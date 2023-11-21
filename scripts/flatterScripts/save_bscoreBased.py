@@ -117,7 +117,7 @@ def treeFlatten(fileName, maxEntries, maxJet):
         for i in range(nJet): # exclude the last jet because we are looking for pairs
             if abs(Jet_eta[i])>2.5:     # exclude jets>2.5 from the jets with  muon group
                 continue
-            if (Jet_muonIdx1[i]>-1): #if there is a muon
+            if (Jet_muonIdx1[i]>-1): #if there is a reco muon in the jet
                 if (bool(Muon_isTriggering[Jet_muonIdx1[i]])):
                     jetsWithMuon.append(i)
                     continue
@@ -159,9 +159,9 @@ def treeFlatten(fileName, maxEntries, maxJet):
         jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bRegNN2[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
         jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bRegNN2[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
         dijet = jet1 + jet2
-        if (nSV>0):
-            if (SV_dlenSig[0]<1):
-                assert False
+        #if (nSV>0):
+        #    if (SV_dlenSig[0]<1):
+        #        assert False
         features_.append(Jet_pt[selected1])                 #0
         features_.append(Jet_eta[selected1])                #1
         features_.append(Jet_phi[selected1])                #2
@@ -184,7 +184,8 @@ def treeFlatten(fileName, maxEntries, maxJet):
         features_.append(Jet_qgl[selected2])
         #features_.append(jet2.Pt()/jet2.E())
 
-
+        if dijet.Pt()<1e-5:
+            assert False
         features_.append(dijet.Pt())
         features_.append(dijet.Eta())
         features_.append(dijet.Phi())
@@ -287,7 +288,7 @@ def treeFlatten(fileName, maxEntries, maxJet):
 
 
 def saveData(nFiles, maxEntries, maxJet, criterionTag):
-    signal = True
+    signal = False
 
 # Use Data For Bkg estimation
     outFolderBkg = "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/data"
@@ -333,6 +334,7 @@ def saveData(nFiles, maxEntries, maxJet, criterionTag):
         print("\nOpening ", (fileNames.index(fileName)+1), "/", len(fileNames), " path:", fileName, "...")
         np.save(outFolder+outName, np.array([1]))  # write a dummy file so that if other jobs look for this file while treeFlatten is working they ignore it
         fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet)
+        print("Saving entries %d" %len(fileData))
         print("Saving in " + outFolder+outName)
         try:
             print("Saved in T3")
