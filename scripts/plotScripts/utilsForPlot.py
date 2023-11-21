@@ -2,8 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 import glob
-
-def getFeaturesBScoreBased(number=False):
+def getXSectionBR():
+    xSectionGGH = 48.52 # pb
+    br = 0.575
+    return xSectionGGH*br
+def getFeaturesBScoreBased(number=False, unit=False):
     featureNames = [
         'Jet1Pt', 'Jet1Eta', 'Jet1Phi', 'Jet1Mass', 
         'Jet1_nMuons', 'Jet1_nElectrons', 'Jet1_btagDeepFlavB', 'Jet1_Area', 'Jet1_QGl',
@@ -16,6 +19,11 @@ def getFeaturesBScoreBased(number=False):
     if number:
         for i in range(len(featureNames)):
             featureNames[i]=str(i)+"_"+featureNames[i]
+    if unit:
+        for i in range(len(featureNames)):
+            if (featureNames[i][-2:]=="Pt") | (featureNames[i][-4:]=="Mass"):
+                featureNames[i] = featureNames[i]+" [GeV]"
+    
             
     return featureNames.copy()
 
@@ -92,8 +100,93 @@ def loadData(signalPath, realDataPath, nSignalFiles, nRealDataFiles):
         sys.stdout.write('\r')
         sys.stdout.write("   %d/%d   "%(realDataFileNames.index(bscore4FileName)+1, len(realDataFileNames)))
         sys.stdout.flush()
-        currentBscore4 = np.load(bscore4FileName)[:,:]
-        bscore4 = np.concatenate((bscore4, currentBscore4))
+        try:
+            currentBscore4 = np.load(bscore4FileName)[:,:]
+        except:
+            print(bscore4FileName)
+        if currentBscore4[0,21]==0:
+            print(bscore4FileName)
+        try:
+            bscore4 = np.concatenate((bscore4, currentBscore4))
+        except:
+            print(bscore4FileName)
     print("bscore4 shape: ", bscore4.shape)
 
     return signal, bscore4
+def loadDataOnlyFeatures(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=-1, features=[0,19]):
+    print("Loading Data...")
+    signalFileNames = glob.glob(signalPath+"/*bScoreBased4_*.npy")
+    realDataFileNames = glob.glob(realDataPath+"/*bScoreBased4_*.npy")
+    signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
+    realDataFileNames = realDataFileNames[:nRealDataFiles] if nRealDataFiles!=-1 else realDataFileNames
+
+    print("%d files for MC ggHbb" %len(signalFileNames))
+    print("%d files for realDataFileNames" %len(realDataFileNames))
+    signal = np.load(signalFileNames[0])[:,features]
+    for signalFileName in signalFileNames[1:]:
+        sys.stdout.write('\r')
+        sys.stdout.write("   %d/%d   "%(signalFileNames.index(signalFileName)+1, len(signalFileNames)))
+        sys.stdout.flush()
+
+        currentSignal = np.load(signalFileName)[:,features]
+        signal = np.concatenate((signal, currentSignal))
+    print("Signal shape: ", signal.shape)
+
+    bscore4 = np.load(realDataFileNames[0])[:,features]
+    for bscore4FileName in realDataFileNames[1:]:
+        sys.stdout.write('\r')
+        sys.stdout.write("   %d/%d   "%(realDataFileNames.index(bscore4FileName)+1, len(realDataFileNames)))
+        sys.stdout.flush()
+        try:
+            currentBscore4 = np.load(bscore4FileName)[:,features]
+        except:
+            print(bscore4FileName)
+        if currentBscore4[0,1]==0:
+            print(bscore4FileName)
+        try:
+            bscore4 = np.concatenate((bscore4, currentBscore4))
+        except:
+            print(bscore4FileName)
+    print("bscore4 shape: ", bscore4.shape)
+
+    return signal, bscore4
+
+def loadDataOnlyMass(signalPath, realDataPath, nSignalFiles, nRealDataFiles):
+    print("Loading Data...")
+    signalFileNames = glob.glob(signalPath+"/*bScoreBased4_*.npy")
+    realDataFileNames = glob.glob(realDataPath+"/*bScoreBased4_*.npy")
+    signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
+    realDataFileNames = realDataFileNames[:nRealDataFiles] if nRealDataFiles!=-1 else realDataFileNames
+
+    print("%d files for MC ggHbb" %len(signalFileNames))
+    print("%d files for realDataFileNames" %len(realDataFileNames))
+    signal = np.load(signalFileNames[0])[:,21]
+    for signalFileName in signalFileNames[1:]:
+        sys.stdout.write('\r')
+        sys.stdout.write("   %d/%d   "%(signalFileNames.index(signalFileName)+1, len(signalFileNames)))
+        sys.stdout.flush()
+
+        currentSignal = np.load(signalFileName)[:,21]
+        signal = np.concatenate((signal, currentSignal))
+    print("Signal shape: ", signal.shape)
+
+    bscore4 = np.load(realDataFileNames[0])[:,21]
+    for bscore4FileName in realDataFileNames[1:]:
+        sys.stdout.write('\r')
+        sys.stdout.write("   %d/%d   "%(realDataFileNames.index(bscore4FileName)+1, len(realDataFileNames)))
+        sys.stdout.flush()
+        try:
+            currentBscore4 = np.load(bscore4FileName)[:,21]
+        except:
+            print(bscore4FileName)
+        if ((currentBscore4[0]==0) & (currentBscore4[1]==0)):
+            print(bscore4FileName)
+            continue
+        try:
+            bscore4 = np.concatenate((bscore4, currentBscore4))
+        except:
+            print(bscore4FileName)
+    print("bscore4 shape: ", bscore4.shape)
+
+    return signal, bscore4
+
