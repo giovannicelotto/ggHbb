@@ -14,15 +14,23 @@ def move_numpy_files(source_directory, destination_directory, min_size_mb=1):
 
     # Use glob to find all numpy files in the source directory
     numpy_files = glob.glob(os.path.join(source_directory, '*.npy'))
-    
-    if not numpy_files:
-        print(f"No numpy files found in '{source_directory}'.")
-        return
+    print(len(numpy_files))
+    min_size_bytes = min_size_mb * 1024  * 1024 # Convert min_size_mb to bytes
 
     print("List of numpy files found in the source folder:")
+    filtered_numpy_files = []
     for file_path in numpy_files:
-        print(file_path)
-
+        file_size = os.path.getsize(file_path)
+        if file_size > min_size_bytes:
+            filtered_numpy_files.append(file_path)
+            print(file_path)
+        else:
+            pass
+    
+    print(len(filtered_numpy_files))
+    if (not filtered_numpy_files) | (len(filtered_numpy_files)==0):
+        print(f"No numpy files found in '{source_directory}'.")
+        return
     while True:
         user_input = input("Continue? (y/n): ").lower()
         if user_input == 'y':
@@ -34,7 +42,7 @@ def move_numpy_files(source_directory, destination_directory, min_size_mb=1):
             print("Invalid input. Please enter 'y' or 'n'.")
 
     # Move each numpy file to the destination directory if its size is greater than min_size_mb
-    for numpy_file in numpy_files:
+    for numpy_file in filtered_numpy_files:
         file_name = os.path.basename(numpy_file)
         destination_path = os.path.join(destination_directory, file_name)
 
@@ -60,10 +68,14 @@ destination_directorySignal = '/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_n
 source_directoryBkg = '/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/data'
 destination_directoryBkg = '/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A2023Nov08/ParkingBPH1/crab_data_Run2018A_part1/231108_145003/flatData/withMoreFeatures'
 
-signal = False
-source_directory = source_directorySignal if signal else source_directoryBkg
-destination_directory = destination_directorySignal if signal else destination_directoryBkg
+#signal = False
+#source_directory = source_directorySignal if signal else source_directoryBkg
+#destination_directory = destination_directorySignal if signal else destination_directoryBkg
 min_size_mb = 1
+print("SIGNAL")
+move_numpy_files(source_directorySignal, destination_directorySignal, min_size_mb)
+print("\nBACKGROUND")
+move_numpy_files(source_directoryBkg, destination_directoryBkg, min_size_mb)
 
 
 # Signal
@@ -74,4 +86,3 @@ min_size_mb = 1
 # /t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/ggHTrue
 # /pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A2023Nov08/ParkingBPH1/crab_data_Run2018A_part1/231108_145003/flatData/withMoreFeatures
 
-move_numpy_files(source_directory, destination_directory, min_size_mb)
