@@ -31,15 +31,15 @@ def move_numpy_files(source_directory, destination_directory, min_size_mb=1):
     if (not filtered_numpy_files) | (len(filtered_numpy_files)==0):
         print(f"No numpy files found in '{source_directory}'.")
         return
-    while True:
-        user_input = input("Continue? (y/n): ").lower()
-        if user_input == 'y':
-            break
-        elif user_input == 'n':
-            print("Stopped.")
-            return
-        else:
-            print("Invalid input. Please enter 'y' or 'n'.")
+    #while True:
+    #    user_input = input("Continue? (y/n): ").lower()
+    #    if user_input == 'y':
+    #        break
+    #    elif user_input == 'n':
+    #        print("Stopped.")
+    #        return
+    #    else:
+    #        print("Invalid input. Please enter 'y' or 'n'.")
 
     # Move each numpy file to the destination directory if its size is greater than min_size_mb
     for numpy_file in filtered_numpy_files:
