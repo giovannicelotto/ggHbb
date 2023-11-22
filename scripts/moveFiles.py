@@ -1,3 +1,9 @@
+# To make this script work every 10 min:
+# open crontab in the terminal by typing:
+#   crontab -e
+# Modify it in the following way:
+# */10 * * * * /path/to/python /path/to/your/script.py
+
 import os
 import shutil
 import glob
