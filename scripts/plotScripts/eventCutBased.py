@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from utilsForPlot import loadData, getFeaturesBScoreBased, getXSectionBR
 from fuzzywuzzy import process
 from plotFeaturesBscoreBased4 import plotNormalizedFeatures
+from plotDijetSpectrum import plotDijetMass
 
 def cutArray(array, featureID, min, max, featureNames = None):
     '''Perform a cut on a feature of the array. The selected features is cut to be >min and <max
@@ -47,19 +48,19 @@ def main():
     signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/flatData/withMoreFeatures"
     realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A2023Nov08/ParkingBPH1/crab_data_Run2018A_part1/231108_145003/flatData/withMoreFeatures"
 
-    signal, realData = loadData(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=-1)
+    signal, realData = loadData(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=20)
 
     # Correction factors and counters
-    #N_mini_BPH = np.load("/t3home/gcelotto/ggHbb/outputs/N_mini.npy")
-    #N_nano_ggH = np.load("/t3home/gcelotto/ggHbb/outputs/N_BPH_Nano.npy")
-    #correctionData = N_nano_ggH/len(realData)
+
     labels = getFeaturesBScoreBased()
     initialSignalLength, initialBkgLength = len(signal), len(realData)
     print("Initial Length of signal:\n%d\nInitial Length of bkg:\n%d\n\n"%(len(signal), len(realData)))
 
     print("SIGNAL\n")
+    # Check QGLikelihood minimum pt for which it works
     mask=(signal[:,8]>0)
     print(np.min(signal[mask,0]))
+    
     signal, realData = cutSignalAndBackground(signal, realData, "Jet1Pt", 20, None, labels)                 # 0
     signal, realData = cutSignalAndBackground(signal, realData, "Jet1Mass", 6, None, labels)                # 3
     signal, realData = cutSignalAndBackground(signal, realData, "Jet1_btagDeepFlavB", 0.2, None, labels)    # 6
@@ -71,15 +72,15 @@ def main():
     signal, realData = cutSignalAndBackground(signal, realData, "dPhi_Dijet", 1.4, None, labels)            #  24
     signal, realData = cutSignalAndBackground(signal, realData, "Jet1_QGl", 0.25, None, labels)             # 8
     signal, realData = cutSignalAndBackground(signal, realData, "Jet2_QGl", 0.25, None, labels)             # 17
-    signal, realData = cutSignalAndBackground(signal, realData, "ht", 180, None, labels)                    # 27
-    signal, realData = cutSignalAndBackground(signal, realData, "Jet1Pt", 45, 180, labels)                  # repeat for process understanding
+    #signal, realData = cutSignalAndBackground(signal, realData, "ht", 180, None, labels)                    # 27
+    #signal, realData = cutSignalAndBackground(signal, realData, "Jet1Pt", 20, 180, labels)                  # repeat for process understanding
     #signal, realData = cutSignalAndBackground(signal, realData, "Jet1Eta", -5+2.46, 5-2.46, labels)
     #signal, realData = cutSignalAndBackground(signal, realData, "Jet2Pt", 20, None, labels) 
-    #signal, realData = cutSignalAndBackground(signal, realData, "DijetMass", 60, 200, labels)
+    
     # Save Data after cuts
     try:
-        np.save("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/flatData/afterCutWithMoreFeatures/signalCut.npy", signal)
-        np.save("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A2023Nov08/ParkingBPH1/crab_data_Run2018A_part1/231108_145003/flatData/afterCutWithMoreFeatures/realDataCut.npy", realData)
+        np.save("/t3home/gcelotto/ggHbb/outputs/signalCut.npy", signal)
+        np.save("/t3home/gcelotto/ggHbb/outputs/realDataCut.npy", realData)
     except:
         pass
         np.save("/t3home/gcelotto/ggHbb/outputs/signalCut.npy", signal)
@@ -89,6 +90,7 @@ def main():
                 23, 24, 26,
                 8, 17, 27]
     plotNormalizedFeatures(signal=signal, realData=realData, outFile = "/t3home/gcelotto/ggHbb/outputs/plots/normalizedFeatures_cuts.png", toKeep=toKeep)
+    plotDijetMass(afterCut=True, log=True, fit=True)
     print("\n\n\n")
     
 
