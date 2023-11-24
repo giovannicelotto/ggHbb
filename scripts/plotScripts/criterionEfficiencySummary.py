@@ -17,11 +17,13 @@ for key, value in criterionSummary.items():
     
 
     #ax.bar(x=key, height=matched, color='blue', label='Matched Events')
-    ax.bar(x=key, height=non_matched, color='black', label='Higgs daugheters not matched (%.1f%%)'%(non_matched/(non_matched+matched)*100), bottom=matched)
+    ax.bar(x=key, height=non_matched, color='black', label='Higgs daughters not matched (%.1f%%)'%(non_matched/(non_matched+matched)*100), bottom=matched)
     ax.bar(x=key, height=outOfEta, color='violet', label='Correct Jets $|\eta|>2.5$ (%.1f%%)'%(outOfEta/(non_matched+matched)*100), bottom=correct_choice+wrong_choice+noDijetWithTrigMuon)
     ax.bar(x=key, height=correct_choice, color='green', label='Correct Choice')
     ax.bar(x=key, height=wrong_choice, color='red', label='Wrong Choice', bottom=correct_choice)
     ax.bar(x=key, height=noDijetWithTrigMuon, color='blue', label='No dijet with a Trig muon in the first N Jet', bottom=correct_choice+wrong_choice)
+    ax.text(x=8-0.25, y=(non_matched + matched)*1.12, s="Correct / Matched")
+    ax.text(x=8-0.25, y=(non_matched + matched)*1.04, s="Correct / Total")
     ax.text(x=key-0.25, y=(non_matched + matched)*1.12, s="%.1f%%"%(correct_choice/matched*100))
     ax.text(x=key-0.25, y=(non_matched + matched)*1.04, s="%.1f%%"%(correct_choice/(matched+non_matched+outOfEta)*100))
     if key==2:
