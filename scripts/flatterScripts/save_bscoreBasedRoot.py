@@ -49,16 +49,6 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
             if abs(Jet_eta[j])>2.5:
                 continue
 
-            
-            jet1 = ROOT.TLorentzVector(0.,0.,0.,0.)
-            jet2 = ROOT.TLorentzVector(0.,0.,0.,0.)
-            #jet1.SetPtEtaPhiM(Jet_pt[i]*Jet_bReg2018[i], Jet_eta[i], Jet_phi[i], Jet_mass[i])
-            #jet2.SetPtEtaPhiM(Jet_pt[j]*Jet_bReg2018[j], Jet_eta[j], Jet_phi[j], Jet_mass[j])
-            # massDr criterion
-            #deltaPhi = jet1.Phi()-jet2.Phi()
-            #deltaPhi = deltaPhi - 2*np.pi*(deltaPhi > np.pi) + 2*np.pi*(deltaPhi< -np.pi)
-            #tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
-
             currentScore = Jet_btagDeepFlavB[i] + Jet_btagDeepFlavB[j]
             if currentScore>score:
                 score=currentScore
@@ -66,7 +56,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
                 selected2 = max(i, j)
     return selected1, selected2 
 
-def treeFlatten(fileName, maxEntries, maxJet, isMC, fileNumber):
+def treeFlatten(fileName, maxEntries, maxJet, isMC, outName):
     '''Require one muon in the dijet. Choose dijets based on their bscore. save all the features of the event append them in a list'''
 
     f = uproot.open(fileName)
@@ -79,7 +69,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, fileNumber):
     f = ROOT.TFile(histPath, "READ")
     hist = f.Get("hist_scale_factor")
     
-    file = ROOT.TFile("newTree_%s.root"%fileNumber, "RECREATE")
+    file = ROOT.TFile(outName, "RECREATE")
     newTree = ROOT.TTree("Events", "variables")
     jet1_pt             = np.zeros(1, dtype=np.float32)
     jet1_eta            = np.zeros(1, dtype=np.float32)
@@ -345,7 +335,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, fileNumber):
     
     newTree.Write()
     file.Close()
-    return newTree
+    return 0
 
 
 
@@ -353,12 +343,12 @@ def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
 
 # Use Data For Bkg estimation
     outFolderBkg = "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/data"
-    T3FolderBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatData"#/scratch"
+    T3FolderBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot"#/scratch"
     pathBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/000*"
     fileNamesBkg = glob.glob(pathBkg+"/Data20181A__Run2_data_2023Nov30_*.root")
     
     outFolderSignal = "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/ggHTrue"
-    T3FolderSignal = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData"#/scratch"
+    T3FolderSignal = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatDataRoot"#/scratch"
     pathSignal = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/0000" #"/t3home/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test"
     fileNamesSignal = glob.glob(pathSignal+"/ggH*.root")
     
@@ -381,7 +371,7 @@ def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
     for fileName in fileNames:
         
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
-        outName = "/ggHbb_%s_%s.root"%(criterionTag, fileNumber) if isMC else "/BParkingDataRun20181A_%s_%s.root"%(criterionTag, fileNumber)
+        outName = "/ggHbb_%s.root"%(fileNumber) if isMC else "/BParkingDataRun20181A_%s.root"%(fileNumber)
         #outFile = outFolder + outName
         if os.path.exists(T3Folder +outName):
             # if you already saved this file skip
@@ -393,8 +383,20 @@ def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
             continue
         
         print("\nOpening ", (fileNames.index(fileName)+1), "/", len(fileNames), " path:", fileName, "...")
-        np.save(outFolder+outName, np.array([1]))  # write a dummy file so that if other jobs look for this file while treeFlatten is working they ignore it
-        newTree = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, isMC=isMC, fileNumber=fileNumber)
+        try:
+            file = ROOT.TFile(T3Folder+outName, "RECREATE")
+            file.Close()
+            print("saved dummy file in ", T3Folder+outName)
+        except:
+            print("Saving in scratch")
+            T3Folder = "/scratch"
+            file = ROOT.TFile(outFolder+outName, "RECREATE")
+            file.Close()
+        treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, isMC=isMC, outName = T3Folder + outName)
+
+        
+        
+        
         
         
     return 0
