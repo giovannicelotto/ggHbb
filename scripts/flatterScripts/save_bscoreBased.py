@@ -21,9 +21,54 @@ Args:
     maxJet      = int(sys.argv[3]) if len(sys.argv) > 3 else 5
 
 '''
+def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB):
+    score=-999
+    selected1 = 999
+    selected2 = 999
+# Jets With Muon is the list of jets with a muon that triggers inside their cone
+    jetsWithMuon = []
+    for i in range(nJet): # exclude the last jet because we are looking for pairs
+        if abs(Jet_eta[i])>2.5:     # exclude jets>2.5 from the jets with  muon group
+            continue
+        if (Jet_muonIdx1[i]>-1): #if there is a reco muon in the jet
+            if (bool(Muon_isTriggering[Jet_muonIdx1[i]])):
+                jetsWithMuon.append(i)
+                continue
+        if (Jet_muonIdx2[i]>-1):
+            if (bool(Muon_isTriggering[Jet_muonIdx2[i]])):
+                jetsWithMuon.append(i)
+                continue
 
+# Now loop over these jets as first element of the pair
+    #if len(jetsWithMuon)==0:
+    #    continue
+    
+    for i in jetsWithMuon:
+        for j in range(0, jetsToCheck):
+            print(i, j, Jet_eta[j])
+            if i==j:
+                continue
+            if abs(Jet_eta[j])>2.5:
+                continue
 
-def treeFlatten(fileName, maxEntries, maxJet):
+            
+            jet1 = ROOT.TLorentzVector(0.,0.,0.,0.)
+            jet2 = ROOT.TLorentzVector(0.,0.,0.,0.)
+            #jet1.SetPtEtaPhiM(Jet_pt[i]*Jet_bReg2018[i], Jet_eta[i], Jet_phi[i], Jet_mass[i])
+            #jet2.SetPtEtaPhiM(Jet_pt[j]*Jet_bReg2018[j], Jet_eta[j], Jet_phi[j], Jet_mass[j])
+            # massDr criterion
+            #deltaPhi = jet1.Phi()-jet2.Phi()
+            #deltaPhi = deltaPhi - 2*np.pi*(deltaPhi > np.pi) + 2*np.pi*(deltaPhi< -np.pi)
+            #tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
+
+            currentScore = Jet_btagDeepFlavB[i] + Jet_btagDeepFlavB[j]
+            if currentScore>score:
+                score=currentScore
+                selected1 = min(i, j)
+                selected2 = max(i, j)
+    return selected1, selected2 
+
+def treeFlatten(fileName, maxEntries, maxJet, isMC):
     '''Require one muon in the dijet. Choose dijets based on their bscore. save all the features of the event append them in a list'''
     f = uproot.open(fileName)
     tree = f['Events']
@@ -32,10 +77,15 @@ def treeFlatten(fileName, maxEntries, maxJet):
     print("Entries : %d"%(maxEntries))
     file_ =[]
     
+
+    # open the file for the SF
+    histPath = "/t3home/gcelotto/ggHbb/trgMu_scale_factors.root"
+    f = ROOT.TFile(histPath, "READ")
+    hist = f.Get("hist_scale_factor")
     for ev in  range(maxEntries):
-        
+        input("Next")
         features_ = []
-        if (ev%(int(maxEntries/100))==0):
+        if (ev%(int(maxEntries/20))==0):
             sys.stdout.write('\r')
             # the exact output you're looking for:
             sys.stdout.write("%d%%"%(ev/maxEntries*100))
@@ -66,9 +116,9 @@ def treeFlatten(fileName, maxEntries, maxJet):
         Jet_nElectrons              = branches["Jet_nElectrons"][ev]
         Jet_muonIdx1                = branches["Jet_muonIdx1"][ev]
         Jet_muonIdx2                = branches["Jet_muonIdx2"][ev]
-        Jet_bRegMVA                 = branches["Jet_bRegMVA"][ev]
-        Jet_bRegNN                  = branches["Jet_bRegNN"][ev]
-        Jet_bRegNN2                 = branches["Jet_bRegNN2"][ev]
+        #Jet_bRegMVA                 = branches["Jet_bRegMVA"][ev]
+        #Jet_bRegNN2                  = branches["Jet_bRegNN2"][ev]
+        Jet_bReg2018                 = branches["Jet_bReg2018"][ev]
         #Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
     # Muons
         Muon_pt                     = branches["Muon_pt"][ev]
@@ -80,6 +130,20 @@ def treeFlatten(fileName, maxEntries, maxJet):
         Muon_dxyErr                 = branches["Muon_dxyErr"][ev]
         Muon_dz                     = branches["Muon_dz"][ev]
         Muon_dzErr                  = branches["Muon_dzErr"][ev]
+        Muon_pfIsoId                = branches["Muon_pfIsoId"][ev]  # 1=PFIsoVeryLoose, 2=PFIsoLoose, 3=PFIsoMedium, 4=PFIsoTight, 5=PFIsoVeryTight, 6=PFIsoVeryVeryTight)
+        Muon_ip3d                   = branches["Muon_ip3d"][ev]
+        Muon_sip3d                  = branches["Muon_sip3d"][ev]
+        Muon_isGlobal               = branches["Muon_isGlobal"][ev]
+        Muon_isTracker              = branches["Muon_isTracker"][ev]
+        Muon_mediumId               = branches["Muon_mediumId"][ev]
+        Muon_looseId                = branches["Muon_looseId"][ev]
+        Muon_isPFcand               = branches["Muon_isPFcand"][ev]
+        Muon_softId                 = branches["Muon_softId"][ev]
+        Muon_tightId                = branches["Muon_tightId"][ev]
+        Muon_tkIsoId                = branches["Muon_tkIsoId"][ev]
+        Muon_triggerIdLoose         = branches["Muon_triggerIdLoose"][ev]
+
+
     
     # SVs
         SV_chi2                     = branches["SV_chi2"][ev]
@@ -106,58 +170,17 @@ def treeFlatten(fileName, maxEntries, maxJet):
         jet2  = ROOT.TLorentzVector(0.,0.,0.,0.)
         dijet = ROOT.TLorentzVector(0.,0.,0.,0.)
         jetsToCheck = np.min([maxJet, nJet])
-        score=-999
-
-        # criterion 1:
-        selected1 = 999
-        selected2 = 999
-
-# Jets With Muon is the list of jets with a muon that triggers inside their cone
-        jetsWithMuon = []
-        for i in range(nJet): # exclude the last jet because we are looking for pairs
-            if abs(Jet_eta[i])>2.5:     # exclude jets>2.5 from the jets with  muon group
-                continue
-            if (Jet_muonIdx1[i]>-1): #if there is a reco muon in the jet
-                if (bool(Muon_isTriggering[Jet_muonIdx1[i]])):
-                    jetsWithMuon.append(i)
-                    continue
-            if (Jet_muonIdx2[i]>-1):
-                if (bool(Muon_isTriggering[Jet_muonIdx2[i]])):
-                    jetsWithMuon.append(i)
-                    continue
-
-# Now loop over these jets as first element of the pair
-        if len(jetsWithMuon)==0:          
-            continue
-        for i in jetsWithMuon:
-            for j in range(0, jetsToCheck):
-                if i==j:
-                    continue
-                if abs(Jet_eta[j])>2.5:
-                    continue
-
-                
-                jet1 = ROOT.TLorentzVector(0.,0.,0.,0.)
-                jet2 = ROOT.TLorentzVector(0.,0.,0.,0.)
-                jet1.SetPtEtaPhiM(Jet_pt[i]*Jet_bRegNN2[i], Jet_eta[i], Jet_phi[i], Jet_mass[i])
-                jet2.SetPtEtaPhiM(Jet_pt[j]*Jet_bRegNN2[j], Jet_eta[j], Jet_phi[j], Jet_mass[j])
-                # massDr criterion
-                #deltaPhi = jet1.Phi()-jet2.Phi()
-                #deltaPhi = deltaPhi - 2*np.pi*(deltaPhi > np.pi) + 2*np.pi*(deltaPhi< -np.pi)
-                #tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
-
-                currentScore = Jet_btagDeepFlavB[i] + Jet_btagDeepFlavB[j]
-                if currentScore>score:
-                    score=currentScore
-                    selected1 = min(i, j)
-                    selected2 = max(i, j)
+        
+        selected1, selected2, = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
 
         if selected1==999:
+            print("skipped")
             continue
         if selected2==999:
             assert False
-        jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bRegNN2[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
-        jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bRegNN2[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
+        print("Taken")
+        jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
+        jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
         dijet = jet1 + jet2
         #if (nSV>0):
         #    if (SV_dlenSig[0]<1):
@@ -204,6 +227,7 @@ def treeFlatten(fileName, maxEntries, maxJet):
             ht = ht+Jet_pt[idx]
 
         features_.append(ht)
+        features_.append(np.max(Muon_pfIsoId))
         #if nSV>0:
         #    features_.append(nSV)
         #    features_.append(SV_chi2[0])
@@ -238,72 +262,95 @@ def treeFlatten(fileName, maxEntries, maxJet):
         #    for z in range(11):
         #        features_.append(-999)
         
-        #GC To be Uncommented GCmuonIdx = 999
-        #GC To be Uncommented GCwhichJetHasLeadingTrigMuon = -1
-        #GC To be Uncommented GC# First jet
-        #GC To be Uncommented GC
-        #GC To be Uncommented GCif Jet_muonIdx1[selected1]>-1:
-        #GC To be Uncommented GC    if Muon_isTriggering[Jet_muonIdx1[selected1]]:
-        #GC To be Uncommented GC        muonIdx = muonIdx if muonIdx < Jet_muonIdx1[selected1] else Jet_muonIdx1[selected1]
-        #GC To be Uncommented GC        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx1[selected1] else selected1
-        #GC To be Uncommented GCif Jet_muonIdx2[selected1]>-1:
-        #GC To be Uncommented GC    if Muon_isTriggering[Jet_muonIdx2[selected1]]:
-        #GC To be Uncommented GC        muonIdx = muonIdx if muonIdx < Jet_muonIdx2[selected1] else Jet_muonIdx2[selected1]
-        #GC To be Uncommented GC        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx2[selected1] else selected1
-        #GC To be Uncommented GC# Second jet
-        #GC To be Uncommented GCif Jet_muonIdx1[selected2]>-1:
-        #GC To be Uncommented GC    if Muon_isTriggering[Jet_muonIdx1[selected2]]:
-        #GC To be Uncommented GC        muonIdx = muonIdx if muonIdx < Jet_muonIdx1[selected2] else Jet_muonIdx1[selected2]
-        #GC To be Uncommented GC        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx1[selected2] else selected2
-        #GC To be Uncommented GCif Jet_muonIdx2[selected2]>-1:
-        #GC To be Uncommented GC    if Muon_isTriggering[Jet_muonIdx2[selected2]]:
-        #GC To be Uncommented GC        muonIdx = muonIdx if muonIdx < Jet_muonIdx2[selected2] else Jet_muonIdx2[selected2]
-        #GC To be Uncommented GC        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx2[selected2] else selected2
-#GC To be Uncommented GC
-#GC To be Uncommented GC
-        #GC To be Uncommented GC
-        #GC To be Uncommented GCmuon = ROOT.TLorentzVector(0., 0., 0., 0.)
-        #GC To be Uncommented GCmuon.SetPtEtaPhiM(Muon_pt[muonIdx], Muon_eta[muonIdx], Muon_phi[muonIdx], Muon_mass[muonIdx])
-#GC To be Uncommented GC
-#GC To be Uncommented GC
-        #GC To be Uncommented GCfeatures_.append(muon.Pt())
-        #GC To be Uncommented GCfeatures_.append(muon.Eta())
-        #GC To be Uncommented GCif whichJetHasLeadingTrigMuon==selected1:
-        #GC To be Uncommented GC    features_.append(muon.DeltaR(jet1) )
-        #GC To be Uncommented GC    features_.append(muon.Pt()/jet1.Pt() )
-        #GC To be Uncommented GCelif whichJetHasLeadingTrigMuon==selected2:
-        #GC To be Uncommented GC    features_.append(muon.DeltaR(jet2) )
-        #GC To be Uncommented GC    features_.append(muon.Pt()/jet2.Pt() )
-        #GC To be Uncommented GCelse:
-        #GC To be Uncommented GC    assert False
-        #GC To be Uncommented GC
-        #GC To be Uncommented GCfeatures_.append(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx])
-        #GC To be Uncommented GCfeatures_.append(Muon_dz[muonIdx]/Muon_dzErr[muonIdx])
-        #GC To be Uncommented GCassert Muon_isTriggering[muonIdx]
+        muonIdx = 999
+        whichJetHasLeadingTrigMuon = -1
+        # First jet
+        
+        if Jet_muonIdx1[selected1]>-1:
+            if Muon_isTriggering[Jet_muonIdx1[selected1]]:
+                muonIdx = muonIdx if muonIdx < Jet_muonIdx1[selected1] else Jet_muonIdx1[selected1]
+                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx1[selected1] else selected1
+        if Jet_muonIdx2[selected1]>-1:
+            if Muon_isTriggering[Jet_muonIdx2[selected1]]:
+                muonIdx = muonIdx if muonIdx < Jet_muonIdx2[selected1] else Jet_muonIdx2[selected1]
+                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx2[selected1] else selected1
+        # Second jet
+        if Jet_muonIdx1[selected2]>-1:
+            if Muon_isTriggering[Jet_muonIdx1[selected2]]:
+                muonIdx = muonIdx if muonIdx < Jet_muonIdx1[selected2] else Jet_muonIdx1[selected2]
+                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx1[selected2] else selected2
+        if Jet_muonIdx2[selected2]>-1:
+            if Muon_isTriggering[Jet_muonIdx2[selected2]]:
+                muonIdx = muonIdx if muonIdx < Jet_muonIdx2[selected2] else Jet_muonIdx2[selected2]
+                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if muonIdx < Jet_muonIdx2[selected2] else selected2
 
+
+        
+        muon = ROOT.TLorentzVector(0., 0., 0., 0.)
+        muon.SetPtEtaPhiM(Muon_pt[muonIdx], Muon_eta[muonIdx], Muon_phi[muonIdx], Muon_mass[muonIdx])
+
+
+        features_.append(muon.Pt())
+        features_.append(muon.Eta())
+        if whichJetHasLeadingTrigMuon==selected1:
+            features_.append(muon.DeltaR(jet1) )
+            features_.append(muon.Pt()/jet1.Pt() )
+        elif whichJetHasLeadingTrigMuon==selected2:
+            features_.append(muon.DeltaR(jet2) )
+            features_.append(muon.Pt()/jet2.Pt() )
+        else:
+            assert False
+        
+        features_.append(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx])
+        features_.append(Muon_dz[muonIdx]/Muon_dzErr[muonIdx])
+        features_.append(Muon_ip3d[muonIdx])
+        features_.append(Muon_sip3d[muonIdx])
+        
+        #features_.append(Muon_looseId[muonIdx])
+        #features_.append(Muon_mediumId[muonIdx])
+        features_.append(Muon_tightId[muonIdx])
+        #features_.append(Muon_softId[muonIdx])
+        #features_.append(Muon_isPFcand[muonIdx])
+        
+        #features_.append(Muon_isGlobal[muonIdx])
+        #features_.append(Muon_isTracker[muonIdx])
+        features_.append(Muon_pfIsoId[muonIdx])
+
+        features_.append(Muon_tkIsoId[muonIdx])
+        #features_.append(Muon_triggerIdLoose[muonIdx])
+        if not isMC:
+            features_.append(1)
+        else:
+            features_.append(hist.GetBinContent(hist.GetXaxis().FindBin(Muon_pt[muonIdx]),hist.GetYaxis().FindBin(abs(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx]))))
+
+        assert Muon_isTriggering[muonIdx]
+        if ev==0:
+            for fidx in range(len(features_)):
+                print(type(features_[fidx]))
+                
+        
         file_.append(features_)
     
     return file_
 
 
 
-def saveData(nFiles, maxEntries, maxJet, criterionTag):
-    signal = False
+def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
 
 # Use Data For Bkg estimation
     outFolderBkg = "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/data"
-    T3FolderBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A2023Nov08/ParkingBPH1/crab_data_Run2018A_part1/231108_145003/flatData/withMoreFeatures"
-    pathBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A2023Nov08/ParkingBPH1/crab_data_Run2018A_part1/231108_145003/000*"
-    fileNamesBkg = glob.glob(pathBkg+"/Data20181A_Run2_data_2023Nov0*.root")
+    T3FolderBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatData"
+    pathBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/000*"
+    fileNamesBkg = glob.glob(pathBkg+"/Data20181A__Run2_data_2023Nov30_*.root")
     
     outFolderSignal = "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/ggHTrue"
-    T3FolderSignal = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/flatData/withMoreFeatures"
-    pathSignal = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/0000"
-    fileNamesSignal = glob.glob(pathSignal+"/Hbb*.root")
+    T3FolderSignal = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData"
+    pathSignal = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/0000" #"/t3home/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test"
+    fileNamesSignal = glob.glob(pathSignal+"/ggH*.root")
     
-    outFolder = outFolderSignal if signal else outFolderBkg
-    fileNames = fileNamesSignal if signal else fileNamesBkg
-    T3Folder = T3FolderSignal   if signal else T3FolderBkg
+    outFolder = outFolderSignal if isMC else outFolderBkg
+    fileNames = fileNamesSignal if isMC else fileNamesBkg
+    T3Folder = T3FolderSignal   if isMC else T3FolderBkg
     
     random.shuffle(fileNames)
     if nFiles > len(fileNames):
@@ -320,7 +367,7 @@ def saveData(nFiles, maxEntries, maxJet, criterionTag):
     for fileName in fileNames:
         
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
-        outName = "/ggHbb_%s_%s.npy"%(criterionTag, fileNumber) if signal else "/BParkingDataRun2018_1A_Cand_%s_%s.npy"%(criterionTag, fileNumber)
+        outName = "/ggHbb_%s_%s.npy"%(criterionTag, fileNumber) if isMC else "/BParkingDataRun20181A_%s_%s.npy"%(criterionTag, fileNumber)
         #outFile = outFolder + outName
         if os.path.exists(T3Folder +outName):
             # if you already saved this file skip
@@ -333,12 +380,13 @@ def saveData(nFiles, maxEntries, maxJet, criterionTag):
         
         print("\nOpening ", (fileNames.index(fileName)+1), "/", len(fileNames), " path:", fileName, "...")
         np.save(outFolder+outName, np.array([1]))  # write a dummy file so that if other jobs look for this file while treeFlatten is working they ignore it
-        fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet)
+        fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, isMC=isMC)
         print("Saving entries %d" %len(fileData))
         print("Saving in " + outFolder+outName)
         try:
-            print("Saved in T3")
             np.save(T3Folder +outName, fileData)
+            print("Saved in T3")
+            os.remove(outFolder+outName)
         except:
             print("Failed to save in T3")
             np.save(outFolder+outName, fileData)
@@ -348,9 +396,10 @@ def saveData(nFiles, maxEntries, maxJet, criterionTag):
 
 
 if __name__=="__main__":
-    nFiles      = int(sys.argv[1]) if len(sys.argv) > 1 else -1
-    maxEntries  = int(sys.argv[2]) if len(sys.argv) > 2 else -1
-    maxJet      = int(sys.argv[3]) if len(sys.argv) > 3 else 4
+    isMC        = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    nFiles      = int(sys.argv[2]) if len(sys.argv) > 2 else -1
+    maxEntries  = int(sys.argv[3]) if len(sys.argv) > 3 else -1
+    maxJet      = int(sys.argv[4]) if len(sys.argv) > 4 else 4
     #criterionTag= (sys.argv[4]) if len(sys.argv) > 4 else criterionTag
     criterionTag = 'bScoreBased%d'%maxJet
-    saveData(nFiles, maxEntries, maxJet, criterionTag)
+    saveData(isMC, nFiles, maxEntries, maxJet, criterionTag)
