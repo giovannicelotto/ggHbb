@@ -29,7 +29,7 @@ def getMiniEntries():
     return totalMiniEntries
 
 def getFlatEntries():
-    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/flatData/jjFeaturesTrue_*.npy")
+    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData/*.npy")
     print("Number of Flat Data : ", len(fileNames))
     totalFlatEntries = 0
     for fileName in fileNames:
@@ -41,7 +41,7 @@ def getFlatEntries():
 
 
 def getNanoEntries():
-    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/0000/*.root")
+    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/0000/*.root")
     print("Number of Flat Data : ", len(fileNames))
     totalNanoEntries = 0
     for fileName in fileNames:
@@ -53,11 +53,11 @@ def getNanoEntries():
     return totalNanoEntries
 
 if __name__=="__main__":
+    nano = getNanoEntries()
+    flat = getFlatEntries()
     mini = getMiniEntries()
     print("Saving mini into /t3home/gcelotto/ggHbb/outputs/N_mini.npy ...")
     np.save("/t3home/gcelotto/ggHbb/outputs/N_mini.npy", mini)
-    nano = getNanoEntries()
-    flat = getFlatEntries()
     efficiencyMC = flat/mini
     
     print("Mini : \t%d"%mini)
