@@ -5,7 +5,7 @@ import time
 import sys
 from matplotlib.ticker import AutoMinorLocator, LogLocator
 import matplotlib.patches as patches
-from utilsForPlot import loadData, getXSectionBR, loadDataOnlyFeatures
+from utilsForPlot import loadData, getXSectionBR, loadDataOnlyFeatures, loadParquet
 import mplhep as hep
 hep.style.use("CMS")
 
@@ -19,14 +19,19 @@ def plotDijetpTDifferential(realFiles=1, afterCut = False):
         signal = signal[:,[18, 21, -1]]
         realData = realData[:,[18, 21, -1]]
     else:
+        signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/flatData"
+        realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot"
 
         # Loading files
-        signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData"
-        realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatData"
-        signal, realData = loadDataOnlyFeatures(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles, features=[18, 21, -1])
+        signalYields, realDataYields = loadParquet(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles)
+        signal =  np.concatenate([s.iloc[:,[18, 21, -1]] for s in signalYields])
+        realData =  np.concatenate([s.iloc[:,[18, 21, -1]] for s in realDataYields])
+        
+        #signal, realData = loadDataOnlyFeatures(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles, features=[18, 21, -1])
 
 
     # Correction factors and counters
+    realFiles = 1017 if realFiles==-1 else realFiles
     N_SignalMini = np.load("/t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy")*237/240
     currentLumi = 0.774*realFiles/1017
     correctionSignal = 1/N_SignalMini*getXSectionBR()*1000*currentLumi
