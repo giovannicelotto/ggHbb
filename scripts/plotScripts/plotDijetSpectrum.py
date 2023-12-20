@@ -8,7 +8,7 @@ import matplotlib.patches as patches
 from scipy.optimize import curve_fit
 from scipy.stats import norm, crystalball
 from scipy.integrate import quad
-from utilsForPlot import loadData, loadDataOnlyMass, getXSectionBR, loadDataOnlyFeatures
+from utilsForPlot import loadData, loadDataOnlyMass, getXSectionBR, loadDataOnlyFeatures, loadRoot, loadParquet
 import sys
 import mplhep as hep
 hep.style.use("CMS")
@@ -26,14 +26,21 @@ def plotDijetMass(afterCut= False, log = False, fit = True, realFiles=1):
         print("Lengths of data and signal : ", len(realData), len(signal))
     else:
         # Loading files
-        signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData"
-        realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatData"
+        signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/flatData"
+        realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot"
 
-        signal, realData = loadDataOnlyFeatures(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles, features=[21, -1])
-        signal, signalSF = signal[:,0], signal[:,1]
-        realData = realData[:,0]
-        #print("Average SF", np.mean(signalSF))
+        signalYields, realDataYields = loadParquet(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles)
+        realData =  np.concatenate([s.iloc[:,21] for s in realDataYields])
+        mass = []
+        sf=[]
+        for s in signalYields:
+            mass.append(s.iloc[:,21])
+            sf.append(s.iloc[:,-1])
 
+        signal = np.concatenate(mass)
+        signalSF = np.concatenate(sf)
+        
+        
     realFiles = 1017 if realFiles==-1 else realFiles
     currentLumi = 0.774*realFiles/1017
     N_SignalMini = np.load("/t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy")*237/240
