@@ -5,23 +5,46 @@ import os
 import glob
 import ROOT
 import pandas as pd
-def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1):
+import dask.dataframe as dd
+def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, columns=['dijet_mass']):
     signalFileNames = glob.glob(signalPath+"/ggH*.parquet")
     realDataFileNames = glob.glob(realDataPath+"/BParking*.parquet")
     signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
     realDataFileNames = realDataFileNames[:nRealDataFiles] if nRealDataFiles!=-1 else realDataFileNames
     print("%d files for MC ggHbb" %len(signalFileNames))
     print("%d files for realDataFileNames" %len(realDataFileNames))
-    def load_df_generator(fileNames):
-        for fileName in fileNames:
-            sys.stdout.write('\r')
-            sys.stdout.write("   %d/%d   "%(fileNames.index(fileName)+1, len(fileNames)))
-            sys.stdout.flush()
-            yield pd.read_parquet(fileName)
-    signal = load_df_generator(signalFileNames)
-    realData = load_df_generator(realDataFileNames)
+    
+    signal = pd.read_parquet(signalFileNames, columns=columns)
+    realData = pd.read_parquet(realDataFileNames, columns=columns)
     return signal, realData
 
+def loadDask(signalPath, realDataPath, nSignalFiles, nRealDataFiles):
+    signalFileNames = glob.glob(signalPath+"/*.parquet")[:nSignalFiles]
+    realDataFileNames = glob.glob(realDataPath+"/*.parquet")[:nRealDataFiles]
+    signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
+    realDataFileNames = realDataFileNames[:nRealDataFiles] if nRealDataFiles!=-1 else realDataFileNames    
+
+    print("%d files for MC ggHbb" %len(signalFileNames))
+    print("%d files for realDataFileNames" %len(realDataFileNames))
+
+    
+    try:    
+        signal = dd.read_parquet(signalFileNames)
+        realData = dd.read_parquet(realDataFileNames)
+        return signal, realData
+    except:
+        print("Some of the files might be corrupted. Here is the list:\n")
+        for fileName in signalFileNames:
+            try:
+                df=pd.read_parquet(fileName)
+            except:
+                print(fileName)
+        for fileName in realDataFileNames:
+            try:
+                df=pd.read_parquet(fileName)
+            except:
+                print(fileName)
+        sys.exit("Exiting the program due to a corrupted files.")
 
 
 def loadRoot(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1):
@@ -95,6 +118,17 @@ def getFeaturesBScoreBased(number=False, unit=False):
         'Muon_sip3d',           'Muon_tightId',
         'Muon_pfIsoId',          'Muon_tkIsoId',       'SF',
         ]
+    featureNames = [
+        'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass',
+        'jet1_nMuons', 'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl',
+        'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass',
+        'jet2_nMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB', 'jet2_area', 'jet2_qgl',
+        'dijet_Pt', 'dijet_Eta', 'dijet_Phi', 'dijet_M',
+        'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
+        'dijet_twist', 'nJets', 'ht', 'max_Muon_pfIsoId',
+        'muon_pt', 'muon_eta', 'muonJet_dR', 'muonOverJet_pt',
+        'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d',
+        'muon_tightId', 'muon_pfIsoId', 'muon_tkIsoId', 'sf']
     if number:
         for i in range(len(featureNames)):
             featureNames[i]=str(i)+"_"+featureNames[i]

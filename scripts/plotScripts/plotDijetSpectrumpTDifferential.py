@@ -23,11 +23,10 @@ def plotDijetpTDifferential(realFiles=1, afterCut = False):
         realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot"
 
         # Loading files
-        signalYields, realDataYields = loadParquet(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles)
-        signal =  np.concatenate([s.iloc[:,[18, 21, -1]] for s in signalYields])
-        realData =  np.concatenate([s.iloc[:,[18, 21, -1]] for s in realDataYields])
+        signal, realData = loadParquet(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles, columns=['dijet_pt', 'dijet_mass', 'sf'])
+        signal = np.array(signal)
+        realData = np.array(realData)
         
-        #signal, realData = loadDataOnlyFeatures(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles, features=[18, 21, -1])
 
 
     # Correction factors and counters
