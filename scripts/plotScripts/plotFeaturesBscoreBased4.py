@@ -6,7 +6,7 @@ import sys
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patches as patches
 #from getFeaturesBScoreBased import getFeaturesBScoreBased
-from utilsForPlot import getBins, loadData, getFeaturesBScoreBased, getXSectionBR
+from utilsForPlot import getBins, loadRoot, getFeaturesBScoreBased, getXSectionBR, loadParquet, loadDask
 import mplhep as hep
 hep.style.use("CMS")
 '''plot normalized features of signal and background'''
@@ -16,12 +16,6 @@ hep.style.use("CMS")
 
 
 def plotNormalizedFeatures(signal, realData, outFile, toKeep=None):
-
-    # Correction factors and counters
-    N_mini = np.load("/t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy")
-    totalNanoEntries = np.load("/t3home/gcelotto/ggHbb/outputs/counters/N_BPH_Nano.npy")
-    correctionData = totalNanoEntries/len(realData)
-    totalSignalCounts, totalData = 0, 0                               # total counts for the signal after rescaled
 
     labels = getFeaturesBScoreBased(unit=True)
     xlims = getBins()
@@ -42,16 +36,19 @@ def plotNormalizedFeatures(signal, realData, outFile, toKeep=None):
         fig.align_xlabels(ax[i,:])
         for j in range(nCol):
             fig.align_ylabels(ax[:,j])
-            if i*nCol+j>=signal.shape[1]:
+            if i*nCol+j>=len(signal.columns):
                 break
             bins = np.linspace(xlims[i*nCol+j,1], xlims[i*nCol+j,2], int(xlims[i*nCol+j,0])+1)
+            countsSignal = np.zeros(len(bins)-1)
+            countsSignal = np.histogram(np.clip(signal.iloc[:,i*nCol+j], bins[0], bins[-1]),weights=signal.iloc[:,-1] if labels[i*nCol+j]!='SF' else None, bins=bins)[0]
 
-            countsSignal = np.histogram(np.clip(signal[:,i*nCol+j], bins[0], bins[-1]),weights=signal[:,-1] if labels[i*nCol+j]!='SF' else None, bins=bins)[0]
+            
             countsSignalErr = np.sqrt(countsSignal)
-            countsSignal, countsSignalErr = countsSignal/N_mini*getXSectionBR()*0.774*1000, countsSignalErr/N_mini*getXSectionBR()*0.774*1000
-            countsBkg    = np.histogram(np.clip(realData[:,i*nCol+j], bins[0], bins[-1]), bins=bins)[0]
+            countsBkg = np.zeros(len(bins)-1)
+                
+            countsBkg = np.histogram(np.clip(realData.iloc[:,i*nCol+j], bins[0], bins[-1]),weights=realData.iloc[:,-1] if labels[i*nCol+j]!='SF' else None, bins=bins)[0]
+            
             countsBkgErr = np.sqrt(countsBkg)
-            countsBkg, countsBkgErr = countsBkg*correctionData, countsBkgErr*correctionData
 
             # Normalize the counts to 1 so also the errors undergo the same operation. Do first the errors, otherwise you lose the info on the signal
             countsSignalErr = countsSignalErr/np.sum(countsSignal)
@@ -105,32 +102,29 @@ def plotNormalizedFeatures(signal, realData, outFile, toKeep=None):
     plt.close('all')
 def main():
     # Loading files
-    signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData"
-    realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatData"
+    #signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatDataRoot"
+    #realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot"
 
-    #toKeep = [ 0, 3, 6,
-    #            9, 10, 15,
-    #            23, 24, 26,
-    #            8, 17]
-    toKeep = [0, 6, 8 ,
-              9, 15, 17,
-              22, 23, 24, 25,26,-1
-            ]
+    toKeep=None
+    signalPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/flatData"
+    realDataPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot"
+
+    signal, realData = loadParquet(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=10)
     
-    signal, realData = loadData(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=100)
-    plotNormalizedFeatures(signal=signal, realData=realData, outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_inclusive.png", toKeep=toKeep)
-    maskSig = signal[:,18]<22
-    maskBkg = realData[:,18]<22
-    plotNormalizedFeatures(signal=signal[maskSig], realData=realData[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt0to22.png", toKeep=toKeep)
-    maskSig = (signal[:,18]>22) & (signal[:,18]<40)
-    maskBkg = (realData[:,18]>22) & (realData[:,18]<40)
-    plotNormalizedFeatures(signal=signal[maskSig], realData=realData[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt40to58.png", toKeep=toKeep)
-    maskSig = (signal[:,18]>40) & (signal[:,18]<69.5)
-    maskBkg = (realData[:,18]>40) & (realData[:,18]<69.5)
-    plotNormalizedFeatures(signal=signal[maskSig], realData=realData[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt58to69p5.png", toKeep=toKeep)
-    maskSig = (signal[:,18]>69.5)# & (signal[:,18]<69.5)
-    maskBkg = (realData[:,18]>69.5)# & (signal[:,18]<69.5)
-    plotNormalizedFeatures(signal=signal[maskSig], realData=realData[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt69p5toInf.png", toKeep=toKeep)
 
+    
+    plotNormalizedFeatures(signal=signal, realData=realData, outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_inclusive.png", toKeep=toKeep)
+    #maskSig = signalYields[:,18]<22
+    #maskBkg = realDataYields[:,18]<22
+    #plotNormalizedFeatures(signalYields=signalYields[maskSig], realDataYields=realDataYields[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt0to22.png", toKeep=toKeep)
+    #maskSig = (signalYields[:,18]>22) & (signalYields[:,18]<40)
+    #maskBkg = (realDataYields[:,18]>22) & (realDataYields[:,18]<40)
+    #plotNormalizedFeatures(signalYields=signalYields[maskSig], realDataYields=realDataYields[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt40to58.png", toKeep=toKeep)
+    #maskSig = (signalYields[:,18]>40) & (signalYields[:,18]<69.5)
+    #maskBkg = (realDataYields[:,18]>40) & (realDataYields[:,18]<69.5)
+    #plotNormalizedFeatures(signalYields=signalYields[maskSig], realDataYields=realDataYields[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt58to69p5.png", toKeep=toKeep)
+    #maskSig = (signalYields[:,18]>69.5)# & (signalYields[:,18]<69.5)
+    #maskBkg = (realDataYields[:,18]>69.5)# & (signalYields[:,18]<69.5)
+    #plotNormalizedFeatures(signalYields=signalYields[maskSig], realDataYields=realDataYields[maskBkg], outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features_pt69p5toInf.png", toKeep=toKeep)
 if __name__=="__main__":
     main()

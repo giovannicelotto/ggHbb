@@ -6,7 +6,7 @@ import glob
 import ROOT
 import pandas as pd
 import dask.dataframe as dd
-def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, columns=['dijet_mass']):
+def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, columns=None):
     signalFileNames = glob.glob(signalPath+"/ggH*.parquet")
     realDataFileNames = glob.glob(realDataPath+"/BParking*.parquet")
     signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
@@ -113,7 +113,7 @@ def getFeaturesBScoreBased(number=False, unit=False):
         #r'$\Delta\varphi$ Dijet','d_Eta+Pi-dPhi',           'twist_Dijet',             'ht',
         'dPhi_Dijet','d_Eta+Pi-dPhi',           'twist_Dijet',             #'njet',
         'ht', 
-        'max_Muon_pfIsoId',    'Muon Pt',                 'Muon Eta',                 'Muon_dR_jet',
+        'Muon Pt',                 'Muon Eta',                 'Muon_dR_jet',
         'Muon_pt/Jet_pt',       'Muon_dxy_sig',            'Muon_dz_sig',             'Muon_ip3d',
         'Muon_sip3d',           'Muon_tightId',
         'Muon_pfIsoId',          'Muon_tkIsoId',       'SF',
@@ -125,8 +125,8 @@ def getFeaturesBScoreBased(number=False, unit=False):
         'jet2_nMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB', 'jet2_area', 'jet2_qgl',
         'dijet_Pt', 'dijet_Eta', 'dijet_Phi', 'dijet_M',
         'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
-        'dijet_twist', 'nJets', 'ht', 'max_Muon_pfIsoId',
-        'muon_pt', 'muon_eta', 'muonJet_dR', 'muonOverJet_pt',
+        'dijet_twist', 'nJets', 'ht',
+        'muon_pt', 'muon_eta',
         'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d',
         'muon_tightId', 'muon_pfIsoId', 'muon_tkIsoId', 'sf']
     if number:
@@ -151,9 +151,8 @@ def getBins():
         [50,0,         30,],   [10,-0.5,      9.5],   [5 ,-0.5,       4.5],     [50,0,        1],
         [30,0.3,       0.7],   [50,-0.5,      1],     [50,0,        300],    [50,-5,       5],
         [50,-np.pi,    np.pi], [50,0,        450],    [50,0,         6],     [50,0,        6],
-        [50,0,         np.pi], [50,0,        10],     [50,0,     np.pi/2],   [8, -0.5, 7.5], [50,0,     800],
-        [7,0,         6],     [50,0,        40],     [50,-2.5,     2.5],    [50,0,        0.5],
-        [50,0,         1],     [50,-35,      35],     [50,-50,      50],     [50,-0,       0.4],
+        [50,0,         np.pi], [50,0,        10],     [50,0,     np.pi/2],   [16, -0.5, 31.5], [50,0,     800],
+        [50,0,        40],     [50,-2.5,     2.5],         [50,-35,      35],     [50,-50,      50],     [50,-0,       0.4],
         [50,0,         100],   [2 ,-0.5,    1.5],      [3 ,-0.5,     2.5],     [3 ,-0.5,    2.5],
         #[2 ,-0.5,    1.5],     [2 ,-0.5,   1.5],      [2 ,-0.5,    1.5],     [3 ,-0.5,     2.5],
         [50 ,0,        1],
