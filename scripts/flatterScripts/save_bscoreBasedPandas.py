@@ -45,8 +45,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
     assert len(muonIdxs)==len(jetsWithMuon)
 
 # Now loop over these jets as first element of the pair
-    #if len(jetsWithMuon)==0:
-    #    continue
+
     
     for i in jetsWithMuon:
         for j in range(0, jetsToCheck):
@@ -59,7 +58,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
             currentScore = Jet_btagDeepFlavB[i] + Jet_btagDeepFlavB[j]
             if currentScore>score:
                 score=currentScore
-                if j not in jetsWithMuon:  # if i has the muon only. jet1 is the jet with the muon.s
+                if j not in jetsWithMuon:  # if i has the muon only. jet1 is the jet with the muon.
                     selected1 = i
                     selected2 = j
                     muonIdx = muonIdxs[jetsWithMuon.index(i)]
@@ -220,25 +219,25 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
 
         if dijet.Pt()<1e-5:
             assert False
-        features_.append(dijet.Pt())
-        features_.append(dijet.Eta())
-        features_.append(dijet.Phi())
-        features_.append(dijet.M())
-        features_.append(jet1.DeltaR(jet2))
-        features_.append(abs(jet1.Eta() - jet2.Eta()))
+        features_.append(np.float32(dijet.Pt()))
+        features_.append(np.float32(dijet.Eta()))
+        features_.append(np.float32(dijet.Phi()))
+        features_.append(np.float32(dijet.M()))
+        features_.append(np.float32(jet1.DeltaR(jet2)))
+        features_.append(np.float32(abs(jet1.Eta() - jet2.Eta())))
         deltaPhi = jet1.Phi()-jet2.Phi()
         deltaPhi = deltaPhi - 2*np.pi*(deltaPhi > np.pi) + 2*np.pi*(deltaPhi< -np.pi)
-        features_.append(abs(deltaPhi))     
+        features_.append(np.float32(abs(deltaPhi)))     
         angVariable = np.pi - abs(deltaPhi) + abs(jet1.Eta() - jet2.Eta())
-        features_.append(angVariable)
+        features_.append(np.float32(angVariable))
         tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
-        features_.append(tau)
+        features_.append(tau.astype(np.float32))
         features_.append(nJet)
         ht = 0
         for idx in range(nJet):
             ht = ht+Jet_pt[idx]
 
-        features_.append(ht)
+        features_.append(ht.astype(np.float32))
         #if nSV>0:
         #    features_.append(nSV)
         #    features_.append(SV_pt[0])
@@ -272,16 +271,16 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         muon.SetPtEtaPhiM(Muon_pt[muonIdx], Muon_eta[muonIdx], Muon_phi[muonIdx], Muon_mass[muonIdx])
 
 
-        features_.append(muon.Pt())
-        features_.append(muon.Eta())
-        if whichJetHasLeadingTrigMuon==selected1:
-            features_.append(muon.DeltaR(jet1) )
-            features_.append(muon.Pt()/jet1.Pt() )
-        elif whichJetHasLeadingTrigMuon==selected2:
-            features_.append(muon.DeltaR(jet2) )
-            features_.append(muon.Pt()/jet2.Pt() )
-        else:
-            assert False
+        features_.append(np.float32(muon.Pt()))
+        features_.append(np.float32(muon.Eta()))
+        #if whichJetHasLeadingTrigMuon==selected1:
+        #    features_.append(muon.DeltaR(jet1) )
+        #    features_.append(muon.Pt()/jet1.Pt() )
+        #elif whichJetHasLeadingTrigMuon==selected2:
+        #    features_.append(muon.DeltaR(jet2) )
+        #    features_.append(muon.Pt()/jet2.Pt() )
+        #else:
+        #    assert False
         
         features_.append(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx])
         features_.append(Muon_dz[muonIdx]/Muon_dzErr[muonIdx])
@@ -303,7 +302,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         if not isMC:
             features_.append(1)
         else:
-            features_.append(hist.GetBinContent(hist.GetXaxis().FindBin(Muon_pt[muonIdx]),hist.GetYaxis().FindBin(abs(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx]))))
+            features_.append(np.float32(hist.GetBinContent(hist.GetXaxis().FindBin(Muon_pt[muonIdx]),hist.GetYaxis().FindBin(abs(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx])))))
 
         assert Muon_isTriggering[muonIdx]
         if ev==0:
@@ -321,7 +320,7 @@ def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
 
 # Use Data For Bkg estimation
     outFolderBkg = "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/data"
-    T3FolderBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatData"
+    T3FolderBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot"
     pathBkg = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/000*"
     fileNamesBkg = glob.glob(pathBkg+"/Data20181A__Run2_data_2023Nov30_*.root")
     
@@ -382,8 +381,7 @@ def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
 'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons',
 'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB',
 'jet2_area', 'jet2_qgl', 'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
-'dijet_twist', 'nJets', 'ht', 'muon_pt', 'muon_eta', 'muon_dRJet', 'muonOverJet_pt', 'muon_dxySig',
-'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 'sf']
+'dijet_twist', 'nJets', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 'sf']
         df.columns = featureNames
         df.to_parquet(T3Folder + outName)
         #np.save(, np.array(fileData, np.float32))
@@ -403,3 +401,62 @@ if __name__=="__main__":
     #criterionTag= (sys.argv[4]) if len(sys.argv) > 4 else criterionTag
     criterionTag = 'bScoreBased%d'%maxJet
     saveData(isMC, nFiles, maxEntries, maxJet, criterionTag)
+
+
+
+
+
+
+
+
+
+
+
+
+def sliceJetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB):
+    # need to work on this
+    score=-999
+    selected1 = 999
+    selected2 = 999
+    muonIdx = 999
+# Jets With Muon is the list of jets with a muon that triggers inside their cone
+    muon_mask = (np.abs(Jet_eta) <= 2.5)
+    muon_mask1 = (Jet_muonIdx1 >= 0) & Muon_isTriggering[Jet_muonIdx1]
+    muon_mask2 = (Jet_muonIdx2 >= 0) & Muon_isTriggering[Jet_muonIdx2]
+
+    jetsWithMuon = np.where(muon_mask & (muon_mask1 | muon_mask2))[0]
+    muonIdxs = np.where(muon_mask1[jetsWithMuon], Jet_muonIdx1[jetsWithMuon], Jet_muonIdx2[jetsWithMuon])
+    assert len(muonIdxs) == len(jetsWithMuon)
+
+    # Initialize variables
+    score = -999
+    selected1, selected2, muonIdx = 999, 999, 999
+    for i in jetsWithMuon:
+        # Create a mask for valid jets to check
+        valid_jet_mask = (np.abs(Jet_eta) <= 2.5)[:jetsToCheck] & (np.arange(jetsToCheck) != i)
+
+        # Calculate scores for all valid pairs
+        currentScores = Jet_btagDeepFlavB[i] + Jet_btagDeepFlavB[valid_jet_mask]
+
+        # Find the index of the maximum score
+        j = np.argmax(currentScores)
+        currentScore = currentScores[j]
+
+        # Update variables if currentScore is greater than the current score
+        if currentScore > score:
+            score = currentScore
+            selected1, selected2 = i, valid_jet_mask[j]
+
+            # Determine muon index based on the selected indices
+            if selected1 in jetsWithMuon and selected2 in jetsWithMuon:
+                muonIdx = muonIdxs[jetsWithMuon == selected1][0] if muonIdxs[jetsWithMuon == selected1][0] < muonIdxs[jetsWithMuon == selected2][0] else muonIdxs[jetsWithMuon == selected2][0]
+                selected1, selected2 = [selected1, selected2] if muonIdxs[jetsWithMuon == selected1][0] < muonIdxs[jetsWithMuon == selected2][0] else [selected2, selected1]
+            elif selected1 in jetsWithMuon:
+                muonIdx = muonIdxs[jetsWithMuon == selected1][0]
+            elif selected2 in jetsWithMuon:
+                muonIdx = muonIdxs[jetsWithMuon == selected2][0]
+                selected1, selected2 = [selected2, selected1]
+            else:
+                muonIdx = -1
+
+    return selected1, selected2, muonIdx
