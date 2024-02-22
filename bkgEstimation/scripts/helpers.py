@@ -1,11 +1,11 @@
 import numpy as np
 import time
 import fcntl
-lock_file = "/t3home/gcelotto/ggHbb/outputs/bkgEstimation/lock_file.lock"
-def acquire_lock():
+
+def acquire_lock(lockPath):
     while True:
         try:
-            lock_fd = open(lock_file, "w")
+            lock_fd = open(lockPath, "w")
             fcntl.lockf(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             return lock_fd
         except IOError:
