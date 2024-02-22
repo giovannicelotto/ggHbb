@@ -27,13 +27,14 @@ def doPlotLoss(fit, outName, earlyStop, patience):
     plt.ylim(ymin=0, ymax=1)
     ymax = min(fit.history['val_loss'])
     ymin = plt.ylim()[0]
-    plt.arrow(x=earlyStop.stopped_epoch-patience-1, y=ymax, dx=0, dy=ymin-ymax, length_includes_head=True, head_length=0.033*(ymin-ymax))
+    plt.arrow(x=earlyStop.stopped_epoch-patience+1, y=ymax, dx=0, dy=ymin-ymax, length_includes_head=True, head_length=0.033*(ymin-ymax))
     plt.legend(['Train Loss', 'Val Loss', 'Train Accuracy', 'Val Accuracy'], loc='upper right')
     plt.savefig(outName)
     plt.cla()
+    print("Saved loss function ", outName)
 
 
-def roc(thresholds, signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions):
+def roc(thresholds, signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName):
 
     tpr, tpr_train = [], []
     fnr, fnr_train = [], []
@@ -56,17 +57,17 @@ def roc(thresholds, signal_predictions, realData_predictions, signalTrain_predic
     ax.plot(thresholds, thresholds, linestyle='dotted', color='green')
     
     ax.grid(True)
-    ax.set_ylabel("TPR = Signal retained")
-    ax.set_xlabel("FNR = Background retained")
+    ax.set_ylabel("Signal Efficiency")
+    ax.set_xlabel("Background Efficiency")
     ax.set_xlim(1e-5,1)
     ax.set_ylim(1e-1,1)
     ax.text(x=0.95, y=0.32, s="AUC Test : %.3f"%auc, ha='right')
     ax.text(x=0.95, y=0.28, s="AUC Train: %.3f"%auc_train, ha='right')
     ax.legend()
-    fig.savefig("/t3home/gcelotto/ggHbb/outputs/plots/NN/nn_roc.png", bbox_inches='tight')
+    fig.savefig(outName, bbox_inches='tight')
     plt.close('all')
 
-def WorkingPoint(signal_predictions, realData_predictions):
+def WorkingPoint(signal_predictions, realData_predictions, outName):
     cuts = [0.00001, 0.01, 0.1, 0.15, 0.2, 0.25, 0.35, 0.4, 0.45, 0.5, 0.6, 0.65, 0.7, 0.75, 0.775, 0.8, 0.81, 0.82, 0.83, 0.84, 0.85, 0.86, 0.87,0.88, 0.9, 0.95, 0.99, 0.995, 0.999]
     bkgRetained = []
     signalRetained = []
@@ -84,10 +85,10 @@ def WorkingPoint(signal_predictions, realData_predictions):
     ax2.set_ylabel('Gain in significance', color='green')
     ax.legend(loc='upper center')
     ax.set_xlabel("NN output")
-    fig.savefig("/t3home/gcelotto/ggHbb/outputs/plots/NN/cut_on_NN_output.png", bbox_inches='tight')
+    fig.savefig(outName, bbox_inches='tight')
     plt.close('all')
 
-def massSpectrum(Xtest, Ytest, y_predict, SFtest, hp):
+def massSpectrum(Xtest, Ytest, y_predict, SFtest, hp, outName):
     
     fig, axes = plt.subplots(3, 3, constrained_layout=True, figsize=(20, 12))
     #fig.subplots_adjust(wspace=0.25)
@@ -95,7 +96,7 @@ def massSpectrum(Xtest, Ytest, y_predict, SFtest, hp):
     totalDataFlat_test = np.load("/t3home/gcelotto/ggHbb/outputs/totalDataFlat_test.npy")
     lumiPerEvent = np.load("/t3home/gcelotto/ggHbb/outputs/lumiPerEvent.npy")
     assert len(glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/flatData/others/*.parquet"))==192
-    N_SignalMini = np.load("/t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy")*192/240
+    N_SignalMini = np.load("/t3home/gcelotto/ggHbb/outputs/counters/N_mini_GluGluHToBB.npy")*192/240
     print("Current lumi", lumiPerEvent*totalDataFlat_test)
     visibilityFactor= 100
     workingPoints = [0, 0.25, 0.5,
@@ -103,7 +104,6 @@ def massSpectrum(Xtest, Ytest, y_predict, SFtest, hp):
                      0.98, 0.99, 0.995]
 
     print(type(Xtest.dijet_mass), type(Ytest.label), type(y_predict.label))
-    print(Xtest, y_predict, Ytest)
     assert len(SFtest)==len(Xtest)
     for idx, ax in enumerate(axes.reshape(-1)):
 
@@ -113,7 +113,7 @@ def massSpectrum(Xtest, Ytest, y_predict, SFtest, hp):
         ax.hist(bins[:-1], bins=bins, weights=realDataCounts, histtype=u'step', color='red', label='BParking Data')
 
 
-        x1_sb, x2_sb  = 123 - 2*17, 123 + 2*17
+        x1_sb, x2_sb  = 123.11 - 2*17, 123.11 + 2*17
         maskSignal = (Xtest[Ytest.label==1].dijet_mass>x1_sb) & (Xtest[Ytest.label==1].dijet_mass<x2_sb)
         maskSignal = (maskSignal) & (y_predict.label[Ytest.label==1]>workingPoints[idx])
         maskData = (Xtest[Ytest.label==0].dijet_mass>x1_sb) & (Xtest[Ytest.label==0].dijet_mass<x2_sb)
@@ -125,16 +125,16 @@ def massSpectrum(Xtest, Ytest, y_predict, SFtest, hp):
         sig=S/np.sqrt(B)*np.sqrt(41.6/(lumiPerEvent*totalDataFlat_test))
         print("Sig", sig)
 
-        ax.text(x=0.9, y=0.5, s="Cut: %.2f"%(round(workingPoints[idx], 2)), transform=ax.transAxes, ha='right')
+        ax.text(x=0.9, y=0.5, s="Cut: %.3f"%(round(workingPoints[idx], 3)), transform=ax.transAxes, ha='right')
         ax.text(x=0.9, y=0.4, s="Sig: %.2f"%(round(sig, 2)), transform=ax.transAxes, ha='right')
         ax.set_ylabel('Events/GeV')
         ax.legend(loc='upper right')
         ax.set_xlabel("Dijet mass [GeV]")
-        fig.savefig("/t3home/gcelotto/ggHbb/outputs/plots/NN/dijetMass_afterCut.png", bbox_inches='tight')
+        fig.savefig(outName, bbox_inches='tight')
     plt.close('all')
 
 
-def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions):
+def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName):
     fig, ax = plt.subplots(1, 1)
     bins=np.linspace(0, 1, 20)
     sig_test_counts = np.histogram(signal_predictions, bins=bins)[0]
@@ -151,10 +151,10 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     ax.legend(loc='upper center')
     ax.set_yscale('log')
     ax.set_xlabel("NN output")
-    fig.savefig("/t3home/gcelotto/ggHbb/outputs/plots/NN/nn_outputs.png", bbox_inches='tight')
+    fig.savefig(outName, bbox_inches='tight')
 
 
-def getShap(Xtest, model):
+def getShap(Xtest, model, outName):
     
     plt.figure()
     max_display = len(Xtest.columns)
@@ -170,4 +170,4 @@ def getShap(Xtest, model):
                     plot_size=[15.0,0.4*max_display+1.5],
                     class_names=['NN output'],
                     show=False)
-    plt.savefig('/t3home/gcelotto/ggHbb/outputs/plots/NN/shap_summary_plot.png')
+    plt.savefig(outName)
