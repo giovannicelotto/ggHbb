@@ -8,8 +8,8 @@ def getProcessesDataFrame():
     nanoPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH"
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     processes = {
-        'BParkingDataRun20181A':            [nanoPathCommon + "/Data20181A_2023Nov30",                                                                                flatPathCommon + "/Data1A"    ,                   -1],
-        'GluGluHToBB':                      [nanoPathCommon + "/GluGluHToBB_20UL18",                                                                                  flatPathCommon + "/GluGluHToBB"    ,      30.52],
+        'BParkingDataRun20181A':            [nanoPathCommon + "/Data1A2024Mar05",                                                                                     flatPathCommon + "/Data1A"    ,                   -1],
+        'GluGluHToBB':                      [nanoPathCommon + "/GluGluHToBB2024Mar05",                                                                                  flatPathCommon + "/GluGluHToBB"    ,              30.52],
         'WW':                               [nanoPathCommon + "/diboson2024Feb14/WW_TuneCP5_13TeV-pythia8",                                                           flatPathCommon + "/diboson/WW",                   75.8],
         'WZ':                               [nanoPathCommon + "/diboson2024Feb14/WZ_TuneCP5_13TeV-pythia8",                                                           flatPathCommon + "/diboson/WZ",                   27.6],
         'ZZ':                               [nanoPathCommon + "/diboson2024Feb14/ZZ_TuneCP5_13TeV-pythia8",                                                           flatPathCommon + "/diboson/ZZ",                   12.14	],
@@ -80,8 +80,8 @@ def main(isMC, nFiles, maxEntries, maxJet):
             print(process+"_"+fileNumber+".parquet present. Skipped")
             continue
         print(process, fileNumber)
-        
-        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 4), '/t3home/gcelotto/ggHbb/flatter/scripts/job.sh', nanoFileName, process, fileNumber, flatPath])
+        print(flatPath)
+        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 20), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, process, fileNumber, flatPath])
         doneFiles = doneFiles+1
     return 
 
