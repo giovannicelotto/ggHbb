@@ -8,23 +8,23 @@ import awkward as ak
 hep.style.use("CMS")
 def closure():
     processes = {
-        'Data':                         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30", -1],
-        'QCD_MuEnriched_Pt-15To20':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-15To20*", 2800000.0	],
-        'QCD_MuEnriched_Pt-20To30':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-20To30*", 2527000.0],
-        'QCD_MuEnriched_Pt-30To50':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-30To50*", 1367000.0],
-        'QCD_MuEnriched_Pt-50To80':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-50To80*", 381700.0],
-        'QCD_MuEnriched_Pt-80To120':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-80To120*", 87740.0],
-        'QCD_MuEnriched_Pt-120To170':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-120To170*", 21280.0],
-        'QCD_MuEnriched_Pt-170To300':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-170To300*", 7000.0],
-        'QCD_MuEnriched_Pt-300To470':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-300To470*", 622.6],
-        'QCD_MuEnriched_Pt-470To600':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-470To600*", 58.9],
-        'QCD_MuEnriched_Pt-600To800':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-600To800*", 18.12	],
-        'QCD_MuEnriched_Pt-800To1000':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-800To1000*", 3.318],
-        'QCD_MuEnriched_Pt-1000':       ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-1000*", 1.085],
+        'Data':                         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data1A2024Mar05/ParkingBPH1", -1],
+        #'QCD_MuEnriched_Pt-15To20':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-15To20*", 2800000.0	],
+        #'QCD_MuEnriched_Pt-20To30':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-20To30*", 2527000.0],
+        #'QCD_MuEnriched_Pt-30To50':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-30To50*", 1367000.0],
+        #'QCD_MuEnriched_Pt-50To80':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-50To80*", 381700.0],
+        #'QCD_MuEnriched_Pt-80To120':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-80To120*", 87740.0],
+        #'QCD_MuEnriched_Pt-120To170':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-120To170*", 21280.0],
+        #'QCD_MuEnriched_Pt-170To300':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-170To300*", 7000.0],
+        #'QCD_MuEnriched_Pt-300To470':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-300To470*", 622.6],
+        #'QCD_MuEnriched_Pt-470To600':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-470To600*", 58.9],
+        #'QCD_MuEnriched_Pt-600To800':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-600To800*", 18.12	],
+        #'QCD_MuEnriched_Pt-800To1000':   ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-800To1000*", 3.318],
+        #'QCD_MuEnriched_Pt-1000':       ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-1000*", 1.085],
         #'GluGluHToBB':                  ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Feb16", 30.52],
-        'TTTo2L2Nu':                 ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8", 831*0.46],
-        'TTToSemiLeptonic':             ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8", 831*0.45],
-        'TTToHadronic':                    ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToHadronic_TuneCP5_13TeV-powheg-pythia8", 831*0.09],
+        #'TTTo2L2Nu':                 ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8", 831*0.46],
+        #'TTToSemiLeptonic':             ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8", 831*0.45],
+        #'TTToHadronic':                    ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToHadronic_TuneCP5_13TeV-powheg-pythia8", 831*0.09],
     }
     df = pd.DataFrame(processes).T
     df.columns = ['path', 'xsection']
@@ -87,7 +87,7 @@ def closure():
     ax.set_xlabel(r"$\mathrm{H_{T}}$")
     ax.set_ylabel("Events")
     ax.legend(bbox_to_anchor=(1,1))
-    fig.savefig("/t3home/gcelotto/ggHbb/outputs/bkgEstimation/closure.png", bbox_inches='tight')
+    fig.savefig("/t3home/gcelotto/ggHbb/bkgEstimation/closure.png", bbox_inches='tight')
     print(allCounts)
     print(dataCounts)
     print("MC/Data", allCounts/dataCounts)
