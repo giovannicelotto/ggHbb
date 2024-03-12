@@ -12,7 +12,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/scripts/plotScripts")
 from utilsForPlot import getXSectionBR
 def getProcessesDataFrame():
     processes = {
-        'Data':                         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30", -1],
+        'Data':                             ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data1A2024Mar05", -1],
         'WW':                               ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/diboson2024Feb14/WW_TuneCP5_13TeV-pythia8", 75.8],
         'WZ':                               ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/diboson2024Feb14/WZ_TuneCP5_13TeV-pythia8",27.6],
         'ZZ':                               ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/diboson2024Feb14/ZZ_TuneCP5_13TeV-pythia8",12.14	],
@@ -26,14 +26,14 @@ def getProcessesDataFrame():
         'TTToHadronic':                     ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToHadronic_TuneCP5_13TeV-powheg-pythia8", 831*0.46],
         'TTToSemiLeptonic':                 ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8", 831*0.45],
         'WJetsToLNu':                       ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToLNu2024Feb20/*", 62070.0],
-        'WJetsToQQ_200to400'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",2549.0],
-        'WJetsToQQ_400to600'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",276.5],
-        'WJetsToQQ_600to800'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",59.25],
-        'WJetsToQQ_800toInf'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",28.75],
-        'ZJetsToQQ_200to400'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",1012.0],
-        'ZJetsToQQ_400to600'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",114.2],
-        'ZJetsToQQ_600to800'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",25.34],
-        'ZJetsToQQ_800toInf'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/*",12.99],
+        'WJetsToQQ_200to400'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/WJetsToQQ_HT-200to400*",2549.0],
+        'WJetsToQQ_400to600'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/WJetsToQQ_HT-400to600*",276.5],
+        'WJetsToQQ_600to800'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/WJetsToQQ_HT-600to800*",59.25],
+        'WJetsToQQ_800toInf'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/WJetsToQQ2024Feb20/WJetsToQQ_HT-800toInf*",28.75],
+        'ZJetsToQQ_200to400'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ZJetsToQQ2024Feb20/ZJetsToQQ_HT-200to400*",1012.0],
+        'ZJetsToQQ_400to600'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ZJetsToQQ2024Feb20/ZJetsToQQ_HT-400to600*",114.2],
+        'ZJetsToQQ_600to800'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ZJetsToQQ2024Feb20/ZJetsToQQ_HT-600to800*",25.34],
+        'ZJetsToQQ_800toInf'      :         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ZJetsToQQ2024Feb20/ZJetsToQQ_HT-800toInf*",12.99],
         'QCD_MuEnriched_Pt-1000':           ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-1000*", 1.085],
         'QCD_MuEnriched_Pt-800To1000':      ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-800To1000*", 3.318],
         'QCD_MuEnriched_Pt-600To800':       ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-600To800*", 18.12	],
@@ -46,7 +46,6 @@ def getProcessesDataFrame():
         'QCD_MuEnriched_Pt-30To50':         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-30To50*", 1367000.0],
         'QCD_MuEnriched_Pt-20To30':         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-20To30*", 2527000.0],
         'QCD_MuEnriched_Pt-15To20':         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-15To20*", 2800000.0	],
-
     }
     df = pd.DataFrame(processes).T
     df.columns = ['path', 'xsection']
@@ -55,7 +54,7 @@ def getProcessesDataFrame():
 def main(nFilesData, nFilesMC):
     df = getProcessesDataFrame()
     df.to_csv("/t3home/gcelotto/ggHbb/PU_reweighting/output/processes.csv")
-    
+
     # lumi for MC normalization
     currentLumi = nFilesData * 0.774 / 1017
     np.save("/t3home/gcelotto/ggHbb/PU_reweighting/output/currentLumi.npy", currentLumi)
