@@ -114,9 +114,18 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
 
         Muon_tightId                = branches["Muon_tightId"][ev]
         Muon_tkIsoId                = branches["Muon_tkIsoId"][ev]
-        PV_npvs                     = branches["PV_npvs"][ev]
 
-
+        Muon_fired_HLT_Mu10p5_IP3p5 =   branches["Muon_fired_HLT_Mu10p5_IP3p5"][ev]
+        Muon_fired_HLT_Mu12_IP6 =       branches["Muon_fired_HLT_Mu12_IP6"][ev]
+        Muon_fired_HLT_Mu7_IP4 =        branches["Muon_fired_HLT_Mu7_IP4"][ev]
+        Muon_fired_HLT_Mu8_IP3 =        branches["Muon_fired_HLT_Mu8_IP3"][ev]
+        Muon_fired_HLT_Mu8_IP5 =        branches["Muon_fired_HLT_Mu8_IP5"][ev]
+        Muon_fired_HLT_Mu8_IP6 =        branches["Muon_fired_HLT_Mu8_IP6"][ev]
+        Muon_fired_HLT_Mu8p5_IP3p5 =    branches["Muon_fired_HLT_Mu8p5_IP3p5"][ev]
+        Muon_fired_HLT_Mu9_IP4 =        branches["Muon_fired_HLT_Mu9_IP4"][ev]
+        Muon_fired_HLT_Mu9_IP5 =        branches["Muon_fired_HLT_Mu9_IP5"][ev]
+        Muon_fired_HLT_Mu9_IP6 =        branches["Muon_fired_HLT_Mu9_IP6"][ev]
+        PV_npvs                =        branches["PV_npvs"][ev]
 
         jetsToCheck = np.min([maxJet, nJet])                                 # !!! max 4 jets to check   !!!
         jet1  = ROOT.TLorentzVector(0.,0.,0.,0.)
@@ -131,24 +140,24 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
             continue
         if selected2==999:
             assert False
-        jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
-        jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
+        jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1]*Jet_bReg2018[selected1])
+        jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2]*Jet_bReg2018[selected2])
         dijet = jet1 + jet2
 
-        features_.append(Jet_pt[selected1])                 #0
-        features_.append(Jet_eta[selected1])                #1
-        features_.append(Jet_phi[selected1])                #2
-        features_.append(Jet_mass[selected1])               #3
-        features_.append(Jet_nMuons[selected1])             #4
-        features_.append(Jet_nElectrons[selected1])         #5
-        features_.append(Jet_btagDeepFlavB[selected1])      #6
+        features_.append(jet1.Pt())                         
+        features_.append(Jet_eta[selected1])                
+        features_.append(Jet_phi[selected1])                
+        features_.append(jet1.M())                          
+        features_.append(Jet_nMuons[selected1])             
+        features_.append(Jet_nElectrons[selected1])         
+        features_.append(Jet_btagDeepFlavB[selected1])      
         features_.append(Jet_area[selected1])
         features_.append(Jet_qgl[selected1])
 
-        features_.append(Jet_pt[selected2])
+        features_.append(jet2.Pt())
         features_.append(Jet_eta[selected2])
         features_.append(Jet_phi[selected2])
-        features_.append(Jet_mass[selected2])
+        features_.append(jet2.M())
         features_.append(Jet_nMuons[selected2])
         features_.append(Jet_nElectrons[selected2])
         features_.append(Jet_btagDeepFlavB[selected2])
@@ -170,7 +179,10 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(np.float32(angVariable))
         tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
         features_.append(tau.astype(np.float32))
+        features_.append(2*((jet1.Pz()*jet2.E() - jet2.Pz()*jet1.E())/(dijet.M()*np.sqrt(dijet.M()**2+dijet.Pt()**2))))
+
         features_.append(nJet)
+        features_.append(int(np.sum(Jet_pt>20)))
         ht = 0
         for idx in range(nJet):
             ht = ht+Jet_pt[idx]
@@ -211,6 +223,16 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(Muon_tightId[muonIdx])
         features_.append(Muon_pfRelIso03_all[muonIdx])
         features_.append(Muon_tkIsoId[muonIdx])
+        features_.append(bool(Muon_fired_HLT_Mu10p5_IP3p5[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu12_IP6[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu7_IP4[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu8_IP3[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu8_IP5[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu8_IP6[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu8p5_IP3p5[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu9_IP4[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu9_IP5[muonIdx]))
+        features_.append(bool(Muon_fired_HLT_Mu9_IP6[muonIdx]))
         features_.append(PV_npvs)
         if not isMC:
             features_.append(1)
@@ -228,8 +250,9 @@ def main(fileName, process):
     featureNames = ['jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons',
                     'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB',
                     'jet2_area', 'jet2_qgl', 'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
-                    'dijet_twist', 'nJets', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 
-                    'PV_npvs','sf']
+                    'dijet_twist', 'dijet_cs', 'nJets', 'nJets_20GeV', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 
+                    'Muon_fired_HLT_Mu10p5_IP3p5',  'Muon_fired_HLT_Mu12_IP6',  'Muon_fired_HLT_Mu7_IP4',   'Muon_fired_HLT_Mu8_IP3',  'Muon_fired_HLT_Mu8_IP5',    'Muon_fired_HLT_Mu8_IP6',
+                    'Muon_fired_HLT_Mu8p5_IP3p5',   'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',    'PV_npvs','sf']
     df.columns = featureNames
     fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
     df.to_parquet('/scratch/' +process+"_%s.parquet"%fileNumber )
