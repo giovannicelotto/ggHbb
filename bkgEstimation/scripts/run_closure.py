@@ -6,12 +6,11 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 import awkward as ak
 import subprocess
-import time
 hep.style.use("CMS")
 
 def getProcessesDataFrame():
     processes = {
-        'Data':                         ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30", -1],
+        'Data':                             ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data1A2024Mar05", -1],
         'WW':                               ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/diboson2024Feb14/WW_TuneCP5_13TeV-pythia8", 75.8],
         'WZ':                               ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/diboson2024Feb14/WZ_TuneCP5_13TeV-pythia8",27.6],
         'ZZ':                               ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/diboson2024Feb14/ZZ_TuneCP5_13TeV-pythia8",12.14	],
@@ -60,15 +59,26 @@ def closure(nFilesData, nFilesMC):
     np.save('/t3home/gcelotto/ggHbb/bkgEstimation/output/currentLumi.npy', currentLumi)
     # choose binning for HT
     bins=np.linspace(0, 800, 20)
-    toSkip = df.index
+    toSkip = [
+        'Data',                         'WW',                           'WZ',
+        'ZZ',                           'ST_s-channel-hadronic',        'ST_s-channel-leptononic',
+        'ST_t-channel-antitop',         'ST_t-channel-top',             'ST_tW-antitop',
+        'ST_tW-top',                    'TTTo2L2Nu',                    'TTToHadronic',
+        'TTToSemiLeptonic',             'QCD_MuEnriched_Pt-800To1000',  'QCD_MuEnriched_Pt-600To800',
+        'QCD_MuEnriched_Pt-470To600',   'QCD_MuEnriched_Pt-300To470',   'QCD_MuEnriched_Pt-170To300',
+        'QCD_MuEnriched_Pt-120To170',   'QCD_MuEnriched_Pt-80To120',    'QCD_MuEnriched_Pt-50To80',
+        'QCD_MuEnriched_Pt-30To50',     'QCD_MuEnriched_Pt-20To30',     'QCD_MuEnriched_Pt-15To20',
+    ]
+    toSkip = []
     np.save('/t3home/gcelotto/ggHbb/bkgEstimation/output/binsForHT.npy', bins)
+    
     for (process, path, xsection) in zip(df.index, df.path, df.xsection):
         print("Starting process ", process)
         if process in list(toSkip):
             print("skipping process ....", process)
             continue
         print(process, list(toSkip))
-        time.sleep(50)
+        #time.sleep(50)
         nFiles=nFilesData if process=='Data' else nFilesMC
         
         fileNames = glob.glob(path+"/**/*.root", recursive=True)
@@ -91,5 +101,7 @@ if __name__ == "__main__":
     nFilesData, nFilesMC = sys.argv[1:]
     nFilesData = int(nFilesData)
     nFilesMC = int(nFilesMC)
+    if nFilesData==-1:
+        nFilesData=1017
 
     closure(nFilesData, nFilesMC)
