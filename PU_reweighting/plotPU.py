@@ -35,8 +35,12 @@ def main():
 
     print(dataCounts)
     print(allCounts)
-    ax1.set_xlim(0, 100)
-    ax2.set_xlim(0, 100)
+    if bins[0]==0:  # asking for 0 PV
+        bins = bins[1:]
+        dataCounts = dataCounts[1:]
+        allCounts = allCounts[1:]
+    ax1.set_xlim(bins[0], bins[-1])
+    ax2.set_xlim(bins[0], bins[-1])
     ax2.set_xlabel("Number of PV")
     ax1.errorbar((bins[1:]+bins[:-1])/2, dataCounts, xerr=np.diff(bins)/2, marker='o', color='black', linestyle='none', label='Data')
     ax1.errorbar((bins[1:]+bins[:-1])/2, allCounts, xerr=np.diff(bins)/2, marker='o', color='red', linestyle='none', label='MC')
@@ -48,6 +52,11 @@ def main():
     outName = "/t3home/gcelotto/ggHbb/PU_reweighting/PU_ggH_vs_data.png"
     print("Saving in %s"%outName)
     fig.savefig(outName, bbox_inches='tight')
+
+    df = pd.DataFrame()
+    df['bins_left'] = bins[:-1]
+    df['PU_SFs'] = (dataCounts/allCounts)/np.mean(dataCounts/allCounts)
+    df.to_csv("/t3home/gcelotto/ggHbb/PU_reweighting/output/pu_sfs.csv")
 
 if __name__=="__main__":
     main()
