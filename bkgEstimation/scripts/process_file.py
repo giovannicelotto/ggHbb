@@ -2,9 +2,9 @@ import sys
 import uproot
 import awkward as ak
 import numpy as np
-import time
-import ROOT
+import pandas as pd
 from helpers import acquire_lock, release_lock
+from functions import getPU_sfs
 
 def process_file(fileName, process):
     bins= np.load("/t3home/gcelotto/ggHbb/bkgEstimation/output/binsForHT.npy")
@@ -18,6 +18,7 @@ def process_file(fileName, process):
     Muon_pt                     = branches["Muon_pt"]
     Muon_dxy                    = branches["Muon_dxy"]
     Muon_dxyErr                 = branches["Muon_dxyErr"]
+    PV_npvs                     = branches["PV_npvs"]
     
     mask_event = ak.sum(Muon_isTriggering, axis=-1)>0     # events where there is one muon that triggers the trigger path
     # uncomment following lines for mu9ip6
@@ -46,21 +47,20 @@ def process_file(fileName, process):
         # Find the bin content for each pair of bin coordinates
         print("Trigger SF in memory ... for", process)
         triggerSF = h[bin_indices_x, bin_indices_y]
+        
+        PU_SFs = getPU_sfs(np.array(PV_npvs)[mask_event])
+        print("PU_SFs", PU_SFs)
+        weights = triggerSF.reshape(-1)*PU_SFs
     else:
         #for mu9ip6
         triggerSF = np.ones(np.sum(mask_event))
-        
 
     ht = ak.sum(Jet_pt, axis=-1)
     #mu9ip6
     ht = ht[mask_event]
     
-
     assert len(ht) == len(triggerSF)
     
-
-
-
     numEventsTotal = 0
 
     if process != 'Data':
@@ -74,18 +74,15 @@ def process_file(fileName, process):
         np.save("/t3home/gcelotto/ggHbb/bkgEstimation/output/mini_%s.npy" % process, numUpdate)
         release_lock(lock_fd)
         
-
-
     lock_fd = acquire_lock("/t3home/gcelotto/ggHbb/bkgEstimation/output/lockFile2_%s.lock"%process)
-    counts = np.histogram(np.clip(ht, bins[0], bins[-1]), bins=bins, weights=triggerSF.reshape(-1) if process!='Data' else None)[0]
+    counts = np.histogram(np.clip(ht, bins[0], bins[-1]), bins=bins, weights=weights if process!='Data' else np.ones(len(ht)))[0]
+    print(process, counts)
     countsOld = np.load("/t3home/gcelotto/ggHbb/bkgEstimation/output/counts_%s.npy"%process)
     countsNew = countsOld + counts
     print(countsNew)
     np.save("/t3home/gcelotto/ggHbb/bkgEstimation/output/counts_%s.npy"%process, countsNew)
            
     release_lock(lock_fd)
-
-   
     return 
 
 if __name__ == "__main__":
@@ -93,5 +90,3 @@ if __name__ == "__main__":
     process = sys.argv[2] 
     
     process_file(fileName, process)
-
-
