@@ -10,8 +10,74 @@ from bayes_opt import BayesianOptimization
 import mplhep as hep
 hep.style.use("CMS")
 import sys
+import math
+def splitPtFunc(dfs, minPt, maxPt):
+        ' if splitPt is true this func is used to cut all the dfs in that class of pt'
+        if maxPt==-1:
+            maskPtData = np.array(minPt<=dfs[0].dijet_pt)
+            maskPtMC1  = np.array(minPt<=dfs[1].dijet_pt)
+            maskPtMC2  = np.array(minPt<=dfs[2].dijet_pt)
+            maskPtMC3  = np.array(minPt<=dfs[3].dijet_pt)
+            maskPtMC4  = np.array(minPt<=dfs[4].dijet_pt)
+        else:
+            maskPtData = np.array((minPt<=dfs[0].dijet_pt) & (dfs[0].dijet_pt<maxPt))
+            maskPtMC1  = np.array((minPt<=dfs[1].dijet_pt) & (dfs[1].dijet_pt<maxPt))
+            maskPtMC2  = np.array((minPt<=dfs[2].dijet_pt) & (dfs[2].dijet_pt<maxPt))
+            maskPtMC3  = np.array((minPt<=dfs[3].dijet_pt) & (dfs[3].dijet_pt<maxPt))
+            maskPtMC4  = np.array((minPt<=dfs[4].dijet_pt) & (dfs[4].dijet_pt<maxPt))
+        dfs[0] = dfs[0][maskPtData]
+        dfs[1] = dfs[1][maskPtMC1]
+        dfs[2] = dfs[2][maskPtMC2]
+        dfs[3] = dfs[3][maskPtMC3]
+        dfs[4] = dfs[4][maskPtMC4]
+        masks = [maskPtData, maskPtMC1, maskPtMC2, maskPtMC3, maskPtMC4]
+        return dfs, masks
 
-def main(nReal):
+def getPredictions(fileNumberList, pathToPredictions, splitPt, masks):
+        '''Open for each sample the corresponding NN predictions previously copmuted and saved somewhere in pathToPredictions.
+        If splitPt is true also apply the same mask used for the dfs'''
+        fileNames=[]
+        for fileNumber in fileNumberList[0]:  #data of bparking1A
+            #print("Opening ", pathToPredictions+"/y0_%d.parquet"%(int(fileNumber)))
+            fileNames.append(pathToPredictions+"/y0_%d.parquet"%(int(fileNumber)))
+        YPred_data = pd.read_parquet(fileNames)
+        if splitPt:
+            YPred_data=YPred_data[masks[0]]
+        fileNames=[]
+        for fileNumber in fileNumberList[1]:  #data of ZJets200to400
+            #print("Opening ", pathToPredictions+"/y20_%d.parquet"%(int(fileNumber)))
+            fileNames.append(pathToPredictions+"/y20_%d.parquet"%(int(fileNumber)))
+        YPred_Z200to400 = pd.read_parquet(fileNames)
+        if splitPt:
+            YPred_Z200to400=YPred_Z200to400[masks[1]]
+        fileNames=[]
+        for fileNumber in fileNumberList[2]:  #data of ZJets400to600
+            #print("Opening ", pathToPredictions+"/y21_%d.parquet"%(int(fileNumber)))
+            fileNames.append(pathToPredictions+"/y21_%d.parquet"%(int(fileNumber)))
+        YPred_Z400to600 = pd.read_parquet(fileNames)
+        if splitPt:
+            YPred_Z400to600=YPred_Z400to600[masks[2]]
+        fileNames=[]
+        for fileNumber in fileNumberList[3]:  #data of ZJets600to800
+            #print("Opening ", pathToPredictions+"/y22_%d.parquet"%(int(fileNumber)))
+            fileNames.append(pathToPredictions+"/y22_%d.parquet"%(int(fileNumber)))
+        YPred_Z600to800 = pd.read_parquet(fileNames)
+        if splitPt:
+            YPred_Z600to800=YPred_Z600to800[masks[3]]
+        fileNames=[]
+        for fileNumber in fileNumberList[4]:  #data of ZJets800toInf
+            fileNames.append(pathToPredictions+"/y23_%d.parquet"%(int(fileNumber)))
+        YPred_Z800toInf = pd.read_parquet(fileNames)
+        if splitPt:
+            YPred_Z800toInf=YPred_Z800toInf[masks[4]]
+            
+        del fileNames
+        YPred_data = np.array(YPred_data)
+        YPred_Z = np.concatenate((np.array(YPred_Z200to400), np.array(YPred_Z400to600), np.array(YPred_Z600to800), np.array(YPred_Z800toInf)))
+
+        return YPred_data, YPred_Z
+
+def main(nReal, minPt, maxPt):
     paths = [
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A/others",
             #"/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/training",
@@ -22,25 +88,19 @@ def main(nReal):
             ]
         
     featuresForTraining, columnsToRead = getFeatures()
-    dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=-1, columns=['sf', 'dijet_mass', 'jet1_pt', 'jet2_pt','jet1_mass', 'jet2_mass', 'jet1_eta', 'jet2_eta', 'jet1_qgl', 'jet2_qgl'], returnNumEventsTotal=True, returnFileNumberList=True)
-    print(fileNumberList)
-    
-    print("Length")
-    print(len(dfs[0]))
-    print(len(dfs[1]))
-    print(len(dfs[2]))
-    print(len(dfs[3]))
-    print(len(dfs[4]))
-    print(len(dfs[1])+len(dfs[2])+len(dfs[3])+len(dfs[4]))
-    print("Cut applied")
+    dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=-1, columns=['sf', 'dijet_mass', 'dijet_pt', 'jet1_pt', 'jet2_pt','jet1_mass', 'jet2_mass', 'jet1_eta', 'jet2_eta', 'jet1_qgl', 'jet2_qgl'], returnNumEventsTotal=True, returnFileNumberList=True)
+        
     dfs = preprocessMultiClass(dfs)
-    print(len(dfs[0]))
-    print(len(dfs[1]))
-    print(len(dfs[2]))
-    print(len(dfs[3]))
-    print(len(dfs[4]))
-    print(len(dfs[1])+len(dfs[2])+len(dfs[3])+len(dfs[4]))
+
+    # mask in dijet_pt
     
+    if (minPt is not None) & (maxPt is not None):
+        dfs, masks = splitPtFunc(dfs, minPt, maxPt)
+        splitPt = True
+    else:
+        masks=None
+        splitPt=False
+
     W = dfs[0].sf
     W_1 = 1012./numEventsList[1]*dfs[1].sf*nReal*0.774/1017*1000
     W_2 = 114.2/numEventsList[2]*dfs[2].sf*nReal*0.774/1017*1000
@@ -58,52 +118,10 @@ def main(nReal):
     print("Amount of Data    : %.3f"%(np.sum(W  )))
     print("Initial significance : %.2f"%(np.sum(W_Z)/np.sqrt(np.sum(W))))
     
-    
-    #model = load_model("/t3home/gcelotto/ggHbb/NN/output/multiClass/model/model.h5")
-
     pathToPredictions = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/NNpredictions"
-    fileNames=[]
     print("my files", fileNumberList)
-    for fileNumber in fileNumberList[0]:  #data of bparking1A
-        #print("Opening ", pathToPredictions+"/y0_%d.parquet"%(int(fileNumber)))
-        fileNames.append(pathToPredictions+"/y0_%d.parquet"%(int(fileNumber)))
-    YPred_data = pd.read_parquet(fileNames)
-    fileNames=[]
-    for fileNumber in fileNumberList[1]:  #data of ZJets200to400
-        print("Opening ", pathToPredictions+"/y20_%d.parquet"%(int(fileNumber)))
-        fileNames.append(pathToPredictions+"/y20_%d.parquet"%(int(fileNumber)))
-    YPred_Z200to400 = pd.read_parquet(fileNames)
-    fileNames=[]
-    for fileNumber in fileNumberList[2]:  #data of ZJets400to600
-        #print("Opening ", pathToPredictions+"/y21_%d.parquet"%(int(fileNumber)))
-        fileNames.append(pathToPredictions+"/y21_%d.parquet"%(int(fileNumber)))
-    YPred_Z400to600 = pd.read_parquet(fileNames)
-    fileNames=[]
-    for fileNumber in fileNumberList[3]:  #data of ZJets600to800
-        #print("Opening ", pathToPredictions+"/y22_%d.parquet"%(int(fileNumber)))
-        fileNames.append(pathToPredictions+"/y22_%d.parquet"%(int(fileNumber)))
-    YPred_Z600to800 = pd.read_parquet(fileNames)
-    fileNames=[]
-    for fileNumber in fileNumberList[4]:  #data of ZJets800toInf
-        #print("Opening ", pathToPredictions+"/y23_%d.parquet"%(int(fileNumber)))
-        fileNames.append(pathToPredictions+"/y23_%d.parquet"%(int(fileNumber)))
-    YPred_Z800toInf = pd.read_parquet(fileNames)
-        
-    del fileNames
-    YPred_data = np.array(YPred_data)
-    print(len(YPred_Z200to400))
-    print(len(YPred_Z400to600))
-    print(len(YPred_Z600to800))
-    print(len(YPred_Z800toInf))
     
-    YPred_Z = np.concatenate((np.array(YPred_Z200to400), np.array(YPred_Z400to600), np.array(YPred_Z600to800), np.array(YPred_Z800toInf)))
-
-    print("Len ypreddata", len(YPred_data))
-    print("Len dfs 0", len(dfs[0]))
-    print("len ypred_z", len(YPred_Z))
-    #dfs[1]  = scale(dfs[1], scalerName= "/t3home/gcelotto/ggHbb/NN/input/multiclass/myScaler.pkl" ,fit=False)
-    #YPred_Z = model.predict(dfs[1][featuresForTraining])
-    #dfs[1] = unscale(dfs[1], scalerName= "/t3home/gcelotto/ggHbb/NN/input/multiclass/myScaler.pkl")
+    YPred_data, YPred_Z = getPredictions(fileNumberList, pathToPredictions, splitPt=splitPt, masks=masks)
 
     def eff(t0, t2):
         mask = (YPred_data[:,2]>t2) &  (YPred_data[:,0]<t0) & np.array(dfs[0].dijet_mass>75) & np.array(dfs[0].dijet_mass<105)
@@ -111,7 +129,11 @@ def main(nReal):
         mask = (YPred_Z[:,2]>t2) &  (YPred_Z[:,0]<t0)  & np.array(dfs[1].dijet_mass>75) & np.array(dfs[1].dijet_mass<105)
         signal= np.sum(W_Z[mask])
         print(signal, t0, t2, signal/np.sqrt(data))
-        return signal/np.sqrt(data)
+        
+        if math.isnan(signal/np.sqrt(data)):
+            return 0
+        else:
+            return signal/np.sqrt(data)
 
     maxt0, maxt2 = -1, -1
     
@@ -152,8 +174,8 @@ def main(nReal):
     maskZ = (YPred_Z[:,2]>maxt2) &  (YPred_Z[:,0]<maxt0)
     print("Amount of Z signal after cut: %.3f"%(np.sum(W_Z[maskZ])))
     print("Amount of Data     after cut: %.3f"%(np.sum(W[maskData])))
-    print("Eff of Z signal after cut: %.1f"%(np.sum(W_Z[maskZ])/np.sum(W_Z)*100))
-    print("Eff of Data     after cut: %.2f"%(np.sum(W[maskData])/np.sum(W)*100))
+    print("Eff of Z signal    after cut: %.1f"%(np.sum(W_Z[maskZ])/np.sum(W_Z)*100))
+    print("Eff of Data        after cut: %.2f"%(np.sum(W[maskData])/np.sum(W)*100))
     visibilityFactor=100
 
     fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10))
@@ -211,11 +233,22 @@ def main(nReal):
     ax[0].legend()
 
 
-
-    fig.savefig("/t3home/gcelotto/ggHbb/NN/output/multiClass/dijet_mass_HS.png", bbox_inches='tight')
-    print("Saved in " + "/t3home/gcelotto/ggHbb/NN/output/multiClass/dijet_mass_HS.png")
+    if splitPt:
+        outName = "/t3home/gcelotto/ggHbb/NN/output/multiClass/dijetMass/dijet_mass_HS_%d-%dGeV.png"%(minPt, maxPt)
+        
+    else:
+        outName = "/t3home/gcelotto/ggHbb/NN/output/multiClass/dijetMass/dijet_mass_HS_inclusive.png"
+    fig.savefig(outName, bbox_inches='tight')
+    print("Saved in " + outName)
     return
 
 if __name__ =="__main__":
     nReal = int(sys.argv[1])
-    main(nReal=nReal)
+    if len(sys.argv)>2:
+        minPt = int(sys.argv[2])
+        maxPt = int(sys.argv[3])
+        print("Lim to %d - %d"%(minPt, maxPt))
+    else:
+        minPt = None
+        maxPt = None
+    main(nReal=nReal, minPt=minPt, maxPt=maxPt)
