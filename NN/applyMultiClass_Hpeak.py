@@ -184,6 +184,7 @@ def main(nReal, minPt, maxPt):
     
     counts = np.histogram(dfs[0].dijet_mass[maskData], bins=bins)[0]
     ax[0].errorbar(x=(bins[:-1] + bins[1:])/2, y=counts/np.diff(bins), yerr=np.sqrt(counts)/np.diff(bins), color='black', marker='o', linestyle='none', markersize=5)
+    #ax[0].text(x=0.9, y=0.6)
 
     counts_sig = np.histogram(dfs[1].dijet_mass[maskZ], bins=bins, weights=W_Z[maskZ])[0]
     ax[0].errorbar(x=(bins[:-1]+bins[1:])/2, y=counts_sig*visibilityFactor/np.diff(bins), color='blue', label=r'ZJets MC $\times %d$'%visibilityFactor)
