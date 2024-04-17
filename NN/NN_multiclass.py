@@ -12,11 +12,23 @@ from sklearn.utils import shuffle
 from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense
 import tensorflow as tf
+import os
 from sklearn.model_selection import train_test_split
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
 from plotFeatures import plotNormalizedFeatures
+'''
+nReal   = number of Files used for realData training, testing (10 recommended). All the datasets are cut after 3*1e4 events
+nMC     = number of Files used for    MC    training, testing (10 recommended). All the datasets are cut after 3*1e4 events
+doTrain = bool. Yes: Do training and do performance plots. False: Load X, Y, Y_Pred, W  and redo the plots.
+ptClass = ptClass in dijetPT:
+            0       inclusive
+            1       0-30 
+            2       30-100
+            3       100-inf
 
-def doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest):
+
+'''
+def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, outFolder):
     from matplotlib import colors
     import matplotlib.pyplot as plt
     import mplhep as hep
@@ -41,11 +53,11 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest):
         tprTrain, fprTrain = [], []
         for t in thresholds:
             #print((YPredTest[maskClass].iloc[:,classIdx] > t).sum())
-            tpr.append((YPredTest[maskClass].iloc[:,classIdx] > t).sum()/len(YPredTest[maskClass]))
-            fpr.append((YPredTest[~maskClass].iloc[:,classIdx] > t).sum()/len(YPredTest[~ maskClass]))
+            tpr.append(Wtest[(YPredTest[maskClass].iloc[:,classIdx] > t)].sum()/Wtest[YPredTest[maskClass].sum()])
+            fpr.append(Wtest[(YPredTest[~maskClass].iloc[:,classIdx] > t)].sum()/Wtest[YPredTest[~ maskClass].sum()])
 
-            tprTrain.append((YPredTrain[maskClassTrain].iloc[:,classIdx] > t).sum()/len(YPredTrain[maskClassTrain]))
-            fprTrain.append((YPredTrain[~maskClassTrain].iloc[:,classIdx] > t).sum()/len(YPredTrain[~ maskClassTrain]))
+            tprTrain.append(Wtrain[(YPredTrain[maskClassTrain].iloc[:,classIdx] > t)].sum()/Wtrain[YPredTrain[maskClassTrain]].sum())
+            fprTrain.append(Wtrain[(YPredTrain[~maskClassTrain].iloc[:,classIdx] > t)].sum()/Wtrain[YPredTrain[~ maskClassTrain]].sum())
 
         
         from scipy.integrate import simpson
@@ -68,7 +80,7 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest):
     labels = [labels[i] for i in [0, 2, 4, 1, 3, 5]]
     ax.legend(handles, labels, ncols=2)
     hep.cms.label(ax=ax)
-    fig.savefig("/t3home/gcelotto/ggHbb/NN/output/multiClass/roc.png", bbox_inches='tight')
+    fig.savefig(outFolder +"/performance/roc.png", bbox_inches='tight')
 
 
 
@@ -80,12 +92,12 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest):
         maskClass = Ytest.iloc[:,trueLabel]>0.99
         den = maskClass.sum()
         for predictedLabel in range(3):
-            print(trueLabel, predictedLabel)
-            print(YPredTest[maskClass].idxmax(axis=1))
+            #print(trueLabel, predictedLabel)
+            #print(YPredTest[maskClass].idxmax(axis=1))
             num = (YPredTest[maskClass].idxmax(axis=1)==predictedLabel).sum()
             confusionM[trueLabel, predictedLabel] = num/den
-            print(trueLabel, predictedLabel, " : ", num)
-    print(confusionM)
+            #print(trueLabel, predictedLabel, " : ", num)
+    print("Confusion matrix : \n",confusionM)
     im = ax.matshow(confusionM, cmap=plt.cm.jet, alpha=0.7, norm=colors.LogNorm(vmin=0.01, vmax=1))
     for y in range(3):
         for x in range(3):
@@ -105,7 +117,7 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest):
         
     #ax.legend()
     hep.cms.label(ax=ax)
-    fig.savefig("/t3home/gcelotto/ggHbb/NN/output/multiClass/confusionMatrix.png", bbox_inches='tight')
+    fig.savefig(outFolder +"/performance/confusionMatrix.png", bbox_inches='tight')
     plt.close('all')
 
 # want to see if the dijet mass for qcd is soothly falling.
@@ -117,7 +129,7 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest):
     #print(  "my maass", Xtest[(maskClass) & (YPredTest.iloc[:,1]>0.5)].dijet_mass)
     ax.set_title("BParking data with ggH score > 0.5")
     ax.hist(Xtest[(maskClass) & (YPredTest.iloc[:,0]<0.1)].dijet_mass, bins=bins, weights=Xtest[(maskClass) & (YPredTest.iloc[:,0]<0.1)].sf)
-    fig.savefig("/t3home/gcelotto/ggHbb/NN/output/multiClass/dijetMass.png", bbox_inches='tight')
+    fig.savefig(outFolder +"/performance/dijetMass.png", bbox_inches='tight')
     plt.close('all')
 
 
@@ -152,7 +164,7 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest):
     
     axes[2].legend(bbox_to_anchor=(1.05, 1),
                          loc='upper left', borderaxespad=0.5)
-    fig.savefig("/t3home/gcelotto/ggHbb/NN/output/multiClass/outputTrainTest.png", bbox_inches='tight')
+    fig.savefig(outFolder +"/performance/outputTrainTest.png", bbox_inches='tight')
     plt.close('all')
 
     return
@@ -196,7 +208,7 @@ def getFeatures():
     
     return featuresForTraining, columnsToRead
 
-def loadData():
+def loadData(pTmin, pTmax):
     featuresForTraining, columnsToRead = getFeatures()
     paths = [
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A/training",
@@ -208,10 +220,13 @@ def loadData():
             ]
 
     dfs, numEventsList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=True)
-    print(numEventsList)
+    
 
-    nData, nHiggs, nZ = int(3*1e4), int(3*1e4) , int(3*1e4)
-    dfs = preprocessMultiClass(dfs)
+    
+    nData, nHiggs, nZ = int(1.*1e4), int(1.*1e4) , int(1.*1e4)
+    dfs = preprocessMultiClass(dfs, pTmin, pTmax, suffix)
+
+
     for idx, df in enumerate(dfs):
         if idx==0:
             dfs[idx] = df.head(nData)
@@ -243,6 +258,7 @@ def loadData():
 
     W_ZBos = W_ZBos/W_ZBos.mean()
     W_1 = W_1/W_1.mean()
+
     Y = np.concatenate((Y_0, Y_1, Y_ZBos))
     X = pd.concat((dfs[0], dfs[1], dfs[2], dfs[3], dfs[4], dfs[5]))
     W = np.concatenate((W_0, W_1, W_ZBos))
@@ -253,12 +269,11 @@ def loadData():
 
 
 
-def HbbClassifier(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, hp, nReal, nMC):
-    outFolder = "/t3home/gcelotto/ggHbb/NN/output/multiClass"
+def HbbClassifier(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, hp, nReal, nMC, inFolder, outFolder):
+    
     featuresForTraining, columnsToRead = getFeatures()
     
-    
-    with open(outFolder+"/status.txt", 'w') as file:
+    with open(outFolder+"/status.txt", 'a+') as file:
         for key, value in hp.items():
             file.write(f"{key}: {value}\n")
     
@@ -274,19 +289,20 @@ def HbbClassifier(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, hp, nReal, nMC):
                     sample_weight = Wtrain,
                     epochs=hp['epochs'], validation_split=hp['validation_split'],
                     callbacks=callbacks, shuffle=True)
-    model.save("/t3home/gcelotto/ggHbb/NN/output/multiClass/model/model.h5")
+    model.save(outFolder +"/model/model.h5")
 
-    model = load_model("/t3home/gcelotto/ggHbb/NN/output/multiClass/model/model.h5")
-    doPlotLoss(fit=fit, outName="/t3home/gcelotto/ggHbb/NN/output/multiClass/loss.png", earlyStop=earlyStop, patience=hp['patienceES'])
-    getShap(Xtest[:4000][featuresForTraining], model, outName = '/t3home/gcelotto/ggHbb/NN/output/multiClass/shap.png')
+    model = load_model(outFolder +"/model/model.h5")
+    doPlotLoss(fit=fit, outName=outFolder +"/performance/loss.png", earlyStop=earlyStop, patience=hp['patienceES'])
+    getShap(Xtest.iloc[:500,:][featuresForTraining], model, outName = outFolder+'/performance/shap.png',
+            class_names=['Data', 'ggH', 'ZJets'])
     YPredTest = model.predict(Xtest[featuresForTraining])
     YPredTrain = model.predict(Xtrain[featuresForTraining])
 
-    Xtrain = unscale(Xtrain, scalerName= "/t3home/gcelotto/ggHbb/NN/input/multiclass/myScaler.pkl")
-    Xtest = unscale(Xtest, scalerName =  "/t3home/gcelotto/ggHbb/NN/input/multiclass/myScaler.pkl")
-
-    plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
-                                    outFile = "/t3home/gcelotto/ggHbb/NN/output/multiClass/features_train_unscaled.png",
+    Xtrain = unscale(Xtrain,    scalerName= inFolder + "/myScaler.pkl")
+    Xtest = unscale(Xtest,      scalerName =  inFolder + "/myScaler.pkl")
+    if (True):
+        plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
+                                    outFile = outFolder +"/performance/features_train_unscaled.png",
                                     legendLabels = ['Train 0 ', 'Train 1', 'Train 2 ', 'Test 0 ', 'Test 1', 'Test 2 ',] , colors = ['blue', 'red', 'green', 'blue', 'red', 'green'],
                                     histtypes=[u'step', u'step', u'step', 'bar', 'bar', 'bar'],
                                     alphas=[1, 1, 1, 0.4, 0.4, 0.4],
@@ -294,18 +310,23 @@ def HbbClassifier(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, hp, nReal, nMC):
                                     autobins=True,
                                     weights=[Wtrain[Ytrain[:,0]==1], Wtrain[Ytrain[:,1]==1], Wtrain[Ytrain[:,2]==1], Wtest[Ytest[:,0]==1],   Wtest[Ytest[:,1]==1], Wtest[Ytest[:,2]==1]])
 
-    np.save("/t3home/gcelotto/ggHbb/NN/input/multiclass/YPredTest.npy", YPredTest)
-    np.save("/t3home/gcelotto/ggHbb/NN/input/multiclass/YPredTrain.npy", YPredTrain)
-    Xtrain.to_parquet("/t3home/gcelotto/ggHbb/NN/input/multiclass/XTrain.parquet")
-    Xtest.to_parquet("/t3home/gcelotto/ggHbb/NN/input/multiclass/XTest.parquet")
-    np.save("/t3home/gcelotto/ggHbb/NN/input/multiclass/WTest.npy", Wtest)
-    np.save("/t3home/gcelotto/ggHbb/NN/input/multiclass/WTrain.npy", Wtrain)
-    np.save("/t3home/gcelotto/ggHbb/NN/input/multiclass/YTest.npy", Ytest)
-    np.save("/t3home/gcelotto/ggHbb/NN/input/multiclass/YTrain.npy", Ytrain)
+    np.save(inFolder +"/YPredTest.npy", YPredTest)
+    np.save(inFolder +"/YPredTrain.npy", YPredTrain)
+    Xtrain.to_parquet(inFolder +"/XTrain.parquet")
+    Xtest.to_parquet(inFolder +"/XTest.parquet")
+    np.save(inFolder +"/WTest.npy", Wtest)
+    np.save(inFolder +"/WTrain.npy", Wtrain)
+    np.save(inFolder +"/YTest.npy", Ytest)
+    np.save(inFolder +"/YTrain.npy", Ytrain)
     
 if __name__ =="__main__":
     nReal, nMC = int(sys.argv[1]), int(sys.argv[2]), 
-    doTrain = bool(int(sys.argv[3])) if len(sys.argv)>3 else True
+    doTrain = bool(int(sys.argv[3]))
+    ptClass = int(sys.argv[4])
+
+    pTmin, pTmax, suffix = [[0,-1,'inclusive'], [0, 30, 'lowPt'], [30, 100, 'mediumPt'], [100, -1, 'highPt']][ptClass]
+
+    
     if doTrain:
         hp = {
             'epochs'            : 300,
@@ -313,16 +334,48 @@ if __name__ =="__main__":
             'validation_split'  : 0.2,
             'learning_rate'     : 5*1e-5,
             'min_delta'         : 0.005,
-            'nDense'            : 2,
-            'nNodes'            : [12, 12],
+            'nNodes'            : [32, 16],
             }
+        hp['nDense']=len(hp['nNodes'])
         assert len(hp['nNodes'])==hp['nDense']
-        data = loadData()
+        
+        data = loadData(pTmin, pTmax)
         Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = data
 
+
+        # do pt cut here
+
+        #if (suffix == 'lowPt') | (suffix == 'mediumPt'):
+        #    maskTrain = (Xtrain.dijet_pt>pTmin) & (Xtrain.dijet_pt<pTmax)
+        #    maskTest  =  (Xtest.dijet_pt>pTmin)   & (Xtest.dijet_pt<pTmax)
+        #    Xtrain, Wtrain, Ytrain = Xtrain.loc[maskTrain], Wtrain.loc[maskTrain], Ytrain.loc[maskTrain]
+        #    Xtest, Wtest, Ytest = Xtest.loc[maskTest], Wtest.loc[maskTest], Ytest.loc[maskTest]
+        #elif (suffix == 'highPt'):
+        #    maskTrain = (Xtrain.dijet_pt>pTmin) 
+        #    maskTest  =  (Xtest.dijet_pt>pTmin) 
+        #    Xtrain, Wtrain, Ytrain = Xtrain.loc[maskTrain], Wtrain.loc[maskTrain], Ytrain.loc[maskTrain]
+        #    Xtest, Wtest, Ytest = Xtest.loc[maskTest], Wtest.loc[maskTest], Ytest.loc[maskTest]
+        #elif (suffix=='inclusive'):
+        #    pass
+        #else:
+        #    assert False
+
         
-        plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
-                                    outFile = "/t3home/gcelotto/ggHbb/NN/output/multiClass/features_train.png",
+
+        # define suffix = inclusive or other
+        
+        inFolder, outFolder = "/t3home/gcelotto/ggHbb/NN/input/multiclass/"+suffix, "/t3home/gcelotto/ggHbb/NN/output/multiClass/"+suffix
+        with open(outFolder+"/status.txt", 'w') as file:
+            for idx, df in enumerate([Xtrain, Xtest]):
+                file.write("Length of %s: %d\n"%(['Xtrain', 'Xtest'][idx], len(df)))
+        if not os.path.exists(inFolder):
+            os.makedirs(inFolder)
+        if not os.path.exists(outFolder+"/performance"):
+            os.makedirs(outFolder+"/performance")
+            os.makedirs(outFolder+"/model")
+        if True:
+            plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
+                                    outFile = outFolder+"/performance/features_train.png",
                                     legendLabels = ['Data Train', 'ggH Train', 'ZJets Train', 'Data Test ', 'ggH Test', 'ZJets Tets',] , colors = ['blue', 'red', 'green', 'blue', 'red', 'green'],
                                     histtypes=[u'step', u'step', u'step', 'bar', 'bar', 'bar'],
                                     alphas=[1, 1, 1, 0.4, 0.4, 0.4],
@@ -331,23 +384,24 @@ if __name__ =="__main__":
                                     weights=[Wtrain[Ytrain[:,0]==1], Wtrain[Ytrain[:,1]==1], Wtrain[Ytrain[:,2]==1], Wtest[Ytest[:,0]==1],   Wtest[Ytest[:,1]==1], Wtest[Ytest[:,2]==1]])
     
     
-    
-        Xtrain = scale(Xtrain, scalerName= "/t3home/gcelotto/ggHbb/NN/input/multiclass/myScaler.pkl" ,fit=True)
-        Xtest  = scale(Xtest, scalerName= "/t3home/gcelotto/ggHbb/NN/input/multiclass/myScaler.pkl" ,fit=False)
+        
+        Xtrain = scale(Xtrain, scalerName= inFolder + "/myScaler.pkl" ,fit=True)
+        Xtest  = scale(Xtest, scalerName= inFolder + "/myScaler.pkl" ,fit=False)
     
 
-    
-        plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
-                                    outFile = "/t3home/gcelotto/ggHbb/NN/output/multiClass/features_train_scaled.png",
+        if True:
+            plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
+                                    outFile = outFolder +"/performance/features_train_scaled.png",
                                     legendLabels = ['Train 0 ', 'Train 1', 'Train 2 ', 'Test 0 ', 'Test 1', 'Test 2 ',] , colors = ['blue', 'red', 'green', 'blue', 'red', 'green'],
                                     histtypes=[u'step', u'step', u'step', 'bar', 'bar', 'bar'],
                                     alphas=[1, 1, 1, 0.4, 0.4, 0.4],
                                     figsize=(20, 30),
                                     autobins=True,
                                     weights=[Wtrain[Ytrain[:,0]==1], Wtrain[Ytrain[:,1]==1], Wtrain[Ytrain[:,2]==1], Wtest[Ytest[:,0]==1],   Wtest[Ytest[:,1]==1], Wtest[Ytest[:,2]==1]])
-        HbbClassifier(Xtrain=Xtrain, Xtest=Xtest, Ytrain=Ytrain, Ytest=Ytest, Wtrain=Wtrain, Wtest=Wtest, hp=hp, nReal=nReal, nMC=nMC)
-    Xtrain, Xtest = pd.read_parquet("/t3home/gcelotto/ggHbb/NN/input/multiclass/XTrain.parquet"), pd.read_parquet("/t3home/gcelotto/ggHbb/NN/input/multiclass/XTest.parquet")
-    YPredTrain, YPredTest = np.load("/t3home/gcelotto/ggHbb/NN/input/multiclass/YPredTrain.npy"), np.load("/t3home/gcelotto/ggHbb/NN/input/multiclass/YPredTest.npy")
-    Wtrain, Wtest = np.load("/t3home/gcelotto/ggHbb/NN/input/multiclass/WTrain.npy"), np.load("/t3home/gcelotto/ggHbb/NN/input/multiclass/WTest.npy")
-    Ytrain, Ytest = np.load("/t3home/gcelotto/ggHbb/NN/input/multiclass/YTrain.npy"), np.load("/t3home/gcelotto/ggHbb/NN/input/multiclass/YTest.npy")
-    doPlots(Xtrain, Ytrain, YPredTrain, Xtest, Ytest, YPredTest)
+            
+        HbbClassifier(Xtrain=Xtrain, Xtest=Xtest, Ytrain=Ytrain, Ytest=Ytest, Wtrain=Wtrain, Wtest=Wtest, hp=hp, nReal=nReal, nMC=nMC, inFolder=inFolder, outFolder=outFolder)
+    Xtrain, Xtest =         pd.read_parquet(inFolder +"/XTrain.parquet"),   pd.read_parquet(inFolder +"/XTest.parquet")
+    YPredTrain, YPredTest = np.load(inFolder +"/YPredTrain.npy"),           np.load(inFolder +"/YPredTest.npy")
+    Wtrain, Wtest =         np.load(inFolder +"/WTrain.npy"),               np.load(inFolder +"/WTest.npy")
+    Ytrain, Ytest =         np.load(inFolder +"/YTrain.npy"),               np.load(inFolder +"/YTest.npy")
+    doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, outFolder)
