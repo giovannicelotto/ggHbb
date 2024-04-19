@@ -155,7 +155,7 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     fig.savefig(outName, bbox_inches='tight')
 
 
-def getShap(Xtest, model, outName):
+def getShap(Xtest, model, outName, class_names=['NN output']):
     
     plt.figure()
     max_display = len(Xtest.columns)
@@ -169,6 +169,6 @@ def getShap(Xtest, model, outName):
                     feature_names=Xtest.columns,
                     max_display=max_display,
                     plot_size=[15.0,0.4*max_display+1.5],
-                    class_names=['NN output'],
+                    class_names=class_names,
                     show=False)
     plt.savefig(outName)
