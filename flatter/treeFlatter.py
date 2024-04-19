@@ -66,6 +66,8 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
     file_ =[]
     
 
+    #open the PU SF
+    df_PU = pd.read_csv("/t3home/gcelotto/ggHbb/PU_reweighting/output/pu_sfs.csv")
     # open the file for the SF
     histPath = "/t3home/gcelotto/ggHbb/trgMu_scale_factors.root"
     f = ROOT.TFile(histPath, "READ")
@@ -73,11 +75,12 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
     for ev in  range(maxEntries):
         
         features_ = []
-        if (ev%(int(maxEntries/100))==0):
-            sys.stdout.write('\r')
-            # the exact output you're looking for:
-            sys.stdout.write("%d%%"%(ev/maxEntries*100))
-            sys.stdout.flush()
+        if maxEntries>100:
+            if (ev%(int(maxEntries/100))==0):
+                sys.stdout.write('\r')
+                # the exact output you're looking for:
+                sys.stdout.write("%d%%"%(ev/maxEntries*100))
+                sys.stdout.flush()
     
     # Reco Jets
         nJet                        = branches["nJet"][ev]
@@ -143,6 +146,15 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1]*Jet_bReg2018[selected1])
         jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2]*Jet_bReg2018[selected2])
         dijet = jet1 + jet2
+
+        if jet2.M() < 0:
+            print("Negative mass for jet2")
+            print("Unorrected pt ", Jet_pt[selected2])
+            print("Unorrected mass ", Jet_mass[selected2])
+            print("corrected pt ", Jet_pt[selected2]*Jet_bReg2018[selected2])
+            print("corrected mass ", Jet_mass[selected2]*Jet_bReg2018[selected2])
+            print("computed pt ", jet2.Pt())
+            print("computed mass ", jet2.M())
 
         features_.append(jet1.Pt())                         
         features_.append(Jet_eta[selected1])                
@@ -236,8 +248,13 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(PV_npvs)
         if not isMC:
             features_.append(1)
+            features_.append(1)
         else:
             features_.append(np.float32(hist.GetBinContent(hist.GetXaxis().FindBin(Muon_pt[muonIdx]),hist.GetYaxis().FindBin(abs(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx])))))
+            
+            indexes = np.digitize(PV_npvs, df_PU['bins_left'].values)
+            PU_SFs = df_PU['PU_SFs'][indexes-1]
+            features_.append(PU_SFs)
         assert Muon_isTriggering[muonIdx]
         file_.append(features_)
     
@@ -252,7 +269,7 @@ def main(fileName, process):
                     'jet2_area', 'jet2_qgl', 'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
                     'dijet_twist', 'dijet_cs', 'nJets', 'nJets_20GeV', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 
                     'Muon_fired_HLT_Mu10p5_IP3p5',  'Muon_fired_HLT_Mu12_IP6',  'Muon_fired_HLT_Mu7_IP4',   'Muon_fired_HLT_Mu8_IP3',  'Muon_fired_HLT_Mu8_IP5',    'Muon_fired_HLT_Mu8_IP6',
-                    'Muon_fired_HLT_Mu8p5_IP3p5',   'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',    'PV_npvs','sf']
+                    'Muon_fired_HLT_Mu8p5_IP3p5',   'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',    'PV_npvs','sf', 'PU_sf']
     df.columns = featureNames
     fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
     df.to_parquet('/scratch/' +process+"_%s.parquet"%fileNumber )
