@@ -3,7 +3,7 @@ from sklearn import preprocessing
 import pickle
 import numpy as np
 import pandas as pd
-def preprocessMultiClass(dfs):
+def preprocessMultiClass(dfs, pTmin=None, pTmax=None, suffix=None):
     '''
     dfs is a list of dataframes
     '''
@@ -17,12 +17,24 @@ def preprocessMultiClass(dfs):
         df = df[(df.jet2_eta<2.5) & (df.jet2_eta>-2.5)]
         df = df[(df.jet2_mass>0)] 
         df = df[(df.jet1_mass>0)]
-        #df = df[(df.dijet_mass>125-2.5*16.6) & (df.dijet_mass<125+2.5*16.6)]
+        #df = df[(df.jet1_qgl)>0]
+        #df = df[(df.jet2_qgl)>0]
+
+        if (pTmin is not None) & (pTmax is not None):
+            print("Pt cut class applied %d-%d"%(pTmin, pTmax))
+            if (suffix == 'lowPt') | (suffix == 'mediumPt'):
+                df = df.loc[ (df.dijet_pt > pTmin) & (df.dijet_pt < pTmax)]
+            elif (suffix == 'highPt'):
+                df = df.loc[ (df.dijet_pt > pTmin)]
+            elif (suffix=='inclusive'):
+                pass
+            else:
+                assert False
     
         print("Nan values : %d process %d "%(df.isna().sum().sum(), idx))
         print("Filling jet qgl with 0.5")
-        df.jet1_qgl = df.jet1_qgl.fillna(0.5)
-        df.jet2_qgl = df.jet2_qgl.fillna(0.5)
+        df.jet1_qgl = df.jet1_qgl.fillna(0.)
+        df.jet2_qgl = df.jet2_qgl.fillna(0.)
         try:
             assert df.isna().sum().sum()==0
             assert df.isna().sum().sum()==0
@@ -141,9 +153,9 @@ def unscale(data, scalerName):
         dataUnscaled = pd.DataFrame(scaled_array, columns=[col for col in data.columns if col!='sf'], index=data.index)
         dataUnscaled['sf'] = data['sf']
 
-    print(dataUnscaled['jet1_pt'])
+    
     for colName in data.columns:
         if ("_pt" in colName) | ("_mass" in colName) | (colName=="ht"):
             dataUnscaled[colName] = np.exp(dataUnscaled[colName]) - 1
-    print(dataUnscaled['jet1_pt'])
+    
     return dataUnscaled
