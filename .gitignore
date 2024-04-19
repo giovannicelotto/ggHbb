@@ -9,3 +9,8 @@ __pycache__/
 #npy files
 *.npy
 *.parquet
+*.pkl
+*.out
+*.csv
+*.lock
+*.root
