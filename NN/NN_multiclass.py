@@ -25,8 +25,6 @@ ptClass = ptClass in dijetPT:
             1       0-30 
             2       30-100
             3       100-inf
-
-
 '''
 def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, outFolder):
     from matplotlib import colors
@@ -53,19 +51,19 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
         tprTrain, fprTrain = [], []
         for t in thresholds:
             #print((YPredTest[maskClass].iloc[:,classIdx] > t).sum())
-            tpr.append(Wtest[(YPredTest[maskClass].iloc[:,classIdx] > t)].sum()/Wtest[YPredTest[maskClass].sum()])
-            fpr.append(Wtest[(YPredTest[~maskClass].iloc[:,classIdx] > t)].sum()/Wtest[YPredTest[~ maskClass].sum()])
+            tpr.append(Wtest[(YPredTest.iloc[:,classIdx] > t) & (maskClass)].sum()/Wtest[maskClass].sum())
+            fpr.append(Wtest[(YPredTest.iloc[:,classIdx] > t) & (~maskClass)].sum()/Wtest[~maskClass].sum())
 
-            tprTrain.append(Wtrain[(YPredTrain[maskClassTrain].iloc[:,classIdx] > t)].sum()/Wtrain[YPredTrain[maskClassTrain]].sum())
-            fprTrain.append(Wtrain[(YPredTrain[~maskClassTrain].iloc[:,classIdx] > t)].sum()/Wtrain[YPredTrain[~ maskClassTrain]].sum())
+            tprTrain.append(Wtrain[(YPredTrain.iloc[:,classIdx]> t) & (maskClassTrain)].sum()/Wtrain[maskClassTrain].sum())
+            fprTrain.append(Wtrain[(YPredTrain.iloc[:,classIdx]> t) & (~maskClassTrain)].sum()/Wtrain[~maskClassTrain].sum())
 
         
         from scipy.integrate import simpson
         
         auc = -simpson(tpr, fpr)
         auc_train = -simpson(tprTrain, fprTrain)
-        ax.plot(fpr, tpr, marker='o', markersize=1, label='%s AUC %.2f'%(labels[classIdx], auc))
-        ax.plot(fprTrain, tprTrain, linestyle='dotted', label='%s AUC %.2f'%(labels[classIdx], auc_train))
+        ax.plot(fpr, tpr, marker='o', markersize=1, label='%s Test AUC %.2f'%(labels[classIdx], auc))
+        ax.plot(fprTrain, tprTrain, linestyle='dotted', label='%s Train AUC %.2f'%(labels[classIdx], auc_train))
         ax.plot(thresholds, thresholds, linestyle='dotted', color='green')
 
         ax.grid(True)
@@ -75,10 +73,10 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
         ax.set_ylim(0,1)
         
 
-    handles, labels = ax.get_legend_handles_labels()
+    handles, newLabels = ax.get_legend_handles_labels()
     handles = [handles[i] for i in [0, 2, 4, 1, 3, 5]]
-    labels = [labels[i] for i in [0, 2, 4, 1, 3, 5]]
-    ax.legend(handles, labels, ncols=2)
+    newLabels = [newLabels[i] for i in [0, 2, 4, 1, 3, 5]]
+    ax.legend(handles, newLabels, ncols=2)
     hep.cms.label(ax=ax)
     fig.savefig(outFolder +"/performance/roc.png", bbox_inches='tight')
 
@@ -90,11 +88,11 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
     for trueLabel in range(3):
         # true label
         maskClass = Ytest.iloc[:,trueLabel]>0.99
-        den = maskClass.sum()
+        den = Wtest[maskClass].sum()
         for predictedLabel in range(3):
             #print(trueLabel, predictedLabel)
             #print(YPredTest[maskClass].idxmax(axis=1))
-            num = (YPredTest[maskClass].idxmax(axis=1)==predictedLabel).sum()
+            num = (Wtest[(YPredTest.idxmax(axis=1)==predictedLabel) & (maskClass)]).sum()
             confusionM[trueLabel, predictedLabel] = num/den
             #print(trueLabel, predictedLabel, " : ", num)
     print("Confusion matrix : \n",confusionM)
@@ -120,7 +118,7 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
     fig.savefig(outFolder +"/performance/confusionMatrix.png", bbox_inches='tight')
     plt.close('all')
 
-# want to see if the dijet mass for qcd is soothly falling.
+# want to see if the dijet mass for qcd is smoothly falling.
 # take data events with high ggH score
     fig, ax = plt.subplots(1, 1)
     maskClass = Ytest.iloc[:,0]>0.99 # data events (QCD)
@@ -132,7 +130,7 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
     fig.savefig(outFolder +"/performance/dijetMass.png", bbox_inches='tight')
     plt.close('all')
 
-
+# outputTrainTest
     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     bins= np.linspace(0, 1, 10)
     xlabels = ['Data score', 'ggH score', 'ZJets score']
@@ -140,9 +138,9 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
         mask0 = Ytrain.iloc[:,0]>0.99   #real class 0 
         mask1 = Ytrain.iloc[:,1]>0.99
         mask2 = Ytrain.iloc[:,2]>0.99
-        counts0 = np.histogram(YPredTrain[mask0].iloc[:,idx], bins=bins)[0]
-        counts1 = np.histogram(YPredTrain[mask1].iloc[:,idx], bins=bins)[0]
-        counts2 = np.histogram(YPredTrain[mask2].iloc[:,idx], bins=bins)[0]
+        counts0 = np.histogram(YPredTrain[mask0].iloc[:,idx], bins=bins, weights=Wtrain[mask0])[0]
+        counts1 = np.histogram(YPredTrain[mask1].iloc[:,idx], bins=bins, weights=Wtrain[mask1])[0]
+        counts2 = np.histogram(YPredTrain[mask2].iloc[:,idx], bins=bins, weights=Wtrain[mask2])[0]
         counts0, counts1, counts2, = counts0/np.sum(counts0), counts1/np.sum(counts1), counts2/np.sum(counts2)
         ax.hist(bins[:-1], bins=bins, weights=counts0, label=labels[0]+" train", histtype=u'step', color='C0')
         ax.hist(bins[:-1], bins=bins, weights=counts1, label=labels[1]+" train", histtype=u'step', color='C1')
@@ -151,9 +149,9 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
         mask0 = Ytest.iloc[:,0]>0.99
         mask1 = Ytest.iloc[:,1]>0.99
         mask2 = Ytest.iloc[:,2]>0.99
-        counts0 = np.histogram(YPredTest[mask0].iloc[:,idx], bins=bins)[0]
-        counts1 = np.histogram(YPredTest[mask1].iloc[:,idx], bins=bins)[0]
-        counts2 = np.histogram(YPredTest[mask2].iloc[:,idx], bins=bins)[0]
+        counts0 = np.histogram(YPredTest[mask0].iloc[:,idx], bins=bins, weights=Wtest[mask0])[0]
+        counts1 = np.histogram(YPredTest[mask1].iloc[:,idx], bins=bins, weights=Wtest[mask1])[0]
+        counts2 = np.histogram(YPredTest[mask2].iloc[:,idx], bins=bins, weights=Wtest[mask2])[0]
         counts0, counts1, counts2, = counts0/np.sum(counts0), counts1/np.sum(counts1), counts2/np.sum(counts2)
         ax.errorbar((bins[1:]+bins[:-1])/2, counts0, label=labels[0] + " test", alpha=1, marker = 'o', linestyle='none', color='C0')
         ax.errorbar((bins[1:]+bins[:-1])/2, counts1, label=labels[1] + " test", alpha=1, marker = 'o', linestyle='none', color='C1')
@@ -195,20 +193,20 @@ def getFeatures():
     
     columnsToRead = [   
     'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons',
-       'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl',
-       'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons',
-       'jet2_nElectrons', 'jet2_btagDeepFlavB', 'jet2_area', 'jet2_qgl',
-       'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR',
-       'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable', 'dijet_twist', 'nJets',
-       'nJets_20GeV',
-       'ht', 'muon_pt', 'muon_eta', 'muon_dxySig', 'muon_dzSig', 'muon_IP3d',
-       'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId',
-       'dijet_cs',
-       'sf']
+    'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl',
+    'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons',
+    'jet2_nElectrons', 'jet2_btagDeepFlavB', 'jet2_area', 'jet2_qgl',
+    'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR',
+    'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable', 'dijet_twist', 'nJets',
+    'nJets_20GeV',
+    'ht', 'muon_pt', 'muon_eta', 'muon_dxySig', 'muon_dzSig', 'muon_IP3d',
+    'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId',
+    'dijet_cs',
+    'sf']
     
     return featuresForTraining, columnsToRead
 
-def loadData(pTmin, pTmax):
+def loadData(pTmin, pTmax, outFolder):
     featuresForTraining, columnsToRead = getFeatures()
     paths = [
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A/training",
@@ -223,7 +221,7 @@ def loadData(pTmin, pTmax):
     
 
     
-    nData, nHiggs, nZ = int(1.*1e4), int(1.*1e4) , int(1.*1e4)
+    nData, nHiggs, nZ = int(1e5), int(1e5) , int(1e5)
     dfs = preprocessMultiClass(dfs, pTmin, pTmax, suffix)
 
 
@@ -237,6 +235,9 @@ def loadData(pTmin, pTmax):
 
     for idx, df in enumerate(dfs):
         print("Length of df %d : %d"%(idx, len(df)))
+    with open(outFolder+"/status.txt", 'a+') as file:
+        for idx, df in enumerate(dfs):
+            file.write("Length of df %d : %d"%(idx, len(df)))
 
 
     Y_0 = pd.DataFrame([np.ones(len(dfs[0])),  np.zeros(len(dfs[0])), np.zeros(len(dfs[0]))]).T
@@ -246,7 +247,7 @@ def loadData(pTmin, pTmax):
     Y_4 = pd.DataFrame([np.zeros(len(dfs[4])), np.zeros(len(dfs[4])), np.ones(len(dfs[4]))]).T
     Y_5 = pd.DataFrame([np.zeros(len(dfs[5])), np.zeros(len(dfs[5])), np.ones(len(dfs[5]))]).T
 
-    # define a weights vector 1 for data 1 for hbb, sigma for the Z boson dataframes. then concat z bosons. divide every weights by the average of the weights
+    # define a weights vector 1 for data 1 for hbb, xsection for the Z boson dataframes. then concat z bosons. divide every weights by the average of the weights
     W_0 = dfs[0].sf
     W_1 = dfs[1].sf
     W_2 = 1012/numEventsList[2]*dfs[2].sf
@@ -262,8 +263,11 @@ def loadData(pTmin, pTmax):
     Y = np.concatenate((Y_0, Y_1, Y_ZBos))
     X = pd.concat((dfs[0], dfs[1], dfs[2], dfs[3], dfs[4], dfs[5]))
     W = np.concatenate((W_0, W_1, W_ZBos))
+    
     X, Y, W = shuffle(X, Y, W, random_state=1999)
     Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = train_test_split(X, Y, W, test_size=0.2, random_state=1999)
+    assert len(Wtrain)==len(Xtrain)
+    assert len(Wtest)==len(Xtest)
     return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest
 
 
@@ -325,8 +329,7 @@ if __name__ =="__main__":
     ptClass = int(sys.argv[4])
 
     pTmin, pTmax, suffix = [[0,-1,'inclusive'], [0, 30, 'lowPt'], [30, 100, 'mediumPt'], [100, -1, 'highPt']][ptClass]
-
-    
+    inFolder, outFolder = "/t3home/gcelotto/ggHbb/NN/input/multiclass/"+suffix, "/t3home/gcelotto/ggHbb/NN/output/multiClass/"+suffix
     if doTrain:
         hp = {
             'epochs'            : 300,
@@ -339,7 +342,7 @@ if __name__ =="__main__":
         hp['nDense']=len(hp['nNodes'])
         assert len(hp['nNodes'])==hp['nDense']
         
-        data = loadData(pTmin, pTmax)
+        data = loadData(pTmin, pTmax, outFolder)
         Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = data
 
 
@@ -364,7 +367,7 @@ if __name__ =="__main__":
 
         # define suffix = inclusive or other
         
-        inFolder, outFolder = "/t3home/gcelotto/ggHbb/NN/input/multiclass/"+suffix, "/t3home/gcelotto/ggHbb/NN/output/multiClass/"+suffix
+        
         with open(outFolder+"/status.txt", 'w') as file:
             for idx, df in enumerate([Xtrain, Xtest]):
                 file.write("Length of %s: %d\n"%(['Xtrain', 'Xtest'][idx], len(df)))
@@ -392,7 +395,7 @@ if __name__ =="__main__":
         if True:
             plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
                                     outFile = outFolder +"/performance/features_train_scaled.png",
-                                    legendLabels = ['Train 0 ', 'Train 1', 'Train 2 ', 'Test 0 ', 'Test 1', 'Test 2 ',] , colors = ['blue', 'red', 'green', 'blue', 'red', 'green'],
+                                    legendLabels = ['Data Train', 'ggH Train', 'ZJets Train', 'Data Test ', 'ggH Test', 'ZJets Tets',] , colors = ['blue', 'red', 'green', 'blue', 'red', 'green'],
                                     histtypes=[u'step', u'step', u'step', 'bar', 'bar', 'bar'],
                                     alphas=[1, 1, 1, 0.4, 0.4, 0.4],
                                     figsize=(20, 30),
