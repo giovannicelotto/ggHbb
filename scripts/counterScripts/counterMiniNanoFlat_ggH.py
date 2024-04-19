@@ -29,15 +29,15 @@ def getMiniEntries():
     return totalMiniEntries
 
 def getFlatEntries():
-    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData/*.npy")
-    print("Number of Flat Data : ", len(fileNames))
-    totalFlatEntries = 0
-    for fileName in fileNames:
-        f = np.load(fileName)
-        maxEntries = len(f)
-        totalFlatEntries += maxEntries
-        print("%d/%d\n\t\t"%(fileNames.index(fileName)+1, len(fileNames)), totalFlatEntries)
-    return totalFlatEntries
+    #fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData/*.npy")
+    #print("Number of Flat Data : ", len(fileNames))
+    #totalFlatEntries = 0
+    #for fileName in fileNames:
+    #    f = np.load(fileName)
+    #    maxEntries = len(f)
+    #    totalFlatEntries += maxEntries
+    #    print("%d/%d\n\t\t"%(fileNames.index(fileName)+1, len(fileNames)), totalFlatEntries)
+    return 0
 
 
 def getNanoEntries():
@@ -56,11 +56,11 @@ if __name__=="__main__":
     nano = getNanoEntries()
     flat = getFlatEntries()
     mini = getMiniEntries()
-    print("Saving mini into /t3home/gcelotto/ggHbb/outputs/N_mini.npy ...")
-    np.save("/t3home/gcelotto/ggHbb/outputs/N_mini.npy", mini)
+    print("Saving mini into /t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy ...")
+    np.save("/t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy", mini)
     efficiencyMC = flat/mini
     
     print("Mini : \t%d"%mini)
     print("Nano : \t%d"%nano)
     print("Flat : \t%d"%flat)
-    print("Efficiency_MC  : \t%.10f"%(flat/mini))
+    print("Efficiency MC (nano/flat)  : \t%.10f"%(nano/mini))

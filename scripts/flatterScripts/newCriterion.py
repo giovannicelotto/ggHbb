@@ -10,7 +10,8 @@ import pickle
 import sys
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
 from criterionEfficiencySummary import plotCriterionEfficiency
-from save_bscoreBased import jetsSelector
+sys.path.append("/t3home/gcelotto/ggHbb/flatter")
+from treeFlatter import jetsSelector
 
 '''
 Choose a criterio to select the candidates jets that are most likely to come from the Higgs
@@ -44,7 +45,7 @@ def evaluateCriterion(maxJet, fileNames):
     etaTracker = 2.5
     print("\n***********************************************************************\n* Computing efficiency of criterion based on two  selected features \n***********************************************************************")
     
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/0000"
+    #path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/0000"
     
     for fileName in fileNames:
         f = uproot.open(fileName)
@@ -52,7 +53,7 @@ def evaluateCriterion(maxJet, fileNames):
         branches = tree.arrays()
         maxEntries = tree.num_entries 
         totalEntriesVisited += maxEntries
-        print("\nFile %d/%d : %s\nEntries : %d"%(fileNames.index(fileName), len(fileNames), fileName[len(path)+1:], tree.num_entries))
+        print("\nFile %d/%d :\nEntries : %d"%(fileNames.index(fileName), len(fileNames), tree.num_entries))
     
         for ev in  range(maxEntries):
             
@@ -99,14 +100,17 @@ def evaluateCriterion(maxJet, fileNames):
                             if idxJet1==-123:                                     # first match
                                 idxJet1=i
                             elif GenJet_partonMotherIdx[Jet_genJetIdx[idxJet1]]==GenJet_partonMotherIdx[Jet_genJetIdx[i]]:  # second match. Also sisters
-                                idxJet2=i    
+                                idxJet2=i  
+
+# in case one jets was not identified as higgs daughter  
             if ((idxJet1==-123) | (idxJet2==-124)):
                 # events of nonMatched
                 nonMatched+=1
+                # look for quarks higgs daughters
                 mask = (GenPart_pdgId[GenPart_genPartIdxMother]==25) & (abs(GenPart_pdgId)==5)
                 if np.sum(mask)==2: # two true bquarks
                     
-                    selected1, selected2, = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, np.min([maxJet, nJet]), Jet_btagDeepFlavB)
+                    selected1, selected2, muonIdx = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, np.min([maxJet, nJet]), Jet_btagDeepFlavB)
                     if (selected1!=999) & (selected2!=999):
                         jet1 = ROOT.TLorentzVector(0., 0., 0., 0.)
                         jet2 = ROOT.TLorentzVector(0., 0., 0., 0.)
@@ -130,7 +134,7 @@ def evaluateCriterion(maxJet, fileNames):
             # if the reco jets are out of 2.5 no way that the choice will be correct
             if ((abs(Jet_eta[idxJet1])>etaTracker)|(abs(Jet_eta[idxJet2])>etaTracker)):
                 outOfEta=outOfEta+1
-                selected1, selected2, = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
+                selected1, selected2, muonIdx = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
                 if (selected1!=999) & (selected2!=999):
                     jet1 = ROOT.TLorentzVector(0., 0., 0., 0.)
                     jet2 = ROOT.TLorentzVector(0., 0., 0., 0.)
@@ -141,10 +145,10 @@ def evaluateCriterion(maxJet, fileNames):
                 continue
                        
 
-            selected1, selected2, = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
+            selected1, selected2, muonIdx = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
 
             #print(ev, idxJet1, idxJet2, selected1, selected2)
-            if (idxJet1==selected1) & (idxJet2==selected2): #choice we made is good
+            if ((idxJet1==selected1) & (idxJet2==selected2) | (idxJet1==selected2) & (idxJet2==selected1)): #choice we made is good
                 goodChoice=goodChoice+1
             elif (selected1==999) & (selected2==999):       #no choice made (event skipped)
                 noPossiblePair+=1
@@ -178,7 +182,8 @@ def evaluateCriterion(maxJet, fileNames):
 
 
 def main(nFiles, maxJet1, maxJet2):
-    '''take the first _nFiles_ NanoAOD files.
+    '''
+    Take the first _nFiles_ NanoAOD files.
     If recomputeDistributions is True recompute the 2D distributions using the right jets coming from the Higgs
                                         Save an array with two features of the jets from higsg per event
     If _plot_ is true, replot the 2d distributions and save it
@@ -187,8 +192,8 @@ def main(nFiles, maxJet1, maxJet2):
     '''
     
 
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/0000"
-    fileNames = glob.glob(path+'/ggH*.root')
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB_20UL18"
+    fileNames = glob.glob(path+'/*.root')
     fileNames = fileNames[:nFiles]
         
     criterionSummary = {}
@@ -202,9 +207,6 @@ def main(nFiles, maxJet1, maxJet2):
         pickle.dump(criterionSummary, file)
     plotCriterionEfficiency()
     
-
-
-
 
 if __name__ == "__main__":
     nFiles                   = int(sys.argv[1]) if len(sys.argv) > 1 else 20

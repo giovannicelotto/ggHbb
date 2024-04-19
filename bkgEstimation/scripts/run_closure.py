@@ -60,7 +60,8 @@ def closure(nFilesData, nFilesMC):
     # choose binning for HT
     bins=np.linspace(0, 800, 20)
     toSkip = [
-        'Data',                         'WW',                           'WZ',
+        #'Data',                         
+        'WW',                           'WZ',
         'ZZ',                           'ST_s-channel-hadronic',        'ST_s-channel-leptononic',
         'ST_t-channel-antitop',         'ST_t-channel-top',             'ST_tW-antitop',
         'ST_tW-top',                    'TTTo2L2Nu',                    'TTToHadronic',
@@ -69,7 +70,7 @@ def closure(nFilesData, nFilesMC):
         'QCD_MuEnriched_Pt-120To170',   'QCD_MuEnriched_Pt-80To120',    'QCD_MuEnriched_Pt-50To80',
         'QCD_MuEnriched_Pt-30To50',     'QCD_MuEnriched_Pt-20To30',     'QCD_MuEnriched_Pt-15To20',
     ]
-    toSkip = []
+    #toSkip = []
     np.save('/t3home/gcelotto/ggHbb/bkgEstimation/output/binsForHT.npy', bins)
     
     for (process, path, xsection) in zip(df.index, df.path, df.xsection):
@@ -93,7 +94,7 @@ def closure(nFilesData, nFilesMC):
 
         print("Process : ", process, "     %d files"%nFiles)
         for fileName in fileNames[:nFiles]:
-            subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 4), '/t3home/gcelotto/ggHbb/bkgEstimation/scripts/process_job.sh', fileName, process])
+            subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 10), '/t3home/gcelotto/ggHbb/bkgEstimation/scripts/process_job.sh', fileName, process])
        
     return 
 

@@ -1,26 +1,37 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
-import os
+import os, re
 import glob
-import ROOT
 import pandas as pd
 import dask.dataframe as dd
-def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, columns=None):
-    signalFileNames = glob.glob(signalPath+"/ggH*.parquet")
-    realDataFileNames = glob.glob(realDataPath+"/BParking*.parquet")
+def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, columns=None, returnNumEventsTotal=False):
+
+    signalFileNames = glob.glob(signalPath+"/*.parquet", recursive=True)
+    realDataFileNames = glob.glob(realDataPath+"/*.parquet", recursive=True)
     signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
     realDataFileNames = realDataFileNames[:nRealDataFiles] if nRealDataFiles!=-1 else realDataFileNames
+
     print("%d files for MC ggHbb" %len(signalFileNames))
     print("%d files for realDataFileNames" %len(realDataFileNames))
     
     signal = pd.read_parquet(signalFileNames, columns=columns)
     realData = pd.read_parquet(realDataFileNames, columns=columns)
-    return signal, realData
+    if returnNumEventsTotal:
+        numEventsTotal=0
+        df = pd.read_csv("/t3home/gcelotto/ggHbb/abcd/output/miniDf.csv")
+        for fileName in signalFileNames:
+            filename = os.path.splitext(os.path.basename(fileName))[0]
+            process = filename.split('_')[0]  # split the process and the fileNumber and keep the process only which is GluGluHToBB in this case
+            fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1))
+            numEventsTotal = numEventsTotal + df[(df.process==process) & (df.fileNumber==fileNumber)].numEventsTotal.iloc[0]
+        return signal, realData, numEventsTotal
+    else:
+        return signal, realData
 
-def loadDask(signalPath, realDataPath, nSignalFiles, nRealDataFiles):
-    signalFileNames = glob.glob(signalPath+"/*.parquet")[:nSignalFiles]
-    realDataFileNames = glob.glob(realDataPath+"/*.parquet")[:nRealDataFiles]
+def loadDask(signalPath, realDataPath, nSignalFiles, nRealDataFiles, columns):
+    signalFileNames = glob.glob(signalPath+"/*.parquet")
+    realDataFileNames = glob.glob(realDataPath+"/*.parquet")
     signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
     realDataFileNames = realDataFileNames[:nRealDataFiles] if nRealDataFiles!=-1 else realDataFileNames    
 
@@ -29,8 +40,8 @@ def loadDask(signalPath, realDataPath, nSignalFiles, nRealDataFiles):
 
     
     try:    
-        signal = dd.read_parquet(signalFileNames)
-        realData = dd.read_parquet(realDataFileNames)
+        signal = dd.read_parquet(signalFileNames, columns=columns)
+        realData = dd.read_parquet(realDataFileNames, columns=columns)
         return signal, realData
     except:
         print("Some of the files might be corrupted. Here is the list:\n")
@@ -83,10 +94,8 @@ def loadRoot(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1):
     print("\nShape : ", signal.shape, realData.shape)
     return signal, realData
 
-def getXSectionBR():
-    xSectionGGH = 48.52 # pb
-    br = 0.5801
-    return xSectionGGH*br
+
+    
 def getTypes():
     l=[
 np.float32,   np.float32,   np.float32,   np.float32,
@@ -123,7 +132,7 @@ def getFeaturesBScoreBased(number=False, unit=False):
         'jet1_nMuons', 'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl',
         'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass',
         'jet2_nMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB', 'jet2_area', 'jet2_qgl',
-        'dijet_Pt', 'dijet_Eta', 'dijet_Phi', 'dijet_M',
+        'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass',
         'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
         'dijet_twist', 'nJets', 'ht',
         'muon_pt', 'muon_eta',
@@ -141,7 +150,7 @@ def getFeaturesBScoreBased(number=False, unit=False):
     return featureNames.copy()
 
 
-def getBins():
+def getBins(dictFormat=False):
     '''nBin, x1, x2'''
     '''bins = np.linspace(xlims[i*nCol+j,1], xlims[i*nCol+j,2], int(xlims[i*nCol+j,0])+1)'''
     bins=np.array([
@@ -160,7 +169,24 @@ def getBins():
         
         ])
     
-    return bins.copy()
+    if dictFormat:
+        binsDict = {
+            'jet1_pt': [50.0, 0.0, 200.0], 'jet1_eta': [50.0, -3, 3], 'jet1_phi': [50.0, -np.pi, np.pi],
+            'jet1_mass': [50.0, 0.0, 30.0], 'jet1_nMuons': [10.0, -0.5, 9.5], 'jet1_nElectrons': [6.0, -0.5, 5.5],
+            'jet1_btagDeepFlavB': [50.0, 0.0, 1.0], 'jet1_area': [30.0, 0.3, 0.7], 'jet1_qgl': [50.0, -0.5, 1.0],
+            'jet2_pt': [50.0, 0, 120.0], 'jet2_eta': [50.0, -3, 3], 'jet2_phi': [50.0, -np.pi, np.pi],
+            'jet2_mass': [50.0, 0, 20], 'jet2_nMuons': [10.0, -0.5, 9.5], 'jet2_nElectrons': [5.0, -0.5, 4.5],
+            'jet2_btagDeepFlavB': [50.0, 0.0, 1.0], 'jet2_area': [30.0, 0.3, 0.7], 'jet2_qgl': [50.0, -0.5, 1.0],
+            'dijet_pt': [50.0, 0.0, 600.0], 'dijet_eta': [50.0, -5.0, 5.0], 'dijet_phi': [50.0, -np.pi, np.pi], 
+            'dijet_mass': [50.0, 0.0, 450.0], 'dijet_dR': [50.0, 0.0, 6.0], 'dijet_dEta': [50.0, 0.0, 6.0], 'dijet_dPhi': [50.0, 0.0, np.pi],
+            'dijet_cs': [20, -1, 1],
+            'dijet_angVariable': [50.0, 0.0, 10.0], 'dijet_twist': [50.0, 0.0, np.pi/2],'nJets': [16.0, -0.5, 31.5],
+            'nJets_20GeV': [12, -0.5, 11.5], 'ht': [50.0, 0.0, 800.0], 'muon_pt': [50.0, 0.0, 40.0], 'muon_eta': [50.0, -2.5, 2.5],
+            'muon_dxySig': [50.0, -35.0, 35.0], 'muon_dzSig': [50.0, -50.0, 50.0], 'muon_IP3d': [50.0, 0.0, 0.4], 'muon_sIP3d': [50.0, 0.0, 100.0],
+            'muon_tightId': [2.0, -0.5, 1.5], 'muon_pfRelIso03_all': [10.0, 0, 4], 'muon_tkIsoId': [3.0, -0.5, 2.5], 'sf': [50.0, 0.0, 1.0]}
+        return pd.DataFrame(binsDict)
+    else:
+        return bins.copy()
 
 
 def scatter2Features(sig, bkg, labels,bins, outFile, figsize=0):

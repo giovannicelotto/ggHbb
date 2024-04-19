@@ -9,8 +9,7 @@ import os
 import re
 import random
 '''
-Open _nFiles_ of MC ggHbb events. Find the matched jets b-flavoured, sisters, from the Higgs and with a triggering muon inside.
-Save the mjj mass
+
 
 
 Args:
@@ -19,17 +18,13 @@ Args:
 
 
 # Now open the file and use the previous distribution
-def saveMatchedJets(fileNames):
+def saveMatchedJets(fileNames, path):
+
+    print("\n***********************************************************************\n* Matched jets \n***********************************************************************")
     
-    goodChoice = 0
-    totalChoice = 0
-    print("\n***********************************************************************\n* Computing efficiency of criterion based on two  selected features \n***********************************************************************")
-    #path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/0000/Hbb_QCDBackground_Run2_mc_2023Nov01_99.root"
-    #print("\nOpening path:", path, "...")
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/0000"
     for fileName in fileNames:
         fileData=[ ]        # to store mjj for the matched signals
-        outFolder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/flatData"
+        outFolder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/genmatched"
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
         if os.path.exists(outFolder +"/jjFeaturesTrue_%s.npy"%fileNumber):
             # if you already saved this file skip
@@ -51,11 +46,11 @@ def saveMatchedJets(fileNames):
                 sys.stdout.write("%d%%"%(ev/maxEntries*100))
                 sys.stdout.flush()
                 pass
-            nGenJet                     = branches["nGenJet"][ev]
-            GenJet_pt                   = branches["GenJet_pt"][ev]
-            GenJet_eta                  = branches["GenJet_eta"][ev]
-            GenJet_phi                  = branches["GenJet_phi"][ev]
-            GenJet_mass                 = branches["GenJet_mass"][ev]
+            #nGenJet                     = branches["nGenJet"][ev]
+            #GenJet_pt                   = branches["GenJet_pt"][ev]
+            #GenJet_eta                  = branches["GenJet_eta"][ev]
+            #GenJet_phi                  = branches["GenJet_phi"][ev]
+            #GenJet_mass                 = branches["GenJet_mass"][ev]
 
             GenJet_partonFlavour        = branches["GenJet_partonFlavour"][ev]
             GenJet_partonMotherIdx      = branches["GenJet_partonMotherIdx"][ev]
@@ -67,66 +62,66 @@ def saveMatchedJets(fileNames):
             Jet_phi                     = branches["Jet_phi"][ev]
             Jet_mass                    = branches["Jet_mass"][ev]
 
-            Jet_muEF                    = branches["Jet_muEF"][ev]
-            Jet_chEmEF                  = branches["Jet_chEmEF"][ev]
-            Jet_neEmEF                  = branches["Jet_neEmEF"][ev]
-            Jet_chHEF                   = branches["Jet_chHEF"][ev]
-            Jet_neHEF                   = branches["Jet_neHEF"][ev]
-            Jet_nConstituents           = branches["Jet_nConstituents"][ev]
-            Jet_area                    = branches["Jet_area"][ev]
-            Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
-            Jet_btagCMVA                = branches["Jet_btagCMVA"][ev]
-            Jet_btagCSVV2               = branches["Jet_btagCSVV2"][ev]
-            Jet_btagDeepB               = branches["Jet_btagDeepB"][ev]
-            Jet_btagDeepC               = branches["Jet_btagDeepC"][ev]
-            Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
-            Jet_qgl                     = branches["Jet_qgl"][ev]
-            Jet_nMuons                  = branches["Jet_nMuons"][ev]
-            Jet_nElectrons              = branches["Jet_nElectrons"][ev]
+            #Jet_muEF                    = branches["Jet_muEF"][ev]
+            #Jet_chEmEF                  = branches["Jet_chEmEF"][ev]
+            #Jet_neEmEF                  = branches["Jet_neEmEF"][ev]
+            #Jet_chHEF                   = branches["Jet_chHEF"][ev]
+            #Jet_neHEF                   = branches["Jet_neHEF"][ev]
+            #Jet_nConstituents           = branches["Jet_nConstituents"][ev]
+            #Jet_area                    = branches["Jet_area"][ev]
+            #Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
+            #Jet_btagCMVA                = branches["Jet_btagCMVA"][ev]
+            #Jet_btagCSVV2               = branches["Jet_btagCSVV2"][ev]
+            #Jet_btagDeepB               = branches["Jet_btagDeepB"][ev]
+            #Jet_btagDeepC               = branches["Jet_btagDeepC"][ev]
+            #Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
+            #Jet_qgl                     = branches["Jet_qgl"][ev]
+            #Jet_nMuons                  = branches["Jet_nMuons"][ev]
+            #Jet_nElectrons              = branches["Jet_nElectrons"][ev]
             Jet_muonIdx1                = branches["Jet_muonIdx1"][ev]
             Jet_muonIdx2                = branches["Jet_muonIdx2"][ev]
-            Jet_bRegMVA                 = branches["Jet_bRegMVA"][ev]
-            Jet_bRegNN                  = branches["Jet_bRegNN"][ev]
-            Jet_bRegNN2                 = branches["Jet_bRegNN2"][ev]
+            #Jet_bRegMVA                 = branches["Jet_bRegMVA"][ev]
+            #Jet_bRegNN                  = branches["Jet_bRegNN"][ev]
+            Jet_bReg2018                 = branches["Jet_bReg2018"][ev]
             Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
         # Muons
-            Muon_pt                     = branches["Muon_pt"][ev]
-            Muon_eta                    = branches["Muon_eta"][ev]
-            Muon_phi                    = branches["Muon_phi"][ev]
-            Muon_mass                   = branches["Muon_mass"][ev]
+            #Muon_pt                     = branches["Muon_pt"][ev]
+            #Muon_eta                    = branches["Muon_eta"][ev]
+            #Muon_phi                    = branches["Muon_phi"][ev]
+            #Muon_mass                   = branches["Muon_mass"][ev]
             Muon_isTriggering           = branches["Muon_isTriggering"][ev]
-            Muon_dxy                    = branches["Muon_dxy"][ev]
-            Muon_dxyErr                 = branches["Muon_dxyErr"][ev]
-            Muon_dz                     = branches["Muon_dz"][ev]
-            Muon_dzErr                  = branches["Muon_dzErr"][ev]
+            #Muon_dxy                    = branches["Muon_dxy"][ev]
+            #Muon_dxyErr                 = branches["Muon_dxyErr"][ev]
+            #Muon_dz                     = branches["Muon_dz"][ev]
+            #Muon_dzErr                  = branches["Muon_dzErr"][ev]
 
         # SVs
-            SV_chi2                     = branches["SV_chi2"][ev]
-            SV_pt                       = branches["SV_pt"][ev]
-            SV_eta                      = branches["SV_eta"][ev]
-            SV_phi                      = branches["SV_phi"][ev]
-            SV_mass                     = branches["SV_mass"][ev]
+            #SV_chi2                     = branches["SV_chi2"][ev]
+            #SV_pt                       = branches["SV_pt"][ev]
+            #SV_eta                      = branches["SV_eta"][ev]
+            #SV_phi                      = branches["SV_phi"][ev]
+            #SV_mass                     = branches["SV_mass"][ev]
 
 
-            nSV                         = branches["nSV"][ev]
-            SV_dlen                     = branches["SV_dlen"][ev]
-            SV_dlenSig                  = branches["SV_dlenSig"][ev]
-            SV_dxy                      = branches["SV_dxy"][ev]
-            SV_dxySig                   = branches["SV_dxySig"][ev]
-            SV_pAngle                   = branches["SV_pAngle"][ev]
-            SV_charge                   = branches["SV_charge"][ev]
+            #nSV                         = branches["nSV"][ev]
+            #SV_dlen                     = branches["SV_dlen"][ev]
+            #SV_dlenSig                  = branches["SV_dlenSig"][ev]
+            #SV_dxy                      = branches["SV_dxy"][ev]
+            #SV_dxySig                   = branches["SV_dxySig"][ev]
+            #SV_pAngle                   = branches["SV_pAngle"][ev]
+            #SV_charge                   = branches["SV_charge"][ev]
 
-            SV_ntracks                  = branches["SV_ntracks"][ev]
-            SV_ndof                     = branches["SV_ndof"][ev]        
+            #SV_ntracks                  = branches["SV_ntracks"][ev]
+            #SV_ndof                     = branches["SV_ndof"][ev]        
 
         # Gen Parts
-            nGenPart                    = branches["nGenPart"][ev]
-            GenPart_pt                  = branches["GenPart_pt"][ev]
-            GenPart_eta                 = branches["GenPart_eta"][ev]
-            GenPart_phi                 = branches["GenPart_phi"][ev]
-            GenPart_mass                = branches["GenPart_mass"][ev]
-            GenPart_genPartIdxMother    = branches["GenPart_genPartIdxMother"][ev]
-            GenPart_pdgId               = branches["GenPart_pdgId"][ev]
+            #nGenPart                    = branches["nGenPart"][ev]
+            #GenPart_pt                  = branches["GenPart_pt"][ev]
+            #GenPart_eta                 = branches["GenPart_eta"][ev]
+            #GenPart_phi                 = branches["GenPart_phi"][ev]
+            #GenPart_mass                = branches["GenPart_mass"][ev]
+            #GenPart_genPartIdxMother    = branches["GenPart_genPartIdxMother"][ev]
+            #GenPart_pdgId               = branches["GenPart_pdgId"][ev]
 
 
             idxJet1, idxJet2 = -1, -1       # index of the first jet satisfying requirements
@@ -136,9 +131,7 @@ def saveMatchedJets(fileNames):
             for i in range(nJet):
             # Find the jets from the signal
                 if (Jet_genJetIdx[i]>-1):                                           # jet is matched to gen
-                    #if Jet_genJetIdx[i]<nGenJet:                                    # some events have jetGenIdx > nGenJet
                     if abs(GenJet_partonFlavour[Jet_genJetIdx[i]])==5:          # jet matched to genjet from b
-
                         if GenJet_partonMotherPdgId[Jet_genJetIdx[i]]==25:      # jet parton mother is higgs (b comes from h)
                             numberOfGoodJets=numberOfGoodJets+1
                             assert numberOfGoodJets<=2, "Error numberOfGoodJets = %d"%numberOfGoodJets                 # check there are no more than 2 jets from higgs
@@ -153,75 +146,76 @@ def saveMatchedJets(fileNames):
             assert idxJet2>-0.01
             
             # Assert that at leasat one of the two jets has overlap with a triggering muon
-            jetContainsTriggeringMuon_1 = False
-            if Jet_muonIdx1[idxJet1]>-1:
-                jetContainsTriggeringMuon_1 = bool(Muon_isTriggering[Jet_muonIdx1[idxJet1]])
-            
+            #jetContainsTriggeringMuon_1 = False
+            #if Jet_muonIdx1[idxJet1]>-1:
+            #    jetContainsTriggeringMuon_1 = bool(Muon_isTriggering[Jet_muonIdx1[idxJet1]])
+            #
             # else the jetContainsTriggeringMuon is already false. Check the second Muon inside the jet (if any)
-            if Jet_muonIdx2[idxJet1]>-1:
-                jetContainsTriggeringMuon_1 = jetContainsTriggeringMuon_1 | bool(Muon_isTriggering[Jet_muonIdx2[idxJet1]])
-            
+            #if Jet_muonIdx2[idxJet1]>-1:
+            #    jetContainsTriggeringMuon_1 = jetContainsTriggeringMuon_1 | bool(Muon_isTriggering[Jet_muonIdx2[idxJet1]])
+            #
             # here if the jets have one muon that is triggering among the two considered inside the jets this leaf is true
             # do the same for the second jet of the pair
             
-            jetContainsTriggeringMuon_2 = False
-            if Jet_muonIdx1[idxJet2]>-1:
-                jetContainsTriggeringMuon_2 = bool(Muon_isTriggering[Jet_muonIdx1[idxJet2]])
-            
-            if Jet_muonIdx2[idxJet2]>-1:
-                jetContainsTriggeringMuon_2 = jetContainsTriggeringMuon_2 | bool(Muon_isTriggering[Jet_muonIdx2[idxJet2]])
-            
-            
-            if (jetContainsTriggeringMuon_1|jetContainsTriggeringMuon_2):
-                pass
-            else:
-                continue
+            #jetContainsTriggeringMuon_2 = False
+            #if Jet_muonIdx1[idxJet2]>-1:
+            #    jetContainsTriggeringMuon_2 = bool(Muon_isTriggering[Jet_muonIdx1[idxJet2]])
+            #
+            #if Jet_muonIdx2[idxJet2]>-1:
+            #    jetContainsTriggeringMuon_2 = jetContainsTriggeringMuon_2 | bool(Muon_isTriggering[Jet_muonIdx2[idxJet2]])
+            #
+            #
+            #if (jetContainsTriggeringMuon_1|jetContainsTriggeringMuon_2):
+            #    pass
+            #else:
+            #    continue
 
 
             # idxJet1 and idxJet2 are the matched ones
             jet1 = ROOT.TLorentzVector(0.,0.,0.,0.)
             jet2 = ROOT.TLorentzVector(0.,0.,0.,0.)
-            jet1.SetPtEtaPhiM(Jet_pt[idxJet1]*Jet_bRegNN2[idxJet1], Jet_eta[idxJet1], Jet_phi[idxJet1], Jet_mass[idxJet1])
-            jet2.SetPtEtaPhiM(Jet_pt[idxJet2]*Jet_bRegNN2[idxJet2], Jet_eta[idxJet2], Jet_phi[idxJet2], Jet_mass[idxJet2])
-            #features_.append((jet1 + jet2).M())
+            jet1.SetPtEtaPhiM(Jet_pt[idxJet1]*Jet_bReg2018[idxJet1], Jet_eta[idxJet1], Jet_phi[idxJet1], Jet_mass[idxJet1])
+            jet2.SetPtEtaPhiM(Jet_pt[idxJet2]*Jet_bReg2018[idxJet2], Jet_eta[idxJet2], Jet_phi[idxJet2], Jet_mass[idxJet2])
+            features_.append(idxJet1)
+            features_.append(idxJet2)
 
-            features_.append(Jet_pt[idxJet1])                 #0
-            features_.append(Jet_eta[idxJet1])                #1
-            features_.append(Jet_phi[idxJet1])                #2
-            features_.append(Jet_mass[idxJet1])               #3
-            features_.append(Jet_nMuons[idxJet1])             #4
-            features_.append(Jet_nElectrons[idxJet1])         #5
-            features_.append(Jet_btagDeepFlavB[idxJet1])      #6
+            #features_.append(Jet_pt[idxJet1])                 #0
+            #features_.append(Jet_eta[idxJet1])                #1
+            #features_.append(Jet_phi[idxJet1])                #2
+            #features_.append(Jet_mass[idxJet1])               #3
+            #features_.append(Jet_nMuons[idxJet1])             #4
+            #features_.append(Jet_nElectrons[idxJet1])         #5
+            #features_.append(Jet_btagDeepFlavB[idxJet1])      #6
             #features_.append(jet1.Pt()/jet1.E())                #7
 
-            features_.append(Jet_pt[idxJet2])
-            features_.append(Jet_eta[idxJet2])
-            features_.append(Jet_phi[idxJet2])
-            features_.append(Jet_mass[idxJet2])
-            features_.append(Jet_nMuons[idxJet2])
-            features_.append(Jet_nElectrons[idxJet2])
-            features_.append(Jet_btagDeepFlavB[idxJet2])
+            #features_.append(Jet_pt[idxJet2])
+            #features_.append(Jet_eta[idxJet2])
+            #features_.append(Jet_phi[idxJet2])
+            #features_.append(Jet_mass[idxJet2])
+            #features_.append(Jet_nMuons[idxJet2])
+            #features_.append(Jet_nElectrons[idxJet2])
+            #features_.append(Jet_btagDeepFlavB[idxJet2])
             #features_.append(jet2.Pt()/jet2.E())
 
-            dijet = jet1 + jet2
-            features_.append(dijet.Pt())
-            features_.append(dijet.Eta())
-            features_.append(dijet.Phi())
-            features_.append(dijet.M())
-            features_.append(jet1.DeltaR(jet2))
-            features_.append(abs(jet1.Eta() - jet2.Eta()))
-            deltaPhi = jet1.Phi()-jet2.Phi()
-            deltaPhi = deltaPhi - 2*np.pi*(deltaPhi > np.pi) + 2*np.pi*(deltaPhi< -np.pi)
-            features_.append(abs(deltaPhi))     
-            angVariable = np.pi - abs(deltaPhi) + abs(jet1.Eta() - jet2.Eta())
-            features_.append(angVariable)
-            tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
-            features_.append(tau)
-            ht = 0
-            for idx in range(nJet):
-                ht = ht+Jet_pt[idx]
-
-            features_.append(ht)
+            #dijet = jet1 + jet2
+            #features_.append(dijet.Pt())
+            #features_.append(dijet.Eta())
+            #features_.append(dijet.Phi())
+            #features_.append(dijet.M())
+            #features_.append(jet1.DeltaR(jet2))
+            #features_.append(abs(jet1.Eta() - jet2.Eta()))
+            #deltaPhi = jet1.Phi()-jet2.Phi()
+            #deltaPhi = deltaPhi - 2*np.pi*(deltaPhi > np.pi) + 2*np.pi*(deltaPhi< -np.pi)
+            #features_.append(abs(deltaPhi))     
+            #angVariable = np.pi - abs(deltaPhi) + abs(jet1.Eta() - jet2.Eta())
+            #features_.append(angVariable)
+            #tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
+            #features_.append(tau)
+            #ht = 0
+            #for idx in range(nJet):
+            #    ht = ht+Jet_pt[idx]
+#
+            #features_.append(ht)
             #if nSV>0:
             #    features_.append(nSV)
             #    features_.append(SV_chi2[0])
@@ -308,8 +302,8 @@ def saveMatchedJets(fileNames):
 
 def main(nFiles):
     
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Hbb_QCDBackground2023Nov01/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231101_175738/0000"
-    fileNames = glob.glob(path+'/Hbb_QCDBackground_Run2_mc_2023Nov01*.root')
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/0000"
+    fileNames = glob.glob(path+'/ggH*.root')
     random.shuffle(fileNames)
     if (nFiles > len(fileNames)) | (nFiles == -1):
         pass
@@ -318,7 +312,7 @@ def main(nFiles):
         
 
     print("nFiles                : ", nFiles)
-    saveMatchedJets(fileNames)
+    saveMatchedJets(fileNames, path=path)
 
 if __name__ == "__main__":
     nFiles                   = int(sys.argv[1]) if len(sys.argv) > 1 else -1

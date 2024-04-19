@@ -17,6 +17,7 @@ Consider the fist _maxJet_ in order of pT and choose the dijet that maximize the
 Returns the percentage of selected pairs that match the correct pairs only when a complete matching is done.
 
 Args:
+    isMC 0:Data, 1:ggH, 2,3,4 : ttbar H, S, L, 5->16 QCD HTclass
     nFiles      = int(sys.argv[1]) if len(sys.argv) > 1 else -1
     maxEntries  = int(sys.argv[2]) if len(sys.argv) > 1 else -1
     maxJet      = int(sys.argv[3]) if len(sys.argv) > 3 else 5
@@ -94,7 +95,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
     for ev in  range(maxEntries):
         
         features_ = []
-        if (ev%(int(maxEntries/4))==0):
+        if (ev%(int(maxEntries/100))==0):
             sys.stdout.write('\r')
             # the exact output you're looking for:
             sys.stdout.write("%d%%"%(ev/maxEntries*100))
@@ -107,19 +108,19 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         Jet_phi                     = branches["Jet_phi"][ev]
         Jet_mass                    = branches["Jet_mass"][ev]
 
-        Jet_muEF                    = branches["Jet_muEF"][ev]
-        Jet_chEmEF                  = branches["Jet_chEmEF"][ev]
-        Jet_neEmEF                  = branches["Jet_neEmEF"][ev]
-        Jet_chHEF                   = branches["Jet_chHEF"][ev]
-        Jet_neHEF                   = branches["Jet_neHEF"][ev]
-        Jet_nConstituents           = branches["Jet_nConstituents"][ev]
+        #Jet_muEF                    = branches["Jet_muEF"][ev]
+        #Jet_chEmEF                  = branches["Jet_chEmEF"][ev]
+        #Jet_neEmEF                  = branches["Jet_neEmEF"][ev]
+        #Jet_chHEF                   = branches["Jet_chHEF"][ev]
+        #Jet_neHEF                   = branches["Jet_neHEF"][ev]
+        #Jet_nConstituents           = branches["Jet_nConstituents"][ev]
         Jet_area                    = branches["Jet_area"][ev]
         Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
-        Jet_btagCMVA                = branches["Jet_btagCMVA"][ev]
-        Jet_btagCSVV2               = branches["Jet_btagCSVV2"][ev]
-        Jet_btagDeepB               = branches["Jet_btagDeepB"][ev]
-        Jet_btagDeepC               = branches["Jet_btagDeepC"][ev]
-        Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
+        #Jet_btagCMVA                = branches["Jet_btagCMVA"][ev]
+        #Jet_btagCSVV2               = branches["Jet_btagCSVV2"][ev]
+        #Jet_btagDeepB               = branches["Jet_btagDeepB"][ev]
+        #Jet_btagDeepC               = branches["Jet_btagDeepC"][ev]
+        #Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
         Jet_qgl                     = branches["Jet_qgl"][ev]
         Jet_nMuons                  = branches["Jet_nMuons"][ev]
         Jet_nElectrons              = branches["Jet_nElectrons"][ev]
@@ -128,12 +129,12 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         #Jet_bRegMVA                 = branches["Jet_bRegMVA"][ev]
         #Jet_bRegNN2                  = branches["Jet_bRegNN2"][ev]
         Jet_bReg2018                 = branches["Jet_bReg2018"][ev]
-        Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
-        GenJet_partonFlavour         = branches["GenJet_partonFlavour"][ev]
-        GenJet_partonMotherIdx       = branches["GenJet_partonMotherIdx"][ev]
+        #Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
+        #GenJet_partonFlavour         = branches["GenJet_partonFlavour"][ev]
+        #GenJet_partonMotherIdx       = branches["GenJet_partonMotherIdx"][ev]
         #GenPart_genPartIdxMother     = branches["GenPart_genPartIdxMother"][ev]
         #GenPart_pdgId                = branches["GenPart_pdgId"][ev]
-        GenJet_partonMotherPdgId     = branches["GenJet_partonMotherPdgId"][ev]
+        #GenJet_partonMotherPdgId     = branches["GenJet_partonMotherPdgId"][ev]
     # Muons
         Muon_pt                     = branches["Muon_pt"][ev]
         Muon_eta                    = branches["Muon_eta"][ev]
@@ -148,55 +149,56 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         Muon_pfRelIso03_all         = branches["Muon_pfRelIso03_all"][ev]
         Muon_ip3d                   = branches["Muon_ip3d"][ev]
         Muon_sip3d                  = branches["Muon_sip3d"][ev]
-        Muon_isGlobal               = branches["Muon_isGlobal"][ev]
-        Muon_isTracker              = branches["Muon_isTracker"][ev]
-        Muon_mediumId               = branches["Muon_mediumId"][ev]
-        Muon_looseId                = branches["Muon_looseId"][ev]
-        Muon_isPFcand               = branches["Muon_isPFcand"][ev]
-        Muon_softId                 = branches["Muon_softId"][ev]
+        #Muon_isGlobal               = branches["Muon_isGlobal"][ev]
+        #Muon_isTracker              = branches["Muon_isTracker"][ev]
+        #Muon_mediumId               = branches["Muon_mediumId"][ev]
+        #Muon_looseId                = branches["Muon_looseId"][ev]
+        #Muon_isPFcand               = branches["Muon_isPFcand"][ev]
+        #Muon_softId                 = branches["Muon_softId"][ev]
         Muon_tightId                = branches["Muon_tightId"][ev]
         Muon_tkIsoId                = branches["Muon_tkIsoId"][ev]
-        Muon_triggerIdLoose         = branches["Muon_triggerIdLoose"][ev]
+        #Muon_triggerIdLoose         = branches["Muon_triggerIdLoose"][ev]
+        PV_npvs                     = branches["PV_npvs"][ev]
 
 
     
     # SVs
-        SV_chi2                     = branches["SV_chi2"][ev]
-        SV_pt                       = branches["SV_pt"][ev]
-        SV_eta                      = branches["SV_eta"][ev]
-        SV_phi                      = branches["SV_phi"][ev]
-        SV_mass                     = branches["SV_mass"][ev]
-
-        
-        nSV                         = branches["nSV"][ev]
-        SV_dlen                     = branches["SV_dlen"][ev]
-        SV_dlenSig                  = branches["SV_dlenSig"][ev]
-        SV_dxy                      = branches["SV_dxy"][ev]
-        SV_dxySig                   = branches["SV_dxySig"][ev]
-        SV_pAngle                   = branches["SV_pAngle"][ev]
-        SV_charge                   = branches["SV_charge"][ev]
-
-        SV_ntracks                  = branches["SV_ntracks"][ev]
-        SV_ndof                     = branches["SV_ndof"][ev]        
-
-        if isMC==2:
-            idxJet1, idxJet2 = -1, -1       # index of the first jet satisfying requirements
-            numberOfGoodJets=0              # number of jets satisfying requirements per event
-            #ht = 0
-
-            for i in range(nJet):
-            # Find the jets from the signal
-                if (Jet_genJetIdx[i]>-1):                                           # jet is matched to gen
-                    if abs(GenJet_partonFlavour[Jet_genJetIdx[i]])==5:          # jet matched to genjet from b
-                        if GenJet_partonMotherPdgId[Jet_genJetIdx[i]]==23:      # jet parton mother is Z boson (b comes from Z)
-                            numberOfGoodJets=numberOfGoodJets+1
-                            assert numberOfGoodJets<=2, "Error numberOfGoodJets = %d"%numberOfGoodJets                 # check there are no more than 2 jets from higgs
-                            if idxJet1==-1:                                     # first match
-                                idxJet1=i
-                            elif GenJet_partonMotherIdx[Jet_genJetIdx[idxJet1]]==GenJet_partonMotherIdx[Jet_genJetIdx[i]]:  # second match. Also sisters
-                                idxJet2=i    
-            if ((idxJet1==-1) | (idxJet2==-1)):
-                continue
+        #SV_chi2                     = branches["SV_chi2"][ev]
+        #SV_pt                       = branches["SV_pt"][ev]
+        #SV_eta                      = branches["SV_eta"][ev]
+        #SV_phi                      = branches["SV_phi"][ev]
+        #SV_mass                     = branches["SV_mass"][ev]
+#
+        #
+        #nSV                         = branches["nSV"][ev]
+        #SV_dlen                     = branches["SV_dlen"][ev]
+        #SV_dlenSig                  = branches["SV_dlenSig"][ev]
+        #SV_dxy                      = branches["SV_dxy"][ev]
+        #SV_dxySig                   = branches["SV_dxySig"][ev]
+        #SV_pAngle                   = branches["SV_pAngle"][ev]
+        #SV_charge                   = branches["SV_charge"][ev]
+#
+        #SV_ntracks                  = branches["SV_ntracks"][ev]
+        #SV_ndof                     = branches["SV_ndof"][ev]        
+# requires gen matching
+        #if isMC==2:
+        #    idxJet1, idxJet2 = -1, -1       # index of the first jet satisfying requirements
+        #    numberOfGoodJets=0              # number of jets satisfying requirements per event
+        #    #ht = 0
+#
+        #    for i in range(nJet):
+        #    # Find the jets from the signal
+        #        if (Jet_genJetIdx[i]>-1):                                           # jet is matched to gen
+        #            if abs(GenJet_partonFlavour[Jet_genJetIdx[i]])==5:          # jet matched to genjet from b
+        #                if GenJet_partonMotherPdgId[Jet_genJetIdx[i]]==23:      # jet parton mother is Z boson (b comes from Z)
+        #                    numberOfGoodJets=numberOfGoodJets+1
+        #                    assert numberOfGoodJets<=2, "Error numberOfGoodJets = %d"%numberOfGoodJets                 # check there are no more than 2 jets from higgs
+        #                    if idxJet1==-1:                                     # first match
+        #                        idxJet1=i
+        #                    elif GenJet_partonMotherIdx[Jet_genJetIdx[idxJet1]]==GenJet_partonMotherIdx[Jet_genJetIdx[i]]:  # second match. Also sisters
+        #                        idxJet2=i    
+        #    if ((idxJet1==-1) | (idxJet2==-1)):
+        #        continue
 
 
 
@@ -323,6 +325,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(Muon_pfRelIso03_all[muonIdx])
 
         features_.append(Muon_tkIsoId[muonIdx])
+        features_.append(PV_npvs)
         #features_.append(Muon_triggerIdLoose[muonIdx])
         if not isMC:
             features_.append(1)
@@ -330,9 +333,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
             features_.append(np.float32(hist.GetBinContent(hist.GetXaxis().FindBin(Muon_pt[muonIdx]),hist.GetYaxis().FindBin(abs(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx])))))
 
         assert Muon_isTriggering[muonIdx]
-        if ev==0:
-            for fidx in range(len(features_)):
-                print(type(features_[fidx]))
+
                 
         
         file_.append(features_)
@@ -341,15 +342,30 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
 
 
 
-def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
+def saveData(isMC, nFiles, maxEntries, maxJet):
 
 # Use Data For Bkg estimation
     
     path = ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/000*",
-            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/0000",
-            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ZJetsToQQ2024Feb07/ZJetsToQQ_HT400to600_qc19_4j_TuneCP5_13TeV-madgraphMLM-pythia8/crab_GluGluToHHTo4B/240207_094550/0000"][isMC]
-    names = ["/Data20181A__Run2_data_2023Nov30_*.root", "/ggH*.root", "/ZJets*.root"][isMC]
-    fileNames = glob.glob(path+"/"+names)
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB_20UL18",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToHadronic_TuneCP5_13TeV-powheg-pythia8",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ttbar2024Feb14/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-15To20_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-15To20_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-20To30_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-20To30_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-30To50_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-30To50_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-50To80_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-50To80_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-80To120_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-80To120_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-120To170_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-120To170_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-170To300_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-170To300_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-300To470_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-300To470_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-470To600_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-470To600_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-600To800_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-600To800_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-800To1000_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-800To1000_MuEnrichedPt5",
+            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/QCD_MuEnriched2024Feb14/QCD_Pt-1000_MuEnrichedPt5_TuneCP5_13TeV-pythia8/crab_QCD_Pt-1000_MuEnrichedPt5"][isMC]
+    names = "**/*.root"
+    fileNames = glob.glob(path+"/"+names, recursive=True)
+    
         
     random.shuffle(fileNames)
     if nFiles > len(fileNames):
@@ -359,21 +375,56 @@ def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
         print("nFiles = -1\nSetting nFiles = len(fileNames) = %d" %len(fileNames))
         nFiles = len(fileNames)
     
-    print("Taking only the first %d files" %nFiles)
-    fileNames = fileNames[:nFiles]
-
+    #print("Taking only the first %d files" %nFiles)
+    #fileNames = fileNames[:nFiles]
+    doneFiles = 0
     
     for fileName in fileNames:
+        if doneFiles == nFiles:
+            sys.exit("Reached %d files\nExit"%nFiles)  
         outFolder = ["/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/data",
                  "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/ggHTrue",
-                 "/t3home/gcelotto/bbar_analysis/flatData/selectedCandidates/ggHTrue"
-                 ][isMC]
-        T3Folder = ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/flatDataRoot",
-                "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/flatData",
-                "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ZJetsToQQ2024Feb07/ZJetsToQQ_HT400to600_qc19_4j_TuneCP5_13TeV-madgraphMLM-pythia8/crab_GluGluToHHTo4B/240207_094550/flatForHbb/genMatched"
+                 ][int(bool(isMC))]
+        T3Folder = ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/ttbar/ttbarHadronic",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/ttbar/ttbarSemiLeptonic",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/ttbar/ttbar2L2Nu",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt15To20",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt20To30",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt30To50",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt50To80",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt80To120",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt120To170",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt170To300",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt300To470",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt470To600",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt600To800",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt800To1000",
+                    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt1000ToInf",
+                    
                 ][isMC]
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
-        outName = ["/BParkingDataRun20181A_%s.parquet"%(fileNumber), "/ggHbb_%s.parquet"%(fileNumber), "/ZJetsToQQ_%s.parquet"%(fileNumber)][isMC]
+        outName = [ "/BParkingDataRun20181A_%s.parquet"%(fileNumber),
+                    "/GluGluHToBB_%s.parquet"%(fileNumber),
+                    #"/ZJetsToQQ_%s.parquet"%(fileNumber),
+                    "/TTToHadronic_%s.parquet"%fileNumber,
+                    "/TTToSemiLeptonic_%s.parquet"%fileNumber,
+                    "/TTTo2L2Nu_%s.parquet"%fileNumber,
+                    "/QCD_Pt15To20_%s.parquet"%fileNumber,
+                    "/QCD_Pt20To30_%s.parquet"%fileNumber,
+                    "/QCD_Pt30To50_%s.parquet"%fileNumber,
+                    "/QCD_Pt50To80_%s.parquet"%fileNumber,
+                    "/QCD_Pt80To120_%s.parquet"%fileNumber,
+                    "/QCD_Pt120To170_%s.parquet"%fileNumber,
+                    "/QCD_Pt170To300_%s.parquet"%fileNumber,
+                    "/QCD_Pt300To470_%s.parquet"%fileNumber,
+                    "/QCD_Pt600To800_%s.parquet"%fileNumber,
+                    "/QCD_Pt470To600_%s.parquet"%fileNumber,
+                    "/QCD_Pt600To800_%s.parquet"%fileNumber,
+                    "/QCD_Pt1000ToInf_%s.parquet"%fileNumber,
+                    "/QCD_Pt800To1000_%s.parquet"%fileNumber,
+                   ][isMC]
         if (os.path.exists(T3Folder+"/others/" + outName)) | (os.path.exists(T3Folder+"/training/" + outName)) | (os.path.exists(T3Folder+ outName)):
             # if you already saved this file skip
             print("File %s already present in T3\n" %fileNumber)
@@ -405,9 +456,11 @@ def saveData(isMC, nFiles, maxEntries, maxJet, criterionTag):
 'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons',
 'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB',
 'jet2_area', 'jet2_qgl', 'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
-'dijet_twist', 'nJets', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 'sf']
+'dijet_twist', 'nJets', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 
+'PV_npvs', 'sf']
         df.columns = featureNames
         df.to_parquet(T3Folder + outName)
+        doneFiles = doneFiles +1
         #np.save(, np.array(fileData, np.float32))
         print("Saved in T3", T3Folder+ outName)
 
@@ -422,19 +475,7 @@ if __name__=="__main__":
     nFiles      = int(sys.argv[2]) if len(sys.argv) > 2 else -1
     maxEntries  = int(sys.argv[3]) if len(sys.argv) > 3 else -1
     maxJet      = int(sys.argv[4]) if len(sys.argv) > 4 else 4
-    #criterionTag= (sys.argv[4]) if len(sys.argv) > 4 else criterionTag
-    criterionTag = 'bScoreBased%d'%maxJet
-    saveData(isMC, nFiles, maxEntries, maxJet, criterionTag)
-
-
-
-
-
-
-
-
-
-
+    saveData(isMC, nFiles, maxEntries, maxJet)
 
 
 def sliceJetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB):

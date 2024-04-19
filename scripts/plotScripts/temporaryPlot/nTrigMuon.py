@@ -30,9 +30,7 @@ for fileName in fileNames[:nFiles]:
     maxEntries = tree.num_entries
     print("Entries : %d"%maxEntries)
     for ev in range(maxEntries):
-        
         Muon_isTriggering   = branches["Muon_isTriggering"][ev]
-
         ntrigMu.append(np.sum(Muon_isTriggering))
 
 fig, ax = plt.subplots(1, 1)

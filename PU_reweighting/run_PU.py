@@ -56,6 +56,7 @@ def main(nFilesData, nFilesMC):
     df.to_csv("/t3home/gcelotto/ggHbb/PU_reweighting/output/processes.csv")
 
     # lumi for MC normalization
+    nFilesData = 1017 if nFilesData==-1 else nFilesData
     currentLumi = nFilesData * 0.774 / 1017
     np.save("/t3home/gcelotto/ggHbb/PU_reweighting/output/currentLumi.npy", currentLumi)
     # bins for PU
@@ -77,7 +78,7 @@ def main(nFilesData, nFilesMC):
             np.save("/t3home/gcelotto/ggHbb/PU_reweighting/output/numEventsTotal_%s.npy"%process,0)
     
         for fileName in fileNames[:nFiles]:
-            subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 4), '/t3home/gcelotto/ggHbb/PU_reweighting/process_PUjob.sh', fileName, process])
+            subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 10), '/t3home/gcelotto/ggHbb/PU_reweighting/process_PUjob.sh', fileName, process])
 
         # note only jobs with different names can run at the same time (see batch script). In this way 4 jobs of the same process can run at the same time
             
