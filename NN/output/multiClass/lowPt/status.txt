@@ -1,0 +1,16 @@
+Length of Xtrain: 87374
+Length of Xtest: 21844
+epochs: 300
+patienceES: 50
+validation_split: 0.2
+learning_rate: 5e-05
+min_delta: 0.005
+nNodes: [32, 16]
+nDense: 2
+epochs: 300
+patienceES: 50
+validation_split: 0.2
+learning_rate: 5e-05
+min_delta: 0.005
+nNodes: [32, 16]
+nDense: 2
