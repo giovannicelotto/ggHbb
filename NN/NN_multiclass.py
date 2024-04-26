@@ -231,7 +231,8 @@ def loadData(pTmin, pTmax, outFolder):
         elif idx==1:
             dfs[idx] = df.head(nHiggs)
         else:
-            dfs[idx] = df.head(int(nZ/4))
+            pass
+            #dfs[idx] = df.head(int(nZ/4))
 
     for idx, df in enumerate(dfs):
         print("Length of df %d : %d"%(idx, len(df)))
@@ -239,9 +240,9 @@ def loadData(pTmin, pTmax, outFolder):
         for idx, df in enumerate(dfs):
             file.write("Length of df %d : %d"%(idx, len(df)))
 
-
     Y_0 = pd.DataFrame([np.ones(len(dfs[0])),  np.zeros(len(dfs[0])), np.zeros(len(dfs[0]))]).T
     Y_1 = pd.DataFrame([np.zeros(len(dfs[1])), np.ones(len(dfs[1])),  np.zeros(len(dfs[1]))]).T
+    #ZJets
     Y_2 = pd.DataFrame([np.zeros(len(dfs[2])), np.zeros(len(dfs[2])), np.ones(len(dfs[2]))]).T
     Y_3 = pd.DataFrame([np.zeros(len(dfs[3])), np.zeros(len(dfs[3])), np.ones(len(dfs[3]))]).T
     Y_4 = pd.DataFrame([np.zeros(len(dfs[4])), np.zeros(len(dfs[4])), np.ones(len(dfs[4]))]).T
@@ -250,18 +251,22 @@ def loadData(pTmin, pTmax, outFolder):
     # define a weights vector 1 for data 1 for hbb, xsection for the Z boson dataframes. then concat z bosons. divide every weights by the average of the weights
     W_0 = dfs[0].sf
     W_1 = dfs[1].sf
+    #ZJets
     W_2 = 1012/numEventsList[2]*dfs[2].sf
     W_3 = 114.2/numEventsList[3]*dfs[3].sf
     W_4 = 25.34/numEventsList[4]*dfs[4].sf
     W_5 = 12.99/numEventsList[5]*dfs[5].sf
     W_ZBos = pd.concat((W_2, W_3, W_4, W_5))
     Y_ZBos = pd.concat((Y_2, Y_3, Y_4, Y_5))
+    df_ZBos = pd.concat(dfs[2:])
 
-    W_ZBos = W_ZBos/W_ZBos.mean()
     W_1 = W_1/W_1.mean()
+    W_ZBos = W_ZBos/W_ZBos.mean()
 
+    Y_ZBos, W_ZBos, df_ZBos = shuffle(Y_ZBos, W_ZBos, df_ZBos)
+    Y_ZBos.head(nZ), W_ZBos.head(nZ), df_ZBos.head(nZ)
     Y = np.concatenate((Y_0, Y_1, Y_ZBos))
-    X = pd.concat((dfs[0], dfs[1], dfs[2], dfs[3], dfs[4], dfs[5]))
+    X = pd.concat((dfs[0], dfs[1], df_ZBos))
     W = np.concatenate((W_0, W_1, W_ZBos))
     
     X, Y, W = shuffle(X, Y, W, random_state=1999)
@@ -366,8 +371,6 @@ if __name__ =="__main__":
         
 
         # define suffix = inclusive or other
-        
-        
         with open(outFolder+"/status.txt", 'w') as file:
             for idx, df in enumerate([Xtrain, Xtest]):
                 file.write("Length of %s: %d\n"%(['Xtrain', 'Xtest'][idx], len(df)))
