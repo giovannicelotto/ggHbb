@@ -9,8 +9,8 @@ import random
 from bayes_opt import BayesianOptimization
 hep.style.use("CMS")
 def blackBox( p0, p1, p2, p3):
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB_20UL18"
-    fileNames = glob.glob(path+"/*.root")[:10]
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Mar05"
+    fileNames = glob.glob(path+"/**/*.root", recursive=True)[:10]
     print("%d files to be used" %len(fileNames))
     correct = 0 #numerator = number of times the selected 4 jets corresponds to the 4 gen matched jets
     matchedEvents = 0 # denominator
@@ -129,7 +129,9 @@ def main():
     n_iter=50,
 )
         
-        #| 0.7988    | 0.2889    | 0.06528   | 0.03519   | 0.9019    |
+    #| iter      | target    | p0       |  p1       |  p2       | p3
+    #| 2         | 0.805     | 0.1468    | 0.09234   | 0.1863    | 0.6728    |
+    #| 37        | 0.8062    | 0.2139    | 0.1284    | 0.08004   | 0.7238    |
         
         
     return
