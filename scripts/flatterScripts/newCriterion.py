@@ -26,11 +26,26 @@ Args:
 
 
 '''
+def getTrueJets(nJet, Jet_genJetIdx, GenJet_partonMotherIdx, GenJet_partonFlavour, GenJet_partonMotherPdgId):
+    idxJet1, idxJet2 = -123, -124       # index of the first jet satisfying requirements
+    numberOfGoodJets=0              # number of jets satisfying requirements per event
+    for i in range(nJet):
+    # Find the jets from the signal
+        if (Jet_genJetIdx[i]>-1):               # jet is matched to gen
+            #if Jet_genJetIdx[i]<nGenJet:                               # some events have jetGenIdx > nGenJet
+            if abs(GenJet_partonFlavour[Jet_genJetIdx[i]])==5:          # jet matched to genjet from b
 
+                if GenJet_partonMotherPdgId[Jet_genJetIdx[i]]==25:      # jet parton mother is higgs (b comes from h)
+                    numberOfGoodJets=numberOfGoodJets+1
+                    assert numberOfGoodJets<=2, "Error numberOfGoodJets = %d"%numberOfGoodJets                 # check there are no more than 2 jets from higgs
+                    if idxJet1==-123:                                     # first match
+                        idxJet1=i
+                    elif GenJet_partonMotherIdx[Jet_genJetIdx[idxJet1]]==GenJet_partonMotherIdx[Jet_genJetIdx[i]]:  # second match. Also sisters
+                        idxJet2=i  
+    return idxJet1, idxJet2
 
 # Now open the file and use the previous distribution
-def evaluateCriterion(maxJet, fileNames):
-    
+def evaluateCriterion(maxJet, fileNames):    
     goodChoice,wrongChoice, matched, nonMatched, noPossiblePair, totalEntriesVisited, outOfEta = 0 ,  0,  0,  0,  0,  0, 0
     # goodChoice       = events where criterion worked
     # wrongChoice      = events criterion did not work
@@ -79,29 +94,14 @@ def evaluateCriterion(maxJet, fileNames):
             Jet_muonIdx1                = branches["Jet_muonIdx1"][ev]
             Jet_muonIdx2                = branches["Jet_muonIdx2"][ev]
             Muon_isTriggering           = branches["Muon_isTriggering"][ev]
-            Jet_bReg2018                 = branches["Jet_bReg2018"][ev]
+            Jet_bReg2018                = branches["Jet_bReg2018"][ev]
             Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
             Jet_nMuons                  = branches["Jet_nMuons"][ev]
             nGenJet                     = branches["nGenJet"][ev]
 
-            idxJet1, idxJet2 = -123, -124       # index of the first jet satisfying requirements
-            numberOfGoodJets=0              # number of jets satisfying requirements per event
             #ht = 0
             
-            for i in range(nJet):
-            # Find the jets from the signal
-                if (Jet_genJetIdx[i]>-1):               # jet is matched to gen
-                    #if Jet_genJetIdx[i]<nGenJet:                               # some events have jetGenIdx > nGenJet
-                    if abs(GenJet_partonFlavour[Jet_genJetIdx[i]])==5:          # jet matched to genjet from b
-
-                        if GenJet_partonMotherPdgId[Jet_genJetIdx[i]]==25:      # jet parton mother is higgs (b comes from h)
-                            numberOfGoodJets=numberOfGoodJets+1
-                            assert numberOfGoodJets<=2, "Error numberOfGoodJets = %d"%numberOfGoodJets                 # check there are no more than 2 jets from higgs
-                            if idxJet1==-123:                                     # first match
-                                idxJet1=i
-                            elif GenJet_partonMotherIdx[Jet_genJetIdx[idxJet1]]==GenJet_partonMotherIdx[Jet_genJetIdx[i]]:  # second match. Also sisters
-                                idxJet2=i  
-
+            idxJet1, idxJet2 = getTrueJets(nJet, Jet_genJetIdx, GenJet_partonMotherIdx, GenJet_partonFlavour, GenJet_partonMotherPdgId)
 # in case one jets was not identified as higgs daughter  
             if ((idxJet1==-123) | (idxJet2==-124)):
                 # events of nonMatched
@@ -192,8 +192,8 @@ def main(nFiles, maxJet1, maxJet2):
     '''
     
 
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB_20UL18"
-    fileNames = glob.glob(path+'/*.root')
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Mar05"
+    fileNames = glob.glob(path+'/**/*.root', recursive=True)
     fileNames = fileNames[:nFiles]
         
     criterionSummary = {}
