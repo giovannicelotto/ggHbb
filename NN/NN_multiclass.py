@@ -206,11 +206,12 @@ def getFeatures():
     
     return featuresForTraining, columnsToRead
 
-def loadData(pTmin, pTmax, outFolder):
+def loadData(pTmin, pTmax, outFolder, hp):
     featuresForTraining, columnsToRead = getFeatures()
     paths = [
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A/training",
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/training",
+            #"/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/ZJets/ZJetsToQQ_HT-100to200",
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/ZJets/ZJetsToQQ_HT-200to400",
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/ZJets/ZJetsToQQ_HT-400to600",
             "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/ZJets/ZJetsToQQ_HT-600to800",
@@ -221,7 +222,7 @@ def loadData(pTmin, pTmax, outFolder):
     
 
     
-    nData, nHiggs, nZ = int(1e5), int(1e5) , int(1e5)
+    nData, nHiggs, nZ = int(5*1e3), int(5*1e3) , int(5*1e3)
     dfs = preprocessMultiClass(dfs, pTmin, pTmax, suffix)
 
 
@@ -231,8 +232,8 @@ def loadData(pTmin, pTmax, outFolder):
         elif idx==1:
             dfs[idx] = df.head(nHiggs)
         else:
-            pass
-            #dfs[idx] = df.head(int(nZ/4))
+            #pass
+            dfs[idx] = df.head(int(nZ/5))
 
     for idx, df in enumerate(dfs):
         print("Length of df %d : %d"%(idx, len(df)))
@@ -243,21 +244,26 @@ def loadData(pTmin, pTmax, outFolder):
     Y_0 = pd.DataFrame([np.ones(len(dfs[0])),  np.zeros(len(dfs[0])), np.zeros(len(dfs[0]))]).T
     Y_1 = pd.DataFrame([np.zeros(len(dfs[1])), np.ones(len(dfs[1])),  np.zeros(len(dfs[1]))]).T
     #ZJets
-    Y_2 = pd.DataFrame([np.zeros(len(dfs[2])), np.zeros(len(dfs[2])), np.ones(len(dfs[2]))]).T
-    Y_3 = pd.DataFrame([np.zeros(len(dfs[3])), np.zeros(len(dfs[3])), np.ones(len(dfs[3]))]).T
-    Y_4 = pd.DataFrame([np.zeros(len(dfs[4])), np.zeros(len(dfs[4])), np.ones(len(dfs[4]))]).T
-    Y_5 = pd.DataFrame([np.zeros(len(dfs[5])), np.zeros(len(dfs[5])), np.ones(len(dfs[5]))]).T
+    Y_Z, W_Z = [],[]
+    for i in range(2, len(paths)):
+        Y = pd.DataFrame([np.zeros(len(dfs[i])), np.zeros(len(dfs[i])), np.ones(len(dfs[i]))]).T
+        Y_Z.append(Y)
+    #Y_2 = pd.DataFrame([np.zeros(len(dfs[2])), np.zeros(len(dfs[2])), np.ones(len(dfs[2]))]).T
+    #Y_3 = pd.DataFrame([np.zeros(len(dfs[3])), np.zeros(len(dfs[3])), np.ones(len(dfs[3]))]).T
+    #Y_4 = pd.DataFrame([np.zeros(len(dfs[4])), np.zeros(len(dfs[4])), np.ones(len(dfs[4]))]).T
+    #Y_5 = pd.DataFrame([np.zeros(len(dfs[5])), np.zeros(len(dfs[5])), np.ones(len(dfs[5]))]).T
+    #Y_6 = pd.DataFrame([np.zeros(len(dfs[6])), np.zeros(len(dfs[6])), np.ones(len(dfs[6]))]).T
 
     # define a weights vector 1 for data 1 for hbb, xsection for the Z boson dataframes. then concat z bosons. divide every weights by the average of the weights
     W_0 = dfs[0].sf
     W_1 = dfs[1].sf
     #ZJets
-    W_2 = 1012/numEventsList[2]*dfs[2].sf
-    W_3 = 114.2/numEventsList[3]*dfs[3].sf
-    W_4 = 25.34/numEventsList[4]*dfs[4].sf
-    W_5 = 12.99/numEventsList[5]*dfs[5].sf
-    W_ZBos = pd.concat((W_2, W_3, W_4, W_5))
-    Y_ZBos = pd.concat((Y_2, Y_3, Y_4, Y_5))
+    for i in range(2, len(paths)):
+        W = ([5.261e+03, 1012, 114.2, 25.34, 12.99][i-2])/numEventsList[i]*dfs[i].sf
+        W_Z.append(W)
+    
+    W_ZBos = pd.concat(W_Z)
+    Y_ZBos = pd.concat(Y_Z)
     df_ZBos = pd.concat(dfs[2:])
 
     W_1 = W_1/W_1.mean()
@@ -270,7 +276,7 @@ def loadData(pTmin, pTmax, outFolder):
     W = np.concatenate((W_0, W_1, W_ZBos))
     
     X, Y, W = shuffle(X, Y, W, random_state=1999)
-    Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = train_test_split(X, Y, W, test_size=0.2, random_state=1999)
+    Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = train_test_split(X, Y, W, test_size=hp['test_split'], random_state=1999)
     assert len(Wtrain)==len(Xtrain)
     assert len(Wtest)==len(Xtest)
     return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest
@@ -340,14 +346,15 @@ if __name__ =="__main__":
             'epochs'            : 300,
             'patienceES'        : 50,
             'validation_split'  : 0.2,
+            'test_split'  : 0.2,
             'learning_rate'     : 5*1e-5,
-            'min_delta'         : 0.005,
+            'min_delta'         : 0.01,
             'nNodes'            : [32, 16],
             }
         hp['nDense']=len(hp['nNodes'])
         assert len(hp['nNodes'])==hp['nDense']
         
-        data = loadData(pTmin, pTmax, outFolder)
+        data = loadData(pTmin, pTmax, outFolder,  hp)
         Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = data
 
 
