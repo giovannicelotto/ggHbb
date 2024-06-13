@@ -5,7 +5,7 @@ import tensorflow as tf
 def getModelMultiClass(inputDim, nDense=2, nNodes=[12, 12]):
     assert len(nNodes)==nDense
     model = Sequential()
-    model.add(tf.keras.layers.Input(shape = inputDim)) 
+    model.add(tf.keras.layers.Input(shape = (inputDim,))) 
     for i in range(nDense):
         model.add(Dense(units=nNodes[i],  kernel_initializer = tf.keras.initializers.glorot_normal( seed=1999)))
         model.add(tf.keras.layers.BatchNormalization())
