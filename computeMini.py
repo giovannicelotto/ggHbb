@@ -1,7 +1,7 @@
 import uproot
 import numpy as np
 import pandas as pd
-import glob, re
+import glob, re, sys
 def getProcessesDataFrame():
     nanoPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH"
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
@@ -25,11 +25,12 @@ def getProcessesDataFrame():
         #'WJetsToQQ_400to600'      :         [nanoPathCommon + "/old/WJetsToQQ2024Feb20/WJetsToQQ_HT-400to600*",                                                           flatPathCommon + "/WJets/WJetsToQQ_HT-400to600" , 276.5],
         #'WJetsToQQ_600to800'      :         [nanoPathCommon + "/old/WJetsToQQ2024Feb20/WJetsToQQ_HT-600to800*",                                                           flatPathCommon + "/WJets/WJetsToQQ_HT-600to800" , 59.25],
         #'WJetsToQQ_800toInf'      :         [nanoPathCommon + "/old/WJetsToQQ2024Feb20/WJetsToQQ_HT-800toInf*",                                                           flatPathCommon + "/WJets/WJetsToQQ_HT-800toInf" , 28.75],
+        'ZJetsToQQ_100to200'      :         [nanoPathCommon + "/ZJets2024Apr01/ZJetsToQQ_HT-100to200*",                                                           flatPathCommon + "/ZJets/ZJetsToQQ_HT-100to200" , 5.261e+03],
         'ZJetsToQQ_200to400'      :         [nanoPathCommon + "/ZJets2024Apr01/ZJetsToQQ_HT-200to400*",                                                           flatPathCommon + "/ZJets/ZJetsToQQ_HT-200to400" , 1012.0],
         'ZJetsToQQ_400to600'      :         [nanoPathCommon + "/ZJets2024Apr01/ZJetsToQQ_HT-400to600*",                                                           flatPathCommon + "/ZJets/ZJetsToQQ_HT-400to600" , 114.2],
         'ZJetsToQQ_600to800'      :         [nanoPathCommon + "/ZJets2024Apr01/ZJetsToQQ_HT-600to800*",                                                           flatPathCommon + "/ZJets/ZJetsToQQ_HT-600to800" , 25.34],
         'ZJetsToQQ_800toInf'      :         [nanoPathCommon + "/ZJets2024Apr01/ZJetsToQQ_HT-800toInf*",                                                           flatPathCommon + "/ZJets/ZJetsToQQ_HT-800toInf" , 12.99],
-        #'EWKZJets'                :         [nanoPathCommon + "/EWKZJets2024Mar15",                                                                                   flatPathCommon + "/EWKZJets" , 9.8],
+        'EWKZJets'                :         [nanoPathCommon + "/EWKZJets2024Mar15",                                                                                   flatPathCommon + "/EWKZJets" , 9.8],
         #'QCD_MuEnriched_Pt-1000':           [nanoPathCommon + "/old/QCD_MuEnriched2024Feb14/QCD_Pt-1000*",                                                                flatPathCommon + "/QCD_Pt1000ToInf"             , 1.085],
         #'QCD_MuEnriched_Pt-800To1000':      [nanoPathCommon + "/old/QCD_MuEnriched2024Feb14/QCD_Pt-800To1000*",                                                           flatPathCommon + "/QCD_Pt800To1000"             , 3.318],
         #'QCD_MuEnriched_Pt-600To800':       [nanoPathCommon + "/old/QCD_MuEnriched2024Feb14/QCD_Pt-600To800*",                                                            flatPathCommon + "/QCD_Pt600To800"              , 18.12	],
@@ -56,10 +57,20 @@ def computeMini():
               'numEventsPassed':       []}
     for (process, nanoPath, xsection) in zip(df.index, df.nanoPath, df.xsection):
         nanoFileNames = glob.glob(nanoPath+"/**/*.root", recursive=True)
-        print("Searching for", nanoPath+"/**/*.root")
+        print("Searching for", nanoPath+"/**/*.root ... %d files found"%len(nanoFileNames))
 
         for nanoFileName in nanoFileNames:
-            fileNumber = re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1)
+            try:
+                fileNumber = re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1)
+            except:
+                sys.exit(1)
+                #print(fileName)
+                #print("filenumber not found in ", nanoFileName)
+                #try:
+                    #
+                    #print("This is ZJets100To200")
+                #except:
+                #sys.exit()
             f = uproot.open(nanoFileName)
             lumiBlocks = f['LuminosityBlocks']
             numEventsPassed = np.sum(lumiBlocks.arrays()['GenFilter_numEventsPassed'])
