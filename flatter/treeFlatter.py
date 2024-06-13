@@ -161,6 +161,12 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(Jet_phi[selected1])                
         features_.append(jet1.M())                          
         features_.append(Jet_nMuons[selected1])             
+        # add jet_nmuons tight
+        counterMuTight=0
+        for muIdx in range(len(Muon_pt)):
+            if (np.sqrt((Muon_eta[muIdx]-Jet_eta[selected1])**2 + (Muon_phi[muIdx]-Jet_phi[selected1])**2)<0.4) & (Muon_tightId[muIdx]):
+                counterMuTight=counterMuTight+1
+        features_.append(counterMuTight)                 
         features_.append(Jet_nElectrons[selected1])         
         features_.append(Jet_btagDeepFlavB[selected1])      
         features_.append(Jet_area[selected1])
@@ -171,6 +177,11 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(Jet_phi[selected2])
         features_.append(jet2.M())
         features_.append(Jet_nMuons[selected2])
+        counterMuTight=0
+        for muIdx in range(len(Muon_pt)):
+            if (np.sqrt((Muon_eta[muIdx]-Jet_eta[selected2])**2 + (Muon_phi[muIdx]-Jet_phi[selected2])**2)<0.4) & (Muon_tightId[muIdx]):
+                counterMuTight=counterMuTight+1
+        features_.append(counterMuTight)   
         features_.append(Jet_nElectrons[selected2])
         features_.append(Jet_btagDeepFlavB[selected2])
         features_.append(Jet_area[selected2])
@@ -246,6 +257,9 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(bool(Muon_fired_HLT_Mu9_IP5[muonIdx]))
         features_.append(bool(Muon_fired_HLT_Mu9_IP6[muonIdx]))
         features_.append(PV_npvs)
+        #features_.append(Muon_vx[muonIdx])
+        #features_.append(Muon_vy[muonIdx])
+        #features_.append(Muon_vz[muonIdx])
         if not isMC:
             features_.append(1)
             features_.append(1)
@@ -264,14 +278,24 @@ def main(fileName, process):
     print("Process", process)
     fileData = treeFlatten(fileName=fileName, maxEntries=-1, maxJet=4, isMC=False if process=='BParkingDataRun20181A' else True)
     df=pd.DataFrame(fileData)
-    featureNames = ['jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons',
-                    'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB',
+    featureNames = ['jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons','jet1_nTightMuons',
+                    'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons', 'jet2_nTightMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB',
                     'jet2_area', 'jet2_qgl', 'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
                     'dijet_twist', 'dijet_cs', 'nJets', 'nJets_20GeV', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 
                     'Muon_fired_HLT_Mu10p5_IP3p5',  'Muon_fired_HLT_Mu12_IP6',  'Muon_fired_HLT_Mu7_IP4',   'Muon_fired_HLT_Mu8_IP3',  'Muon_fired_HLT_Mu8_IP5',    'Muon_fired_HLT_Mu8_IP6',
-                    'Muon_fired_HLT_Mu8p5_IP3p5',   'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',    'PV_npvs','sf', 'PU_sf']
+                    'Muon_fired_HLT_Mu8p5_IP3p5',   'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',    'PV_npvs',
+                    #'Muon_vx', 'Muon_vy', 'Muon_vz',
+                    'sf', 'PU_sf']
     df.columns = featureNames
-    fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
+    try:
+        fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
+    except:
+        print("filenumber not found in ", fileName)
+        try:
+            fileNumber = re.search(r'200_(\d+)_Run2', fileName).group(1)
+            print("This is ZJets100To200")
+        except:
+            sys.exit()
     df.to_parquet('/scratch/' +process+"_%s.parquet"%fileNumber )
     print("Saving in " + '/scratch/' +process+"_%s.parquet"%fileNumber )
 
