@@ -45,6 +45,7 @@ def getProcessesDataFrame():
         'QCD_MuEnriched_Pt-30To50':         [nanoPathCommon + "/QCD_MuEnriched2024Apr01/QCD_Pt-30To50*",                                                                flatPathCommon + "/QCD_Pt30To50"                , 1367000.0],  # 33        
         'QCD_MuEnriched_Pt-20To30':         [nanoPathCommon + "/QCD_MuEnriched2024Apr01/QCD_Pt-20To30*",                                                                flatPathCommon + "/QCD_Pt20To30"                , 2527000.0],  # 34        
         'QCD_MuEnriched_Pt-15To20':         [nanoPathCommon + "/QCD_MuEnriched2024Apr01/QCD_Pt-15To20*",                                                                flatPathCommon + "/QCD_Pt15To20"                , 2800000.0	], # 35            
+        'ZJetsToQQ_100to200'      :         [nanoPathCommon + "/ZJets2024Apr01/ZJetsToQQ_HT-100to200",                                                                   flatPathCommon + "/ZJets/ZJetsToQQ_HT-100to200" , 5.261e+03],     # 36    
 
     }
 
@@ -60,6 +61,7 @@ def main(isMC, nFiles, maxEntries, maxJet):
     nanoPath = list(df.nanoPath)[isMC]
     flatPath = list(df.flatPath)[isMC]
     if not os.path.exists(flatPath):
+        print("Creting flathPath ...", flatPath)
         os.makedirs(flatPath)
     process = list(df.index)[isMC]
     nanoFileNames = glob.glob(nanoPath+"/**/*.root", recursive=True)
@@ -79,7 +81,10 @@ def main(isMC, nFiles, maxEntries, maxJet):
     for nanoFileName in nanoFileNames:
         if doneFiles==nFiles:
             break
-        fileNumber = re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1)
+        try:
+            fileNumber = re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1)
+        except:
+            sys.exit()
         filePattern = flatPath+"/**/"+process+"_"+fileNumber+".parquet"
         matching_files = glob.glob(filePattern, recursive=True)
         #print("Checking for ", flatPath+"/**/"+process+"_"+fileNumber+".parquet")
