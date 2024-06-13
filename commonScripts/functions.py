@@ -38,7 +38,7 @@ def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, col
         return signal, realData
     
 
-def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=False, returnFileNumberList=False):
+def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False):
     '''
     paths = array of string ordered with the first position occupied by the realData
     nReal = how many realdata files load  (-1=all the files, -2 no realData in the array)
@@ -53,10 +53,25 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
     numEventsList = []
     if returnFileNumberList:
         fileNumberList = []
+    fileNamesSelected=[]
     for path in paths:
-        if returnFileNumberList:
-            fileNumberListProcess = []
         fileNames = glob.glob(path+"/*.parquet", recursive=True)
+        #if selectFileNumberList is not None then keep only strings where there is a match
+        if selectFileNumberList is not None:
+            #print(len(selectFileNumberList[paths.index(path)]), " files expected")
+            fileNamesSelectedProcess = []
+            for fileName in fileNames:
+                match = re.search(r'_(\d+).parquet', fileName)
+                if match:
+                    fn = match.group(1)
+                if int(fn) in selectFileNumberList[paths.index(path)]:
+                    fileNamesSelectedProcess.append(fileName)
+                else:
+                    pass
+                    #print("remove", fileName)
+            fileNamesSelected.append(fileNamesSelectedProcess)
+            fileNames=fileNamesSelectedProcess
+        print("process %d from dfs: "%paths.index(path),len(fileNames))
         if paths.index(path)==0:
             if nReal>0:
                 fileNames = fileNames[:nReal]
@@ -68,10 +83,12 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
             fileNames = fileNames[:nMC] if nMC!=-1 else fileNames
 
         print("%d files for process %d" %(len(fileNames), paths.index(path)))
+        print("\n")
         
-    
         df = pd.read_parquet(fileNames, columns=columns)
         dfs.append(df)
+        if returnFileNumberList:
+            fileNumberListProcess = []
     #return dfs
         if returnNumEventsTotal:
             numEventsTotal=0
