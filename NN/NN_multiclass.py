@@ -1,6 +1,6 @@
 import shap
-from keras.callbacks import EarlyStopping
-from keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.optimizers import Adam
 import sys
 import numpy as np
 import pandas as pd
@@ -18,6 +18,7 @@ from sklearn.model_selection import train_test_split
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
 from plotFeatures import plotNormalizedFeatures
 import logging
+
 
 '''
 nReal   = number of Files used for realData training, testing (10 recommended). All the datasets are cut after 3*1e4 events
@@ -44,42 +45,44 @@ def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, 
     fig, ax = plt.subplots(1, 1)
     thresholds = np.linspace(0, 1, 1000)
     labels = ['Data', 'ggH', 'ZJets']
-    for classIdx in range(3):
-        classesIdx = [0, 1, 2]
-        classesIdx.remove(classIdx)
-        
+    for classIdx in range(1, 3):
+        # maskClass : events in the class 1 (ggH) or 2 (ZJets)
+        # roc for multiClass: 2 signals, we scan the threshold for Z score and ggH score and see how much Z, QCD and ggH, QCD we retain
         maskClass = Ytest.iloc[:,classIdx]>0.99
+        maskQCD = Ytest.iloc[:,0]>0.99
         maskClassTrain = Ytrain.iloc[:,classIdx]>0.99
+        maskQCDTrain = Ytrain.iloc[:,0]>0.99
         logging.info("%s events in class %d"%(len(Ytest[maskClass]), classIdx))
 
         tpr, fpr = [], []
         tprTrain, fprTrain = [], []
         for t in thresholds:
             tpr.append(Wtest[(YPredTest.iloc[:,classIdx] > t) & (maskClass)].sum()/Wtest[maskClass].sum())
-            fpr.append(Wtest[(YPredTest.iloc[:,classIdx] > t) & (~maskClass)].sum()/Wtest[~maskClass].sum())
+            fpr.append(Wtest[(YPredTest.iloc[:,classIdx] > t) & (maskQCD)].sum()/Wtest[maskQCD].sum())
 
             tprTrain.append(Wtrain[(YPredTrain.iloc[:,classIdx]> t) & (maskClassTrain)].sum()/Wtrain[maskClassTrain].sum())
-            fprTrain.append(Wtrain[(YPredTrain.iloc[:,classIdx]> t) & (~maskClassTrain)].sum()/Wtrain[~maskClassTrain].sum())
+            fprTrain.append(Wtrain[(YPredTrain.iloc[:,classIdx]> t) & (maskQCDTrain)].sum()/Wtrain[maskQCDTrain].sum())
 
         
         from scipy.integrate import simpson
+        from sklearn.metrics import auc as auc_sk
         
-        auc = -simpson(tpr, fpr)
-        auc_train = -simpson(tprTrain, fprTrain)
+        auc = auc_sk(fpr, tpr)
+        auc_train = auc_sk(fprTrain, tprTrain)
         ax.plot(fpr, tpr, marker='o', markersize=1, label='%s Test AUC %.2f'%(labels[classIdx], auc))
         ax.plot(fprTrain, tprTrain, linestyle='dotted', label='%s Train AUC %.2f'%(labels[classIdx], auc_train))
         ax.plot(thresholds, thresholds, linestyle='dotted', color='green')
 
         ax.grid(True)
         ax.set_ylabel("Signal Efficiency")
-        ax.set_xlabel("Background Efficiency")
+        ax.set_xlabel("QCD Efficiency")
         ax.set_xlim(0,1)
         ax.set_ylim(0,1)
         
 
     handles, newLabels = ax.get_legend_handles_labels()
-    handles = [handles[i] for i in [0, 2, 4, 1, 3, 5]]
-    newLabels = [newLabels[i] for i in [0, 2, 4, 1, 3, 5]]
+    handles = [handles[i] for i in [1, 3, 0, 2]]
+    newLabels = [newLabels[i] for i in [1, 3, 0, 2]]
     ax.legend(handles, newLabels, ncols=2)
     hep.cms.label(ax=ax)
     fig.savefig(outFolder +"/performance/roc%s.png"%suffixWeight, bbox_inches='tight')
@@ -203,12 +206,12 @@ def getFeatures():
     featuresForTraining=[
        'jet1_pt',
        'jet1_eta', 'jet1_phi', 'jet1_mass',
-        'jet1_nMuons', 'jet1_nElectrons',
+        'jet1_nMuons', 'jet1_nTightMuons', 'jet1_nElectrons',
         'jet1_btagDeepFlavB', #'jet1_area',
         'jet1_qgl',
        'jet2_pt',
        'jet2_eta', 'jet2_phi', 'jet2_mass',
-       'jet2_nMuons', 'jet2_nElectrons',
+       'jet2_nMuons', 'jet2_nTightMuons','jet2_nElectrons',
        'jet2_btagDeepFlavB', #'jet2_area',
        'jet2_qgl',
        #'dijet_pt',
@@ -232,9 +235,9 @@ def getFeatures():
        ]
     
     columnsToRead = [   
-    'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons',
+    'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons', 'jet1_nTightMuons',
     'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl',
-    'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons',
+    'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons','jet2_nTightMuons',
     'jet2_nElectrons', 'jet2_btagDeepFlavB', 'jet2_area', 'jet2_qgl',
     'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR',
     'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable', 'dijet_twist', 'nJets',
@@ -266,23 +269,18 @@ def loadData(pTmin, pTmax, suffix, outFolder, hp, logging):
     dfs[0]=dfs[0][(dfs[0].dijet_mass<200)]
     dfs[1]=dfs[1][(dfs[1].dijet_mass<200)]
     dfs[2]=dfs[2][(dfs[2].dijet_mass<200)]
-    #dfs[2]=dfs[2][(dfs[2].dijet_mass>40) & (dfs[2].dijet_mass<140)]
-    #dfs[3]=dfs[3][(dfs[3].dijet_mass>40) & (dfs[3].dijet_mass<140)]
-    #dfs[4]=dfs[4][(dfs[4].dijet_mass>40) & (dfs[4].dijet_mass<140)]
-    #dfs[5]=dfs[5][(dfs[5].dijet_mass>40) & (dfs[5].dijet_mass<140)]
-    #dfs[6]=dfs[6][(dfs[6].dijet_mass>40) & (dfs[6].dijet_mass<140)]    
+    dfs[3]=dfs[3][(dfs[3].dijet_mass<200)]
+    dfs[4]=dfs[4][(dfs[4].dijet_mass<200)]
+    dfs[5]=dfs[5][(dfs[5].dijet_mass<200)]
+    dfs[6]=dfs[6][(dfs[6].dijet_mass<200)]
     print("my max:", dfs[0].dijet_mass.max())
     
-    nData, nHiggs, nZ = int(5*1e4), int(5*1e4) , int(5*1e4)
+    nData, nHiggs, nZ = int(25*1e4), int(25*1e4) , int(25*1e4)
     dfs = preprocessMultiClass(dfs, pTmin, pTmax, suffix)
 
     for idx, df in enumerate(dfs):
         if idx==0:
-            #print(len(dfs[idx]))
-            
-            #print(len(dfs[idx]))
             dfs[idx] = df.head(nData)
-            #sys.exit()
         elif idx==1:
             dfs[idx] = df.head(nHiggs)
         else:
@@ -322,33 +320,43 @@ def loadData(pTmin, pTmax, suffix, outFolder, hp, logging):
     W_1 = W_1/W_1.sum()
     W_ZBos = W_ZBos/W_ZBos.sum()
 
-    bins_0 = np.linspace(0, 200, 40)
-    bins_1 = np.linspace(75, 175, 20)
-    bins_2 = np.linspace(40, 140, 20)
-    counts_0 = np.histogram(dfs[0].dijet_mass, bins=bins_0, weights=rW_0)[0]
-    counts_Z = np.histogram(df_ZBos.dijet_mass, bins=bins_2, weights=W_ZBos)[0]
-    counts_H = np.histogram(dfs[1].dijet_mass, bins=bins_1, weights=W_1)[0]
-
+    bins_0 = np.linspace(40, 200, 40)
+    bins_1 = np.linspace(40, 200, 40)
+    bins_2 = np.linspace(40, 200, 40)
+    counts_0 = np.histogram(dfs[0].dijet_mass,  bins=bins_0, weights=rW_0)[0]
+    counts_H = np.histogram(dfs[1].dijet_mass,  bins=bins_1, weights=rW_1)[0]
+    counts_Z = np.histogram(df_ZBos.dijet_mass, bins=bins_2, weights=rW_ZBos)[0]
+    
     if suffixWeight=='_flat':
-        rW_ZBos=(rW_ZBos)*(1/counts_Z[np.digitize(np.clip(df_ZBos.dijet_mass, bins_2[0], bins_2[-1]-0.0001), bins_2)-1])
-        rW_0=pd.DataFrame(1/counts_0[np.digitize(np.clip(dfs[0].dijet_mass, bins_0[0], bins_0[-1]-0.0001), bins_0)-1])
-        rW_1=pd.DataFrame(1/counts_H[np.digitize(np.clip(dfs[1].dijet_mass, bins_1[0], bins_1[-1]-0.0001), bins_1)-1])
+        rW_ZBos=rW_ZBos*(1/counts_Z[np.digitize(np.clip(df_ZBos.dijet_mass, bins_2[0], bins_2[-1]-0.0001), bins_2)-1])
+        rW_0=rW_0*(1/counts_0[np.digitize(np.clip(dfs[0].dijet_mass, bins_0[0], bins_0[-1]-0.0001), bins_0)-1])
+        rW_1=rW_1*(1/counts_H[np.digitize(np.clip(dfs[1].dijet_mass, bins_1[0], bins_1[-1]-0.0001), bins_1)-1])
+    elif suffixWeight=='_r':
+        rW_ZBos=rW_ZBos*((counts_0/counts_Z)[np.digitize(np.clip(df_ZBos.dijet_mass, bins_2[0], bins_2[-1]-0.0001), bins_2)-1])
+        rW_0=rW_0*((counts_0/counts_0)[np.digitize(np.clip(dfs[0].dijet_mass, bins_0[0], bins_0[-1]-0.0001), bins_0)-1])
+        rW_1=rW_1*((counts_0/counts_H)[np.digitize(np.clip(dfs[1].dijet_mass, bins_1[0], bins_1[-1]-0.0001), bins_1)-1])
+        pass
+    elif suffixWeight=='_nr':
+        pass
     #rW_1=rW_1*(counts_0/counts_H)[np.digitize(np.clip(dfs[1].dijet_mass, bins[0], bins[-1]-0.0001), bins)-1]
     rW_0 = rW_0/rW_0.sum()
     rW_1 = rW_1/rW_1.sum()
     rW_ZBos = rW_ZBos/rW_ZBos.sum()
     plt.close('all')
-    bins = np.linspace(0, 300, 35)
+    
     fig, ax =plt.subplots(1, 1)
     ax.hist(df_ZBos.dijet_mass, bins=bins_0, weights=rW_ZBos, histtype=u'step', label='Z reweighted', linewidth=5)
     ax.hist(df_ZBos.dijet_mass, bins=bins_0, weights=W_ZBos, histtype=u'step', label='Z', linewidth=5)
-    ax.hist(dfs[1].dijet_mass, bins=bins_0, weights=rW_1, histtype=u'step', label='H reweighted', linewidth=5)
+    ax.hist(dfs[1].dijet_mass, bins=bins_0, weights=rW_1, histtype=u'step', label='H reweighted', linewidth=5, linestyle='dotted')
     ax.hist(dfs[1].dijet_mass, bins=bins_0, weights=W_1, histtype=u'step', label='H', linewidth=5)
     ax.hist(dfs[0].dijet_mass, bins=bins_0, weights=W_0, label='Data', alpha=0.4)
-    ax.hist(dfs[0].dijet_mass, bins=bins_0, weights=rW_0, label='Data reweighted', histtype=u'step', linewidth=5)
-    ax.legend()
+    ax.hist(dfs[0].dijet_mass, bins=bins_0, weights=rW_0, label='Data reweighted', histtype=u'step', linewidth=3, linestyle='dashed')
+    ax.legend(ncols=2)
     ax.set_yscale('log')
-    fig.savefig("/t3home/gcelotto/ggHbb/NN/output/multiClass/inclusive/dijetMass/mass_temp%s.png"%suffixWeight)
+    ax.set_xlabel("Dijet Mass [GeV]")
+    ax.set_ylabel("Normalized Counts")
+    fig.savefig("/t3home/gcelotto/ggHbb/NN/output/multiClass/%s/dijetMass/mass_temp%s.png"%(suffix, suffixWeight))
+
 
     
     
@@ -430,13 +438,13 @@ if __name__ =="__main__":
 
     pTmin, pTmax, suffix = [[0,-1,'inclusive'], [0, 30, 'lowPt'], [30, 100, 'mediumPt'], [100, -1, 'highPt']][ptClass]
     inFolder, outFolder = "/t3home/gcelotto/ggHbb/NN/input/multiclass/"+suffix, "/t3home/gcelotto/ggHbb/NN/output/multiClass/"+suffix
-    if os.path.exists(outFolder+"/status.txt"):
-        os.remove(outFolder+"/status.txt")
+    if os.path.exists(outFolder+"/status%s.txt"%suffixWeight):
+        os.remove(outFolder+"/status%s.txt"%suffixWeight)
     logging.basicConfig(level=logging.INFO,
                     #format='%(asctime)s - %(levelname)s - %(message)s',
                     format='',
                     handlers=[
-                        logging.FileHandler(outFolder+"/status.txt"),
+                        logging.FileHandler(outFolder+"/status%s.txt"%suffixWeight),
                         logging.StreamHandler()
                     ])
     if doTrain:
@@ -445,8 +453,7 @@ if __name__ =="__main__":
             'patienceES'        : 30,
             'validation_split'  : 0.2,
             'test_split'        : 0.2,
-            'learning_rate'     : 5e-4,
-            'min_delta'         : 1e-7,
+            'learning_rate'     : 1e-4,
             'nNodes'            : [32, 16],
             }
         hp['nDense']=len(hp['nNodes'])
@@ -487,7 +494,8 @@ if __name__ =="__main__":
                                     alphas=[1, 1, 1, 0.4, 0.4, 0.4],
                                     figsize=(20, 30),
                                     autobins=True,
-                                    weights=[Wtrain[Ytrain[:,0]==1], Wtrain[Ytrain[:,1]==1], Wtrain[Ytrain[:,2]==1], Wtest[Ytest[:,0]==1],   Wtest[Ytest[:,1]==1], Wtest[Ytest[:,2]==1]])
+                                    weights=[Wtrain[Ytrain[:,0]==1], Wtrain[Ytrain[:,1]==1], Wtrain[Ytrain[:,2]==1], Wtest[Ytest[:,0]==1],   Wtest[Ytest[:,1]==1], Wtest[Ytest[:,2]==1]],
+                                    error=False)
             
         HbbClassifier(Xtrain=Xtrain, Xtest=Xtest, Ytrain=Ytrain, Ytest=Ytest, Wtrain=Wtrain, Wtest=Wtest,
                         rWtrain=rWtrain, rWtest=rWtest,
@@ -495,12 +503,22 @@ if __name__ =="__main__":
     Xtrain, Xtest =         pd.read_parquet(inFolder +"/XTrain.parquet"),   pd.read_parquet(inFolder +"/XTest.parquet")
     YPredTrain, YPredTest = np.load(inFolder +"/YPredTrain.npy"),           np.load(inFolder +"/YPredTest.npy")
     Wtrain, Wtest =         np.load(inFolder +"/WTrain.npy"),               np.load(inFolder +"/WTest.npy")
+    rWtrain, rWtest =         np.load(inFolder +"/rWTrain.npy"),               np.load(inFolder +"/rWTest.npy")
     Ytrain, Ytest =         np.load(inFolder +"/YTrain.npy"),               np.load(inFolder +"/YTest.npy")
+    plotNormalizedFeatures(data =   [Xtrain[Ytrain[:,0]==1], Xtrain[Ytrain[:,1]==1], Xtrain[Ytrain[:,2]==1], Xtest[Ytest[:,0]==1],   Xtest[Ytest[:,1]==1], Xtest[Ytest[:,2]==1]],
+                                    outFile = outFolder +"/performance/features_train_reWeighted%s.png"%suffixWeight,
+                                    legendLabels = ['Data Train', 'ggH Train', 'ZJets Train', 'Data Test ', 'ggH Test', 'ZJets Tets',] , colors = ['blue', 'red', 'green', 'blue', 'red', 'green'],
+                                    histtypes=[u'step', u'step', u'step', 'bar', 'bar', 'bar'],
+                                    alphas=[1, 1, 1, 0.4, 0.4, 0.4],
+                                    figsize=(20, 30),
+                                    autobins=True,
+                                    weights=[rWtrain[Ytrain[:,0]==1], rWtrain[Ytrain[:,1]==1], rWtrain[Ytrain[:,2]==1], rWtest[Ytest[:,0]==1],   rWtest[Ytest[:,1]==1], rWtest[Ytest[:,2]==1]],
+                                    error=False)
     doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, outFolder, logging)
     featuresForTraining, columnsToRead = getFeatures()
     model = load_model(outFolder +"/model/"+modelName)
-    #from tensorflow.compat.v1.keras.backend import get_session
-#
-    #tensorflow.compat.v1.disable_v2_behavior()
-    #getShapNew(Xtest.iloc[:500,:][featuresForTraining], model, outName = outFolder+'/performance/shap%s.png'%suffixWeight,
-    #        class_names=['Data', 'ggH', 'ZJets'])
+
+
+
+    getShapNew(Xtest.iloc[:500,:][featuresForTraining], model, outName = outFolder+'/performance/shap%s.png'%suffixWeight,
+            class_names=['Data', 'ggH', 'ZJets'])
