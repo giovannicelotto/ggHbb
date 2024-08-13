@@ -54,11 +54,13 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
     if returnFileNumberList:
         fileNumberList = []
     fileNamesSelected=[]
-    for path in paths:
+    for path in paths: 
+        # loop over processes
         fileNames = glob.glob(path+"/*.parquet", recursive=True)
-        #if selectFileNumberList is not None then keep only strings where there is a match
+
+        #if selectFileNumberList is not None then keep only strings where there is a match (want keep only files when i have predictions)
         if selectFileNumberList is not None:
-            #print(len(selectFileNumberList[paths.index(path)]), " files expected")
+            print("Looking for a specific list of ", len(selectFileNumberList[paths.index(path)]), " files expected")
             fileNamesSelectedProcess = []
             for fileName in fileNames:
                 match = re.search(r'_(\d+).parquet', fileName)
@@ -69,14 +71,15 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
                 else:
                     pass
                     #print("remove", fileName)
+            
             fileNamesSelected.append(fileNamesSelectedProcess)
             fileNames=fileNamesSelectedProcess
-        print("process %d from dfs: "%paths.index(path),len(fileNames))
+        print("Found %d files for process %d"%(len(fileNames), paths.index(path)))
         if paths.index(path)==0:
             if nReal>0:
                 fileNames = fileNames[:nReal]
             if nReal == -2:
-                fileNames = fileNames[:nMC]
+                fileNames = fileNames[:nMC] if nMC!=-1 else fileNames
             elif nReal == -1:
                 pass
         else:
@@ -92,7 +95,7 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
     #return dfs
         if returnNumEventsTotal:
             numEventsTotal=0
-            df = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Mar.csv")
+            df = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Aug.csv")
             for fileName in fileNames:
                 filename = os.path.splitext(os.path.basename(fileName))[0]
                 try:
@@ -100,7 +103,7 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
                     fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1))
                     if returnFileNumberList:
                         fileNumberListProcess.append(fileNumber)
-                    if process == "BParkingDataRun20181A":
+                    if process == "Data":
                         continue
                     numEventsTotal = numEventsTotal + df[(df.process==process) & (df.fileNumber==fileNumber)].numEventsPassed.iloc[0]
                 except:
@@ -123,20 +126,19 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
             fileNumberList.append(fileNumberListProcess)
 
     if (returnNumEventsTotal) & (not returnFileNumberList):
+        print("lenght of elements returned in fileNumberList")
+        print(numEventsList)
         return dfs, numEventsList
     elif returnFileNumberList:
+        print("lenght of elements returned in fileNumberList")
+        print([len(el) for el in fileNumberList])
         return dfs, numEventsList, fileNumberList
     else:
         return dfs
     
 
-def getPU_sfs(PV_npvs):
-    df_PU = pd.read_csv("/t3home/gcelotto/ggHbb/PU_reweighting/output/pu_sfs.csv")
-    indexes = np.digitize(PV_npvs, df_PU['bins_left'].values)
-    PU_SFs = df_PU['PU_SFs'][indexes-1].values
-    return PU_SFs
 
 def getXSectionBR():
-    xSectionGGH = 48.52 # pb
+    xSectionGGH = 48.61 # pb
     br = 0.5801
     return xSectionGGH*br
