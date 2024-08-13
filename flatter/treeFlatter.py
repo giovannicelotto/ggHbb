@@ -9,6 +9,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
     selected1 = 999
     selected2 = 999
     muonIdx = 999
+    muonIdx2 = 999
 # Jets With Muon is the list of jets with a muon that triggers inside their cone
     jetsWithMuon, muonIdxs = [], []
     for i in range(nJet): 
@@ -16,47 +17,57 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
             continue
         if (Jet_muonIdx1[i]>-1): #if there is a reco muon in the jet
             if (bool(Muon_isTriggering[Jet_muonIdx1[i]])):
-                jetsWithMuon.append(i)
-                muonIdxs.append(Jet_muonIdx1[i])
-                continue
+                if i not in jetsWithMuon:
+                    jetsWithMuon.append(i)
+                    muonIdxs.append(Jet_muonIdx1[i])
+                    continue
         if (Jet_muonIdx2[i]>-1):
             if (bool(Muon_isTriggering[Jet_muonIdx2[i]])):
-                jetsWithMuon.append(i)
-                muonIdxs.append(Jet_muonIdx2[i])
-                continue
+                if i not in jetsWithMuon:
+                    jetsWithMuon.append(i)
+                    muonIdxs.append(Jet_muonIdx2[i])
+                    continue
     assert len(muonIdxs)==len(jetsWithMuon)
 # Now loop over these jets as first element of the pair
-    
-    for i in jetsWithMuon:
+    # if two jets
+    if len(muonIdxs)>=2:
+        selected1=jetsWithMuon[0]
+        selected2=jetsWithMuon[1]
+        muonIdx=muonIdxs[0]
+        muonIdx2=muonIdxs[1]
+    elif len(muonIdxs)==0:
+        selected1=999
+        selected2=999
+        muonIdx=999
+        muonIdx2=999
+    elif len(muonIdxs)==1:
+        selected1 = jetsWithMuon[0]
+        muonIdx = muonIdxs[0]
         for j in range(0, jetsToCheck):
-            #print(i, j, Jet_eta[j])
-            if i==j:
+            if j==jetsWithMuon[0]:
                 continue
             if abs(Jet_eta[j])>2.5:
                 continue
-
-            currentScore = Jet_btagDeepFlavB[i] + Jet_btagDeepFlavB[j]
+            currentScore = Jet_btagDeepFlavB[j]
             if currentScore>score:
                 score=currentScore
-                if j not in jetsWithMuon:  # if i has the muon only. jet1 is the jet with the muon.
-                    selected1 = i
-                    selected2 = j
-                    muonIdx = muonIdxs[jetsWithMuon.index(i)]
-                elif (i in jetsWithMuon) & (j in jetsWithMuon):
-                    if muonIdxs[jetsWithMuon.index(i)] < muonIdxs[jetsWithMuon.index(j)]:
-                        selected1 = i
-                        selected2 = j
-                        muonIdx = muonIdxs[jetsWithMuon.index(i)]
-                    elif muonIdxs[jetsWithMuon.index(i)] > muonIdxs[jetsWithMuon.index(j)]:
-                        selected1 = j
-                        selected2 = i
-                        muonIdx = muonIdxs[jetsWithMuon.index(j)]
-                else:
-                    assert False
-    return selected1, selected2, muonIdx
+                selected2 = j
+                muonIdx2 = 999
+        if selected2 == 999: # case there are not 2 jets in the acceptance set also the first to 999 to say there is no pair chosen
+            selected1 = 999
+    else:
+        assert False
+    return selected1, selected2, muonIdx, muonIdx2
 
 
 def treeFlatten(fileName, maxEntries, maxJet, isMC):
+    maxEntries=int(maxEntries)
+    maxjet=int(maxJet)
+    isMC=int(isMC)
+    print("fileName", fileName)
+    print("maxEntries", maxEntries)
+    print("isMC", isMC)
+    print("maxJet", maxJet)
     '''Require one muon in the dijet. Choose dijets based on their bscore. save all the features of the event append them in a list'''
     f = uproot.open(fileName)
     tree = f['Events']
@@ -67,7 +78,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
     
 
     #open the PU SF
-    df_PU = pd.read_csv("/t3home/gcelotto/ggHbb/PU_reweighting/output/pu_sfs.csv")
+    #df_PU = pd.read_csv("/t3home/gcelotto/ggHbb/PU_reweighting/output/pu_sfs.csv")
     # open the file for the SF
     histPath = "/t3home/gcelotto/ggHbb/trgMu_scale_factors.root"
     f = ROOT.TFile(histPath, "READ")
@@ -91,6 +102,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
 
         Jet_area                    = branches["Jet_area"][ev]
         Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
+        Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
 
         Jet_qgl                     = branches["Jet_qgl"][ev]
         Jet_nMuons                  = branches["Jet_nMuons"][ev]
@@ -114,29 +126,39 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         Muon_pfRelIso03_all         = branches["Muon_pfRelIso03_all"][ev]
         Muon_ip3d                   = branches["Muon_ip3d"][ev]
         Muon_sip3d                  = branches["Muon_sip3d"][ev]
+        Muon_charge                 = branches["Muon_charge"][ev]
 
         Muon_tightId                = branches["Muon_tightId"][ev]
         Muon_tkIsoId                = branches["Muon_tkIsoId"][ev]
 
-        Muon_fired_HLT_Mu10p5_IP3p5 =   branches["Muon_fired_HLT_Mu10p5_IP3p5"][ev]
+        Muon_pfRelIso04_all         = branches["Muon_pfRelIso04_all"][ev]
+
+
         Muon_fired_HLT_Mu12_IP6 =       branches["Muon_fired_HLT_Mu12_IP6"][ev]
         Muon_fired_HLT_Mu7_IP4 =        branches["Muon_fired_HLT_Mu7_IP4"][ev]
         Muon_fired_HLT_Mu8_IP3 =        branches["Muon_fired_HLT_Mu8_IP3"][ev]
         Muon_fired_HLT_Mu8_IP5 =        branches["Muon_fired_HLT_Mu8_IP5"][ev]
         Muon_fired_HLT_Mu8_IP6 =        branches["Muon_fired_HLT_Mu8_IP6"][ev]
-        Muon_fired_HLT_Mu8p5_IP3p5 =    branches["Muon_fired_HLT_Mu8p5_IP3p5"][ev]
+
         Muon_fired_HLT_Mu9_IP4 =        branches["Muon_fired_HLT_Mu9_IP4"][ev]
         Muon_fired_HLT_Mu9_IP5 =        branches["Muon_fired_HLT_Mu9_IP5"][ev]
         Muon_fired_HLT_Mu9_IP6 =        branches["Muon_fired_HLT_Mu9_IP6"][ev]
+        nSV                    =        branches["nSV"][ev]
         PV_npvs                =        branches["PV_npvs"][ev]
+
+        if isMC!=0:
+            Pileup_nTrueInt         =       branches["Pileup_nTrueInt"][ev]
+        else:
+            Pileup_nTrueInt = 0
 
         jetsToCheck = np.min([maxJet, nJet])                                 # !!! max 4 jets to check   !!!
         jet1  = ROOT.TLorentzVector(0.,0.,0.,0.)
         jet2  = ROOT.TLorentzVector(0.,0.,0.,0.)
+        jet3  = ROOT.TLorentzVector(0.,0.,0.,0.)
         dijet = ROOT.TLorentzVector(0.,0.,0.,0.)
         jetsToCheck = np.min([maxJet, nJet])
         
-        selected1, selected2, muonIdx = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
+        selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
 
         if selected1==999:
             #print("skipped")
@@ -186,7 +208,40 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(Jet_btagDeepFlavB[selected2])
         features_.append(Jet_area[selected2])
         features_.append(Jet_qgl[selected2])
+        if len(Jet_pt)>2:
+            for i in range(len(Jet_pt)):
+                if ((i ==selected1) | (i==selected2)):
+                    continue
+                else:
+                    #first jet besides the tagged ones
+                    features_.append(Jet_pt[i])
+                    features_.append(Jet_eta[i])
+                    features_.append(Jet_phi[i])
+                    features_.append(Jet_mass[i])
+                    counterMuTight=0
+                    for muIdx in range(len(Muon_pt)):
+                        if (np.sqrt((Muon_eta[muIdx]-Jet_eta[i])**2 + (Muon_phi[muIdx]-Jet_phi[i])**2)<0.4) & (Muon_tightId[muIdx]):
+                            counterMuTight=counterMuTight+1
+                    features_.append(counterMuTight)   
+                    features_.append(Jet_btagDeepFlavB[i])
+                    features_.append(Jet_btagDeepFlavC[i])
+                    features_.append(Jet_qgl[i])
+                    jet3.SetPtEtaPhiM(Jet_pt[i],Jet_eta[i],Jet_phi[i],Jet_mass[i])
+                    features_.append(jet3.DeltaR(dijet))
+                    break
+        else:
+            features_.append(0)
+            features_.append(0)
+            features_.append(0)
+            features_.append(0)
+            features_.append(0)
+            features_.append(0)   
+            features_.append(0)
+            features_.append(0)
+            features_.append(0)
 
+
+# Dijet
         if dijet.Pt()<1e-5:
             assert False
         features_.append(np.float32(dijet.Pt()))
@@ -203,38 +258,41 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         tau = np.arctan(abs(deltaPhi)/abs(jet1.Eta() - jet2.Eta() + 0.0000001))
         features_.append(tau.astype(np.float32))
         features_.append(2*((jet1.Pz()*jet2.E() - jet2.Pz()*jet1.E())/(dijet.M()*np.sqrt(dijet.M()**2+dijet.Pt()**2))))
-
+        features_.append(dijet.Pt()/(jet1.Pt()+jet2.Pt()))
+# nJets
         features_.append(nJet)
         features_.append(int(np.sum(Jet_pt>20)))
         ht = 0
         for idx in range(nJet):
             ht = ht+Jet_pt[idx]
-
         features_.append(ht.astype(np.float32))
-        newMuonIdx = 999
-        whichJetHasLeadingTrigMuon = -1
+# SV
+        features_.append(nSV)
+# Trig Muon
+        #newMuonIdx = 999
+        #whichJetHasLeadingTrigMuon = -1
         # First jet
         
-        if Jet_muonIdx1[selected1]>-1:
-            if Muon_isTriggering[Jet_muonIdx1[selected1]]:
-                newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx1[selected1] else Jet_muonIdx1[selected1]
-                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx1[selected1] else selected1
-        if Jet_muonIdx2[selected1]>-1:
-            if Muon_isTriggering[Jet_muonIdx2[selected1]]:
-                newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx2[selected1] else Jet_muonIdx2[selected1]
-                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx2[selected1] else selected1
+        #if Jet_muonIdx1[selected1]>-1:
+        #    if Muon_isTriggering[Jet_muonIdx1[selected1]]:
+        #        newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx1[selected1] else Jet_muonIdx1[selected1]
+        #        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx1[selected1] else selected1
+        #if Jet_muonIdx2[selected1]>-1:
+        #    if Muon_isTriggering[Jet_muonIdx2[selected1]]:
+        #        newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx2[selected1] else Jet_muonIdx2[selected1]
+        #        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx2[selected1] else selected1
         # Second jet
-        if Jet_muonIdx1[selected2]>-1:
-            if Muon_isTriggering[Jet_muonIdx1[selected2]]:
-                newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx1[selected2] else Jet_muonIdx1[selected2]
-                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx1[selected2] else selected2
-        if Jet_muonIdx2[selected2]>-1:
-            if Muon_isTriggering[Jet_muonIdx2[selected2]]:
-                newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx2[selected2] else Jet_muonIdx2[selected2]
-                whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx2[selected2] else selected2
+        #if Jet_muonIdx1[selected2]>-1:
+        #    if Muon_isTriggering[Jet_muonIdx1[selected2]]:
+        #        newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx1[selected2] else Jet_muonIdx1[selected2]
+        #        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx1[selected2] else selected2
+        #if Jet_muonIdx2[selected2]>-1:
+        #    if Muon_isTriggering[Jet_muonIdx2[selected2]]:
+        #        newMuonIdx = newMuonIdx if newMuonIdx < Jet_muonIdx2[selected2] else Jet_muonIdx2[selected2]
+        #        whichJetHasLeadingTrigMuon = whichJetHasLeadingTrigMuon if newMuonIdx < Jet_muonIdx2[selected2] else selected2
 
-        assert whichJetHasLeadingTrigMuon == selected1
-        assert newMuonIdx == muonIdx
+        #assert whichJetHasLeadingTrigMuon == selected1
+        #assert newMuonIdx == muonIdx
         muon = ROOT.TLorentzVector(0., 0., 0., 0.)
         muon.SetPtEtaPhiM(Muon_pt[muonIdx], Muon_eta[muonIdx], Muon_phi[muonIdx], Muon_mass[muonIdx])
         features_.append(np.float32(muon.Pt()))
@@ -245,47 +303,70 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         features_.append(Muon_sip3d[muonIdx])
         features_.append(Muon_tightId[muonIdx])
         features_.append(Muon_pfRelIso03_all[muonIdx])
-        features_.append(Muon_tkIsoId[muonIdx])
-        features_.append(bool(Muon_fired_HLT_Mu10p5_IP3p5[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu12_IP6[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu7_IP4[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu8_IP3[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu8_IP5[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu8_IP6[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu8p5_IP3p5[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu9_IP4[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu9_IP5[muonIdx]))
-        features_.append(bool(Muon_fired_HLT_Mu9_IP6[muonIdx]))
+        features_.append(Muon_pfRelIso04_all[muonIdx])
+        features_.append(int(Muon_tkIsoId[muonIdx]))
+        if muonIdx2==999:
+            features_.append(False)
+            features_.append(Muon_charge[muonIdx])
+            features_.append(-1.1)
+            features_.append(-1.1)
+            features_.append(-1.1)
+        else:
+            muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
+            muon2.SetPtEtaPhiM(Muon_pt[muonIdx2], Muon_eta[muonIdx2], Muon_phi[muonIdx2], Muon_mass[muonIdx2])
+            features_.append(True)
+            features_.append(Muon_charge[muonIdx] + Muon_charge[muonIdx2])
+            features_.append(Muon_pt[muonIdx2])
+            features_.append(Muon_eta[muonIdx2])
+            features_.append((muon+muon2).M())
+# Trigger
+        features_.append(int(bool(Muon_fired_HLT_Mu12_IP6[muonIdx])))
+        features_.append(int(bool(Muon_fired_HLT_Mu7_IP4[muonIdx])))
+        features_.append(int(bool(Muon_fired_HLT_Mu8_IP3[muonIdx])))
+        features_.append(int(bool(Muon_fired_HLT_Mu8_IP5[muonIdx])))
+        features_.append(int(bool(Muon_fired_HLT_Mu8_IP6[muonIdx])))
+        features_.append(int(bool(Muon_fired_HLT_Mu9_IP4[muonIdx])))
+        features_.append(int(bool(Muon_fired_HLT_Mu9_IP5[muonIdx])))
+        features_.append(int(bool(Muon_fired_HLT_Mu9_IP6[muonIdx])))
+# PV
         features_.append(PV_npvs)
+        features_.append(Pileup_nTrueInt)
         #features_.append(Muon_vx[muonIdx])
         #features_.append(Muon_vy[muonIdx])
         #features_.append(Muon_vz[muonIdx])
-        if not isMC:
-            features_.append(1)
+# SF
+        if isMC==0:
             features_.append(1)
         else:
-            features_.append(np.float32(hist.GetBinContent(hist.GetXaxis().FindBin(Muon_pt[muonIdx]),hist.GetYaxis().FindBin(abs(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx])))))
-            
-            indexes = np.digitize(PV_npvs, df_PU['bins_left'].values)
-            PU_SFs = df_PU['PU_SFs'][indexes-1]
-            features_.append(PU_SFs)
+            xbin = hist.GetXaxis().FindBin(Muon_pt[muonIdx])
+            ybin = hist.GetYaxis().FindBin(abs(Muon_dxy[muonIdx]/Muon_dxyErr[muonIdx]))
+            # overflow gets the same triggerSF as the last bin
+            if xbin == hist.GetNbinsX()+1:
+                xbin=xbin-1
+            if ybin == hist.GetNbinsY()+1:
+                ybin=ybin-1
+            features_.append(np.float32(hist.GetBinContent(xbin,ybin)))
         assert Muon_isTriggering[muonIdx]
         file_.append(features_)
     
     return file_
-def main(fileName, process):
+def main(fileName, maxEntries, maxJet, isMC, process):
     print("FileName", fileName)
     print("Process", process)
-    fileData = treeFlatten(fileName=fileName, maxEntries=-1, maxJet=4, isMC=False if process=='BParkingDataRun20181A' else True)
+    assert maxJet==4
+    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, isMC=isMC)
     df=pd.DataFrame(fileData)
-    featureNames = ['jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_nMuons','jet1_nTightMuons',
-                    'jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl', 'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons', 'jet2_nTightMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB',
-                    'jet2_area', 'jet2_qgl', 'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
-                    'dijet_twist', 'dijet_cs', 'nJets', 'nJets_20GeV', 'ht', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_tkIsoId', 
-                    'Muon_fired_HLT_Mu10p5_IP3p5',  'Muon_fired_HLT_Mu12_IP6',  'Muon_fired_HLT_Mu7_IP4',   'Muon_fired_HLT_Mu8_IP3',  'Muon_fired_HLT_Mu8_IP5',    'Muon_fired_HLT_Mu8_IP6',
-                    'Muon_fired_HLT_Mu8p5_IP3p5',   'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',    'PV_npvs',
-                    #'Muon_vx', 'Muon_vy', 'Muon_vz',
-                    'sf', 'PU_sf']
+    featureNames = ['jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass',
+                    'jet1_nMuons','jet1_nTightMuons','jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_area', 'jet1_qgl',
+                    'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_nMuons', 'jet2_nTightMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB',
+                    'jet2_area', 'jet2_qgl', 
+                    'jet3_pt', 'jet3_eta', 'jet3_phi', 'jet3_mass', 'jet3_nTightMuons', 'jet3_btagDeepFlavB', 'jet3_btagDeepFlavC', 'jet3_qgl', 'dR_jet3_dijet',
+                    'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 'dijet_angVariable',
+                    'dijet_twist', 'dijet_cs', 'normalized_dijet_pt', 'nJets', 'nJets_20GeV', 'ht', 'nSV', 'muon_pt', 'muon_eta',  'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId', 'muon_pfRelIso03_all', 'muon_pfRelIso04_all', 'muon_tkIsoId', 
+                    'twoTrigMuons', 'sumMuonsCharge', 'muon2_pt', 'muon2_eta', 'dimuon_mass',
+                    'Muon_fired_HLT_Mu12_IP6',  'Muon_fired_HLT_Mu7_IP4',   'Muon_fired_HLT_Mu8_IP3',  'Muon_fired_HLT_Mu8_IP5',    'Muon_fired_HLT_Mu8_IP6',
+                    'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',    'PV_npvs', 'Pileup_nTrueInt',
+                    'sf']#, #'PU_sf']
     df.columns = featureNames
     try:
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
@@ -301,9 +382,10 @@ def main(fileName, process):
 
 
 if __name__ == "__main__":
-    fileName = sys.argv[1]
-    process = sys.argv[2] 
+    fileName    = sys.argv[1]
+    maxEntries  = int(sys.argv[2])
+    maxJet      = int(sys.argv[3])
+    isMC        = int(sys.argv[4] )
+    process     = sys.argv[5] 
     
-    main(fileName, process)
-
-
+    main(fileName, maxEntries, maxJet, isMC, process)
