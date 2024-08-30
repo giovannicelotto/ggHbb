@@ -16,3 +16,4 @@ __pycache__/
 *.root
 *.h5
 *.keras
+status*.txt
