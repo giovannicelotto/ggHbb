@@ -3,7 +3,15 @@ import uproot
 import awkward as ak
 import numpy as np
 import pandas as pd
-import glob
+import glob, json
+def load_mapping_dict(file_path):
+    with open(file_path, 'r') as file:
+        mapping_dict = json.load(file)
+        # Convert keys back to integers if needed (they should already be integers)
+        mapping_dict = {int(k): v for k, v in mapping_dict.items()}
+
+    return mapping_dict
+
 def cut(data, feature, min, max):
             newData = []
             for df in data:
@@ -14,9 +22,9 @@ def cut(data, feature, min, max):
                 newData.append(df)
             return newData
 def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, columns=None, returnNumEventsTotal=False):
-
+    
     signalFileNames = glob.glob(signalPath+"/*.parquet", recursive=True)
-    realDataFileNames = glob.glob(realDataPath+"/*.parquet", recursive=True)
+    realDataFileNames = glob.glob(realDataPath+"/*.parquet", recursive=False)
     signalFileNames = signalFileNames[:nSignalFiles] if nSignalFiles!=-1 else signalFileNames
     realDataFileNames = realDataFileNames[:nRealDataFiles] if nRealDataFiles!=-1 else realDataFileNames
 
@@ -45,10 +53,13 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
     nMC = how many MC files load
     columns = which columns to read
 
-    return
+    returnf
     dfs
     numEventsTotal = array of sum num events generated
     '''
+    if 'Pileup_nTrueInt' not in columns:
+        columns = list(columns)
+        columns.append('Pileup_nTrueInt')
     dfs = []
     numEventsList = []
     if returnFileNumberList:
@@ -56,7 +67,8 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
     fileNamesSelected=[]
     for path in paths: 
         # loop over processes
-        fileNames = glob.glob(path+"/*.parquet", recursive=True)
+        print("PATH : ", path)
+        fileNames = glob.glob(os.path.join(path, '**', '*.parquet'), recursive=True)
 
         #if selectFileNumberList is not None then keep only strings where there is a match (want keep only files when i have predictions)
         if selectFileNumberList is not None:
@@ -95,7 +107,7 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
     #return dfs
         if returnNumEventsTotal:
             numEventsTotal=0
-            df = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Aug.csv")
+            df = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Sep.csv")
             for fileName in fileNames:
                 filename = os.path.splitext(os.path.basename(fileName))[0]
                 try:
@@ -107,7 +119,7 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
                         continue
                     numEventsTotal = numEventsTotal + df[(df.process==process) & (df.fileNumber==fileNumber)].numEventsPassed.iloc[0]
                 except:
-                    process = '_'.join(filename.split('_')[:2])  # split the process and the fileNumber and keep the process only which is GluGluHToBB in this case
+                    process = '_'.join(filename.split('_')[:-1])  # split the process and the fileNumber and keep the process only which is GluGluHToBB in this case
                     fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1))
                     #print(process, fileNumber)
                     if returnFileNumberList and fileNumberListProcess[-1]!=fileNumber:
@@ -124,6 +136,12 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
             numEventsList.append(numEventsTotal)
         if returnFileNumberList:
             fileNumberList.append(fileNumberListProcess)
+    PU_map = load_mapping_dict('/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData/PU_PVtoPUSF.json')
+    for df in dfs:
+        #print(df['Pileup_nTrueInt'])
+        df['PU_SF'] = df['Pileup_nTrueInt'].apply(int).map(PU_map)
+        df.loc[df['Pileup_nTrueInt'] > 98, 'PU_SF'] = 0
+    
 
     if (returnNumEventsTotal) & (not returnFileNumberList):
         print("lenght of elements returned in fileNumberList")
