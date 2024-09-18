@@ -48,7 +48,7 @@ def main(isMC, nFiles, maxEntries, maxJet):
             #pass
         print(process, fileNumber, str(isMC))
         print(flatPath)
-        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 20), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(isMC), process, str(fileNumber), flatPath])
+        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 40), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(isMC), process, str(fileNumber), flatPath])
         doneFiles = doneFiles+1
     return 
 
