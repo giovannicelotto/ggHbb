@@ -1,7 +1,4 @@
-import sys, os, re
-import uproot
-import awkward as ak
-import numpy as np
+import os, re
 import pandas as pd
 import glob, json
 def load_mapping_dict(file_path):
