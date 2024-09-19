@@ -1,7 +1,7 @@
 def getParams():
     hp = {
-    'epochs'            : 10,
-    'patienceES'        : 30,
+    'epochs'            : 3800,
+    'patienceES'        : 100,
     'validation_split'  : 0.2,
     'test_split'        : 0.2,
     'learning_rate'     : 5*1e-5,

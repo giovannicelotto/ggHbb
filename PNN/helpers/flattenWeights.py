@@ -51,4 +51,11 @@ def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, outName):
     ax.set_xlim(40, 300)
     fig.savefig(outName)
 
-    return rWtrain_QCD, rWtrain_H, rWtest_QCD, rWtest_H
+
+    rWtrain = Wtrain.copy()
+    rWtest = Wtest.copy()
+    rWtrain[Ytrain==0] = rWtrain_QCD
+    rWtrain[Ytrain==1] = rWtrain_H
+    rWtest[Ytest==0] = rWtest_QCD
+    rWtest[Ytest==1] = rWtest_H
+    return rWtrain, rWtest

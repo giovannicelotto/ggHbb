@@ -1,5 +1,5 @@
 import numpy as np
-def getFeatures(inFolder):
+def getFeatures(outFolder):
     featuresForTraining=[
        #'jet1_pt',
         'jet1_eta',
@@ -58,5 +58,6 @@ def getFeatures(inFolder):
     'dijet_cs', 'normalized_dijet_pt',
 
     'sf']
-    np.save(inFolder+"/featuresForTraining.npy", featuresForTraining)
+    if outFolder is not None:
+      np.save(outFolder+"/model/featuresForTraining.npy", featuresForTraining)
     return featuresForTraining, columnsToRead

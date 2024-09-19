@@ -1,8 +1,8 @@
 import os 
 
 def getInfolderOutfolder():
-    outFolder = "/t3home/gcelotto/ggHbb/PNN/results"
-    inFolder = "/t3home/gcelotto/ggHbb/PNN/input/"
+    outFolder   = "/t3home/gcelotto/ggHbb/PNN/results/basicFeatures"
+    inFolder    = "/t3home/gcelotto/ggHbb/PNN/input"
 
     # define suffix = inclusive or other
     if not os.path.exists(inFolder):
