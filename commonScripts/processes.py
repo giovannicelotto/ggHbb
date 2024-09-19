@@ -1,10 +1,11 @@
 import pandas as pd
 def getProcessesDataFrame():
     nanoPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH"
+    nanoRatramon = "/pnfs/psi.ch/cms/trivcat/store/user/ratramon"
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     processes = {
         'Data':                             [nanoPathCommon + "/Data1A2024Mar05",                                                                                       flatPathCommon + "/Data1A"    ,                   -1],         # 0              
-        'GluGluHToBB':                      [nanoPathCommon + "/GluGluHToBB2024Mar05",                                                                                  flatPathCommon + "/GluGluHToBB"    ,             30.52],       # 1     
+        'GluGluHToBB':                      [nanoPathCommon + "/GluGluHToBB2024Mar05",                                                                                  flatPathCommon + "/GluGluHToBB"    ,             48.61*0.58],       # 1     
         'EWKZJets':                         [nanoPathCommon + "/EWKZJets2024Mar15",                                                                                     flatPathCommon + "/EWKZJets",                      9.8],       # 2     
         'WW':                               [nanoPathCommon + "/diboson2024Apr01/WW_TuneCP5_13TeV-pythia8",                                                             flatPathCommon + "/diboson/WW",                   75.8],       # 3     
         'WZ':                               [nanoPathCommon + "/diboson2024Apr01/WZ_TuneCP5_13TeV-pythia8",                                                             flatPathCommon + "/diboson/WZ",                   27.6],       # 4     
@@ -42,6 +43,20 @@ def getProcessesDataFrame():
         'QCD_MuEnriched_Pt-20To30':         [nanoPathCommon + "/QCD_MuEnriched2024Apr01/QCD_Pt-20To30*",                                                                flatPathCommon + "/QCD_Pt20To30"                , 2527000.0],  # 34        
         'QCD_MuEnriched_Pt-15To20':         [nanoPathCommon + "/QCD_MuEnriched2024Apr01/QCD_Pt-15To20*",                                                                flatPathCommon + "/QCD_Pt15To20"                , 2800000.0	], # 35            
         'ZJetsToQQ_100to200'      :         [nanoPathCommon + "/ZJets2024Apr01/ZJetsToQQ_HT-100to200",                                                                  flatPathCommon + "/ZJets/ZJetsToQQ_HT-100to200" , 5.261e+03],     # 36    
+        'VBFHToBB'      :                   [nanoPathCommon + "/VBFHToBB2024Aug05/",                                                                                    flatPathCommon + "/VBFHToBB" , 3.766*0.58],     # 37    
+        'GluGluHToBBMINLO'          :       [nanoPathCommon + "/MINLOGluGluHToBB/",                                                                                      flatPathCommon + "/MINLOGluGluHToBB", 48.61*0.58], # 38
+        'Data_2A':                          [nanoPathCommon + "/Data2A2024Sep11",                                                                                       flatPathCommon + "/Data2A"    ,                   -1],         # 39              
+        'GluGluH_M50_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_50/RunIISummer20UL18_NANO/240815_194300/0000",                                flatPathCommon + "/GluGluH_M50_ToBB", 48.61*0.58],           # 40
+        'GluGluH_M70_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_70/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M70_ToBB", 48.61*0.58],           # 41
+        'GluGluH_M100_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_100/RunIISummer20UL18_NANO/240815_194320/0000",                                flatPathCommon + "/GluGluH_M100_ToBB", 48.61*0.58],        # 42
+        'GluGluH_M200_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_200/RunIISummer20UL18_NANO/240815_194329/0000",                                flatPathCommon + "/GluGluH_M200_ToBB", 48.61*0.58],        # 43
+        'GluGluH_M300_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_300/RunIISummer20UL18_NANO/240815_194338/0000",                                flatPathCommon + "/GluGluH_M300_ToBB", 48.61*0.58],        # 44
+        #'GluGluH_M400_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_400/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M400_ToBB", 48.61*0.58],
+        #'GluGluH_M500_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_500/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M500_ToBB", 48.61*0.58],
+        #'GluGluH_M600_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_600/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M600_ToBB", 48.61*0.58],
+        #'GluGluH_M800_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_800/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M800_ToBB", 48.61*0.58],
+        #'GluGluH_M1000_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_1000/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M1000_ToBB", 48.61*0.58],
+        
 
     }
 
