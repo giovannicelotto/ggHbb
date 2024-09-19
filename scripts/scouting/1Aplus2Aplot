@@ -1,0 +1,20 @@
+# %%
+import pandas as pd
+import matplotlib.pyplot as plt
+import glob
+import numpy as np
+# %%
+folder1A = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A"
+folder2A = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data2A"
+fileNames1A = glob.glob(folder1A+"/**/*.parquet", recursive=True)
+fileNames2A = glob.glob(folder2A+"/*.parquet")
+
+fileNames = fileNames1A + fileNames2A
+# %%
+df = pd.read_parquet(fileNames, columns=['dijet_mass', 'jet2_btagDeepFlavB'])
+# %%
+fig, ax = plt.subplots(1,1)
+bins = np.linspace(0, 200, 101)
+m = df.jet2_btagDeepFlavB > 0.99
+ax.hist(df.dijet_mass[m], bins=bins)
+# %%
