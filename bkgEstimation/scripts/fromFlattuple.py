@@ -83,13 +83,13 @@ def closure(nFilesData, nFilesMC):
                 if add==0:
                     print(process, fileNumber, add)
                 mini=mini+ add
-        columns=['sf', 'muon_pt', 'muon_eta', 'muon_dxySig', 'Pileup_nTrueInt','PV_npvs']
+        columns=['sf', 'jet1_pt','jet2_pt','muon_pt', 'muon_eta', 'muon_dxySig', 'Pileup_nTrueInt','PV_npvs']
         if process=='Data':
             columns.remove('Pileup_nTrueInt') 
         dfProcess=pd.read_parquet(fileNames, filters=[('muon_pt', '>=', 7)])
 
 
-        dfProcess=dfProcess[(dfProcess.muon_pt>7) & (abs(dfProcess.muon_eta)<1.5)]
+        dfProcess=dfProcess[(dfProcess.jet1_pt>20) & (dfProcess.jet2_pt>20) & (dfProcess.muon_pt>7) & (abs(dfProcess.muon_eta)<1.5)]
         if process!='Data':
             #print(dfProcess.loc[dfProcess.Pileup_nTrueInt.isna()])
             print("="*25)
