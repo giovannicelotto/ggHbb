@@ -4,7 +4,7 @@ import sys
 import os, re
 import glob
 import pandas as pd
-import dask.dataframe as dd
+#import dask.dataframe as dd
 def loadParquet(signalPath, realDataPath, nSignalFiles=-1, nRealDataFiles=1, columns=None, returnNumEventsTotal=False):
 
     signalFileNames = glob.glob(signalPath+"/*.parquet", recursive=True)
@@ -188,8 +188,16 @@ def getBins(dictFormat=False):
             'muon_tightId': [2.0, -0.5, 1.5], 'muon_pfRelIso03_all': [10.0, 0, 4], 
             'muon_pfRelIso04_all':[10,0,4],
             'muon_tkIsoId': [3.0, -0.5, 2.5], 
+            'muon2_pt': [50.0, 0.0, 40.0], 'muon2_eta': [50.0, -2.5, 2.5],
+            'muon2_dxySig': [50.0, -35.0, 35.0], 'muon2_dzSig': [50.0, -50.0, 50.0], 'muon2_IP3d': [50.0, 0.0, 0.4], 'muon2_sIP3d': [50.0, 0.0, 100.0],
+            'muon2_tightId': [2.0, -0.5, 1.5], 'muon2_pfRelIso03_all': [10.0, 0, 4], 
+            'muon2_pfRelIso04_all':[10,0,4],
+            'muon2_tkIsoId': [3.0, -0.5, 2.5],
+            'dimuon_mass': [21, 0, 30],
             #'Muon_vx': [20, -0.50, .50],
             #'Muon_vy': [20, -0.50, .50],
+            'nSV':[8,-.5, 7.5],
+            'muon2_charge':[10, -1, 2],
             'Muon_fired_HLT_Mu12_IP6':[2,-.5,1.5],
             'Muon_fired_HLT_Mu8_IP3':[2,-.5,1.5],
             'Muon_fired_HLT_Mu8_IP5':[2,-.5,1.5],
@@ -200,7 +208,8 @@ def getBins(dictFormat=False):
             'Muon_fired_HLT_Mu7_IP4':[2,-.5,1.5],
             'PV_npvs':[50,0,49],
             'Pileup_nTrueInt': [20, -0.5, 40.5],
-            'sf': [50.0, 0.0, 1.0]}
+            'sf': [50.0, 0.0, 1.0],
+            'PU_SF':[21, 0, 2]}
         return pd.DataFrame(binsDict)
     else:
         return bins.copy()
