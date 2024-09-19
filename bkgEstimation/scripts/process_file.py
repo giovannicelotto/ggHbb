@@ -7,7 +7,8 @@ from helpers import acquire_lock, release_lock
 from functions import getPU_sfs
 
 def process_file(fileName, process):
-    bins= np.load("/t3home/gcelotto/ggHbb/bkgEstimation/output/binsForHT.npy")
+    outFolder="/t3home/gcelotto/ggHbb/bkgEstimation/output"
+    bins= np.load(outFolder+"/binsForHT.npy")
     f = uproot.open(fileName)
     tree = f['Events']
     branches = tree.arrays()
@@ -65,22 +66,22 @@ def process_file(fileName, process):
 
     if process != 'Data':
         lumiBlocks = f['LuminosityBlocks']
-        numEventsTotal = np.sum(lumiBlocks.arrays()['GenFilter_numEventsPassed'])
+        numEventsTotal = np.sum(lumiBlocks.arrays()['GenFilter_numEventsTotal'])
         
         print("Acquiring lock 1... for ", process)
-        lock_fd = acquire_lock("/t3home/gcelotto/ggHbb/bkgEstimation/output/lockFile1_%s.lock"%process)
-        numOld = np.load("/t3home/gcelotto/ggHbb/bkgEstimation/output/mini_%s.npy" % process)
+        lock_fd = acquire_lock(outFolder+"/lockFile1_%s.lock"%process)
+        numOld = np.load(outFolder+"/mini_%s.npy" % process)
         numUpdate = numOld + numEventsTotal
-        np.save("/t3home/gcelotto/ggHbb/bkgEstimation/output/mini_%s.npy" % process, numUpdate)
+        np.save(outFolder+"/mini_%s.npy" % process, numUpdate)
         release_lock(lock_fd)
         
-    lock_fd = acquire_lock("/t3home/gcelotto/ggHbb/bkgEstimation/output/lockFile2_%s.lock"%process)
+    lock_fd = acquire_lock(outFolder+"/lockFile2_%s.lock"%process)
     counts = np.histogram(np.clip(ht, bins[0], bins[-1]), bins=bins, weights=weights if process!='Data' else np.ones(len(ht)))[0]
     print(process, counts)
-    countsOld = np.load("/t3home/gcelotto/ggHbb/bkgEstimation/output/counts_%s.npy"%process)
+    countsOld = np.load(outFolder+"/counts_%s.npy"%process)
     countsNew = countsOld + counts
     print(countsNew)
-    np.save("/t3home/gcelotto/ggHbb/bkgEstimation/output/counts_%s.npy"%process, countsNew)
+    np.save(outFolder+"/counts_%s.npy"%process, countsNew)
            
     release_lock(lock_fd)
     return 
