@@ -37,6 +37,8 @@ ptClass = ptClass in dijetPT:
 suffixWeight = "_medium"
 modelName = "model%s.h5"%suffixWeight
 def doPlots(Xtrain, Ytrain, YPredTrain, Wtrain, Xtest, Ytest, YPredTest, Wtest, outFolder, logging):
+
+# ROC
     fig, ax = plt.subplots(1, 1)
     thresholds = np.linspace(0, 1, 1000)
     labels = ['Data', 'ggH', 'ZJets']
@@ -298,7 +300,7 @@ def loadData(pTmin, pTmax, suffix, outFolder, hp, logging):
 
     dfs, numEventsList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=True)
         
-    dfs = preprocessMultiClass(dfs, pTmin, pTmax, suffix)
+    dfs = preprocessMultiClass(dfs, leptonClass=None, pTmin=pTmin, pTmax=pTmax, suffix=suffix)
 
     nData, nHiggs, nZ = int(1e6), int(4e5) , int(2e5)
     for idx, df in enumerate(dfs):
