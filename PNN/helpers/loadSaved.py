@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-def loadSaved(inFolder):
+def loadSaved(inFolder, rWeights=False):
     Xtrain      = pd.read_parquet(inFolder + "/XTrain.parquet")
     Xtest       = pd.read_parquet(inFolder + "/XTest.parquet")
     Ytrain      = np.load(inFolder + "/YTrain.npy")
@@ -10,4 +10,9 @@ def loadSaved(inFolder):
     YPredTrain  = np.load(inFolder + "/YPredTrain.npy")    
     YPredTest   = np.load(inFolder + "/YPredTest.npy")    
 
-    return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest
+    if rWeights:
+        rWtrain  = np.load(inFolder + "/rWTrain.npy")
+        rWtest   = np.load(inFolder + "/rWTest.npy")
+        return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, rWtrain, rWtest
+    else:
+        return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest

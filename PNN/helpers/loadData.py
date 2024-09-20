@@ -27,7 +27,7 @@ def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
     dfs[0]['massHypo'] = np.random.choice(massHypothesis+[125], size=len(dfs[0]))
     dfs[1]['massHypo'] = 125
     for idx in range(len(dfs[2:])):
-        dfs[idx+2]['massHypo'] = massHypothesis[2]
+        dfs[idx+2]['massHypo'] = massHypothesis[idx]
     
 
 

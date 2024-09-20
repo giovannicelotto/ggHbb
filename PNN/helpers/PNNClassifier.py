@@ -10,7 +10,7 @@ from doPlots import doPlotLoss
 def PNNClassifier(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, rWtrain, rWtest, featuresForTraining, hp, inFolder, outFolder):
     
     #featuresForTraining, columnsToRead = getFeatures(inFolder)
-    featuresForTraining = featuresForTraining + ['massHypo']
+    
     modelName = "myModel.h5"
 
 # get the model, optimizer, compile it and fit to data
