@@ -95,7 +95,7 @@ def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=F
             fileNames = fileNames[:nMC] if nMC!=-1 else fileNames
 
         print("%d files for process %d" %(len(fileNames), paths.index(path)))
-        print("\n")
+        #print("\n")
         
         df = pd.read_parquet(fileNames, columns=columns)
         dfs.append(df)

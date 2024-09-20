@@ -16,8 +16,8 @@ def getProcessesDataFrame():
         'ST_t-channel-top':                 [nanoPathCommon + "/singleTop2024Apr01/ST_t-channel_top_4f_InclusiveDecays_TuneCP5_13TeV-powheg-madspin-pythia8",           flatPathCommon + "/singleTop/t-channel_top"     , 115.3],      # 9     
         'ST_tW-antitop':                    [nanoPathCommon + "/singleTop2024Apr01/ST_tW_antitop_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",                      flatPathCommon + "/singleTop/tW-channel_antitop", 34.97],      # 10     
         'ST_tW-top':                        [nanoPathCommon + "/singleTop2024Apr01/ST_tW_top_5f_inclusiveDecays_TuneCP5_13TeV-powheg-pythia8",                          flatPathCommon + "/singleTop/tW-channel_top"    , 34.91	],     # 11        
-        # ttbar cross section: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/TtbarNNLO
-        # w boson decay modes : https://pdg.lbl.gov/2023/listings/rpp2023-list-w-boson.pdf
+         #ttbar cross section: https://twiki.cern.ch/twiki/bin/view/LHCPhysics/TtbarNNLO
+         #w boson decay modes : https://pdg.lbl.gov/2023/listings/rpp2023-list-w-boson.pdf
         'TTTo2L2Nu':                        [nanoPathCommon + "/ttbar2024Apr01/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8",                                                 flatPathCommon + "/ttbar/ttbar2L2Nu"            , 833.9*(0.1086*3)**2],   # 12        
         'TTToHadronic':                     [nanoPathCommon + "/ttbar2024Apr01/TTToHadronic_TuneCP5_13TeV-powheg-pythia8",                                              flatPathCommon + "/ttbar/ttbarHadronic"         , 833.9*(0.6741)**2],  # 13        
         'TTToSemiLeptonic':                 [nanoPathCommon + "/TTToSemiLeptonic2024Apr11/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/crab_TTToSemiLeptonic/240411_121925",                                          flatPathCommon + "/ttbar/ttbarSemiLeptonic"     , 2*833.9*0.6741*0.1086*3],   # 14        
@@ -51,11 +51,11 @@ def getProcessesDataFrame():
         'GluGluH_M100_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_100/RunIISummer20UL18_NANO/240815_194320/0000",                                flatPathCommon + "/GluGluH_M100_ToBB", 48.61*0.58],        # 42
         'GluGluH_M200_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_200/RunIISummer20UL18_NANO/240815_194329/0000",                                flatPathCommon + "/GluGluH_M200_ToBB", 48.61*0.58],        # 43
         'GluGluH_M300_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_300/RunIISummer20UL18_NANO/240815_194338/0000",                                flatPathCommon + "/GluGluH_M300_ToBB", 48.61*0.58],        # 44
-        #'GluGluH_M400_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_400/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M400_ToBB", 48.61*0.58],
-        #'GluGluH_M500_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_500/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M500_ToBB", 48.61*0.58],
-        #'GluGluH_M600_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_600/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M600_ToBB", 48.61*0.58],
-        #'GluGluH_M800_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_800/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M800_ToBB", 48.61*0.58],
-        #'GluGluH_M1000_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_1000/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M1000_ToBB", 48.61*0.58],
+        'GluGluH_M400_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_400/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M400_ToBB", 48.61*0.58],
+        'GluGluH_M500_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_500/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M500_ToBB", 48.61*0.58],
+        'GluGluH_M600_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_600/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M600_ToBB", 48.61*0.58],
+        'GluGluH_M800_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_800/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M800_ToBB", 48.61*0.58],
+        'GluGluH_M1000_ToBB':                    [nanoRatramon  + "/GluGluSpin0ToBBbar_W_1p0_M_1000/RunIISummer20UL18_NANO/240815_194311/0000",                                flatPathCommon + "/GluGluH_M1000_ToBB", 48.61*0.58],
         
 
     }

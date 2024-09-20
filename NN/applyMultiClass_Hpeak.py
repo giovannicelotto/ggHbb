@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from bayes_opt import BayesianOptimization
 import mplhep as hep
 hep.style.use("CMS")
-import sys
+import sys, os
 import math
 def splitPtFunc(dfs, minPt, maxPt):
         ' if splitPt is true this func is used to cut all the dfs in that class of pt'
@@ -30,16 +30,20 @@ def splitPtFunc(dfs, minPt, maxPt):
 
 def getPredictions(fileNumberList, pathToPredictions, splitPt, masks, isMC, pTClass):
         '''
-        Open for each sample the corresponding NN predictions previously copmuted and saved somewhere in pathToPredictions.
+        Open for each sample the corresponding NN predictions previously computed and saved somewhere in pathToPredictions.
         If splitPt is true also apply the same mask used for the dfs
         '''
         YPredictions = []
         for idx, fileNumberListProcess in enumerate(fileNumberList):
             fileNames=[]
             for fileNumber in fileNumberListProcess:  #data of bparking1A
-
-                fileNames.append(pathToPredictions+"/yMC%d_fn%d_pt%d.parquet"%(int(isMC[idx]), int(fileNumber), int(pTClass)))
-
+                #print(fileNumber)
+                if os.path.exists(pathToPredictions+"/yMC%d_fn%d_pt%d.parquet"%(int(isMC[idx]), int(fileNumber), int(pTClass))):
+                    fileNames.append(pathToPredictions+"/yMC%d_fn%d_pt%d.parquet"%(int(isMC[idx]), int(fileNumber), int(pTClass)))
+                else:
+                    print("FileNotFound")
+                    pass
+                    #print("File not found. skipping")
             YPred = pd.read_parquet(fileNames)
             if splitPt:
                 print(len(masks[idx]), len(YPred))
@@ -47,15 +51,7 @@ def getPredictions(fileNumberList, pathToPredictions, splitPt, masks, isMC, pTCl
         
             YPred = np.array(YPred)
             YPredictions.append(YPred)
-        #fileNames=[]
-        #for fileNumber in fileNumberList[1]:  #data of ggH
-        #    fileNames.append(pathToPredictions+"/y1_%d.parquet"%(int(fileNumber)))
-        #YPred_H = pd.read_parquet(fileNames)
-        #if splitPt:
-        #    YPred_H=YPred_H[masks[1]]
-        #del fileNames
-        
-        #YPred_H = np.array(YPred_H)
+
 
         return YPredictions
 
