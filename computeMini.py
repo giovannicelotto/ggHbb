@@ -57,7 +57,10 @@ def computeMini():
     miniDf = {'process' :   [],
               'fileNumber': [],
               'numEventsPassed':       []}
-    for (process, nanoPath, xsection) in zip(df.index, df.nanoPath, df.xsection):
+    for (process, nanoPath, xsection) in zip(df.process, df.nanoPath, df.xsection):
+        print(process)
+        if process=='Data':
+            continue
         nanoFileNames = glob.glob(nanoPath+"/**/*.root", recursive=True)
         print("Searching for", nanoPath+"/**/*.root ... %d files found"%len(nanoFileNames))
 
