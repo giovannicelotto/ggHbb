@@ -15,20 +15,21 @@ def doPlotLoss(fit, outName, earlyStop, patience):
     fig, ax = plt.subplots(1, 1)
     ax.plot(fit.history['loss'])
     ax.plot(fit.history['val_loss'])
-    ax.plot(fit.history['accuracy'])
-    ax.plot(fit.history['val_accuracy'])
+    #ax.plot(fit.history['accuracy'])
+    #ax.plot(fit.history['val_accuracy'])
     ax.set_title('Model Loss')
     ax.set_ylabel('Loss')
     ax.set_xlabel('Epoch')
     
     # plt.yscale('log')
-    #plt.ylim(ymax = max(min(fit.history['loss']), min(fit.history['val_loss']))*1.4, ymin = min(min(fit.history['loss']),min(fit.history['val_loss']))*0.9)
+    ax.set_ylim(ymax = max(min(fit.history['loss']), min(fit.history['val_loss']))*1.4, ymin = min(min(fit.history['loss']),min(fit.history['val_loss']))*0.9)
     #ax.set_ylim(ymin= min(min(fit.history['loss']),min(fit.history['val_loss']))*0.9, ymax=max(min(fit.history['accuracy']), min(fit.history['val_accuracy']))*1.4)
-    ax.set_ylim(0, 1)
+    #ax.set_ylim(0, 1)
     ymax = 1#min(fit.history['val_loss'])
     ymin = 0#plt.ylim()[0]
     plt.arrow(x=earlyStop.stopped_epoch-patience+1, y=ymax, dx=0, dy=ymin-ymax, length_includes_head=True, head_length=0.033*(ymin-ymax))
-    plt.legend(['Train Loss', 'Val Loss', 'Train Accuracy', 'Val Accuracy'], loc='upper right')
+    #plt.legend(['Train Loss', 'Val Loss', 'Train Accuracy', 'Val Accuracy'], loc='upper right')
+    plt.legend(['Train Loss', 'Val Loss'], loc='upper right')
     plt.savefig(outName)
     plt.cla()
     print("Saved loss function ", outName)
@@ -165,10 +166,43 @@ def getShap(Xtest, model, outName, class_names=['NN output']):
     shap_values = explainer.shap_values(np.array(Xtest), nsamples=1000)
         #Generate summary plot
     shap.initjs()
-    shap.summary_plot(shap_values, Xtest, plot_type="bar",
-                    feature_names=Xtest.columns,
-                    max_display=max_display,
-                    plot_size=[15.0,0.4*max_display+1.5],
-                    class_names=class_names,
-                    show=False)
+    shap.plots.bar(shap_values)
+    #shap.summary_plot(shap_values, Xtest, plot_type="bar",
+    #                feature_names=Xtest.columns,
+    #                max_display=max_display,
+    #                plot_size=[15.0,0.4*max_display+1.5],
+    #                class_names=class_names,
+    #                show=False)
+    plt.savefig(outName)
+
+def getShapNew(Xtest, model, outName, nFeatures, class_names=['NN output']):
+    featuresForTraining = Xtest.columns.values
+    explainer = shap.GradientExplainer(model=model, data=Xtest)
+
+    shap_values = explainer.shap_values(np.array(Xtest))
+    print(shap_values)
+    # get the contribution for each class by averaging over all the events
+    shap_values_average = abs(shap_values).mean(axis=0)
+
+    #find the leading features:
+    shap_values_average_sum = shap_values_average.sum(axis=1)
+    for idx, feature in enumerate(featuresForTraining):
+        print(feature, shap_values_average_sum[idx])
+    indices = np.argsort(shap_values_average_sum)[::-1]
+    ordered_featuresForTraining = np.array(featuresForTraining)[indices][:nFeatures]
+    orderd_shap_values_average = shap_values_average[indices][:nFeatures]
+
+    fig, ax =plt.subplots(1, 1, figsize=(10, 5), constrained_layout=True)
+    bins = np.arange(len(ordered_featuresForTraining)+1)
+
+
+
+    c0=ax.hist(bins[:-1],bins=bins, width=0.3,color='C0', weights=orderd_shap_values_average[:,0] ,label='Data')[0]
+    c1=ax.hist(bins[:-1],bins=bins, width=0.3,color='C1', weights=orderd_shap_values_average[:,1] ,label='Higgs', bottom=c0)[0]
+    c2=ax.hist(bins[:-1],bins=bins, width=0.3,color='C2', weights=orderd_shap_values_average[:,2] , label='Z',bottom=c0+c1)[0]
+    ax.set_xticks(np.arange(len(ordered_featuresForTraining)), labels=ordered_featuresForTraining)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+             rotation_mode="anchor")
+    ax.legend()
+    ax.set_ylabel("Mean(|SHAP|)")
     plt.savefig(outName)
