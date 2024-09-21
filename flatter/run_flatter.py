@@ -34,9 +34,10 @@ def main(isMC, nFiles, maxEntries, maxJet):
         if doneFiles==nFiles:
             break
         try:
+            print(nanoFileName)
             fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1))
         except:
-            sys.exit()
+            sys.exit("FileNumber not found")
 
         filePattern = flatPath+"/**/"+process+"_"+str(fileNumber)+".parquet"
         matching_files = glob.glob(filePattern, recursive=True)
