@@ -43,33 +43,42 @@ def roc(thresholds, signal_predictions, realData_predictions, signalTrain_predic
     tpr, tpr_train = [], []
     fpr, fpr_train = [], []
     for t in thresholds:
+        print(t)
         tpr.append(np.sum(signal_predictions > t)/len(signal_predictions))
         fpr.append(np.sum(realData_predictions > t)/len(realData_predictions))
-        tpr_train.append(np.sum(signalTrain_predictions > t)/len(signalTrain_predictions))
-        fpr_train.append(np.sum(realDataTrain_predictions > t)/len(realDataTrain_predictions))
+        if signalTrain_predictions is not None:
+            tpr_train.append(np.sum(signalTrain_predictions > t)/len(signalTrain_predictions))
+            fpr_train.append(np.sum(realDataTrain_predictions > t)/len(realDataTrain_predictions))
     tpr, fpr =np.array(tpr), np.array(fpr)
-    tpr_train, fpr_train =np.array(tpr_train), np.array(fpr_train)
     # auc
     auc = -simpson(tpr, fpr)
-    auc_train = -simpson(tpr_train, fpr_train)
+    if signalTrain_predictions is not None:
+        tpr_train, fpr_train =np.array(tpr_train), np.array(fpr_train)
+        auc_train = -simpson(tpr_train, fpr_train)
     print("AUC : ", auc)
 
 
     fig, ax = plt.subplots(1, 1)
+    print(np.max(fpr))
     ax.plot(fpr, tpr, marker='o', markersize=1, label='test')
-    ax.plot(fpr_train, tpr_train, marker='o', markersize=1, label='train')
+    if signalTrain_predictions is not None:
+        ax.plot(fpr_train, tpr_train, marker='o', markersize=1, label='train')
     ax.plot(thresholds, thresholds, linestyle='dotted', color='green')
     
     ax.grid(True)
     ax.set_ylabel("Signal Efficiency")
     ax.set_xlabel("Background Efficiency")
     ax.set_xlim(1e-5,1)
-    ax.set_ylim(1e-1,1)
+    ax.set_ylim(1e-5,1)
     ax.text(x=0.95, y=0.32, s="AUC Test : %.3f"%auc, ha='right')
-    ax.text(x=0.95, y=0.28, s="AUC Train: %.3f"%auc_train, ha='right')
+    if signalTrain_predictions is not None:
+        ax.text(x=0.95, y=0.28, s="AUC Train: %.3f"%auc_train, ha='right')
     ax.legend()
-    fig.savefig(outName, bbox_inches='tight')
     hep.cms.label()
+    if outName is not None:
+        fig.savefig(outName, bbox_inches='tight')
+    else:
+        plt.show()
     plt.close('all')
 
 def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName):
@@ -141,7 +150,8 @@ def ggHscoreScan(Xtest, Ytest, YPredTest, Wtest, outName):
     ax.legend()
     #print(Wtest[combinedMask][:10], Wtest[combinedMask].mean(), Wtest[combinedMask].std())
     ax.set_title("Dijet Mass : ggH score scan")
-    fig.savefig(outName, bbox_inches='tight')
+    if outName is not None:
+        fig.savefig(outName, bbox_inches='tight')
 
 
 def runPlots(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, featuresForTraining, model, inFolder, outFolder):
@@ -154,5 +164,5 @@ def runPlots(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest,
     NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output.png")
     ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, outName=outFolder + "/performance/ggHScoreScan.png")
     # scale
-    Xtest  = scale(Xtest, scalerName= inFolder + "/myScaler.pkl" ,fit=False)
+    Xtest  = scale(Xtest, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
     getShapNew(Xtest=Xtest[featuresForTraining].head(1000), model=model, outName=outFolder+'/performance/shap.png', nFeatures=15, class_names=['NN output'])
