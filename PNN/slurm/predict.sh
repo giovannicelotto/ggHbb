@@ -24,7 +24,6 @@ number=$(echo "$filename" | sed 's/.*_\([0-9]\+\)\.parquet/\1/')
 source_dir="/scratch"
 
 echo "Moving to "
-echo "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNN/yMC$isMC"_"fn$number".parquet"
-echo "yMC$isMC"_"fn$number".parquet"
-xrdcp -f -N "$source_dir/yMC$isMC"_"fn$number".parquet" "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNN/$process"/"yMC$isMC"_"fn$number".parquet"
-
+echo "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions/yMC"$isMC"_"fn$number".parquet"
+echo "yMC"$isMC"_fn"$number".parquet"
+xrdcp -f -N "$source_dir/yMC"$isMC"_fn"$number".parquet" "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions/"$process"/yMC"$isMC"_fn"$number".parquet"
