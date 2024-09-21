@@ -121,6 +121,8 @@ def saveMatchedJets(fileName, prefix, fileNumber):
         'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_btagDeepFlavB', 'jet2_qgl', 'jet2_nTrigMuons',
         'jet3_pt', 'jet3_eta', 'jet3_phi', 'jet3_mass', 'jet3_btagDeepFlavB', 'jet3_qgl', 'jet3_nTrigMuons',
         'jet4_pt', 'jet4_eta', 'jet4_phi', 'jet4_mass', 'jet4_btagDeepFlavB', 'jet4_qgl', 'jet4_nTrigMuons',
+        #'jet5_pt', 'jet5_eta', 'jet5_phi', 'jet5_mass', 'jet5_btagDeepFlavB', 'jet5_qgl', 'jet5_nTrigMuons',
+        #'jet6_pt', 'jet6_eta', 'jet6_phi', 'jet6_mass', 'jet6_btagDeepFlavB', 'jet6_qgl', 'jet6_nTrigMuons',
         'massHypo',
         'true1', 'true2'
     ])
