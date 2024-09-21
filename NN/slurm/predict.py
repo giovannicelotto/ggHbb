@@ -9,18 +9,20 @@ from helpersForNN import preprocessMultiClass, scale, unscale
 def predict(file_path, isMC, pTClass):
     featuresForTraining, columnsToRead = getFeatures()
     pTmin, pTmax, suffix = [[0,-1,'inclusive'], [0, 30, 'lowPt'], [30, 100, 'mediumPt'], [100, -1, 'highPt']][pTClass]
-    model = load_model("/t3home/gcelotto/ggHbb/NN/output/multiClass/%s/model/model.h5"%suffix)
+    model = load_model("/t3home/gcelotto/ggHbb/NN/output/multiClass/%s/_medium/model/model_medium.h5"%suffix)
 
     # Load data from file_path and preprocess it as needed
     Xtest = pd.read_parquet(file_path, columns=columnsToRead)
+    print(Xtest)
     data = [Xtest]
-    data = preprocessMultiClass(data, pTmin, pTmax, suffix)
+    print("This is suffix1", suffix)
+    data = preprocessMultiClass(data, leptonClass=None, pTmin=pTmin, pTmax=pTmax, suffix=suffix)
 
     # Perform prediction
     # scale
 
     print(data[0].jet1_pt.min())
-    data[0]  = scale(data[0], scalerName= "/t3home/gcelotto/ggHbb/NN/input/multiclass/%s/myScaler.pkl"%suffix ,fit=False)
+    data[0]  = scale(data[0], scalerName= "/t3home/gcelotto/ggHbb/NN/input/multiclass/%s/myScaler_medium.pkl"%suffix ,fit=False)
 
     print(data[0].columns)
     predictions = model.predict(data[0][featuresForTraining])
