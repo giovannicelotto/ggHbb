@@ -26,7 +26,9 @@ def saveMatchedJets(fileNames, path, prefix):
 
     for fileName in fileNames:
         fileData=[]        # to store mjj for the matched signals
-        outFolder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/gen4JetsFeatures"
+        outFolder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/gen4JetsFeatures/%s"%prefix
+        if not os.path.exists(outFolder):
+            os.makedirs(outFolder)
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
         if os.path.exists(outFolder +"/%s_%s.parquet"%(prefix, fileNumber)):
             # if you already saved this file skip
@@ -43,7 +45,7 @@ def saveMatchedJets(fileNames, path, prefix):
             features_ = []
             
             GenJet_partonFlavour        = branches["GenJet_partonFlavour"][ev]
-            GenJet_partonMotherIdx      = branches["GenJet_partonMotherIdx"][ev]
+            #GenJet_partonMotherIdx      = branches["GenJet_partonMotherIdx"][ev]
             GenJet_partonMotherPdgId    = branches["GenJet_partonMotherPdgId"][ev]
         # Reco Jets
             nJet                        = branches["nJet"][ev]
@@ -77,10 +79,10 @@ def saveMatchedJets(fileNames, path, prefix):
                 continue
             if len(GenJet_pt)<2:
                 continue
-            if prefix=='GluGluHToBB':
-                m = (Jet_genJetIdx>-1) & (abs(GenJet_partonFlavour[Jet_genJetIdx])==5) & (GenJet_partonMotherPdgId[Jet_genJetIdx]==25)
-            elif prefix=='EWKZJets':
-                m = (Jet_genJetIdx>-1) & (abs(GenJet_partonFlavour[Jet_genJetIdx])==5) & (GenJet_partonMotherPdgId[Jet_genJetIdx]==23)
+            #if prefix=='GluGluHToBB':
+            m = (Jet_genJetIdx>-1) & (abs(GenJet_partonFlavour[Jet_genJetIdx])==5) & (GenJet_partonMotherPdgId[Jet_genJetIdx]==25)
+            #elif prefix=='EWKZJets':
+            #    m = (Jet_genJetIdx>-1) & (abs(GenJet_partonFlavour[Jet_genJetIdx])==5) & (GenJet_partonMotherPdgId[Jet_genJetIdx]==23)
             if np.sum(m)==2:
                 pass
                 #matchedEvents=matchedEvents+1
@@ -136,17 +138,28 @@ def saveMatchedJets(fileNames, path, prefix):
     return 0
 
 
-def main(nFiles, particle):
+def main(nFiles, mass):
     df=pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
-    if particle == 'H':
-        path = df.nanoPath[1]#"/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Sep10/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/240910_141038/0000"
-        fileNames = glob.glob(path+'/**/GluGlu*.root', recursive=True)
-        print("Looking for files in ", path)
-        prefix="GluGluHToBB"
-    #elif particle=="Z":
-    #    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/EWKZJets2024Mar15/EWKZ2Jets_ZToQQ_TuneCP5_13TeV-madgraph-pythia8/crab_EWKZ2Jets_ZToQQ/240315_141326/0000"
-    #    fileNames = glob.glob(path+'/EWKZ*.root')
-    #    prefix="EWKZJets"
+    if mass == 125:
+        isMC = 1
+    elif mass ==50:
+        isMC = 40
+    elif mass ==70:
+        isMC = 41
+    elif mass ==100:
+        isMC = 42
+    elif mass ==200:
+        isMC = 43
+    elif mass ==300:
+        isMC = 43
+    
+
+    
+    
+    path = df.nanoPath[isMC]
+    fileNames = glob.glob(path+'/**/*.root', recursive=True)
+    prefix=str(mass)
+
     if (nFiles > len(fileNames)) | (nFiles == -1):
         nFiles=len(fileNames)
     else:
@@ -158,5 +171,5 @@ def main(nFiles, particle):
 
 if __name__ == "__main__":
     nFiles                   = int(sys.argv[1]) if len(sys.argv) > 1 else -1
-    particle                   = (sys.argv[2]).upper()    #(z for Z boson, h for Higgs boson)
-    main(nFiles=nFiles, particle=particle)
+    mass                   = int(sys.argv[2])    # mass of the particle GluGluSpin0_M<> # possible values 50, 70, 100, 125, 200, 300
+    main(nFiles=nFiles, mass=mass)
