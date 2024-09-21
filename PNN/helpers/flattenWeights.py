@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, outName):
+def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, inFolder, outName):
 # **********
 # TRAIN
 # **********
@@ -58,4 +58,6 @@ def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, outName):
     rWtrain[Ytrain==1] = rWtrain_H
     rWtest[Ytest==0] = rWtest_QCD
     rWtest[Ytest==1] = rWtest_H
+    np.save(inFolder + "/rWTrain.npy", rWtrain)
+    np.save(inFolder + "/rWTest.npy",  rWtest)
     return rWtrain, rWtest

@@ -1,7 +1,10 @@
 import os 
 
 def getInfolderOutfolder():
-    outFolder   = "/t3home/gcelotto/ggHbb/PNN/results/basicFeatures"
+    outFolder   = "/t3home/gcelotto/ggHbb/PNN/results/basicFeatures" 
+    # basicFeatures
+    # allFeatures
+    # prova
     inFolder    = "/t3home/gcelotto/ggHbb/PNN/input"
 
     # define suffix = inclusive or other

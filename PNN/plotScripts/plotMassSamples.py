@@ -19,11 +19,17 @@ for m in massHypo:
     dfs.append(df)
 # %%
 fig, ax = plt.subplots(1, 1)
-bins = np.linspace(0, 500, 101)
+bins = np.linspace(0, 400, 101)
 for df,m in zip(dfs,massHypo):
     c = np.histogram(df.dijet_mass, bins=bins, weights=df.sf)[0]
     c = c/np.sum(c)
-    ax.hist(bins[:-1], bins=bins, weights=c, histtype=u'step', label="M = %d GeV"%m)
+    if m==125:
+        ax.hist(bins[:-1], bins=bins, weights=c, histtype='bar', alpha=0.3, color='C3', label="M = %d GeV"%m)
+        ax.hist(bins[:-1], bins=bins, weights=c, histtype=u'step')
+    else:
+        ax.hist(bins[:-1], bins=bins, weights=c, histtype=u'step', label="M = %d GeV"%m)
+
+
 ax.legend()
 hep.cms.label()
 ax.set_ylabel("Normalized Events")
