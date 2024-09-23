@@ -20,7 +20,7 @@ def main(nFiles, mass):
     elif mass ==200:
         isMC = 43
     elif mass ==300:
-        isMC = 43
+        isMC = 44
     
 
     
@@ -34,7 +34,7 @@ def main(nFiles, mass):
         
 
     print("nFiles                : ", nFiles)
-
+    print("fileNames             : ", len(fileNames))
     doneFiles = 0
     for fileName in fileNames:
         if doneFiles==nFiles:
@@ -45,7 +45,7 @@ def main(nFiles, mass):
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
         if os.path.exists(finalDestinationFolder +"/%s_%s.parquet"%(prefix, fileNumber)):
             # if you already saved this file skip
-            print("%s_%s.parquet already present\n"%(prefix, fileNumber))
+            #print("%s_%s.parquet already present\n"%(prefix, fileNumber))
             continue
         subprocess.run(['sbatch', '-J', "M"+str(mass)+"_%d"%random.randint(1, 40), '/t3home/gcelotto/ggHbb/BDT/dataPreparing/job.sh', fileName, prefix, finalDestinationFolder, fileNumber])
         doneFiles = doneFiles+1
