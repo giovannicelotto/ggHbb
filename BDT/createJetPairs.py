@@ -2,8 +2,12 @@
 import glob
 import pandas as pd
 import sys
-# %%
+
 m = int(sys.argv[1])
+
+
+
+
 fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/gen4JetsFeatures/%d/*.parquet"%m)
 fileNames = fileNames[:20] if m==125 else fileNames
 df = pd.read_parquet(fileNames)
@@ -74,4 +78,7 @@ pairs_df.to_parquet("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/gen4JetsFeatur
 # View the new dataframe
 print(len(pairs_df), " events for M=%d"%m)
 
+'''
+m = int(sys.argv[1]) mass of the spin 0 particle [50, 70, 100, 200, 300]
 
+'''
