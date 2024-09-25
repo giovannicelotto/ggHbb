@@ -45,15 +45,6 @@ def create_jet_pairs(df):
                   'jet4_pt', 'jet4_eta', 'jet4_phi', 'jet4_mass', 'jet4_btagDeepFlavB', 'jet4_qgl', 'jet4_nTrigMuons']].tolist(),
              (1 if true_pair == [2, 3] else 0))
 
-             # missing 1,5
-             # missing 1,6
-             # missing 2,5
-             # missing 2,6
-             # missing 3,5
-             # missing 3,6
-             # missing 4,5
-             # missing 4,6
-             # missing 5,6
 
         ]
         

@@ -25,13 +25,13 @@ def bdtJetSelector(Jet_pt, Jet_eta, Jet_phi, Jet_mass, Jet_btagDeepFlavB, Jet_qg
 
     # Create a DataFrame from the combined rows
     pair_df = pd.DataFrame(rows)
-    pair_df['massHypo']=125 if isMC==1 else random.choice([50, 70, 100, 125, 200, 300])
+    #pair_df['massHypo']=125 if isMC==1 else random.choice([50, 70, 100, 125, 200, 300])
 
 
     feature_columns = [
         'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_btagDeepFlavB', 'jet1_qgl', 'jet1_nTrigMuons',
         'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_btagDeepFlavB', 'jet2_qgl', 'jet2_nTrigMuons',
-        'massHypo'
+        #'massHypo'
     ]
 
     # Extract the feature DataFrame
