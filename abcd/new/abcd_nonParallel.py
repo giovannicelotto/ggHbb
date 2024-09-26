@@ -316,7 +316,7 @@ for key in countsDict.keys():
     ax.hist(bins[:-1], bins=bins, weights=countsDict[key], bottom=cTot, label=key)
     cTot = cTot + countsDict[key]
 ax.legend()
-#ax.set_yscale('log')
+ax.set_yscale('log')
 # %%
 for letter in ['A', 'B', 'C', 'D']:
     print(np.sum(regions[letter]))
