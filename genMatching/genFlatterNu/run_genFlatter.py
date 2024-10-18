@@ -48,7 +48,7 @@ def main(nFiles):
         if matching_files:
 
             continue
-        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 500), '/t3home/gcelotto/ggHbb/genMatching/job.sh', nanoFileName, process, str(fileNumber), flatPath])
+        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 500), '/t3home/gcelotto/ggHbb/genMatching/genFlatterNu/job.sh', nanoFileName, process, str(fileNumber), flatPath])
         doneFiles = doneFiles+1
     return 
 

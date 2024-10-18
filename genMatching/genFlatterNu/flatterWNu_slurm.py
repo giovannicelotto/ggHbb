@@ -266,12 +266,42 @@ def main(nanoFileName, fileNumber, process):
             features_.append(dijet.Phi())
             features_.append(dijet.M())
         
-# genjet features
         else:
             for jdx in range(24):
                 features_.append(-1.)
         
-# gen matching and pt
+# GenJets
+        features_.append(GenJet_pt[Jet_genJetIdx[selected1]])
+        features_.append(GenJet_eta[Jet_genJetIdx[selected1]])
+        features_.append(GenJet_phi[Jet_genJetIdx[selected1]])
+        features_.append(GenJet_mass[Jet_genJetIdx[selected1]])
+        if selected2>-1:
+            features_.append(GenJet_pt[Jet_genJetIdx[selected2]])
+            features_.append(GenJet_eta[Jet_genJetIdx[selected2]])
+            features_.append(GenJet_phi[Jet_genJetIdx[selected2]])
+            features_.append(GenJet_mass[Jet_genJetIdx[selected2]])
+
+            genJet1 = ROOT.TLorentzVector(0.,0.,0.,0.)
+            genJet2 = ROOT.TLorentzVector(0.,0.,0.,0.)
+            genJet1.SetPtEtaPhiM(GenJet_pt[Jet_genJetIdx[selected1]],
+                                    GenJet_eta[Jet_genJetIdx[selected1]],
+                                    GenJet_phi[Jet_genJetIdx[selected1]],
+                                    GenJet_mass[Jet_genJetIdx[selected1]])
+            genJet2.SetPtEtaPhiM(GenJet_pt[Jet_genJetIdx[selected2]],
+                                    GenJet_eta[Jet_genJetIdx[selected2]],
+                                    GenJet_phi[Jet_genJetIdx[selected2]],
+                                    GenJet_mass[Jet_genJetIdx[selected2]])
+            genDijet = genJet1 + genJet2
+            features_.append(genDijet.M())
+        else:
+            features_.append(-1)
+            features_.append(-1)
+            features_.append(-1)
+            features_.append(-1)
+            features_.append(-1)
+            features_.append(-1)
+
+# GenJetsNu
 
         features_.append(GenJetNu_pt[Jet_genJetNuIdx[selected1]])
         features_.append(GenJetNu_eta[Jet_genJetNuIdx[selected1]])
@@ -318,8 +348,11 @@ def main(nanoFileName, fileNumber, process):
         'dijet_pt_pnetNu', 'dijet_eta_pnetNu', 'dijet_phi_pnetNu', 'dijet_mass_pnetNu',
         'dijet_pt_parT', 'dijet_eta_parT', 'dijet_phi_parT', 'dijet_mass_parT',
         'dijet_pt_partTNu', 'dijet_eta_partTNu', 'dijet_phi_partTNu', 'dijet_mass_partTNu',
+        'genJet1_pt', 'genJet1_eta', 'genJet1_phi', 'genJet1_mass', 
+        'genJet2_pt', 'genJet2_eta', 'genJet2_phi', 'genJet2_mass', 
+        'genDijet_mass',
         'genJetNu1_pt', 'genJetNu1_eta', 'genJetNu1_phi', 'genJetNu1_mass', 'jet1_genJetNu_dR',
-        'genJetNu2_pt', 'genJetNu2_eta', 'genJetNu2_phi', 'genJetNu2_mass', 'genDijet_mass', 'jet2_genJetNu_dR',
+        'genJetNu2_pt', 'genJetNu2_eta', 'genJetNu2_phi', 'genJetNu2_mass', 'genDijetNu_mass', 'jet2_genJetNu_dR',
     ])
     fileData.to_parquet(outFolder+"/%s_GenMatched_%s.parquet"%(process, fileNumber))
 

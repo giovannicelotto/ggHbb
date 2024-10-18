@@ -13,6 +13,6 @@ nanoFileName="$1"
 process="$2"
 fileNumber="$3" 
 flatPath="$4"
-python /t3home/gcelotto/ggHbb/genMatching/flatterWNu_slurm.py $nanoFileName $fileNumber $process # to pass all the arguments
+python /t3home/gcelotto/ggHbb/genMatching/genFlatterNu/flatterWNu_slurm.py $nanoFileName $fileNumber $process # to pass all the arguments
 pwd
 xrdcp -f -N $source_dir/$process"_GenMatched_"$fileNumber.parquet root://t3dcachedb.psi.ch:1094//$flatPath
