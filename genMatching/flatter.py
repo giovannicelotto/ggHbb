@@ -55,6 +55,17 @@ def saveMatchedJets(fileNames, path, prefix):
             Jet_bReg2018                = branches["Jet_bReg2018"][ev]
             Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
             Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
+            Jet_rawFactor               = branches["Jet_rawFactor"][ev]
+            Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
+            Jet_tagUParTAK4B            = branches["Jet_tagUParTAK4B"][ev]
+
+            Jet_PNetRegPtRawCorr              = branches["Jet_PNetRegPtRawCorr"][ev]
+            Jet_PNetRegPtRawCorrNeutrino      = branches["Jet_PNetRegPtRawCorrNeutrino"][ev]
+            Jet_PNetRegPtRawRes               = branches["Jet_PNetRegPtRawRes"][ev]
+            Jet_ParTAK4RegPtRawCorr           = branches["Jet_ParTAK4RegPtRawCorr"][ev]
+            Jet_UParTAK4RegPtRawCorrNeutrino  = branches["Jet_UParTAK4RegPtRawCorrNeutrino"][ev]
+            Jet_UParTAK4RegPtRawRes           = branches["Jet_UParTAK4RegPtRawRes"][ev]
+
             GenJet_pt                   = branches["GenJet_pt"][ev]
             GenJet_eta                  = branches["GenJet_eta"][ev]
             GenJet_phi                  = branches["GenJet_phi"][ev]
@@ -63,6 +74,7 @@ def saveMatchedJets(fileNames, path, prefix):
             Jet_muonIdx2                = branches["Jet_muonIdx2"][ev]
             Muon_isTriggering           = branches["Muon_isTriggering"][ev]
             Jet_qgl                     = branches["Jet_qgl"][ev]
+            GenJetNu_pt                 = branches["GenJetNu_pt"][ev]
 
             GenPart_pt                  = branches["GenPart_pt"][ev]
             GenPart_eta                 = branches["GenPart_eta"][ev]
@@ -72,11 +84,11 @@ def saveMatchedJets(fileNames, path, prefix):
             #Muons
             nMuon                       = branches["nMuon"][ev]
             Muon_charge                 = branches["Muon_charge"][ev]
-            Jet_chargeP1                 = branches["Jet_chargeP1"][ev]
-            Jet_chargeP3                 = branches["Jet_chargeP3"][ev]
-            Jet_chargeP5                 = branches["Jet_chargeP5"][ev]
-            Jet_chargeP7                 = branches["Jet_chargeP7"][ev]
-            Jet_charge                 = branches["Jet_charge"][ev]
+            #Jet_chargeP1                 = branches["Jet_chargeP1"][ev]
+            #Jet_chargeP3                 = branches["Jet_chargeP3"][ev]
+            #Jet_chargeP5                 = branches["Jet_chargeP5"][ev]
+            #Jet_chargeP7                 = branches["Jet_chargeP7"][ev]
+            #Jet_charge                 = branches["Jet_charge"][ev]
             
             # limit the data to events where 4 jets are gen matched to higgs daughers
             if nJet<2:
@@ -102,7 +114,7 @@ def saveMatchedJets(fileNames, path, prefix):
                 pass
             
             
-            # choice of jets is done in any case
+            # choice of jets is done in any case (unless no muon in jets)
             jetsToCheck = np.min([4, nJet])
             selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
             if selected1==999:
@@ -115,21 +127,30 @@ def saveMatchedJets(fileNames, path, prefix):
             features_.append(Jet_phi[selected1])
             features_.append(Jet_mass[selected1])
             features_.append(Jet_bReg2018[selected1])
-            features_.append(Jet_chargeP1[selected1])
-            features_.append(Jet_chargeP3[selected1])
-            features_.append(Jet_chargeP5[selected1])
-            features_.append(Jet_chargeP7[selected1])
-            features_.append(Jet_charge[selected1])
+            features_.append(Jet_rawFactor[selected1])
+            features_.append(Jet_btagPNetB[selected1])
+            features_.append(Jet_tagUParTAK4B[selected1])
+            features_.append(Jet_PNetRegPtRawCorr[selected1])
+            features_.append(Jet_PNetRegPtRawCorrNeutrino[selected1])
+            features_.append(Jet_PNetRegPtRawRes[selected1])
+            features_.append(Jet_ParTAK4RegPtRawCorr[selected1])
+            features_.append(Jet_UParTAK4RegPtRawCorrNeutrino[selected1])
+            features_.append(Jet_UParTAK4RegPtRawRes[selected1])
+
             features_.append(Jet_pt[selected2])
             features_.append(Jet_eta[selected2])
             features_.append(Jet_phi[selected2])
             features_.append(Jet_mass[selected2])
             features_.append(Jet_bReg2018[selected2])
-            features_.append(Jet_chargeP1[selected2])
-            features_.append(Jet_chargeP3[selected2])
-            features_.append(Jet_chargeP5[selected2])
-            features_.append(Jet_chargeP7[selected2])
-            features_.append(Jet_charge[selected2])
+            features_.append(Jet_rawFactor[selected2])
+            features_.append(Jet_btagPNetB[selected2])
+            features_.append(Jet_tagUParTAK4B[selected2])
+            features_.append(Jet_PNetRegPtRawCorr[selected2])
+            features_.append(Jet_PNetRegPtRawCorrNeutrino[selected2])
+            features_.append(Jet_PNetRegPtRawRes[selected2])
+            features_.append(Jet_ParTAK4RegPtRawCorr[selected2])
+            features_.append(Jet_UParTAK4RegPtRawCorrNeutrino[selected2])
+            features_.append(Jet_UParTAK4RegPtRawRes[selected2])
 
             jet2_leptonicCharge = 0
             for mu in range(nMuon):
@@ -157,11 +178,20 @@ def saveMatchedJets(fileNames, path, prefix):
             features_.append(dijet.Eta())
             features_.append(dijet.Phi())
             features_.append(dijet.M())
-
+# breg 2018
             jet1 = ROOT.TLorentzVector(0.,0.,0.,0.)
             jet2 = ROOT.TLorentzVector(0.,0.,0.,0.)
             jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1]*Jet_bReg2018[selected1])
             jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2]*Jet_bReg2018[selected2])
+            dijet = jet1 + jet2
+
+            features_.append(dijet.Pt())
+            features_.append(dijet.Eta())
+            features_.append(dijet.Phi())
+            features_.append(dijet.M())
+# pnet no neutrinos
+            jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_rawFactor[selected1]* Jet_PNetRegPtRawCorr[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
+            jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_rawFactor[selected2]* Jet_PNetRegPtRawCorr[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
             dijet = jet1 + jet2
             
             features_.append(dijet.Pt())
@@ -169,8 +199,36 @@ def saveMatchedJets(fileNames, path, prefix):
             features_.append(dijet.Phi())
             features_.append(dijet.M())
 
+# pnet with neutrinos
+            jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_rawFactor[selected1]* Jet_PNetRegPtRawCorr[selected1]*Jet_PNetRegPtRawCorrNeutrino[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
+            jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_rawFactor[selected2]* Jet_PNetRegPtRawCorr[selected2]*Jet_PNetRegPtRawCorrNeutrino[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
+            dijet = jet1 + jet2
             
-            # genjet features
+            features_.append(dijet.Pt())
+            features_.append(dijet.Eta())
+            features_.append(dijet.Phi())
+            features_.append(dijet.M())
+# parT no neutrinos
+
+            jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_rawFactor[selected1]* Jet_PNetRegPtRawCorr[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
+            jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_rawFactor[selected2]* Jet_PNetRegPtRawCorr[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
+            dijet = jet1 + jet2
+            
+            features_.append(dijet.Pt())
+            features_.append(dijet.Eta())
+            features_.append(dijet.Phi())
+            features_.append(dijet.M())
+# parT with neutrinos
+            jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_rawFactor[selected1]* Jet_PNetRegPtRawCorr[selected1] * Jet_UParTAK4RegPtRawCorrNeutrino[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
+            jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_rawFactor[selected2]* Jet_PNetRegPtRawCorr[selected2] * Jet_UParTAK4RegPtRawCorrNeutrino[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
+            dijet = jet1 + jet2
+            
+            features_.append(dijet.Pt())
+            features_.append(dijet.Eta())
+            features_.append(dijet.Phi())
+            features_.append(dijet.M())
+            
+# genjet features
 
             jetsWereCorrect = False
             if np.sum(m)==2:
@@ -237,12 +295,17 @@ def saveMatchedJets(fileNames, path, prefix):
         
         fileData=pd.DataFrame(fileData, columns=[
             'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_bReg2018',
-            'jet1_chargeP1', 'jet1_chargeP3', 'jet1_chargeP5', 'jet1_chargeP7', 'jet1_charge',
+            'jet1_rawFactor', 'jet1_btagPNetB', 'jet1_tagUParTAK4B', 'jet1_PNetRegPtRawCorr', 'jet1_PNetRegPtRawCorrNeutrino', 'jet1_PNetRegPtRawRes', 'jet1_ParTAK4RegPtRawCorr', 'jet1_UParTAK4RegPtRawCorrNeutrino', 'jet1_UParTAK4RegPtRawRes', 
             'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_bReg2018',
-            'jet2_chargeP1', 'jet2_chargeP3', 'jet2_chargeP5', 'jet2_chargeP7', 'jet2_charge',
+            'jet2_rawFactor', 'jet2_btagPNetB', 'jet2_tagUParTAK4B', 'jet2_PNetRegPtRawCorr', 'jet2_PNetRegPtRawCorrNeutrino', 'jet2_PNetRegPtRawRes', 'jet2_ParTAK4RegPtRawCorr', 'jet2_UParTAK4RegPtRawCorrNeutrino', 'jet2_UParTAK4RegPtRawRes', 
+            #'jet2_chargeP1', 'jet2_chargeP3', 'jet2_chargeP5', 'jet2_chargeP7', 'jet2_charge',
             'muon_charge', 'muon2_charge', 'jet2_leptonicCharge',
             'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass',
-            'dijetCorr_pt', 'dijetCorr_eta', 'dijetCorr_phi', 'dijetCorr_mass',
+            'dijet_pt_2018', 'dijet_eta_2018', 'dijet_phi_2018', 'dijet_mass_2018',
+            'dijet_pt_pnet', 'dijet_eta_pnet', 'dijet_phi_pnet', 'dijet_mass_pnet',
+            'dijet_pt_pnetNu', 'dijet_eta_pnetNu', 'dijet_phi_pnetNu', 'dijet_mass_pnetNu',
+            'dijet_pt_parT', 'dijet_eta_parT', 'dijet_phi_parT', 'dijet_mass_parT',
+            'dijet_pt_partTNu', 'dijet_eta_partTNu', 'dijet_phi_partTNu', 'dijet_mass_partTNu',
             'correctChoice',
             'twoJetsGenMatched',
             #'jet1Corr_pt', 'jet1Corr_mass',
@@ -259,7 +322,7 @@ def saveMatchedJets(fileNames, path, prefix):
 def main(nFiles, particle):
     df=pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
     if particle == 'H':
-        path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Sep10/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/240910_141038/0000"
+        path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Oct09/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/241009_135255/0000"
         fileNames = glob.glob(path+'/**/GluGlu*.root', recursive=True)
         print("Looking for files in ", path)
         prefix="GluGluHToBB"
