@@ -11,18 +11,18 @@ from helpers.preprocessMultiClass import preprocessMultiClass
 from plotDfs import plotDfs
 # %%
 
-nReal, nMC = 100, -1
+nReal, nMC = 800, -1
 
 
-predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b"
+predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova"
 isMCList = [0, 1,
-            2,
+            #2,
             3, 4, 5,
             6,7,8,9,10,11,
             12,13,14,
             15,16,17,18,19,
             20, 21, 22, 23, 36,
-            39    
+            #39    
             # Data2A
 ]
 
@@ -33,7 +33,7 @@ processes = dfProcesses.process[isMCList].values
 predictionsFileNames = []
 for p in processes:
     print(p)
-    predictionsFileNames.append(glob.glob(predictionsPath+"/%s/*.parquet"%p))
+    predictionsFileNames.append(glob.glob(predictionsPath+"/%s/others/*.parquet"%p))
 
 
 # %%
@@ -55,10 +55,10 @@ print(predictionsFileNumbers)
 dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC,
                                                       columns=['sf', 'dijet_mass', 'dijet_pt', 'jet1_pt',
                                                                'jet2_pt','jet1_mass', 'jet2_mass', 'jet1_eta',
-                                                               'jet2_eta', 'jet1_qgl', 'jet2_qgl', 'dijet_dR',
-                                                                'jet3_mass', 'jet3_qgl', 'Pileup_nTrueInt',
-                                                               'jet2_btagDeepFlavB', 'dijet_cs',
-                                                               'jet1_btagDeepFlavB'],
+                                                               'jet2_eta', 'dijet_dR',
+                                                                'jet3_mass', 'Pileup_nTrueInt',
+                                                               'jet2_btagPNetB', 'dijet_cs',
+                                                               'jet1_btagPNetB', 'PU_SF'],
                                                                returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                                returnFileNumberList=True)
 if isMCList[-1]==39:
@@ -111,13 +111,13 @@ dfs[0]['weight'] = np.ones(len(dfs[0]))
 x1 = 'dijet_cs_abs'
 x2 = 'PNN'
 t1=0.3
-t21 =0.3
-t22 = 0.8
+t21 =0.4
+t22 = 0.6
 xx = 'dijet_mass'
 # further preprocess
 from functions import cut
-dfs = cut (data=dfs, feature='jet1_btagDeepFlavB', min=0.6, max=None)
-dfs = cut (data=dfs, feature='jet2_btagDeepFlavB', min=0.6, max=None)
+dfs = cut (data=dfs, feature='jet1_btagPNetB', min=0.3, max=None)
+dfs = cut (data=dfs, feature='jet2_btagPNetB', min=0.3, max=None)
 
 
 # %%
@@ -150,7 +150,7 @@ print("Region D : ", np.sum(dfZ.weight[mD])/dfZ.weight.sum())
 
 # %%
 # Fill regions with data
-bins = np.linspace(40, 300, 9)
+bins = np.linspace(40, 300, 3)
 x=(bins[1:]+bins[:-1])/2
 regions = {
     'A':np.zeros(len(bins)-1),

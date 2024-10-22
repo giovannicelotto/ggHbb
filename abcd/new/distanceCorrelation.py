@@ -15,7 +15,7 @@ import dcor
 nReal, nMC = 100, -1
 
 
-predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b"
+predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova"
 isMCList = [0, 1,
             #2,
             #3, 4, 5,
@@ -35,7 +35,7 @@ processes = dfProcesses.process[isMCList].values
 predictionsFileNames = []
 for p in processes:
     print(p)
-    predictionsFileNames.append(glob.glob(predictionsPath+"/%s/*.parquet"%p))
+    predictionsFileNames.append(glob.glob(predictionsPath+"/%s/others/*.parquet"%p))
 
 
 # %%
@@ -57,11 +57,11 @@ print(predictionsFileNumbers)
 dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC,
                                                       columns=['sf', 'dijet_mass', 'dijet_pt', 'jet1_pt',
                                                                'jet2_pt','jet1_mass', 'jet2_mass', 'jet1_eta',
-                                                               'jet2_eta', 'jet1_qgl', 'jet2_qgl', 'dijet_dR',
-                                                               'dijet_dPhi', 'jet3_mass', 'jet3_qgl', 'Pileup_nTrueInt',
-                                                               'jet2_btagDeepFlavB', 'normalized_dijet_pt', 'dijet_cs',
-                                                               'jet1_btagDeepFlavB',
-                                                               'dijet_dEta'],
+                                                               'jet2_eta', 'dijet_dR',
+                                                               'dijet_dPhi', 'jet3_mass', 'Pileup_nTrueInt',
+                                                               'jet2_btagPNetB', 'normalized_dijet_pt', 'dijet_cs',
+                                                               'jet1_btagPNetB',
+                                                                'PU_SF'],
                                                                returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                                returnFileNumberList=True)
 
@@ -124,8 +124,8 @@ xx  = 'dijet_mass'
 # further preprocess
 from functions import cut
 
-#dfs = cut (data=dfs, feature='jet1_btagDeepFlavB', min=0.3, max=None)
-#dfs = cut (data=dfs, feature='jet2_btagDeepFlavB', min=0.3, max=None)
+dfs = cut (data=dfs, feature='jet1_btagPNetB', min=0.2, max=None)
+dfs = cut (data=dfs, feature='jet2_btagPNetB', min=0.2, max=None)
 #dfs = cut (data=dfs, feature='dijet_pt', min=50, max=None)
 
 # %%
@@ -170,7 +170,7 @@ bins = np.linspace(40, 300, 9)
 df = dfs[0]
 df = df.sample(frac=1).reset_index(drop=True)
 
-xLog = [2e3, 5e3, 1e4, 1e5]
+xLog = [1e4, 2e4, 3e4, 4e4, 6e4, 8e4, 1e5, 2e5]
 fig, ax = plt.subplots(1,1 )
 indexColor = 0
 
@@ -212,12 +212,13 @@ ax.legend(bbox_to_anchor=(1,1), ncols=2)
 fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/correlation_vs_sampleSize.png", bbox_inches='tight')
 # %%
 bins = np.linspace(40, 300, 9)
+bin_pnn = np.linspace(0, 1, 11)
 dec = [0.1, 0.3, 0.5, 0.7, 0.9, 1]
 for b in range(len(bins)-1):
     fig, ax = plt.subplots(1, 1)
     insideBin = (df.dijet_mass>bins[b]) & (df.dijet_mass<bins[b+1])
     for j in range(len(dec)-1):
-        ax.hist(df[x2][insideBin][(df[x1]<dec[j]) & (df[x1][insideBin]<dec[j+1])], histtype='step', density=True, label='Bin %d : %d<%s<%d'%(b, dec[j], x1, dec[j+1]))
+        ax.hist(df[x2][insideBin][(df[x1]<dec[j]) & (df[x1][insideBin]<dec[j+1])], histtype='step', density=True, label='Bin %d : %.1f<%s<%.1f'%(b, dec[j], x1, dec[j+1]), bins=bin_pnn)
     ax.set_xlabel(x2)
     ax.legend(bbox_to_anchor=(1, 1))
 #ax.hist(df[x1][insideBin][df[x2]<0.5], histtype='step', density=True)
