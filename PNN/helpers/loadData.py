@@ -10,7 +10,7 @@ def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
 
     nData, nHiggs = int(1e5), int(1e5)
 
-    flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
+    flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/"
     paths = [
             flatPathCommon + "/Data1A/training",
             flatPathCommon + "/GluGluHToBB/training"]
@@ -24,11 +24,18 @@ def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
     dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False)
     dfs = preprocessMultiClass(dfs)
 
-    dfs[0]['massHypo'] = np.random.choice(massHypothesis+[125], size=len(dfs[0]))
-    dfs[1]['massHypo'] = 125
-    for idx in range(len(dfs[2:])):
-        dfs[idx+2]['massHypo'] = massHypothesis[idx]
+    # Uncomment in case you want discrete parameter for mass hypotheses
+    #massHypothesis = np.array([125]+massHypothesis)
     
+    # method v1
+    #dfs[0]['massHypo'] = dfs[0]['dijet_mass'].apply(lambda x: massHypothesis[np.abs(massHypothesis - x).argmin()])
+    #for idx, df in enumerate(dfs[1:]):
+    #    dfs[idx+1]['massHypo'] = massHypothesis[idx]
+    #    print("Process %d Mass %d"%(idx, massHypothesis[idx]))
+
+    # method v2
+    #for idx, df in enumerate(dfs):
+    #    dfs[idx]['massHypo'] = dfs[idx]['dijet_mass'].apply(lambda x: massHypothesis[np.abs(massHypothesis - x).argmin()])
 
 
 
