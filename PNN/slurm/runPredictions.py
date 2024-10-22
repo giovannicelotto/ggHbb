@@ -11,6 +11,11 @@ def main(isMC, nFiles):
     df=pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
 
     flatPath = list(df.flatPath)[isMC]
+    # temp
+    #if isMC==0:
+    #    flatPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/flat_old/Data1A"
+    #elif isMC==1:
+    #    flatPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/flat_old/GluGluHToBB"
     process = list(df.process)[isMC]
     print("NN predictions for %s"%process)
     
@@ -39,12 +44,12 @@ def main(isMC, nFiles):
 
 
         # check if the predictions was already done:
-        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions/%s"%process):
-            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions/%s"%process)
-        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions/%s/yMC%d_fn%d.parquet"%(process, isMC, fileNumber)):
+        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova/%s/others"%process):
+            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova/%s/others"%process)
+        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova/%s/others/yMC%d_fn%d.parquet"%(process, isMC, fileNumber)):
             print("Launching the job soon")
             print(fileName, str(isMC))
-            subprocess.run(['sbatch', '-J', "y%d_%d"%(isMC, random.randint(1, 40)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(isMC), process])
+            subprocess.run(['sbatch', '-J', "y%d_%d"%(isMC, random.randint(1, 100)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(isMC), process])
             doneFiles = doneFiles + 1
         else:
             print("..")

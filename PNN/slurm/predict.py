@@ -13,17 +13,19 @@ import numpy as np
 # change the scaler
 
 def predict(file_path, isMC):
-    featuresForTraining, columnsToRead = getFeatures(outFolder=None)
-    featuresForTraining = np.load("/t3home/gcelotto/ggHbb/PNN/results/basicFeatures/model/featuresForTraining.npy")
-    model = load_model("/t3home/gcelotto/ggHbb/PNN/results/basicFeatures/model/myModel.h5")
+    #featuresForTraining, columnsToRead = getFeatures(outFolder=None)
+    modelDir = "/t3home/gcelotto/ggHbb/PNN/results/v3b_prova/model"
+    featuresForTraining = np.load(modelDir + "/featuresForTraining.npy")
+    model = load_model(modelDir + "/myModel.h5")
 
     # Load data from file_path and preprocess it as needed
-    Xtest = pd.read_parquet(file_path, columns=columnsToRead)
-    if int(isMC)==0:
-        Xtest['massHypo'] = np.random.choice([50, 70, 100, 200, 300, 125], size=len(Xtest))
-    elif int(isMC)==1:
-        Xtest['massHypo'] = 125
-    featuresForTraining = np.array(list(featuresForTraining) + ['massHypo'])
+    print(file_path)
+    Xtest = pd.read_parquet(file_path)
+    mass_hypo_list = np.array([50, 70, 100, 200, 300, 125])
+    
+    #Xtest['massHypo'] = Xtest['dijet_mass'].apply(lambda x: mass_hypo_list[np.abs(mass_hypo_list - x).argmin()])
+    
+    #featuresForTraining = np.array(list(featuresForTraining) + ['massHypo'])
     data = [Xtest]
 
     data = preprocessMultiClass(data)
@@ -32,7 +34,7 @@ def predict(file_path, isMC):
     # scale
 
     print(data[0].jet1_pt.min())
-    data[0]  = scale(data[0], featuresForTraining=featuresForTraining, scalerName= "/t3home/gcelotto/ggHbb/PNN/results/basicFeatures/model/myScaler.pkl" ,fit=False)
+    data[0]  = scale(data[0], featuresForTraining=featuresForTraining, scalerName= modelDir + "/myScaler.pkl" ,fit=False)
 
     print(data[0].columns)
     predictions = model.predict(data[0][featuresForTraining])

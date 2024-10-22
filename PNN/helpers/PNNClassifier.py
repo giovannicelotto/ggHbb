@@ -24,6 +24,7 @@ def PNNClassifier(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, rWtrain, rWtest, 
                     sample_weight = rWtrain,
                     verbose = 2,
                     epochs=hp['epochs'], validation_split=hp['validation_split'],
+                    batch_size=hp['batch_size'],
                     callbacks=callbacks, shuffle=True)
     
     model.save(outFolder +"/model/"+modelName)

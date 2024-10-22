@@ -4,13 +4,14 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G
-#SBATCH --time=0-00:20:00
+#SBATCH --partition=short              # Specify your cluster partition
+#SBATCH --time=0-00:4:00
 #SBATCH --dependency=singleton
 #. /t3home/gcelotto/.bashrc
 #conda activate myenv
 
 # Run the prediction script
-echo "THis is the file_path"
+#echo "THis is the file_path"
 file_path=$1
 isMC=$2
 process=$3
@@ -24,6 +25,5 @@ number=$(echo "$filename" | sed 's/.*_\([0-9]\+\)\.parquet/\1/')
 source_dir="/scratch"
 
 echo "Moving to "
-echo "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions/yMC"$isMC"_"fn$number".parquet"
 echo "yMC"$isMC"_fn"$number".parquet"
-xrdcp -f -N "$source_dir/yMC"$isMC"_fn"$number".parquet" "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions/"$process"/yMC"$isMC"_fn"$number".parquet"
+xrdcp -f -N "$source_dir/yMC"$isMC"_fn"$number".parquet" "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova/"$process"/others/yMC"$isMC"_fn"$number".parquet"

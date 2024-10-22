@@ -28,13 +28,13 @@ def preprocessMultiClass(dfs):
 
         if df.isna().sum().sum()>0:
             print("Nan values : %d process %d "%(df.isna().sum().sum(), idx))
-        print("Filling jet1 qgl with 0. %d" %(df.jet1_qgl.isna().sum()))
-        print("Filling jet2 qgl with 0. %d" %(df.jet2_qgl.isna().sum()),"\n")
+        #print("Filling jet1 qgl with 0. %d" %(df.jet1_qgl.isna().sum()))
+        #print("Filling jet2 qgl with 0. %d" %(df.jet2_qgl.isna().sum()),"\n")
 
-        df.jet1_qgl = df.jet1_qgl.fillna(0.)
-        df.jet2_qgl = df.jet2_qgl.fillna(0.)
-        if 'jet3_qgl' in df.columns:
-            df.jet3_qgl = df.jet3_qgl.fillna(0.)
+        #df.jet1_qgl = df.jet1_qgl.fillna(0.)
+        #df.jet2_qgl = df.jet2_qgl.fillna(0.)
+        #if 'jet3_qgl' in df.columns:
+        #    df.jet3_qgl = df.jet3_qgl.fillna(0.)
         try:
             assert df.isna().sum().sum()==0
             assert df.isna().sum().sum()==0
