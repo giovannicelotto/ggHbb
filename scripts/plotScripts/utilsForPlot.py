@@ -188,6 +188,7 @@ def getBins(dictFormat=False):
             'muon_tightId': [2.0, -0.5, 1.5], 'muon_pfRelIso03_all': [10.0, 0, 4], 
             'muon_pfRelIso04_all':[10,0,4],
             'muon_tkIsoId': [3.0, -0.5, 2.5], 
+            'muon_ptRel':[31,0,5],
             'muon2_pt': [50.0, 0.0, 40.0], 'muon2_eta': [50.0, -2.5, 2.5],
             'muon2_dxySig': [50.0, -35.0, 35.0], 'muon2_dzSig': [50.0, -50.0, 50.0], 'muon2_IP3d': [50.0, 0.0, 0.4], 'muon2_sIP3d': [50.0, 0.0, 100.0],
             'muon2_tightId': [2.0, -0.5, 1.5], 'muon2_pfRelIso03_all': [10.0, 0, 4], 
