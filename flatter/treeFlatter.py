@@ -4,7 +4,7 @@ import numpy as np
 import ROOT
 import uproot
 from functions import load_mapping_dict
-def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB):
+def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId):
     score=-999
     selected1 = 999
     selected2 = 999
@@ -13,7 +13,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
 # Jets With Muon is the list of jets with a muon that triggers inside their cone
     jetsWithMuon, muonIdxs = [], []
     for i in range(nJet): 
-        if abs(Jet_eta[i])>2.5:     # exclude jets>2.5 from the jets with  muon group
+        if (abs(Jet_eta[i])>2.5) | (Jet_puId[i]<4) | (Jet_jetId[i]<6):     # exclude jets>2.5 from the jets with  muon group
             continue
         if (Jet_muonIdx1[i]>-1): #if there is a reco muon in the jet
             if (bool(Muon_isTriggering[Jet_muonIdx1[i]])):
@@ -46,7 +46,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
         for j in range(0, jetsToCheck):
             if j==jetsWithMuon[0]:
                 continue
-            if abs(Jet_eta[j])>2.5:
+            if (abs(Jet_eta[j])>2.5) | (Jet_puId[j]<4) | (Jet_jetId[j]<6):
                 continue
             currentScore = Jet_btagDeepFlavB[j]
             if currentScore>score:
@@ -100,6 +100,9 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         Jet_pt                      = branches["Jet_pt"][ev]
         Jet_phi                     = branches["Jet_phi"][ev]
         Jet_mass                    = branches["Jet_mass"][ev]
+
+        Jet_jetId                   = branches["Jet_jetId"][ev]
+        Jet_puId                    = branches["Jet_puId"][ev]
 
         Jet_area                    = branches["Jet_area"][ev]
         Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
@@ -170,7 +173,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         dijet = ROOT.TLorentzVector(0.,0.,0.,0.)
         jetsToCheck = np.min([maxJet, nJet])
         
-        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagPNetB)
+        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagPNetB, Jet_puId, Jet_jetId)
 
         if selected1==999:
             #print("skipped")
@@ -197,11 +200,15 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
                 counterMuTight=counterMuTight+1
         features_.append(counterMuTight)                 
         features_.append(Jet_nElectrons[selected1])         
+        features_.append(Jet_btagDeepFlavB[selected1])
         features_.append(Jet_btagPNetB[selected1])
         features_.append(selected1)
         features_.append(Jet_rawFactor[selected1])
         features_.append(Jet_PNetRegPtRawCorr[selected1])
         features_.append(Jet_PNetRegPtRawCorrNeutrino[selected1])
+        
+        features_.append(Jet_jetId[selected1])
+        features_.append(Jet_puId[selected1])
 
 
         features_.append(jet2.Pt())
@@ -215,11 +222,14 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
                 counterMuTight=counterMuTight+1
         features_.append(counterMuTight)   
         features_.append(Jet_nElectrons[selected2])
+        features_.append(Jet_btagDeepFlavB[selected2])
         features_.append(Jet_btagPNetB[selected2])
         features_.append(selected2)
         features_.append(Jet_rawFactor[selected2])
         features_.append(Jet_PNetRegPtRawCorr[selected2])
         features_.append(Jet_PNetRegPtRawCorrNeutrino[selected2])
+        features_.append(Jet_jetId[selected2])
+        features_.append(Jet_puId[selected2])
         
 
 
@@ -422,12 +432,14 @@ def main(fileName, maxEntries, maxJet, isMC, process):
     featureNames = [
                 # Jet 1
                     'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass',
-                    'jet1_nMuons','jet1_nTightMuons','jet1_nElectrons', 'jet1_btagPNetB', 'jet1_idx',
+                    'jet1_nMuons','jet1_nTightMuons','jet1_nElectrons', 'jet1_btagDeepFlavB', 'jet1_btagPNetB', 'jet1_idx',
                     'jet1_rawFactor', 'jet1_PNetRegPtRawCorr', 'jet1_PNetRegPtRawCorrNeutrino',
+                    'jet1_id', 'jet1_puId',
                 # Jet 2
                     'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass',
-                    'jet2_nMuons', 'jet2_nTightMuons', 'jet2_nElectrons', 'jet2_btagPNetB','jet2_idx',
+                    'jet2_nMuons', 'jet2_nTightMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB','jet2_btagPNetB','jet2_idx',
                     'jet2_rawFactor', 'jet2_PNetRegPtRawCorr', 'jet2_PNetRegPtRawCorrNeutrino',
+                    'jet2_id', 'jet2_puId',
                 # Jet 3
                     'jet3_pt', 'jet3_eta', 'jet3_phi', 'jet3_mass', 'jet3_nTightMuons',
                     'jet3_btagPNetB', 'dR_jet3_dijet',
