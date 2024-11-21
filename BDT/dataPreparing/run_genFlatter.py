@@ -38,12 +38,13 @@ def main(nFiles, mass):
     doneFiles = 0
     for fileName in fileNames:
         if doneFiles==nFiles:
-            print("Reached the end :)")
+            print("Reached the end :) ")
             break
         finalDestinationFolder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/gen4JetsFeatures/%s"%prefix
 
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
         if os.path.exists(finalDestinationFolder +"/%s_%s.parquet"%(prefix, fileNumber)):
+            print("skip")
             # if you already saved this file skip
             #print("%s_%s.parquet already present\n"%(prefix, fileNumber))
             continue

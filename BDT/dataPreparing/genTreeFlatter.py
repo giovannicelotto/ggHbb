@@ -44,6 +44,7 @@ def saveMatchedJets(fileName, prefix, fileNumber):
         Jet_bReg2018                = branches["Jet_bReg2018"][ev]
         Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
         Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
+        Jet_btagDeepFlavB               = branches["Jet_btagDeepFlavB"][ev]
         GenJet_pt                   = branches["GenJet_pt"][ev]
         GenJet_eta                  = branches["GenJet_eta"][ev]
         GenJet_phi                  = branches["GenJet_phi"][ev]
@@ -88,7 +89,7 @@ def saveMatchedJets(fileName, prefix, fileNumber):
         
         for idx in range(4):
             if idx>=nJet:
-                for j in range(7):
+                for j in range(6):
                     features_.append(0)
             else:
                 features_.append(Jet_pt[idx])
@@ -96,19 +97,20 @@ def saveMatchedJets(fileName, prefix, fileNumber):
                 features_.append(Jet_phi[idx])
                 features_.append(Jet_mass[idx])
                 features_.append(Jet_btagDeepFlavB[idx])
-                features_.append(Jet_qgl[idx])
-                if Jet_nMuons[idx]>0:
+                if Jet_nMuons[idx]==1:
+                    features_.append(Muon_isTriggering[Jet_muonIdx1[idx]])
+                elif Jet_nMuons[idx]>1:
                     features_.append(Muon_isTriggering[Jet_muonIdx1[idx]] + Muon_isTriggering[Jet_muonIdx2[idx]])
-                else:
+                else: 
                     features_.append(0)
 
         indices = np.where(m)[0]
 
         if ((np.array(indices)>3).any()):
             continue
-        features_.append(int(prefix))
-        features_.append(indices[0])
-        features_.append(indices[1])
+        features_.append(int(prefix))   # mass
+        features_.append(indices[0])   #jetidx
+        features_.append(indices[1])    #jetidx
 
 
             
@@ -117,10 +119,10 @@ def saveMatchedJets(fileName, prefix, fileNumber):
         fileData.append(features_)
     
     fileData=pd.DataFrame(fileData, columns=[
-        'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_btagDeepFlavB', 'jet1_qgl', 'jet1_nTrigMuons',
-        'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_btagDeepFlavB', 'jet2_qgl', 'jet2_nTrigMuons',
-        'jet3_pt', 'jet3_eta', 'jet3_phi', 'jet3_mass', 'jet3_btagDeepFlavB', 'jet3_qgl', 'jet3_nTrigMuons',
-        'jet4_pt', 'jet4_eta', 'jet4_phi', 'jet4_mass', 'jet4_btagDeepFlavB', 'jet4_qgl', 'jet4_nTrigMuons',
+        'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_btagDeepFlavB', 'jet1_nTrigMuons',
+        'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_btagDeepFlavB', 'jet2_nTrigMuons',
+        'jet3_pt', 'jet3_eta', 'jet3_phi', 'jet3_mass', 'jet3_btagDeepFlavB', 'jet3_nTrigMuons',
+        'jet4_pt', 'jet4_eta', 'jet4_phi', 'jet4_mass', 'jet4_btagDeepFlavB', 'jet4_nTrigMuons',
         #'jet5_pt', 'jet5_eta', 'jet5_phi', 'jet5_mass', 'jet5_btagDeepFlavB', 'jet5_qgl', 'jet5_nTrigMuons',
         #'jet6_pt', 'jet6_eta', 'jet6_phi', 'jet6_mass', 'jet6_btagDeepFlavB', 'jet6_qgl', 'jet6_nTrigMuons',
         'massHypo',
