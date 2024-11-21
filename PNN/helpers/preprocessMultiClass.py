@@ -10,7 +10,7 @@ def preprocessMultiClass(dfs):
         #df = df[df.leptonClass == leptonClass]
 
         
-        df = df[(df.jet1_pt>15) & (df.jet2_pt>15)]
+        df = df[(df.jet1_pt>20) & (df.jet2_pt>20)]
         df = df[(df.jet2_mass>0)] 
         df = df[(df.jet1_mass>0)]
         if 'jet3_mass' in df.columns:
