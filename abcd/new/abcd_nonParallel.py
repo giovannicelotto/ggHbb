@@ -9,9 +9,11 @@ from functions import loadMultiParquet, getDfProcesses, sortPredictions
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
 from plotDfs import plotDfs
+from hist import Hist
+import hist
 # %%
 # Define number of Data Files, MC files per process, predictionsPath, list of MC processes
-nReal = 10
+nReal = 1008
 nMC = -1
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18"
 isMCList = [0, 1,
@@ -152,19 +154,25 @@ mC      = (dfZ[x1]<t11 ) & (dfZ[x2]<t21 )
 mD      = (dfZ[x1]>t12 ) & (dfZ[x2]<t21 ) 
 
 
-
 print("Region A : ", np.sum(dfZ.weight[mA])/dfZ.weight.sum())
 print("Region B : ", np.sum(dfZ.weight[mB])/dfZ.weight.sum())
 print("Region C : ", np.sum(dfZ.weight[mC])/dfZ.weight.sum())
 print("Region D : ", np.sum(dfZ.weight[mD])/dfZ.weight.sum())
 
 # %%
-bins = np.linspace(40, 300, 4)
+# ABCD Start here
+# Define 4 histograms for mjj, one for each region
+
+bins = np.linspace(40, 300, 7)
+hA = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
+hB = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
+hC = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
+hD = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
 regions = {
-    'A':np.zeros(len(bins)-1),
-    'B':np.zeros(len(bins)-1),
-    'D':np.zeros(len(bins)-1),
-    'C':np.zeros(len(bins)-1),
+    'A' : hA,
+    'B' : hB,
+    'C' : hC,
+    'D' : hD,
 }
 
 
@@ -173,41 +181,49 @@ mA      = (dfs[0][x1]<t11 ) & (dfs[0][x2]>t22 )
 mB      = (dfs[0][x1]>t12 ) & (dfs[0][x2]>t22 ) 
 mC      = (dfs[0][x1]<t11 ) & (dfs[0][x2]<t21 ) 
 mD      = (dfs[0][x1]>t12 ) & (dfs[0][x2]<t21 ) 
-regions['A'] = regions['A'] + np.histogram(dfs[0][mA][xx], bins=bins)[0]
-regions['B'] = regions['B'] + np.histogram(dfs[0][mB][xx], bins=bins)[0]
-regions['C'] = regions['C'] + np.histogram(dfs[0][mC][xx], bins=bins)[0]
-regions['D'] = regions['D'] + np.histogram(dfs[0][mD][xx], bins=bins)[0]
+regions['A'].fill(dfs[0][mA][xx])
+regions['B'].fill(dfs[0][mB][xx])
+regions['C'].fill(dfs[0][mC][xx])
+regions['D'].fill(dfs[0][mD][xx])
+
 print("Data counts in ABCD regions")
 print("Region A : ", regions["A"].sum())
 print("Region B : ", regions["B"].sum())
 print("Region C : ", regions["C"].sum())
 print("Region D : ", regions["D"].sum())
-
-# remove MC simulations from a, b, c
+# %%
+# remove MC from non QCD processes simulations from A, C, D
 for idx, df in enumerate(dfs[1:]):
     print(idx, df.dijet_mass.mean())
     mA      = (df[x1]<t11 ) & (df[x2]>t22 ) 
     mB      = (df[x1]>t12 ) & (df[x2]>t22 ) 
     mC      = (df[x1]<t11 ) & (df[x2]<t21 ) 
     mD      = (df[x1]>t12 ) & (df[x2]<t21 ) 
-    regions['A'] = regions['A'] - np.histogram(df[mA][xx], bins=bins, weights=df[mA].weight)[0]
+    # Subtract the events by filling with opposite weights
+    regions['A'].fill(df[mA][xx], weight=-df[mA].weight)  
+    regions['C'].fill(df[mC][xx], weight=-df[mC].weight)  
+    regions['D'].fill(df[mD][xx], weight=-df[mD].weight)  
+    # In B don't do it, we want to see the excess from Data - QCD = MCnonQCD
     #regions['B'] = regions['B'] - np.histogram(df[mB][xx], bins=bins, weights=df[mB].weight)[0]
-    regions['C'] = regions['C'] - np.histogram(df[mC][xx], bins=bins, weights=df[mC].weight)[0]
-    regions['D'] = regions['D'] - np.histogram(df[mD][xx], bins=bins, weights=df[mD].weight)[0]
 
 
 # %%
-
+# Plot Data and Data and B=A*D/C estimation in SR
 fig, ax = plt.subplots(2, 2, constrained_layout=True, figsize=(15, 10))
 x=(bins[1:]+bins[:-1])/2
-ax[0,0].hist(bins[:-1], bins=bins, weights=regions["A"], histtype=u'step', label='Region A')
-ax[0,1].hist(bins[:-1], bins=bins, weights=regions["B"], histtype=u'step', label='Region B')
-ax[1,0].hist(bins[:-1], bins=bins, weights=regions['C'], histtype=u'step', label='Region C')
-ax[1,1].hist(bins[:-1], bins=bins, weights=regions['D'], histtype=u'step', label='Region D')
+ax[0,0].hist(bins[:-1], bins=bins, weights=regions["A"].values(), histtype=u'step', label='Region A')
+ax[0,1].hist(bins[:-1], bins=bins, weights=regions["B"].values(), histtype=u'step', label='Region B')
+ax[1,0].hist(bins[:-1], bins=bins, weights=regions['C'].values(), histtype=u'step', label='Region C')
+ax[1,1].hist(bins[:-1], bins=bins, weights=regions['D'].values(), histtype=u'step', label='Region D')
 
-ax[0,1].hist(bins[:-1], bins=bins, weights=regions['A']*regions['D']/(regions['C']+1e-6), histtype=u'step', label=r'$A\times D / C$ ')
-ax[0,1].errorbar(x, regions["B"], yerr=np.sqrt(regions["B"]), linestyle='none', color='black', marker='o')
+hB_ADC_values = regions['A'].values()*regions['D'].values()/(regions['C'].values()+1e-6)
+ADC_err = regions['A'].values()*regions['D'].values()/regions['C'].values()*np.sqrt(1/regions['A'].values() + 1/regions['D'].values() + 1/regions['C'].values())
+hB_ADC = Hist.new.Reg(len(bins) - 1, bins[0], bins[-1], name='mjj').Weight()
+hB_ADC.values()[:] = hB_ADC_values
+hB_ADC.variances()[:] = ADC_err**2 
 
+ax[0,1].hist(bins[:-1], bins=bins, weights=hB_ADC.values(), histtype=u'step', label=r'$A\times D / C$ ')
+ax[0,1].errorbar(x, regions["B"].values(), yerr=np.sqrt(regions["B"].variances()), linestyle='none', color='black', marker='o')
 
 ax[0,0].set_title("%s < %.1f, %s >= %.1f"%(x1, t11, x2, t22), fontsize=14)
 ax[0,1].set_title("%s >= %.1f, %s >= %.1f"%(x1, t12, x2, t22), fontsize=14)
@@ -223,81 +239,98 @@ fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/CR_SR_check.png", bbox_inches
 # %%
 x = (bins[1:] + bins[:-1])/2
 
-
 fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
-b_err = np.sqrt(regions['B'])
-adc_err = regions['A']*regions['D']/regions['C']*np.sqrt(1/regions['A'] + 1/regions['D'] + 1/regions['C'])
-ax[0].errorbar(x, regions['B']-regions['A']*regions['D']/regions['C'], yerr=np.sqrt(b_err**2 + adc_err**2) , marker='o', color='black', linestyle='none')
+hExcess = regions["B"].copy()
+hExcess.values()[:] = regions["B"].values()-hB_ADC.values()
+hExcess.variances()[:] = regions["B"].variances() + hB_ADC.variances()
+
+ax[0].errorbar(x, hExcess.values(), yerr=np.sqrt(hExcess.variances()) , marker='o', color='black', linestyle='none')
 cTot = np.zeros(len(bins)-1)
+
+
+h = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
 countsDict = {
-        'Data':np.zeros(len(bins)-1),
-        'H':np.zeros(len(bins)-1),
-        'VV':np.zeros(len(bins)-1),
-        'ST':np.zeros(len(bins)-1),
-        'ttbar':np.zeros(len(bins)-1),
-        'W+Jets':np.zeros(len(bins)-1),
-        'QCD':np.zeros(len(bins)-1),
-        'Z+Jets':np.zeros(len(bins)-1),
+        'Data'   : h.copy() ,
+        'H'      : h.copy() ,
+        'VV'     : h.copy() ,
+        'ST'     : h.copy() ,
+        'ttbar'  : h.copy() ,
+        'W+Jets' : h.copy() ,
+        'QCD'    : h.copy() ,
+        'Z+Jets' : h.copy() ,
     }
 
 for idx, df in enumerate(dfs[1:]):
     isMC = isMCList[idx+1]
     process = dfProcesses.process[isMC]
     mB      = (df[x1]>t12 ) & (df[x2]>t22 ) 
-    c = np.histogram(df.dijet_mass[mB], bins=bins,weights=df.weight[mB])[0]
+
+    h = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
+    h.fill(df.dijet_mass[mB], weight=df.weight[mB])
+
     if 'Data' in process:
-        countsDict['Data'] = countsDict['Data'] + c
+        countsDict['Data'] = countsDict['Data'] + h
         print("adding data with", process)
     elif 'GluGluHToBB' in process:
-        countsDict['H'] = countsDict['H'] + c
+        countsDict['H'] = countsDict['H'] + h
     elif 'ST' in process:
-        countsDict['ST'] = countsDict['ST'] + c
+        countsDict['ST'] = countsDict['ST'] + h
     elif 'TTTo' in process:
-        countsDict['ttbar'] = countsDict['ttbar'] + c
+        countsDict['ttbar'] = countsDict['ttbar'] + h
     elif 'QCD' in process:
-        countsDict['QCD'] = countsDict['QCD'] + c
+        countsDict['QCD'] = countsDict['QCD'] + h
     elif 'ZJets' in process:
-        countsDict['Z+Jets'] = countsDict['Z+Jets'] + c
+        countsDict['Z+Jets'] = countsDict['Z+Jets'] + h
     elif 'WJets' in process:
-        countsDict['W+Jets'] = countsDict['W+Jets'] + c
+        countsDict['W+Jets'] = countsDict['W+Jets'] + h
     elif (('WW' in process) | ('ZZ' in process) | ('WZ' in process)):
-        countsDict['VV'] = countsDict['VV'] + c
+        countsDict['VV'] = countsDict['VV'] + h
 
     #c = ax[0].hist(df.dijet_mass, bins=bins, bottom=cTot, weights=df.weight, label=dfProcesses.process[isMC])[0]
     
 for key in countsDict.keys():
-    if np.sum(countsDict[key])==0:
+    if countsDict[key].values().sum()==0:
         continue
-    print(key, np.sum(countsDict[key]))
-    ax[0].hist(bins[:-1], bins=bins, weights=countsDict[key], bottom=cTot, label=key)
-    cTot = cTot + countsDict[key]
+    print(key, countsDict[key].values().sum())
+    ax[0].hist(bins[:-1], bins=bins, weights=countsDict[key].values(), bottom=cTot, label=key)
+    cTot = cTot + countsDict[key].values()
 ax[0].legend()
 
 ax[1].set_xlim(ax[1].get_xlim())    
 ax[1].hlines(y=1, xmin=ax[1].get_xlim()[0], xmax=ax[1].get_xlim()[1], color='black')
-data = regions['B']-regions['A']*regions['D']/regions['C']
+
 mc = countsDict['Z+Jets'] + countsDict['W+Jets'] + countsDict['ttbar'] + countsDict['ST'] + countsDict['H'] + countsDict['VV']
+ax[0].bar(x, 2*np.sqrt(mc.variances()), width=np.diff(bins), bottom=mc.values() - np.sqrt(mc.variances()), 
+       color='none', edgecolor='black', hatch='///', linewidth=0, alpha=1, label="Uncertainty")
+
+ax[1].bar(x, 2*np.sqrt(mc.variances())/mc.values(), width=np.diff(bins), bottom=1 - np.sqrt(mc.variances())/mc.values(), 
+       color='none', edgecolor='black', hatch='///', linewidth=0, alpha=1, label="Uncertainty")
+
+
 ax[1].set_ylim(0., 2)
 ax[1].set_xlabel("Dijet Mass [GeV]")
-ax[1].errorbar(x, data/mc, yerr=np.sqrt(b_err**2 + adc_err**2)/mc , marker='o', color='black', linestyle='none')
+ax[1].errorbar(x, hExcess.values()/mc.values(), yerr=np.sqrt(hExcess.variances())/mc.values() , marker='o', color='black', linestyle='none')
 hep.cms.label(lumi=np.round(nReal*0.774/1017, 3), ax=ax[0])
 fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/SMnonQCD_closure.png")
 #ax.set_yscale('log')
 # %%
 for letter in ['A', 'B', 'C', 'D']:
-    print(np.sum(regions[letter]))
+    print(regions[letter].sum())
 # %%
 
+# put negative values to countsDict
+for key in countsDict:
+    countsDict[key].values()[:] = -countsDict[key].values()[:]
 
+qcd_mc = regions['B'] + countsDict['H'] + countsDict['ttbar'] + countsDict['ST'] + countsDict['VV'] + countsDict['VV'] + countsDict['W+Jets'] + countsDict['Z+Jets']
+# Restore positive histograms
+for key in countsDict:
+    countsDict[key].values()[:] = -countsDict[key].values()[:]
 
-
-qcd_mc = regions['B'] - countsDict['H'] - countsDict['ttbar'] - countsDict['ST'] - countsDict['VV'] - countsDict['VV'] - countsDict['W+Jets'] - countsDict['Z+Jets']
 fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
-
-
-ax[0].hist(bins[:-1], bins=bins, weights=(regions['A']*regions['D']/regions['C']), label='QCD = ABCD estimation', histtype='step')
-ax[0].hist(bins[:-1], bins=bins, weights=qcd_mc, label='QCD = B - MC estimation[B]', histtype='step')
-ax[1].errorbar(x, regions['A']*regions['D']/regions['C']/qcd_mc, yerr=adc_err/qcd_mc,linestyle='none', marker='o', color='black')
+ax[0].hist(bins[:-1], bins=bins, weights=(hB_ADC.values()), label='QCD = ABCD estimation', histtype='step')
+ax[0].hist(bins[:-1], bins=bins, weights=qcd_mc.values(), label='QCD = B - MC estimation[B]', histtype='step')
+ax[1].errorbar(x, hB_ADC.values()/qcd_mc.values(), yerr=np.sqrt(hB_ADC.variances())/qcd_mc.values(),linestyle='none', marker='o', color='black')
 ax[1].set_ylim(0.95, 1.05)
 ax[1].set_xlim(bins[0], bins[-1])
 ax[1].hlines(y=1, xmin=bins[0], xmax=bins[-1])
@@ -311,105 +344,34 @@ fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/QCD_closure.png", bbox_inches
 x = (bins[1:] + bins[:-1])/2
 
 fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
-b_err = np.sqrt(regions['B'])
-adc_err = regions['A']*regions['D']/regions['C']*np.sqrt(1/regions['A'] + 1/regions['D'] + 1/regions['C'])
-ax[0].errorbar(x, regions['B'], yerr=b_err , marker='o', color='black', linestyle='none')
+
+#ADC_err = regions['A']*regions['D']/regions['C']*np.sqrt(1/regions['A'] + 1/regions['D'] + 1/regions['C'])
+ax[0].errorbar(x, regions['B'].values(), yerr=np.sqrt(regions['B'].variances()) , marker='o', color='black', linestyle='none')
 cTot = np.zeros(len(bins)-1)
-countsDict = {
-        'Data':     np.zeros(len(bins)-1),
-        'H':        np.zeros(len(bins)-1),
-        'VV':       np.zeros(len(bins)-1),
-        'ST':       np.zeros(len(bins)-1),
-        'ttbar':    np.zeros(len(bins)-1),
-        'W+Jets':   np.zeros(len(bins)-1),
-        'QCD':      np.zeros(len(bins)-1),
-        'Z+Jets':   np.zeros(len(bins)-1),
-    }
 
-for idx, df in enumerate(dfs[1:]):
-    isMC = isMCList[idx+1]
-    process = dfProcesses.process[isMC]
-    mB      = (df[x1]>t12 ) & (df[x2]>t22 ) 
-    c = np.histogram(df.dijet_mass[mB], bins=bins, weights=df.weight[mB])[0]
-    if 'Data' in process:
-        countsDict['Data'] = countsDict['Data'] + c
-        print("adding data with", process)
-    elif 'GluGluHToBB' in process:
-        countsDict['H'] = countsDict['H'] + c
-    elif 'ST' in process:
-        countsDict['ST'] = countsDict['ST'] + c
-    elif 'TTTo' in process:
-        countsDict['ttbar'] = countsDict['ttbar'] + c
-    elif 'QCD' in process:
-        countsDict['QCD'] = countsDict['QCD'] + c
-    elif 'ZJets' in process:
-        countsDict['Z+Jets'] = countsDict['Z+Jets'] + c
-    elif 'WJets' in process:
-        countsDict['W+Jets'] = countsDict['W+Jets'] + c
-    elif (('WW' in process) | ('ZZ' in process) | ('WZ' in process)):
-        countsDict['VV'] = countsDict['VV'] + c
-
-    #c = ax[0].hist(df.dijet_mass, bins=bins, bottom=cTot, weights=df.weight, label=dfProcesses.process[isMC])[0]
-cQCD = ax[0].hist(bins[:-1], bins=bins, weights=regions["D"]*regions["A"]/regions["C"], bottom=cTot, label='QCD')[0]
+    
+cQCD = ax[0].hist(bins[:-1], bins=bins, weights=hB_ADC.values(), bottom=cTot, label='QCD')[0]
 cTot = cTot + cQCD
 for key in countsDict.keys():
-    if np.sum(countsDict[key])==0:
+    if np.sum(countsDict[key].values())==0:
         continue
-    print(key, np.sum(countsDict[key]))
-    ax[0].hist(bins[:-1], bins=bins, weights=countsDict[key], bottom=cTot, label=key)
-    cTot = cTot + countsDict[key]
+    print(key, countsDict[key].sum())
+    ax[0].hist(bins[:-1], bins=bins, weights=countsDict[key].values(), bottom=cTot, label=key)
+    cTot = cTot + countsDict[key].values()
 ax[0].legend()
 ax[0].set_yscale('log')
 
 ax[1].set_xlim(ax[1].get_xlim())    
 ax[1].hlines(y=1, xmin=ax[1].get_xlim()[0], xmax=ax[1].get_xlim()[1], color='black')
-data = regions['B']
-mc = countsDict['Z+Jets'] + countsDict['W+Jets'] + countsDict['ttbar'] + countsDict['ST'] + countsDict['H'] + countsDict['VV'] + cQCD
+
+mcPlusQCD = mc.copy()
+mcPlusQCD= mcPlusQCD + hB_ADC
 ax[1].set_ylim(0.95, 1.05)
-ax[1].errorbar(x, data/mc, yerr=np.sqrt(b_err**2 + adc_err**2)/mc , marker='o', color='black', linestyle='none')
+ax[1].errorbar(x, regions["B"].values()/mcPlusQCD.values(), yerr=np.sqrt(regions["B"].variances() + hB_ADC.variances())/mcPlusQCD.values() , marker='o', color='black', linestyle='none')
 ax[1].set_xlabel("Dijet Mass [GeV]")
 fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/ZQCDplusSM.png")
 # %%
-dfs=dfs_precut.copy()
 
-# Compute histogram of highPNN in dijet mass
-# Subtract histogram of MC non QCD
-pnn_threshold = 0.5
-dfs = cut (data=dfs, feature='jet2_btagDeepFlavB', min=0.3, max=None)
-dfs = cut (data=dfs, feature='jet1_btagDeepFlavB', min=0.3, max=None)
-countsHighPNN = np.histogram(dfs[0][dfs[0].PNN>pnn_threshold], bins=bins)[0]
-cSMHighPNN = np.zeros(len(bins)-1)
-
-for idx, df in enumerate(dfs[1:]):
-    isMC = isMCList[idx+1]
-    process = dfProcesses.process[isMC]
-    mHigh = df.PNN > pnn_threshold
-    c = np.histogram(df.dijet_mass[mHigh], bins=bins, weights=df.weight[mHigh])[0]
-    cSMHighPNN = cSMHighPNN + c
-countsHighPNN_SMsub = countsHighPNN - cSMHighPNN
-# DO the same for LowpNN
-countsLowPNN = np.histogram(dfs[0][dfs[0].PNN<pnn_threshold], bins=bins)[0]
-cSMLowPNN = np.zeros(len(bins)-1)
-
-for idx, df in enumerate(dfs[1:]):
-    isMC = isMCList[idx+1]
-    process = dfProcesses.process[isMC]
-    mHigh = df.PNN < pnn_threshold
-    c = np.histogram(df.dijet_mass[mHigh], bins=bins, weights=df.weight[mHigh])[0]
-    cSMLowPNN = cSMLowPNN + c
-countsLowPNN_SMsub = countsLowPNN - cSMLowPNN
-fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
-ax[0].hist(bins[:-1], bins=bins, weights=countsHighPNN_SMsub/np.sum(countsHighPNN_SMsub), histtype='step', density=True, label='Data - MC(SMnonQCD) PNN>%.1f'%pnn_threshold)
-ax[0].hist(bins[:-1], bins=bins, weights=countsLowPNN_SMsub/np.sum(countsLowPNN_SMsub), histtype='step', density=True,label='Data - MC(SMnonQCD) PNN<%.1f'%pnn_threshold)
-ax[0].legend()
-ax[0].text(x=0.9, y=0.5, s="Jet1_btagDeepFlavB > 0.3", ha='right',transform=ax[0].transAxes)
-ax[0].text(x=0.9, y=0.45, s="Jet2_btagDeepFlavB > 0.3",ha='right', transform=ax[0].transAxes)
-ax[1].set_xlabel("Dijet Mass [GeV]")
-ax[1].errorbar(x = (bins[1:]+bins[:-1])/2, y=countsHighPNN_SMsub/countsLowPNN_SMsub*np.sum(countsLowPNN_SMsub)/np.sum(countsHighPNN_SMsub), yerr=countsHighPNN_SMsub/countsHighPNN_SMsub*np.sum(countsLowPNN_SMsub)/np.sum(countsHighPNN_SMsub)*np.sqrt(1/countsHighPNN_SMsub + 1/countsLowNN_SMsub), linestyle='none', color='black', marker='o')
-ax[1].hlines(y=1, xmin=bins[0], xmax=bins[-1], color='black')
-ax[0].set_xlim(bins[0], bins[-1])
-ax[1].set_ylim(.9, 1.1)
-fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/High_Low_PNN_score.png", bbox_inches='tight')
 # %%
 import ROOT
 
@@ -419,30 +381,30 @@ root_file = ROOT.TFile("/t3home/gcelotto/ggHbb/abcd/combineTry/counts.root", "RE
 # Create histograms for each process
 # use same bins
 processes = ['H', 'VV', 'ST', 'ttbar', 'W+Jets', 'Z+Jets', 'QCD']
-rates = {
+hists = {
     'H':      countsDict["H"]  ,
     'VV':     countsDict["VV"]  ,
     'ST':     countsDict["ST"]  ,
     'ttbar':  countsDict["ttbar"]      ,
     'W+Jets': countsDict["W+Jets"]      ,
     'Z+Jets': countsDict["Z+Jets"]      ,
-    'QCD':    regions["A"]*regions["D"]/regions["C"],
+    'QCD':    hB_ADC,
     'data_obs':    regions["B"]
 }
 
 # Create histograms for each process
-for proc, rates_list in rates.items():
-    hist = ROOT.TH1F(proc, proc, len(bins)-1, bins)
-    for i, rate in enumerate(rates_list):
-        hist.SetBinContent(i+1, rate)
-    if proc == 'QCD':
-            hist.SetBinError(i+1, adc_err[i])
-    hist.Write()
+for proc, hist in hists.items():
+    rootHist = ROOT.TH1F(proc, proc, len(bins)-1, bins)
+    for i, (value, error) in enumerate(zip(hist.values(), np.sqrt(hist.variances()))):
+        rootHist.SetBinContent(i+1, value)
+        rootHist.SetBinError(i+1, error)
+    rootHist.Write()
 
 # Close the file
 root_file.Close()
 
 # %%
+assert False
 import numpy as np
 from scipy.optimize import minimize
 
@@ -483,3 +445,46 @@ print(f"Best-fit signal strength: {mu_z_best:.3f}")
 print(f"68% confidence interval: ({lower_limit:.3f}, {upper_limit:.3f})")
 
 # %%
+
+
+
+dfs=dfs_precut.copy()
+
+# Compute histogram of highPNN in dijet mass
+# Subtract histogram of MC non QCD
+pnn_threshold = 0.5
+dfs = cut (data=dfs, feature='jet2_btagDeepFlavB', min=0.3, max=None)
+dfs = cut (data=dfs, feature='jet1_btagDeepFlavB', min=0.3, max=None)
+countsHighPNN = np.histogram(dfs[0][dfs[0].PNN>pnn_threshold], bins=bins)[0]
+cSMHighPNN = np.zeros(len(bins)-1)
+
+for idx, df in enumerate(dfs[1:]):
+    isMC = isMCList[idx+1]
+    process = dfProcesses.process[isMC]
+    mHigh = df.PNN > pnn_threshold
+    c = np.histogram(df.dijet_mass[mHigh], bins=bins, weights=df.weight[mHigh])[0]
+    cSMHighPNN = cSMHighPNN + c
+countsHighPNN_SMsub = countsHighPNN - cSMHighPNN
+# DO the same for LowpNN
+countsLowPNN = np.histogram(dfs[0][dfs[0].PNN<pnn_threshold], bins=bins)[0]
+cSMLowPNN = np.zeros(len(bins)-1)
+
+for idx, df in enumerate(dfs[1:]):
+    isMC = isMCList[idx+1]
+    process = dfProcesses.process[isMC]
+    mHigh = df.PNN < pnn_threshold
+    c = np.histogram(df.dijet_mass[mHigh], bins=bins, weights=df.weight[mHigh])[0]
+    cSMLowPNN = cSMLowPNN + c
+countsLowPNN_SMsub = countsLowPNN - cSMLowPNN
+fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
+ax[0].hist(bins[:-1], bins=bins, weights=countsHighPNN_SMsub/np.sum(countsHighPNN_SMsub), histtype='step', density=True, label='Data - MC(SMnonQCD) PNN>%.1f'%pnn_threshold)
+ax[0].hist(bins[:-1], bins=bins, weights=countsLowPNN_SMsub/np.sum(countsLowPNN_SMsub), histtype='step', density=True,label='Data - MC(SMnonQCD) PNN<%.1f'%pnn_threshold)
+ax[0].legend()
+ax[0].text(x=0.9, y=0.5, s="Jet1_btagDeepFlavB > 0.3", ha='right',transform=ax[0].transAxes)
+ax[0].text(x=0.9, y=0.45, s="Jet2_btagDeepFlavB > 0.3",ha='right', transform=ax[0].transAxes)
+ax[1].set_xlabel("Dijet Mass [GeV]")
+ax[1].errorbar(x = (bins[1:]+bins[:-1])/2, y=countsHighPNN_SMsub/countsLowPNN_SMsub*np.sum(countsLowPNN_SMsub)/np.sum(countsHighPNN_SMsub), yerr=countsHighPNN_SMsub/countsHighPNN_SMsub*np.sum(countsLowPNN_SMsub)/np.sum(countsHighPNN_SMsub)*np.sqrt(1/countsHighPNN_SMsub + 1/countsLowNN_SMsub), linestyle='none', color='black', marker='o')
+ax[1].hlines(y=1, xmin=bins[0], xmax=bins[-1], color='black')
+ax[0].set_xlim(bins[0], bins[-1])
+ax[1].set_ylim(.9, 1.1)
+fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/High_Low_PNN_score.png", bbox_inches='tight')
