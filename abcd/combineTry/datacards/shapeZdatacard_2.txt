@@ -1,0 +1,25 @@
+Combination of datacard_Zxsection.txt
+imax 6 number of bins
+jmax 6 number of processes minus 1
+kmax 8 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes *    ch1  /t3home/gcelotto/ggHbb/abcd/combineTry/counts.root $PROCESS
+----------------------------------------------------------------------------------------------------------------------------------
+bin          ch1  
+observation  -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             ch1     ch1     ch1     ch1     ch1     ch1     ch1   
+process                         Z+Jets  H       VV      ST      ttbar   W+Jets  QCD   
+process                         0       1       2       3       4       5       6     
+rate                            -1      -1      -1      -1      -1      -1      -1    
+----------------------------------------------------------------------------------------------------------------------------------
+Z_xsec                  lnN     1.01      -     -       -       -        -       -     
+H_xsec                  lnN      -      1.01     -      -       -        -       -     
+VV_xsec                 lnN      -      -      1.01     -       -        -       -     
+ST_xsec                 lnN      -      -       -      1.01       -        -       -     
+ttbar_xsec              lnN      -      -       -     -      1.01        -       -     
+W_xsec                  lnN      -      -       -       -      -      1.01       -     
+lumi                    lnN      1.025      1.025       1.025       1.025      1.025      1.025       -     
+QCD_closure             lnN      -      -       -       -      -      -       1.1     
+
+   

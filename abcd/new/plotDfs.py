@@ -2,9 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-def plotDfs(dfs, isMCList, dfProcesses):
+def plotDfs(dfs, isMCList, dfProcesses, nbin, log=True):
     fig, ax =plt.subplots(1, 1)
-    bins_mass = np.linspace(40, 300, 101)
+    bins_mass = np.linspace(40, 300, nbin)
     c = np.histogram(dfs[0].dijet_mass, bins=bins_mass)[0]
     x = (bins_mass[:-1] + bins_mass[1:])/2
     ax.errorbar(x, c, yerr=np.sqrt(c), linestyle='none', color='black', marker='o')
@@ -52,8 +52,9 @@ def plotDfs(dfs, isMCList, dfProcesses):
         ax.hist(bins_mass[:-1], bins=bins_mass, weights=countsDict[key], bottom=cTot, label=key)
         cTot = cTot + countsDict[key]
     ax.legend()
-    ax.set_yscale('log')
-    ax.set_ylim(10, ax.get_ylim()[1])
+    if log:
+        ax.set_yscale('log')
+        ax.set_ylim(10, ax.get_ylim()[1])
 
 
     return fig
