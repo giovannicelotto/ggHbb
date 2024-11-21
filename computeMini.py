@@ -31,9 +31,9 @@ def computeMini():
             miniDf['numEventsPassed'].append(numEventsPassed)
             miniDf['numEventsTotal'].append(numEventsTotal)
         miniPandasDf = pd.DataFrame(miniDf)
-        miniPandasDf.to_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Oct.csv")
+        miniPandasDf.to_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Oct_new.csv")
     miniDf = pd.DataFrame(miniDf)
-    miniDf.to_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Oct.csv")
+    miniDf.to_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Oct_new.csv")
 
     return
 
