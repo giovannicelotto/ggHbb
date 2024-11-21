@@ -17,3 +17,4 @@ __pycache__/
 *.h5
 *.keras
 status*.txt
+CMSSW_14*
