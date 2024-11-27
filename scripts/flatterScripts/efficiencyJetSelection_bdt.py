@@ -14,6 +14,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/flatter")
 from treeFlatter import jetsSelector
 from bdtJetSelector import bdtJetSelector
 import xgboost as xgb
+import random
 
 '''
 Choose a criterio to select the candidates jets that are most likely to come from the Higgs
@@ -144,14 +145,10 @@ def evaluateCriterion(maxJet, fileNames):
             else:
                 Jet_nTrigMuons = np.zeros(nJet)
             bst_loaded = xgb.Booster()
-            bst_loaded.load_model('/t3home/gcelotto/ggHbb/BDT/model/xgboost_jet_model.model')
-            selected1, selected2 = bdtJetSelector(Jet_pt, Jet_eta, Jet_phi, Jet_mass, Jet_btagDeepFlavB, Jet_qgl, Jet_nTrigMuons, bst_loaded, isMC=1)
+            bst_loaded.load_model('/t3home/gcelotto/ggHbb/BDT/model/xgboost_jet_model_optimal.model')
+            selected1, selected2 = bdtJetSelector(Jet_pt, Jet_eta, Jet_phi, Jet_mass, Jet_btagDeepFlavB, Jet_nTrigMuons, bst_loaded)
 
 
-
-
-
-            jetsToCheck = np.min([maxJet, nJet])
             
             # if the reco jets are out of 2.5 no way that the choice will be correct
             #if ((abs(Jet_eta[idxJet1])>etaTracker)|(abs(Jet_eta[idxJet2])>etaTracker)):
@@ -221,8 +218,9 @@ def main(nFiles, maxJet1, maxJet2):
     '''
     
 
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Mar05"
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Oct21"
     fileNames = glob.glob(path+'/**/*.root', recursive=True)
+    random.shuffle(fileNames)
     fileNames = fileNames[:nFiles]
         
     criterionSummary = {}

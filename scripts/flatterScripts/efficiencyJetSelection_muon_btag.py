@@ -12,6 +12,9 @@ sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
 from criterionEfficiencySummary import plotCriterionEfficiency
 sys.path.append("/t3home/gcelotto/ggHbb/flatter")
 from treeFlatter import jetsSelector
+from bdtJetSelector import bdtJetSelector
+import xgboost as xgb
+import random
 
 '''
 Choose a criterio to select the candidates jets that are most likely to come from the Higgs
@@ -45,10 +48,10 @@ def getTrueJets(nJet, Jet_genJetIdx, GenJet_partonMotherIdx, GenJet_partonFlavou
     return idxJet1, idxJet2
 
 # Now open the file and use the previous distribution
-def evaluateCriterion(maxJet, fileNames): 
+def evaluateCriterion(maxJet, fileNames, tag): 
     firstJetIsGood = 0   
     secondJetIsGood = 0   
-    goodChoice,wrongChoice, matched, nonMatched, noPossiblePair, totalEntriesVisited, outOfEta = 0 ,  0,  0,  0,  0,  0, 0
+    goodChoice,wrongChoice, matched, nonMatched, noPossiblePair, totalEntriesVisited, outOfEta = 0, 0, 0, 0, 0, 0, 0
     # goodChoice       = events where criterion worked
     # wrongChoice      = events criterion did not work
     # mathced          = events in which Higgs daughters are matched
@@ -63,7 +66,7 @@ def evaluateCriterion(maxJet, fileNames):
     print("\n***********************************************************************\n* Computing efficiency of criterion based on two  selected features \n***********************************************************************")
     
     #path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/0000"
-    
+    assert len(fileNames)>0, "No Filenames found. Check the path"
     for fileName in fileNames:
         f = uproot.open(fileName)
         tree = f['Events']
@@ -79,19 +82,36 @@ def evaluateCriterion(maxJet, fileNames):
                 sys.stdout.write("%d%%"%(ev/maxEntries*100))
                 sys.stdout.flush()
                 pass
+            # GenPart
             nGenPart                    = branches["nGenPart"][ev]
             GenPart_pdgId               = branches['GenPart_pdgId'][ev]
             GenPart_genPartIdxMother    = branches["GenPart_genPartIdxMother"][ev]
             GenPart_Pt                  = branches["GenPart_pt"][ev]
             GenPart_Eta                 = branches["GenPart_eta"][ev]
-            Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
+            
+            nGenJet                     = branches["nGenJet"][ev]
             GenJet_partonFlavour        = branches["GenJet_partonFlavour"][ev]
             GenJet_partonMotherIdx      = branches["GenJet_partonMotherIdx"][ev]
             GenJet_partonMotherPdgId    = branches["GenJet_partonMotherPdgId"][ev]
+            Jet_genJetIdx               = branches["Jet_genJetIdx"][ev]
+
+            # GenJets with Neutrino
+            nGenJetNu                   = branches["nGenJetNu"][ev]
+            GenJetNu_eta                = branches["GenJetNu_eta"][ev]
+            GenJetNu_phi                = branches["GenJetNu_phi"][ev]
+            GenJetNu_partonMotherIdx    = branches["GenJetNu_partonMotherIdx"][ev]
+            GenJetNu_partonMotherPdgId  = branches["GenJetNu_partonMotherPdgId"][ev]
+            GenJetNu_partonFlavour      = branches["GenJetNu_partonFlavour"][ev]
+
             Jet_eta                     = branches["Jet_eta"][ev]
             Jet_pt                      = branches["Jet_pt"][ev]
             Jet_phi                     = branches["Jet_phi"][ev]
             Jet_mass                    = branches["Jet_mass"][ev]
+            Jet_puId                    = branches["Jet_puId"][ev]
+            Jet_jetId                    = branches["Jet_jetId"][ev]
+
+            Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
+            Jet_tagUParTAK4B            = branches["Jet_tagUParTAK4B"][ev]
             nJet                        = branches["nJet"][ev]
             Jet_muonIdx1                = branches["Jet_muonIdx1"][ev]
             Jet_muonIdx2                = branches["Jet_muonIdx2"][ev]
@@ -99,57 +119,98 @@ def evaluateCriterion(maxJet, fileNames):
             Jet_bReg2018                = branches["Jet_bReg2018"][ev]
             Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
             Jet_nMuons                  = branches["Jet_nMuons"][ev]
-            nGenJet                     = branches["nGenJet"][ev]
+            Jet_qgl                     = branches["Jet_qgl"][ev]
+            nMuon                       = branches["nMuon"][ev]
+            
 
             #ht = 0
-            
+
+            # Try to match to Jets with Neutrinos
+            #Jet_genJetNuIdx = []
+            #Jet_genJetNu_dR = []
+            #for j in range(nJet):
+            #    minDeltaR = 999
+            #    minDeltaR_idx = 999
+            #    for gjnu in range(nGenJetNu):
+            #        delta_eta = (Jet_eta[j] - GenJetNu_eta[gjnu])
+            #        delta_phi = (Jet_phi[j] - GenJetNu_phi[gjnu])
+            #        if delta_phi > np.pi:
+            #            delta_phi -= 2 * np.pi
+            #        elif delta_phi < -np.pi:
+            #            delta_phi += 2 * np.pi
+            #        deltaR = np.sqrt(delta_eta**2 + delta_phi**2)
+            #        if (deltaR<0.1) & (deltaR<minDeltaR):
+            #            minDeltaR = deltaR
+            #            minDeltaR_idx = gjnu
+            #    if minDeltaR == 999:
+            #        Jet_genJetNuIdx.append(-1)
+            #    else:
+            #        Jet_genJetNuIdx.append(minDeltaR_idx)
+#
+            #    Jet_genJetNu_dR.append(minDeltaR)
+            #Jet_genJetNuIdx = np.array(Jet_genJetNuIdx)
+            #Jet_genJetNu_dR = np.array(Jet_genJetNu_dR)
+
+
             idxJet1, idxJet2 = getTrueJets(nJet, Jet_genJetIdx, GenJet_partonMotherIdx, GenJet_partonFlavour, GenJet_partonMotherPdgId)
 # in case one jets was not identified as higgs daughter  
             if ((idxJet1==-123) | (idxJet2==-124)):
                 # events of nonMatched
                 nonMatched+=1
                 # look for quarks higgs daughters
-                mask = (GenPart_pdgId[GenPart_genPartIdxMother]==25) & (abs(GenPart_pdgId)==5)
-                if np.sum(mask)==2: # two true bquarks
-                    
-                    selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, np.min([maxJet, nJet]), Jet_btagDeepFlavB)
-                    #if (selected1!=0) & (selected2!=0):
-                    #    selected1=0
-                    if (selected1!=999) & (selected2!=999):
-                        jet1 = ROOT.TLorentzVector(0., 0., 0., 0.)
-                        jet2 = ROOT.TLorentzVector(0., 0., 0., 0.)
-                        jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1])
-                        jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2])
-                        isQuark1Leading = True if GenPart_Pt[mask][0]>GenPart_Pt[mask][1] else False
-                        quark1Pt = GenPart_Pt[mask][0] if isQuark1Leading else GenPart_Pt[mask][1]
-                        quark1Eta = GenPart_Eta[mask][0] if isQuark1Leading else GenPart_Eta[mask][1]
-                        quark2Pt = GenPart_Pt[mask][1] if isQuark1Leading else GenPart_Pt[mask][0]
-                        quark2Eta = GenPart_Eta[mask][1] if isQuark1Leading else GenPart_Eta[mask][0]
-                        differenceJetsQuarkPtEtaNonMathced.append([(jet1.Pt() - quark1Pt)/quark1Pt, (jet1.Eta() - quark1Eta)/quark1Eta, (jet2.Pt() - quark2Pt)/quark2Pt, (jet2.Eta() - quark2Eta)/quark2Eta] )
+                #mask = (GenPart_pdgId[GenPart_genPartIdxMother]==25) & (abs(GenPart_pdgId)==5)
+                #if np.sum(mask)==2: # two true bquarks
+                #    
+                #    selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, np.min([maxJet, nJet]), Jet_btagDeepFlavB)
+                #
+                #    #if (selected1!=0) & (selected2!=0):
+                #    #    selected1=0
+                #    if (selected1!=999) & (selected2!=999):
+                #        jet1 = ROOT.TLorentzVector(0., 0., 0., 0.)
+                #        jet2 = ROOT.TLorentzVector(0., 0., 0., 0.)
+                #        jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1])
+                #        jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2])
+                #        isQuark1Leading = True if GenPart_Pt[mask][0]>GenPart_Pt[mask][1] else False
+                #        quark1Pt = GenPart_Pt[mask][0] if isQuark1Leading else GenPart_Pt[mask][1]
+                #        quark1Eta = GenPart_Eta[mask][0] if isQuark1Leading else GenPart_Eta[mask][1]
+                #        quark2Pt = GenPart_Pt[mask][1] if isQuark1Leading else GenPart_Pt[mask][0]
+                #        quark2Eta = GenPart_Eta[mask][1] if isQuark1Leading else GenPart_Eta[mask][0]
+                #        differenceJetsQuarkPtEtaNonMathced.append([(jet1.Pt() - quark1Pt)/quark1Pt, (jet1.Eta() - quark1Eta)/quark1Eta, (jet2.Pt() - quark2Pt)/quark2Pt, (jet2.Eta() - quark2Eta)/quark2Eta] )
                 continue
             else:
                 matched=matched+1
                 
             assert idxJet1>-0.01
             assert idxJet2>-0.01
-            
-            jetsToCheck = np.min([maxJet, nJet])
+
+            # new selector
+            #if nMuon>0:
+            #    Jet_nTrigMuons = (Muon_isTriggering[Jet_muonIdx1]>0)+(Muon_isTriggering[Jet_muonIdx2]>0)
+            #else:
+            #    Jet_nTrigMuons = np.zeros(nJet)
+            #bst_loaded = xgb.Booster()
+            #bst_loaded.load_model('/t3home/gcelotto/ggHbb/BDT/model/xgboost_jet_model_optimal.model')
+            #selected1, selected2 = bdtJetSelector(Jet_pt, Jet_eta, Jet_phi, Jet_mass, Jet_btagDeepFlavB, Jet_qgl, Jet_nTrigMuons, bst_loaded, isMC=1)
+
+
             
             # if the reco jets are out of 2.5 no way that the choice will be correct
+            jetsToCheck = np.min([nJet, maxJet])
             if ((abs(Jet_eta[idxJet1])>etaTracker)|(abs(Jet_eta[idxJet2])>etaTracker)):
                 outOfEta=outOfEta+1
-                selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
-                if (selected1!=999) & (selected2!=999):
-                    jet1 = ROOT.TLorentzVector(0., 0., 0., 0.)
-                    jet2 = ROOT.TLorentzVector(0., 0., 0., 0.)
-                    jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1]*Jet_bReg2018[selected1])
-                    jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2]*Jet_bReg2018[selected2])
-                    wrongJetsMass.append([(jet1+jet2).Pt(), (jet1+jet2).M()])
-
+                #selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
+                #if (selected1!=999) & (selected2!=999):
+                #    jet1 = ROOT.TLorentzVector(0., 0., 0., 0.)
+                #    jet2 = ROOT.TLorentzVector(0., 0., 0., 0.)
+                #    jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1]*Jet_bReg2018[selected1])
+                #    jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2]*Jet_bReg2018[selected2])
+                #    wrongJetsMass.append([(jet1+jet2).Pt(), (jet1+jet2).M()])
+            
                 continue
                        
-
-            selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
+            taggers = [Jet_btagDeepFlavB, Jet_btagPNetB, Jet_tagUParTAK4B]
+            tagLabel = ['DeepJet', 'PNet', 'PartT'][tag]
+            selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, taggers[tag], Jet_puId, Jet_jetId)
 
             #print(ev, idxJet1, idxJet2, selected1, selected2)
             if ((idxJet1==selected1) | (idxJet2==selected1)):
@@ -166,7 +227,7 @@ def evaluateCriterion(maxJet, fileNames):
                 jet2 = ROOT.TLorentzVector(0., 0., 0., 0.)
                 jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1])
                 jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2])
-                wrongJetsMass.append([(jet1+jet2).Pt(), (jet1+jet2).M()])
+                #wrongJetsMass.append([(jet1+jet2).Pt(), (jet1+jet2).M()])
             
     print("\nTriggering Jet is Good                                       : %d  \t  %.2f%%"%(firstJetIsGood, firstJetIsGood/totalEntriesVisited*100))
     print("Non-Triggering Jet is Good                                   : %d  \t  %.2f%%"%(secondJetIsGood, secondJetIsGood/totalEntriesVisited*100))
@@ -183,16 +244,16 @@ def evaluateCriterion(maxJet, fileNames):
     print(maxJet, maxJet==4)
     if int(maxJet)==4:
         print("Only for maxJet == 4 saving the wrong masses and non matched ones")
-        np.save("/t3home/gcelotto/ggHbb/outputs/wrongJetsMassCriterion.npy", wrongJetsMass)
-        np.save("/t3home/gcelotto/ggHbb/outputs/nonMatchedQuarksPt.npy", differenceJetsQuarkPtEtaNonMathced)
+        #np.save("/t3home/gcelotto/ggHbb/outputs/wrongJetsMassCriterion.npy", wrongJetsMass)
+        #np.save("/t3home/gcelotto/ggHbb/outputs/nonMatchedQuarksPt.npy", differenceJetsQuarkPtEtaNonMathced)
     
-        print("Wrong jets mass saved length: ", len(wrongJetsMass))
-        print("Non matched jets saved length: ", len(differenceJetsQuarkPtEtaNonMathced))
+        #print("Wrong jets mass saved length: ", len(wrongJetsMass))
+        #print("Non matched jets saved length: ", len(differenceJetsQuarkPtEtaNonMathced))
     
     return nonMatched, matched, goodChoice, wrongChoice, noPossiblePair, outOfEta
 
 
-def main(nFiles, maxJet1, maxJet2):
+def main(nFiles, maxJet1, maxJet2, tag):
     '''
     Take the first _nFiles_ NanoAOD files.
     If recomputeDistributions is True recompute the 2D distributions using the right jets coming from the Higgs
@@ -203,24 +264,26 @@ def main(nFiles, maxJet1, maxJet2):
     '''
     
 
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Mar05"
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Oct21"
     fileNames = glob.glob(path+'/**/*.root', recursive=True)
+    #random.shuffle(fileNames)
     fileNames = fileNames[:nFiles]
         
     criterionSummary = {}
     for maxJet in range(maxJet1, maxJet2):
         print("nFiles                : ", nFiles)
         print("Max jet to check      : %d"%maxJet)
-        nonMatched, matched, goodChoice, wrongChoice, noPossiblePair, outOfEta = evaluateCriterion(maxJet, fileNames)
+        nonMatched, matched, goodChoice, wrongChoice, noPossiblePair, outOfEta = evaluateCriterion(maxJet, fileNames, tag)
         criterionSummary[maxJet] = [nonMatched, matched, goodChoice, wrongChoice, noPossiblePair, outOfEta]
-    
-    with open("/t3home/gcelotto/ggHbb/outputs/dict_criterionEfficiency.pkl", 'wb') as file:
+    tagLabel = ['DeepJet', 'PNet', 'ParT'][tag]
+    with open("/t3home/gcelotto/ggHbb/outputs/dict_criterionEfficiency_%s.pkl"%tagLabel, 'wb') as file:
         pickle.dump(criterionSummary, file)
-    plotCriterionEfficiency()
+    plotCriterionEfficiency(tag=tagLabel)
     
 
 if __name__ == "__main__":
     nFiles                   = int(sys.argv[1]) if len(sys.argv) > 1 else 20
     maxJet1                   = int(sys.argv[2]) if len(sys.argv) > 2 else 2
     maxJet2                   = int(sys.argv[3]) if len(sys.argv) > 3 else 8
-    main(nFiles=nFiles, maxJet1=maxJet1, maxJet2=maxJet2)
+    tag                         = int(sys.argv[4])   # ['DeepJet', 'PNet', 'ParT'][tag]
+    main(nFiles=nFiles, maxJet1=maxJet1, maxJet2=maxJet2, tag=tag)

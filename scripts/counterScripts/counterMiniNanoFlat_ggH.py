@@ -1,6 +1,6 @@
 import uproot
 import glob
-import numpy as np
+import pandas as pd
 '''
     take all the MINIAOD files of ggHbb and get the number of entries, save them.
     take all the NANOAOD files of ggHbb and get the number of entries
@@ -29,20 +29,17 @@ def getMiniEntries():
     return totalMiniEntries
 
 def getFlatEntries():
-    #fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/flatData/*.npy")
-    #print("Number of Flat Data : ", len(fileNames))
-    #totalFlatEntries = 0
-    #for fileName in fileNames:
-    #    f = np.load(fileName)
-    #    maxEntries = len(f)
-    #    totalFlatEntries += maxEntries
-    #    print("%d/%d\n\t\t"%(fileNames.index(fileName)+1, len(fileNames)), totalFlatEntries)
-    return 0
+    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/**/*.parquet", recursive=True)
+    print("Number of Flat Data : ", len(fileNames))
+    
+    f = pd.read_parquet(fileNames, columns=['sf'])
+    totalFlatEntries = len(f)
+    return totalFlatEntries
 
 
 def getNanoEntries():
-    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH_2023Nov30/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231130_120412/0000/*.root")
-    print("Number of Flat Data : ", len(fileNames))
+    fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Mar05/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/240305_081723/0000/*.root")
+    print("Number of Nano Data : ", len(fileNames))
     totalNanoEntries = 0
     for fileName in fileNames:
         f = uproot.open(fileName)
@@ -55,12 +52,12 @@ def getNanoEntries():
 if __name__=="__main__":
     nano = getNanoEntries()
     flat = getFlatEntries()
-    mini = getMiniEntries()
-    print("Saving mini into /t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy ...")
-    np.save("/t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy", mini)
-    efficiencyMC = flat/mini
+    #mini = getMiniEntries()
+    #print("Saving mini into /t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy ...")
+    #np.save("/t3home/gcelotto/ggHbb/outputs/counters/N_mini.npy", mini)
+    #efficiencyMC = flat/mini
     
-    print("Mini : \t%d"%mini)
+    #print("Mini : \t%d"%mini)
     print("Nano : \t%d"%nano)
     print("Flat : \t%d"%flat)
-    print("Efficiency MC (nano/flat)  : \t%.10f"%(nano/mini))
+    #print("Efficiency MC (nano/flat)  : \t%.10f"%(nano/mini))
