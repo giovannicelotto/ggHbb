@@ -52,6 +52,9 @@ def main(nanoFileName, fileNumber, process):
         Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
         Jet_tagUParTAK4B            = branches["Jet_tagUParTAK4B"][ev]
 
+        Jet_puId                    = branches["Jet_puId"][ev]
+        Jet_jetId                   = branches["Jet_jetId"][ev]
+
         Jet_PNetRegPtRawCorr              = branches["Jet_PNetRegPtRawCorr"][ev]
         Jet_PNetRegPtRawCorrNeutrino      = branches["Jet_PNetRegPtRawCorrNeutrino"][ev]
         Jet_PNetRegPtRawRes               = branches["Jet_PNetRegPtRawRes"][ev]
@@ -157,6 +160,8 @@ def main(nanoFileName, fileNumber, process):
 
         if process=='GluGluHToBB':
             m = (Jet_genJetNuIdx>-1) & (abs(GenJetNu_partonFlavour[Jet_genJetNuIdx])==5) & (GenJetNu_partonMotherPdgId[Jet_genJetNuIdx]==25)
+        elif (process=="EWKZJets") | (process=="ZJetsToQQ_200to400") | (process=="ZJetsToQQ_400to600") |  (process=="ZJetsToQQ_600to800") | (process=="ZJetsToQQ_800toInf") | (process=="ZJetsToQQ_100to200"):
+            m = (Jet_genJetNuIdx>-1) & (abs(GenJetNu_partonFlavour[Jet_genJetNuIdx])==5) & (GenJetNu_partonMotherPdgId[Jet_genJetNuIdx]==23)
 
         if np.sum(m)==2:
             selected1, selected2 = np.arange(nJet)[m][0], np.arange(nJet)[m][1]
@@ -184,6 +189,8 @@ def main(nanoFileName, fileNumber, process):
         features_.append(Jet_ParTAK4RegPtRawCorr[selected1])
         features_.append(Jet_UParTAK4RegPtRawCorrNeutrino[selected1])
         features_.append(Jet_UParTAK4RegPtRawRes[selected1])
+        features_.append(Jet_jetId[selected1])
+        features_.append(Jet_puId[selected1])
 
         if selected2>-1:
             features_.append(Jet_pt[selected2])
@@ -201,8 +208,10 @@ def main(nanoFileName, fileNumber, process):
             features_.append(Jet_ParTAK4RegPtRawCorr[selected2])
             features_.append(Jet_UParTAK4RegPtRawCorrNeutrino[selected2])
             features_.append(Jet_UParTAK4RegPtRawRes[selected2])
+            features_.append(Jet_jetId[selected2])
+            features_.append(Jet_puId[selected2])
         else:
-            for jdx in range(14):
+            for jdx in range(16):
                 features_.append(-1)
 
         if selected2>-1:
@@ -219,8 +228,8 @@ def main(nanoFileName, fileNumber, process):
 # breg 2018
             jet1 = ROOT.TLorentzVector(0.,0.,0.,0.)
             jet2 = ROOT.TLorentzVector(0.,0.,0.,0.)
-            jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1]*Jet_bReg2018[selected1])
-            jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2]*Jet_bReg2018[selected2])
+            jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
+            jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
             dijet = jet1 + jet2
 
             features_.append(dijet.Pt())
@@ -340,8 +349,10 @@ def main(nanoFileName, fileNumber, process):
     fileData=pd.DataFrame(fileData, columns=[
         'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass', 'jet1_bReg2018',
         'jet1_rawFactor', 'jet1_btagDeepFlavB', 'jet1_btagPNetB', 'jet1_tagUParTAK4B', 'jet1_PNetRegPtRawCorr', 'jet1_PNetRegPtRawCorrNeutrino', 'jet1_PNetRegPtRawRes', 'jet1_ParTAK4RegPtRawCorr', 'jet1_UParTAK4RegPtRawCorrNeutrino', 'jet1_UParTAK4RegPtRawRes', 
+        'jet1_id', 'jet1_puid',
         'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass', 'jet2_bReg2018',
         'jet2_rawFactor', 'jet2_btagDeepFlavB', 'jet2_btagPNetB', 'jet2_tagUParTAK4B', 'jet2_PNetRegPtRawCorr', 'jet2_PNetRegPtRawCorrNeutrino', 'jet2_PNetRegPtRawRes', 'jet2_ParTAK4RegPtRawCorr', 'jet2_UParTAK4RegPtRawCorrNeutrino', 'jet2_UParTAK4RegPtRawRes', 
+        'jet2_id', 'jet2_puid',
         'dijet_pt_reco', 'dijet_eta_reco', 'dijet_phi_reco', 'dijet_mass_reco',
         'dijet_pt_2018', 'dijet_eta_2018', 'dijet_phi_2018', 'dijet_mass_2018',
         'dijet_pt_pnet', 'dijet_eta_pnet', 'dijet_phi_pnet', 'dijet_mass_pnet',

@@ -3,23 +3,24 @@ import glob, sys, re, os
 import random
 import subprocess
 import time
+from functions import getDfProcesses
 
 
-
-def main(nFiles):
+def main(isMC, nFiles):
     # Define name of the process, folder for the files and xsections
     
-    df=pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
+    df=getDfProcesses()
 
-
-    nanoPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Oct09/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/241009_135255/0000"
+    nanoPath = df.nanoPath[isMC]
     flatPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/genMatched"
+    process = df.process[isMC]
     if not os.path.exists(flatPath):
         print("Creting flathPath ...", flatPath)
         os.makedirs(flatPath)
-    process = "GluGluHToBB"
+    if not os.path.exists(flatPath+"/"+process):
+        os.makedirs(flatPath+"/"+process)
     nanoFileNames = glob.glob(nanoPath+"/**/*.root", recursive=True)
-    flatFileNames = glob.glob(flatPath+"/**/*.parquet", recursive=True)
+    flatFileNames = glob.glob(flatPath+"/%s/*.parquet"%process, recursive=True)
     print(process, len(flatFileNames), "/", len(nanoFileNames))
     if len(flatFileNames)==len(nanoFileNames):
         return
@@ -48,10 +49,11 @@ def main(nFiles):
         if matching_files:
 
             continue
-        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 500), '/t3home/gcelotto/ggHbb/genMatching/genFlatterNu/job.sh', nanoFileName, process, str(fileNumber), flatPath])
+        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 500), '/t3home/gcelotto/ggHbb/genMatching/genFlatterNu/job.sh', nanoFileName, process, str(fileNumber), flatPath+"/"+process])
         doneFiles = doneFiles+1
     return 
 
 if __name__ == "__main__":
-    nFiles                   = int(sys.argv[1]) if len(sys.argv) > 1 else -1
-    main(nFiles=nFiles)
+    isMC   = int(sys.argv[1]) if len(sys.argv) > 1 else -1
+    nFiles = int(sys.argv[2]) if len(sys.argv) > 2 else -1
+    main(isMC=isMC, nFiles=nFiles)

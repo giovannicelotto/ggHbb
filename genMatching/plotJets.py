@@ -1,15 +1,28 @@
+# %%
 import pandas as pd
 import matplotlib.pyplot as plt
 import glob
 import numpy as np
 import mplhep as hep
 hep.style.use("CMS")
-
-fig,ax = plt.subplots(2, 2)
+# %%
+#fig,ax = plt.subplots(2, 2)
 fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/genMatched/GluGlu*.parquet")
+#fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A/*.parquet")
 df = pd.read_parquet(fileNames)
-
-m = (df.jet1_pt > 20)  & (abs(df.jet1_eta)<2.5) & (abs(df.jet1_eta)<2.5)
+# %%
+m = (df.jet1_pt > 20)  & (df.jet2_pt > 20) & (abs(df.jet1_eta)<2.5) & (abs(df.jet1_eta)<2.5)
+fig, ax = plt.subplots(1, 2, figsize=(10, 5))
+bins=np.arange(9)
+ax[0].hist(df[m].jet1_id, bins=bins, histtype='step', label='Leading', density=True)
+ax[0].hist(df[m].jet2_id, bins=bins, histtype='step', label='Subleading', density=True)
+ax[1].hist(df[m].jet1_puid, bins=bins, histtype='step', label='Leading', density=True)
+ax[1].hist(df[m].jet2_puid, bins=bins, histtype='step', label='Subleading', density=True)
+ax[0].set_xlabel("Jet ID")
+ax[1].set_xlabel("Jet puID")
+ax[0].legend()
+ax[1].legend()
+# %%
 print(len(df), " entries")
 print(len(df[m]), " in the phase space")
 m=(m)& (df.genPart1_pt>1e-5)
