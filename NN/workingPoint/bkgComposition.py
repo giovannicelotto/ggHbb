@@ -13,7 +13,7 @@ from applyMultiClass_Hpeak import getPredictions, splitPtFunc
 
 # load data
 
-pTClass, nReal, nMC = 0, 300, 100
+pTClass, nReal, nMC = 0, 600, -1
 dfProcess=pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
 isMCList = [0, # Data
             1, # GluGlu
@@ -50,7 +50,7 @@ for isMC in isMCList:
 
 
 # load the files where the prediction is available
-columns = ['sf', 'dijet_mass', 'dijet_pt', 'jet1_pt', 'jet2_pt','jet1_mass', 'jet2_mass', 'jet1_eta', 'jet2_eta', 'jet1_qgl', 'jet2_qgl', 'dijet_dR', 'dijet_dPhi', 'jet3_pt', 'jet3_mass', 'jet3_qgl', 'Pileup_nTrueInt']
+columns = ['sf', 'dijet_mass', 'dijet_pt', 'jet1_pt', 'jet2_pt','jet1_mass', 'jet2_mass', 'jet1_eta', 'jet2_eta', 'jet1_qgl', 'jet2_qgl', 'dijet_dR', 'dijet_dPhi', 'jet3_pt', 'jet3_mass', 'jet3_qgl', 'Pileup_nTrueInt', 'muon_pt']
 dfs, numEventsList, fileNumberList = loadMultiParquet(paths=flatPath, nReal=nReal, nMC=nMC,
                                                       columns=columns, returnNumEventsTotal=True,
                                                       selectFileNumberList=fileNumberList, returnFileNumberList=True)
@@ -75,7 +75,7 @@ YPred = list(getPredictions(fileNumberList, pathToPredictions, splitPt=splitPt, 
 
 
 # %%
-bins = np.linspace(40, 200, 41)
+bins = np.linspace(0, 80, 21)
 MCCounts = {
     'ggH':np.zeros(len(bins)-1),
     'VV':np.zeros(len(bins)-1),
@@ -89,7 +89,7 @@ dataCounts = np.zeros(len(bins)-1)
 for idx, df in enumerate(dfs):
     print("Process : %s"%processNames[idx])
     
-    mask = (YPred[idx][:,0]<0.22) & (YPred[idx][:,1]>0.34)
+    mask = (YPred[idx][:,0]<1) & (YPred[idx][:,1]>0) & (df.dijet_pt>0)
 
 
     if numEventsList[idx]!=0:
@@ -97,18 +97,25 @@ for idx, df in enumerate(dfs):
         counts_ = counts_/(numEventsList[idx]+1e-7) * dfProcess.xsection[idx] * 1000 * nReal/1017 * 0.774
         
         if 'ST' in processNames[idx]:
+            print(processNames[idx], " in ST")
             MCCounts['ST'] = MCCounts['ST'] + counts_
         elif 'TTTo' in processNames[idx]:
+            print(processNames[idx], " in TT")
             MCCounts['tt'] = MCCounts['tt'] + counts_
         elif ('WW' in processNames[idx]) | ('ZZ' in processNames[idx]) | ('WZ' in processNames[idx]):
+            print(processNames[idx], " in VV")
             MCCounts['VV'] = MCCounts['VV'] + counts_
         elif ('WJets' in processNames[idx]):
+            print(processNames[idx], " in W")
             MCCounts['W'] = MCCounts['W'] + counts_
         elif ('ZJets' in processNames[idx]) | ('EWKZJets' in processNames[idx]):
+            print(processNames[idx], " in Z")
             MCCounts['Z'] = MCCounts['Z'] + counts_
         elif ('GluGluHToBB' in processNames[idx]):
+            print(processNames[idx], " in H")
             MCCounts['ggH'] = MCCounts['ggH'] + counts_
         elif ('QCD' in processNames[idx]):
+            print(processNames[idx], " in QCD")
             MCCounts['QCD'] = MCCounts['QCD'] + counts_
     else:
         assert ('Data' in processNames[idx])
@@ -138,4 +145,12 @@ for value in MCCounts.values():
 ax2.errorbar(x, dataCounts/MCSum, yerr=np.sqrt(dataCounts)/MCSum, color='black', linestyle='none', marker='o')
 
 
+# %%
+pTcut = 0
+for pTcut in [0, 80, 100, 120]:
+    mask     =   (YPred[1][:,0]<0.22) & (YPred[1][:,1]>0.34) & (dfs[1].dijet_mass>100)& (dfs[1].dijet_mass<150) & (dfs[1].dijet_pt>pTcut)
+    maskBkg = (YPred[0][:,0]<0.22) & (YPred[0][:,1]>0.34) & (dfs[0].dijet_mass>100)& (dfs[0].dijet_mass<150) & (dfs[0].dijet_pt>pTcut)
+    W_H     =   dfs[1][mask].sf.sum()/(numEventsList[1]+1e-7) * dfProcess.xsection[1] * 1000 * nReal/1017 * 0.774
+    den     =   (maskBkg).sum()
+    print("pT > %d  \t:%.2f"%(pTcut, W_H/np.sqrt(den)*np.sqrt(1017/nReal)*np.sqrt(41.6/0.774)))
 # %%

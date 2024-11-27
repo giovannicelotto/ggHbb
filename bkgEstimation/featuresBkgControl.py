@@ -8,13 +8,11 @@ hep.style.use("CMS")
 
 
 def main(nData, nMC):
-    miniDf = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_June.csv")
+    miniDf = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Long.csv")
     datasets = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
 
-
-
     fig,(ax1, ax2) = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(10, 12))
-    bins= np.linspace(0, 300, 101)
+    bins= np.linspace(0, 50, 101)
     allCounts = np.zeros(len(bins)-1)
 
     countsDict = {
@@ -29,18 +27,19 @@ def main(nData, nMC):
         'QCD':np.zeros(len(bins)-1),
     }
 
-    lumiPerEvent = np.load("/t3home/gcelotto/ggHbb/outputs/lumiPerEvent.npy")
-
-
+    currentLumi = 0.774*nData/1017
+    index = 0
     for (process, path, xsection) in zip(datasets.process, datasets.flatPath, datasets.xsection):
+        if index==37:
+            break
+        print(process)
         nFiles = nData if process=='Data' else nMC
         fileNames = glob.glob(path+"/**/*.parquet", recursive=True)[:nFiles]
         if len(fileNames)==0:
             sys.exit("No file found for process %s"%process)
-        df = pd.read_parquet(fileNames, columns=['dijet_mass', 'sf', 'dijet_pt', 'jet2_btagDeepFlavB'])
+        df = pd.read_parquet(fileNames, columns=['dijet_mass', 'sf', 'dijet_pt', 'jet2_btagDeepFlavB', 'muon_pt'])
         if process=='Data':
-            currentLumi=lumiPerEvent*len(df)
-            print(currentLumi)
+            pass
         else:
             mini=0
             for fileName in fileNames:
@@ -49,13 +48,12 @@ def main(nData, nMC):
 
             xsection = datasets[datasets.process==process].xsection.values[0]*1000
         
-
-        df=df[(df.dijet_pt>100) & (df.jet2_btagDeepFlavB>0.8)]
-        counts = np.histogram(df.dijet_mass, bins=bins, weights=df.sf)[0]
+        #df=df[(df.dijet_pt>100) & (df.jet2_btagDeepFlavB>0.8)]
+        counts = np.histogram(df.muon_pt, bins=bins, weights=df.sf)[0]
         if process=='Data':
             pass
         else:
-            counts=counts*xsection / mini*currentLumi
+            counts=counts*xsection / mini*currentLumi*1000
         if 'Data' in process:
             countsDict['Data'] = countsDict['Data'] +counts
         elif 'GluGluHToBB' in process:
@@ -73,7 +71,7 @@ def main(nData, nMC):
             countsDict['W+Jets'] = countsDict['W+Jets'] +counts
         elif (('WW' in process) | ('ZZ' in process) | ('WZ' in process)):
             countsDict['VV'] = countsDict['VV'] +counts
-
+        index = index + 1
     for key in countsDict.keys():
         if key=='Data':
             ax1.errorbar((bins[1:]+bins[:-1])/2, countsDict[key], xerr=np.diff(bins)/2, yerr=np.sqrt(countsDict[key]), color='black', linestyle='none')[0]
@@ -98,7 +96,7 @@ def main(nData, nMC):
     ax2.errorbar((bins[:-1]+bins[1:])/2, countsDict['Data']/allCounts, xerr=np.diff(bins)/2, color='black', linestyle='none')
     ax2.set_ylim(0.5, 1.5)
     ax2.hlines(y=1, xmin=bins[0], xmax=bins[-1], color='black')
-    fig.savefig("/t3home/gcelotto/ggHbb/bkgEstimation/output/dijet_mass.png", bbox_inches='tight')
+    fig.savefig("/t3home/gcelotto/ggHbb/bkgEstimation/output/muon_pt.png", bbox_inches='tight')
 
 if __name__=="__main__":
     nData, nMC = int(sys.argv[1]), int(sys.argv[2])

@@ -59,10 +59,13 @@ def closure(nFilesData, nFilesMC):
     countsDic={}
 
     print("="*50,"\nMiniDf found\n","="*50)
-    miniDf = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_June.csv")
+    miniDf = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Long.csv")
     PU_map = load_mapping_dict('/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData/PU_PVtoPUSF.json')
 
+    index = 0
     for (process, path, xsection) in zip(df.process, df.flatPath, df.xsection):
+        if index == 37:
+            break
         print("Starting process ", process)
         if process in list(toSkip):
             print("skipping process ....", process)
@@ -109,9 +112,9 @@ def closure(nFilesData, nFilesMC):
             counts = np.histogram(dfProcess[featureDisplay], bins=bins, weights=dfProcess.sf)[0]
             dataCounts = counts
             dataErr = np.sqrt(dataCounts)
-            
 
 
+        index = index + 1
 
     fig,(ax1, ax2) = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [3, 1]}, figsize=(10, 10))
     fig.subplots_adjust(hspace=0.1)
@@ -152,7 +155,7 @@ def closure(nFilesData, nFilesMC):
     print(("="*30))
     ax2.errorbar((bins[1:]+bins[:-1])/2, (dataCounts/(allCounts+epsilon)), marker='o', color='black', linewidth=1, linestyle='', label='MC', alpha=1)
     ax1.legend(bbox_to_anchor=(1 ,1), ncols=1)
-    outName = outFolder+"/%s_trigAndPU.png"%(featureDisplay)
+    outName = outFolder+"/%s_trigAndPU_new.png"%(featureDisplay)
     print("Savin in ", outName)
     fig.savefig(outName, bbox_inches='tight')
 
