@@ -10,6 +10,7 @@ from helpers.getParams import getParams
 from helpers.loadSaved import loadXYWSaved
 from helpers.getInfolderOutfolder import getInfolderOutfolder
 from helpers.scaleUnscale import scale, unscale
+from helpers.saveDataAndPredictions import save
 
 from helpers.doPlots import runPlots
 from tensorflow.keras.models import load_model
@@ -40,5 +41,6 @@ YPredTrain = model.predict(Xtrain[featuresForTraining])
 
 Xtrain = unscale(Xtrain, featuresForTraining=featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl")
 Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
+save(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, inFolder)
 # Plots 
 runPlots(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, featuresForTraining, model, inFolder, outFolder)

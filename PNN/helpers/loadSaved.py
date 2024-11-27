@@ -16,3 +16,13 @@ def loadSaved(inFolder, rWeights=False):
         return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, rWtrain, rWtest
     else:
         return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest
+    
+def loadXYWSaved(inFolder):
+    Xtrain      = pd.read_parquet(inFolder + "/XTrain.parquet")
+    Xtest       = pd.read_parquet(inFolder + "/XTest.parquet")
+    Ytrain      = np.load(inFolder + "/YTrain.npy")
+    Ytest       = np.load(inFolder + "/YTest.npy")
+    Wtrain      = np.load(inFolder + "/WTrain.npy")
+    Wtest       = np.load(inFolder + "/WTest.npy")
+
+    return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest

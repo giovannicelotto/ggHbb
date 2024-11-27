@@ -1,11 +1,11 @@
 import os 
 
-def getInfolderOutfolder():
-    outFolder   = "/t3home/gcelotto/ggHbb/PNN/results/basicFeatures" 
+def getInfolderOutfolder(name):
+    outFolder   = "/t3home/gcelotto/ggHbb/PNN/results/"+name 
     # basicFeatures
     # allFeatures
     # prova
-    inFolder    = "/t3home/gcelotto/ggHbb/PNN/input"
+    inFolder    = "/t3home/gcelotto/ggHbb/PNN/input/"+name
 
     # define suffix = inclusive or other
     if not os.path.exists(inFolder):

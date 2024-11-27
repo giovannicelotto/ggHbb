@@ -44,12 +44,15 @@ def main(isMC, nFiles):
 
 
         # check if the predictions was already done:
-        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova/%s/others"%process):
-            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova/%s/others"%process)
-        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_v3b_prova/%s/others/yMC%d_fn%d.parquet"%(process, isMC, fileNumber)):
+        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/%s/others"%process):
+            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/%s/others"%process)
+        pattern = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/%s/**/yMC%d_fn%d.parquet" % (process, isMC, fileNumber)
+        matching_files = glob.glob(pattern, recursive=True)
+
+        if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(isMC))
-            subprocess.run(['sbatch', '-J', "y%d_%d"%(isMC, random.randint(1, 100)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(isMC), process])
+            subprocess.run(['sbatch', '-J', "y%d_%d"%(isMC, random.randint(1, 20)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(isMC), process])
             doneFiles = doneFiles + 1
         else:
             print("..")

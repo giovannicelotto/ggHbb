@@ -14,7 +14,7 @@ import numpy as np
 
 def predict(file_path, isMC):
     #featuresForTraining, columnsToRead = getFeatures(outFolder=None)
-    modelDir = "/t3home/gcelotto/ggHbb/PNN/results/v3b_prova/model"
+    modelDir = "/t3home/gcelotto/ggHbb/PNN/results/nov18/model"
     featuresForTraining = np.load(modelDir + "/featuresForTraining.npy")
     model = load_model(modelDir + "/myModel.h5")
 

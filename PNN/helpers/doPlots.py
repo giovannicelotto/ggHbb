@@ -40,10 +40,11 @@ def doPlotLoss(fit, outName, earlyStop, patience):
 
 def roc(thresholds, signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName):
 
+    print("Scale factors missing")
+
     tpr, tpr_train = [], []
     fpr, fpr_train = [], []
     for t in thresholds:
-        print(t)
         tpr.append(np.sum(signal_predictions > t)/len(signal_predictions))
         fpr.append(np.sum(realData_predictions > t)/len(realData_predictions))
         if signalTrain_predictions is not None:
@@ -59,7 +60,6 @@ def roc(thresholds, signal_predictions, realData_predictions, signalTrain_predic
 
 
     fig, ax = plt.subplots(1, 1)
-    print(np.max(fpr))
     ax.plot(fpr, tpr, marker='o', markersize=1, label='test')
     if signalTrain_predictions is not None:
         ax.plot(fpr_train, tpr_train, marker='o', markersize=1, label='train')
@@ -103,19 +103,17 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     fig.savefig(outName, bbox_inches='tight')
 
 def getShapNew(Xtest, model, outName, nFeatures, class_names=['NN output']):
-    print(Xtest.shape)
     featuresForTraining = Xtest.columns.values
     explainer = shap.GradientExplainer(model=model, data=Xtest)
 
     shap_values = explainer.shap_values(np.array(Xtest))
-    print(shap_values)
     # get the contribution for each class by averaging over all the events
     shap_values_average = abs(shap_values).mean(axis=0)
 
     #find the leading features:
     shap_values_average_sum = shap_values_average.sum(axis=1)
-    for idx, feature in enumerate(featuresForTraining):
-        print(feature, shap_values_average_sum[idx])
+    #for idx, feature in enumerate(featuresForTraining):
+    #    print(feature, shap_values_average_sum[idx])
     indices = np.argsort(shap_values_average_sum)[::-1]
     ordered_featuresForTraining = np.array(featuresForTraining)[indices][:nFeatures]
     orderd_shap_values_average = shap_values_average[indices][:nFeatures]
@@ -148,7 +146,6 @@ def ggHscoreScan(Xtest, Ytest, YPredTest, Wtest, outName):
             ax.hist(Xtest.dijet_mass[combinedMask], bins=bins, weights=Wtest[combinedMask], label='ggH score >%.1f'%t[i], histtype=u'step', density=True)[0]
 
     ax.legend()
-    #print(Wtest[combinedMask][:10], Wtest[combinedMask].mean(), Wtest[combinedMask].std())
     ax.set_title("Dijet Mass : ggH score scan")
     if outName is not None:
         fig.savefig(outName, bbox_inches='tight')
@@ -159,10 +156,11 @@ def runPlots(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest,
     realData_predictions = YPredTest[Ytest==0]
     signalTrain_predictions = YPredTrain[Ytrain==1]
     realDataTrain_predictions = YPredTrain[Ytrain==0]
-
+    
     roc(thresholds=np.linspace(0, 1, 100), signal_predictions=signal_predictions, realData_predictions=realData_predictions, signalTrain_predictions=signalTrain_predictions, realDataTrain_predictions=realDataTrain_predictions, outName=outFolder+"/performance/roc.png")
     NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output.png")
     ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, outName=outFolder + "/performance/ggHScoreScan.png")
     # scale
-    Xtest  = scale(Xtest, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+    Xtest  = scale(Xtest, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
+    
     getShapNew(Xtest=Xtest[featuresForTraining].head(1000), model=model, outName=outFolder+'/performance/shap.png', nFeatures=15, class_names=['NN output'])

@@ -10,14 +10,14 @@ def preprocessMultiClass(dfs):
         #df = df[df.leptonClass == leptonClass]
 
         
-        df = df[(df.jet1_pt>20) & (df.jet2_pt>20)]
-        df = df[(df.jet2_mass>0)] 
-        df = df[(df.jet1_mass>0)]
+        #df = df[(df.jet1_pt>20) & (df.jet2_pt>20)]
+        #df = df[(df.jet2_mass>0)] 
+        #df = df[(df.jet1_mass>0)]
         if 'jet3_mass' in df.columns:
             df = df[(df.jet3_mass>0)]
         # useless
-        df = df[(df.jet1_eta<2.5) & (df.jet1_eta>-2.5)]
-        df = df[(df.jet2_eta<2.5) & (df.jet2_eta>-2.5)]
+        #df = df[(df.jet1_eta<2.5) & (df.jet1_eta>-2.5)]
+        #df = df[(df.jet2_eta<2.5) & (df.jet2_eta>-2.5)]
         # end useless
         
         beforeCutMass = len(df)
