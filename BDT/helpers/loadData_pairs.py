@@ -13,5 +13,10 @@ def loadData_pairs(path):
     y = df['is_true_pair']  # Labels
 
     ## Split into training and test sets
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1999)
-    return X_train, X_test, y_train, y_test
+    # First, split the data into 60% training and 40% temp (test+validation)
+    X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, random_state=1999)
+
+    # Then, split the temp set into 50% validation and 50% test (i.e., 20% each of the original data)
+    X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=1999)
+
+    return X_train, X_val, X_test, y_train, y_val, y_test
