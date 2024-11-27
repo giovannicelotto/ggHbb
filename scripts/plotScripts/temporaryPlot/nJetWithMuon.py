@@ -11,12 +11,12 @@ signal=False
 tag='MC' if signal else 'Bkg'
 if signal:
     tag='MC'
-    nFiles = 40
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/0000"
+    nFiles = 1
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Mar05/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/240305_081723/0000"
 else:
     tag = 'Bkg'
-    nFiles = 5
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data20181A_2023Nov30/ParkingBPH1/crab_data_Run2018A_part1/231130_120505/000*/"
+    nFiles = 1
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Data1A2024Mar05/ParkingBPH1/crab_data_Run2018A_part1/240305_082004/0000"
 
 print("Signal is set to ", signal)
 print("path : ", path)
@@ -41,11 +41,11 @@ for fileName in fileNames[:nFiles]:
 
         for jetIdx in range(nJet):
             if Jet_muonIdx1[jetIdx]>-1:
-                if (Muon_isTriggering[Jet_muonIdx1[jetIdx]]) & (abs(Jet_eta[jetIdx])<2.5):
+                if (Muon_isTriggering[Jet_muonIdx1[jetIdx]]) & (abs(Jet_eta[jetIdx])<2.5) :#& (np.sum(abs(Jet_eta[:4])<2.5)>1):
                     nTrigJetEvent=nTrigJetEvent+1
                     continue
             if Jet_muonIdx2[jetIdx]>-1:
-                if (Muon_isTriggering[Jet_muonIdx2[jetIdx]]) & (abs(Jet_eta[jetIdx])<2.5):
+                if (Muon_isTriggering[Jet_muonIdx2[jetIdx]]) & (abs(Jet_eta[jetIdx])<2.5) :#& (np.sum(abs(Jet_eta[:4])<2.5)>1):
                     nTrigJetEvent=nTrigJetEvent+1
                     continue
         trigJet.append(nTrigJetEvent)

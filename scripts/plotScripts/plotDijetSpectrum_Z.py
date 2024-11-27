@@ -6,7 +6,8 @@ import matplotlib.patches as patches
 from scipy.optimize import curve_fit
 from scipy.stats import norm, crystalball
 from scipy.integrate import quad
-from utilsForPlot import loadData, loadDataOnlyMass, getXSectionBR, loadDataOnlyFeatures, loadRoot, loadParquet, loadDask
+from utilsForPlot import loadData, loadDataOnlyMass, loadDataOnlyFeatures, loadRoot, loadParquet, loadDask
+from functions import getXSectionBR
 import sys, glob
 import mplhep as hep
 hep.style.use("CMS")
@@ -21,7 +22,8 @@ def plotDijetMass(log = False, fit = True, realFiles=1):
     signal, realData, numEventsTotal= loadParquet(signalPath=signalPath, realDataPath=realDataPath, nSignalFiles=-1, nRealDataFiles=realFiles, columns=columnsToRead, returnNumEventsTotal=True)
     
 
-    dfs = [ pd.read_parquet(glob.glob(ZJetsToQQPath+"/ZJetsToQQ_HT-200to400/*.parquet"), columns=columnsToRead),
+    dfs = [ pd.read_parquet(glob.glob(ZJetsToQQPath+"/ZJetsToQQ_HT-100to200/*.parquet"), columns=columnsToRead),
+            pd.read_parquet(glob.glob(ZJetsToQQPath+"/ZJetsToQQ_HT-200to400/*.parquet"), columns=columnsToRead),
             pd.read_parquet(glob.glob(ZJetsToQQPath+"/ZJetsToQQ_HT-400to600/*.parquet"), columns=columnsToRead),
             pd.read_parquet(glob.glob(ZJetsToQQPath+"/ZJetsToQQ_HT-600to800/*.parquet"), columns=columnsToRead),
             pd.read_parquet(glob.glob(ZJetsToQQPath+"/ZJetsToQQ_HT-800toInf/*.parquet"), columns=columnsToRead)]
@@ -29,14 +31,16 @@ def plotDijetMass(log = False, fit = True, realFiles=1):
         
 
     df_processes = pd.read_csv("/t3home/gcelotto/ggHbb/bkgEstimation/processes.csv")
-    miniDf = pd.read_csv("/t3home/gcelotto/ggHbb/abcd/output/miniDf.csv")
+    miniDf = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_Mar.csv")
     
-    xsectionZ = [df_processes[(df_processes.process=='ZJetsToQQ_200to400')].xsection.values[0],
+    xsectionZ = [   df_processes[(df_processes.process=='ZJetsToQQ_100to200')].xsection.values[0],
+                    df_processes[(df_processes.process=='ZJetsToQQ_200to400')].xsection.values[0],
                     df_processes[(df_processes.process=='ZJetsToQQ_400to600')].xsection.values[0],
                     df_processes[(df_processes.process=='ZJetsToQQ_600to800')].xsection.values[0],
                     df_processes[(df_processes.process=='ZJetsToQQ_800toInf')].xsection.values[0]]
     
-    miniZ = [miniDf[(miniDf.process=="ZJetsToQQ_200to400") ].numEventsTotal.sum(),
+    miniZ = [   miniDf[(miniDf.process=="ZJetsToQQ_100to200") ].numEventsTotal.sum(),
+                miniDf[(miniDf.process=="ZJetsToQQ_200to400") ].numEventsTotal.sum(),
                 miniDf[(miniDf.process=="ZJetsToQQ_400to600") ].numEventsTotal.sum(),
                 miniDf[(miniDf.process=="ZJetsToQQ_600to800") ].numEventsTotal.sum(),
                 miniDf[(miniDf.process=="ZJetsToQQ_800toInf") ].numEventsTotal.sum()]

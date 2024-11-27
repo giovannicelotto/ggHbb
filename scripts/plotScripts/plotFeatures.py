@@ -5,7 +5,7 @@ import pandas as pd
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patches as patches
 #from getFeaturesBScoreBased import getFeaturesBScoreBased
-from utilsForPlot import getBins, loadRoot, getFeaturesBScoreBased, loadParquet, loadDask
+from utilsForPlot import getBins, loadRoot, getFeaturesBScoreBased, loadParquet#,loadDask
 from functions import getXSectionBR, loadMultiParquet, cut
 import mplhep as hep
 hep.style.use("CMS")
@@ -16,9 +16,16 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
     '''
     plot normalized features of signal and background
     data= list of dataframes one for each process'''
+    # Find common columns
+    common_columns = set(data[0].columns) 
+    for df in data[1:]:
+        common_columns.intersection_update(df.columns)  # Update with the intersection of columns
+    # Drop columns that are not in the common set from each DataFrame
+    data = [df[list(common_columns)] for df in data]
+
 
     xlims = getBins(dictFormat=True)
-    nRow, nCol = int(len(data[0].columns)/4+int(bool(len(data[0].columns)%4))), 4
+    nRow, nCol = int(len(data[0].columns)/6+int(bool(len(data[0].columns)%6))), 6
     fig, ax = plt.subplots(nRow, nCol, figsize=(20, 15) if figsize==None else figsize, constrained_layout=True)
     fig.align_ylabels(ax[:,0])
     
@@ -39,7 +46,7 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
                 bins = np.linspace(xlims[featureName][1], xlims[featureName][2], int(xlims[featureName][0])+1)
             if autobins:
                 try:
-                    xmin, xmax = data[0][featureName].quantile(0.1), data[0][featureName].quantile(0.9)
+                    xmin, xmax = data[0][featureName].quantile(0.02), data[0][featureName].quantile(0.98)
                     for idx in range(len(data)):
                         if data[idx][featureName].quantile(0.1) < xmin:
                             xmin =data[idx][featureName].quantile(0.1)
@@ -58,15 +65,16 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
                 else:
                     weightsDf = weights[idx]
                 counts = np.zeros(len(bins)-1)
-                counts = np.histogram(np.clip(df[featureName], bins[0], bins[-1]),weights = weightsDf if featureName!='sf' else None, bins=bins)[0]
-                
-                
+                feature_data = df[featureName].astype(int) if df[featureName].dtype == bool else df[featureName]
+                counts = np.histogram(np.clip(feature_data, bins[0], bins[-1]),weights = weightsDf if featureName!='sf' else None, bins=bins)[0]
+                              
                 
                 if ((counts<0).any()):
                     print("Negative counts in ", featureName)
                     #print(counts)
                 if error:
-                    countsErr = np.sqrt(counts)
+                    countsErr = np.sqrt(np.histogram(np.clip(feature_data, bins[0], bins[-1]),weights = weightsDf**2 if featureName!='sf' else None, bins=bins)[0])
+
                 
                 # Normalize the counts to 1 so also the errors undergo the same operation. Do first the errors, otherwise you lose the info on the signal
                     countsErr = countsErr/np.sum(counts)
