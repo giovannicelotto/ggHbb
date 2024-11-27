@@ -1,8 +1,10 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import mplhep as hep
+hep.style.use("CMS")
 
-def plotDfs(dfs, isMCList, dfProcesses, nbin, log=True):
+def plotDfs(dfs, isMCList, dfProcesses, nbin, nReal, log=True):
     fig, ax =plt.subplots(1, 1)
     bins_mass = np.linspace(40, 300, nbin)
     c = np.histogram(dfs[0].dijet_mass, bins=bins_mass)[0]
@@ -55,6 +57,9 @@ def plotDfs(dfs, isMCList, dfProcesses, nbin, log=True):
     if log:
         ax.set_yscale('log')
         ax.set_ylim(10, ax.get_ylim()[1])
+    ax.set_ylabel("Counts")
+    ax.set_xlabel("Dijet Mass [GeV]")
+    hep.cms.label(lumi=round(nReal*0.774/1017,2))
 
 
     return fig

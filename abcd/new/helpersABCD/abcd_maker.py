@@ -3,6 +3,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
 from plot import plotQCDhists_SR_CR, controlPlotABCD, plotQCDClosure, plotQCDPlusSM
 from createRootHists import createRootHists
 from hist import Hist
+import matplotlib.pyplot as plt
 
 def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix):
     hA = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
@@ -32,24 +33,30 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix):
     print("Region B : ", regions["B"].sum())
     print("Region C : ", regions["C"].sum())
     print("Region D : ", regions["D"].sum())
-
     # remove MC from non QCD processes simulations from A, C, D
     for idx, df in enumerate(dfs[1:]):
-        print(idx, df.dijet_mass.mean())
+        print(idx, dfProcesses.process[isMCList[idx+1]])
         mA      = (df[x1]<t1 ) & (df[x2]>t2 ) 
         mB      = (df[x1]>t1 ) & (df[x2]>t2 ) 
         mC      = (df[x1]<t1 ) & (df[x2]<t2 ) 
         mD      = (df[x1]>t1 ) & (df[x2]<t2 ) 
-        # Subtract the events by filling with opposite weights
+        # Subtract the events by filling with opposite weights (variances will be updated consequently)
+        # Hist will sum the variances. Variances theorem
         regions['A'].fill(df[mA][xx], weight=-df[mA].weight)  
         regions['C'].fill(df[mC][xx], weight=-df[mC].weight)  
         regions['D'].fill(df[mD][xx], weight=-df[mD].weight)  
         # In B don't do it, we want to see the excess from Data - QCD = MCnonQCD
-        #regions['B'] = regions['B'] - np.histogram(df[mB][xx], bins=bins, weights=df[mB].weight)[0]
+        
 
+# Fist Plot
+    # hB_ADC is the hist of QCD estimated via ABCD
+    # The variances are propagated from A, D, C. They give uncertainties on QCD
     hB_ADC = plotQCDhists_SR_CR(regions=regions, bins=bins, x1=x1, x2=x2, t1=t1, t2=t2, suffix=suffix)
-
+    
+    plt.close('all')    
+# Second Plot
     countsDict = controlPlotABCD(regions, hB_ADC, bins, dfs, isMCList, dfProcesses, x1, t1, x2, t2, nReal, suffix=suffix)
+    plt.close('all')
 
 
 
@@ -58,15 +65,18 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix):
 
 
     # put negative values to countsDict
+    print("Put negative values")
     for key in countsDict:
         countsDict[key].values()[:] = -countsDict[key].values()[:]
-
-    qcd_mc = regions['B'] + countsDict['H'] + countsDict['ttbar'] + countsDict['ST'] + countsDict['VV'] + countsDict['VV'] + countsDict['W+Jets'] + countsDict['Z+Jets']
+    print("regions B values", regions["B"].values())
+    qcd_mc = regions['B'] + countsDict['H'] + countsDict['ttbar'] + countsDict['ST'] + countsDict['VV'] + countsDict['VV'] + countsDict['WJets'] + countsDict['ZJets']
     # Restore positive histograms
     for key in countsDict:
         countsDict[key].values()[:] = -countsDict[key].values()[:]
+    print(print("regions B values unchagned", regions["B"].values()))
+    plotQCDClosure(bins, hB_ADC, qcd_mc, nReal=nReal, suffix=suffix)
+    plt.close('all')
+    plotQCDPlusSM(bins, regions, countsDict, hB_ADC, nReal=nReal, suffix=suffix)
+    plt.close('all')
 
-    plotQCDClosure(bins, hB_ADC, qcd_mc, suffix)
-    plotQCDPlusSM(bins, regions, countsDict, hB_ADC, suffix)
-
-    createRootHists(countsDict, hB_ADC, regions, bins, suffix)
+    #createRootHists(countsDict, hB_ADC, regions, bins, suffix)

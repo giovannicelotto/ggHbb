@@ -13,7 +13,7 @@ from hist import Hist
 import hist
 # %%
 # Define number of Data Files, MC files per process, predictionsPath, list of MC processes
-nReal = 1008
+nReal = 308
 nMC = -1
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18"
 isMCList = [0, 1,
@@ -65,7 +65,7 @@ dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, 
                                                       columns=[ 'sf',        'dijet_mass',   'dijet_pt',             'jet1_pt',
                                                                 'jet2_pt',   'jet1_mass',    'jet2_mass',            'jet1_eta',
                                                                 'jet2_eta',  'dijet_dR',     'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
-                                                                'jet3_mass', 'Pileup_nTrueInt',
+                                                                'jet3_mass', 'Pileup_nTrueInt', 'leptonClass',
                                                                 'dijet_cs',  'PU_SF'],
                                                                returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                                returnFileNumberList=True)
@@ -158,6 +158,36 @@ print("Region A : ", np.sum(dfZ.weight[mA])/dfZ.weight.sum())
 print("Region B : ", np.sum(dfZ.weight[mB])/dfZ.weight.sum())
 print("Region C : ", np.sum(dfZ.weight[mC])/dfZ.weight.sum())
 print("Region D : ", np.sum(dfZ.weight[mD])/dfZ.weight.sum())
+# %%
+
+fig, ax = plt.subplots(1, 1)
+bins=np.linspace(0, 1, 51)
+ax.hist(dfs[0].dijet_cs_abs, bins=bins, histtype='step', label='Data', density=True)
+ax.hist(dfZ.dijet_cs_abs, bins=bins, weights=dfZ.weight, histtype='step', label='ZJets', density=True)
+ax.hist(dfs[1].dijet_cs_abs, bins=bins, weights=dfs[1].weight, histtype='step', label='Higgs', density=True)
+ax.set_xlabel("Dijet cs")
+ax.legend()
+
+# %%
+fig, ax = plt.subplots(1, 1)
+bins=np.arange(1, 5)
+cData = ax.hist(dfs[0].leptonClass, bins=bins, histtype='step', label='Data', density=True, color='C0')[0]
+cZ = ax.hist(dfZ.leptonClass, bins=bins, weights=dfZ.weight, histtype='step', label='ZJets', density=True, color='C1')[0]
+cH = ax.hist(dfs[1].leptonClass, bins=bins, weights=dfs[1].weight, histtype='step', label='Higgs', density=True, color='C2')[0]
+
+for i in range(len(cData)):
+    ax.text((bins[i] + bins[i + 1]) / 2, 0.125, f'{cData[i]*100:.1f}%', ha='center', va='bottom', color='C0')
+    ax.text((bins[i] + bins[i + 1]) / 2, 0.1, f'{cZ[i]*100:.1f}%', ha='center', va='bottom', color='C1')
+    ax.text((bins[i] + bins[i + 1]) / 2, 0.08, f'{cH[i]*100:.1f}%', ha='center', va='bottom', color='C2')
+
+ax.set_xticks(bins[:-1] + 0.5)  # Center labels within the bins
+ax.set_xticklabels(["Trig Muon", "Muon", "No Muon"])
+ax.set_xlabel("Muon In Jet")
+ax.set_yscale('log')
+ax.legend()
+
+
+
 
 # %%
 # ABCD Start here

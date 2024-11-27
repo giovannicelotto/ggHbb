@@ -19,7 +19,7 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
                 12,13,14,
                 15,16,17,18,19,
                 20, 21, 22, 23, 36,
-                #39    # Data2A
+                39    # Data2A
     ]
 
     # Take the DataFrame with processes, path, xsection. Filter the needed rows (processes)
@@ -107,7 +107,7 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
     dfs[0]['weight'] = np.ones(len(dfs[0]))
 
 
-    return dfs, isMCList, dfProcesses
+    return dfs, isMCList, dfProcesses, nReal
 
 
 

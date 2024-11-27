@@ -7,14 +7,14 @@ def createRootHists(countsDict, hB_ADC, regions, bins, suffix):
     
     # Create histograms for each process
     # use same bins
-    processes = ['H', 'VV', 'ST', 'ttbar', 'W+Jets', 'Z+Jets', 'QCD']
+    processes = ['H', 'VV', 'ST', 'ttbar', 'WJets', 'ZJets', 'QCD']
     hists = {
         'H':      countsDict["H"]  ,
         'VV':     countsDict["VV"]  ,
         'ST':     countsDict["ST"]  ,
         'ttbar':  countsDict["ttbar"]      ,
-        'W+Jets': countsDict["W+Jets"]      ,
-        'Z+Jets': countsDict["Z+Jets"]      ,
+        'WJets': countsDict["WJets"]      ,
+        'ZJets': countsDict["ZJets"]      ,
         'QCD':    hB_ADC,
         'data_obs':    regions["B"]
     }
