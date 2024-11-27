@@ -61,4 +61,7 @@ if __name__ == "__main__":
     maxEntries  = int(sys.argv[3]) if len(sys.argv) > 3 else -1
     maxJet      = int(sys.argv[4]) if len(sys.argv) > 4 else 4
     print("max jet", maxJet)
+    print("*"*20)
+    print(" CHeck if the dijet is saved with pnet corrections!")
+    print("*"*20)
     main(isMC, nFiles, maxEntries, maxJet)

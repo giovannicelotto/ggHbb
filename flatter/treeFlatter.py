@@ -4,6 +4,7 @@ import numpy as np
 import ROOT
 import uproot
 from functions import load_mapping_dict
+import awkward as ak
 def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId):
     score=-999
     selected1 = 999
@@ -84,7 +85,21 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
     histPath = "/t3home/gcelotto/ggHbb/trgMu_scale_factors.root"
     f = ROOT.TFile(histPath, "READ")
     hist = f.Get("hist_scale_factor")
-    for ev in  range(maxEntries):
+    if (isMC==2) | (isMC==20) | (isMC==21) | (isMC==22) | (isMC==23) | (isMC==36):
+        GenPart_pdgId = branches["GenPart_pdgId"]
+        GenPart_genPartIdxMother = branches["GenPart_genPartIdxMother"]
+        maskBB = ak.sum((abs(GenPart_pdgId)==5) & ((GenPart_pdgId[GenPart_genPartIdxMother])==23), axis=1)==2
+        myrange = np.arange(tree.num_entries)[~maskBB]
+
+    elif (isMC==45) | (isMC==46) | (isMC==47) | (isMC==48) | (isMC==49) | (isMC==50):
+        GenPart_pdgId = branches["GenPart_pdgId"]
+        GenPart_genPartIdxMother = branches["GenPart_genPartIdxMother"]
+        maskBB = ak.sum((abs(GenPart_pdgId)==5) & ((GenPart_pdgId[GenPart_genPartIdxMother])==23), axis=1)==2
+        myrange = np.arange(tree.num_entries)[maskBB]
+    else:
+        myrange = range(maxEntries)
+    
+    for ev in myrange:
         
         features_ = []
         if maxEntries>100:
@@ -173,7 +188,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         dijet = ROOT.TLorentzVector(0.,0.,0.,0.)
         jetsToCheck = np.min([maxJet, nJet])
         
-        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagPNetB, Jet_puId, Jet_jetId)
+        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId)
 
         if selected1==999:
             #print("skipped")
@@ -184,8 +199,10 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         
 
             
-        jet1.SetPtEtaPhiM(Jet_pt[selected1]*(1-Jet_rawFactor[selected1])*Jet_PNetRegPtRawCorr[selected1]*Jet_PNetRegPtRawCorrNeutrino[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
-        jet2.SetPtEtaPhiM(Jet_pt[selected2]*(1-Jet_rawFactor[selected2])*Jet_PNetRegPtRawCorr[selected2]*Jet_PNetRegPtRawCorrNeutrino[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
+        #jet1.SetPtEtaPhiM(Jet_pt[selected1]*(1-Jet_rawFactor[selected1])*Jet_PNetRegPtRawCorr[selected1]*Jet_PNetRegPtRawCorrNeutrino[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1])
+        #jet2.SetPtEtaPhiM(Jet_pt[selected2]*(1-Jet_rawFactor[selected2])*Jet_PNetRegPtRawCorr[selected2]*Jet_PNetRegPtRawCorrNeutrino[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2])
+        jet1.SetPtEtaPhiM(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], Jet_mass[selected1]    )
+        jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], Jet_mass[selected2]    )
         dijet = jet1 + jet2
 
         features_.append(jet1.Pt())                         
@@ -238,7 +255,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
                 if ((i ==selected1) | (i==selected2)):
                     continue
                 else:
-                    jet3.SetPtEtaPhiM(Jet_pt[i]*(1-Jet_rawFactor[i]*Jet_PNetRegPtRawCorr[i]),Jet_eta[i],Jet_phi[i],Jet_mass[i])
+                    jet3.SetPtEtaPhiM(Jet_pt[i],Jet_eta[i],Jet_phi[i],Jet_mass[i])
                     features_.append(np.float32(jet3.Pt()))
                     features_.append(np.float32(Jet_eta[i]))
                     features_.append(np.float32(Jet_phi[i]))
@@ -249,6 +266,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
                             counterMuTight=counterMuTight+1
                     features_.append(int(counterMuTight))   
                     features_.append(np.float32(Jet_btagPNetB[i]))
+                    features_.append(np.float32(Jet_btagDeepFlavB[i]))
                     features_.append(jet3.DeltaR(dijet))
                     break
         else:
@@ -258,6 +276,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
             features_.append(np.float32(0)) #mass
             features_.append(int(0))                
             features_.append(np.float32(0))         # pnet
+            features_.append(np.float32(0))         # deepjet
             features_.append(np.float32(0))         # deltaR
 
 
@@ -294,6 +313,15 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
         #features_.append(np.float32(jet2_unc.M()))
         #features_.append(np.float32(dijet_unc.Pt()))
         #features_.append(np.float32(dijet_unc.M()))
+        jet1.SetPtEtaPhiM(Jet_pt[selected1]*(1-Jet_rawFactor[selected1])*Jet_PNetRegPtRawCorr[selected1]*Jet_PNetRegPtRawCorrNeutrino[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1])
+        jet2.SetPtEtaPhiM(Jet_pt[selected2]*(1-Jet_rawFactor[selected2])*Jet_PNetRegPtRawCorr[selected2]*Jet_PNetRegPtRawCorrNeutrino[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2])
+        dijet_pnet = jet1+jet2
+        features_.append(jet1.Pt())
+        features_.append(jet2.Pt())
+        features_.append(dijet_pnet.Pt())
+        features_.append(dijet_pnet.Eta())
+        features_.append(dijet_pnet.Phi())
+        features_.append(dijet_pnet.M())
 # Event variables
 # nJets
         features_.append(int(nJet))
@@ -303,10 +331,10 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
             ht = ht+Jet_pt[idx]
         features_.append((np.float32(ht)))
         #nJets with pTT > 30 and btag < 0.2
-        nJets_30_p2 = np.sum((Jet_pt>30) & (Jet_btagPNetB<0.2) & (abs(Jet_eta)<2.5))
-        ttbar_tag = (np.sum(Jet_pt>45)>=4) & (np.sum((Jet_pt>45) & (Jet_btagPNetB<0.2))<=3) & (np.sum(Jet_btagPNetB>0.9)==2)
-        features_.append(nJets_30_p2)
-        features_.append(ttbar_tag)
+        nJets_30_p2 = np.sum((Jet_pt>30) & (Jet_btagDeepFlavB<0.2) & (abs(Jet_eta)<2.5))
+        ttbar_tag = (np.sum(Jet_pt>45)>=4) & (np.sum((Jet_pt>45) & (Jet_btagDeepFlavB<0.2))<=3) & (np.sum(Jet_btagDeepFlavB>0.9)==2)
+        features_.append(int(nJets_30_p2))
+        features_.append(int(ttbar_tag))
 # SV
         features_.append(int(nSV))
 
@@ -381,7 +409,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
             features_.append(np.float32(-999))
             features_.append(np.float32(-999))
             features_.append(np.float32(-999))
-            features_.append(bool(-999))
+            features_.append(bool(False))
             features_.append(np.float32(-999))
             features_.append(np.float32(-999))
             features_.append(int(-999))
@@ -442,10 +470,13 @@ def main(fileName, maxEntries, maxJet, isMC, process):
                     'jet2_id', 'jet2_puId',
                 # Jet 3
                     'jet3_pt', 'jet3_eta', 'jet3_phi', 'jet3_mass', 'jet3_nTightMuons',
-                    'jet3_btagPNetB', 'dR_jet3_dijet',
+                    'jet3_btagPNetB', 'jet3_btagDeepFlavB', 'dR_jet3_dijet',
                 # Dijet
                     'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 
                     'dijet_twist', 'dijet_cs', 'normalized_dijet_pt', 
+                # PNet variables
+                    'jet1_pt_pnet', 'jet2_pt_pnet', 
+                    'dijet_pt_pnet', 'dijet_eta_pnet', 'dijet_phi_pnet', 'dijet_mass_pnet',
                 # Event Variables
                     'nJets', 'nJets_20GeV', 'ht', 'nJets_pt30_btag0p2', 'ttbar_tag', 'nSV',  # Error
                 # Trig Muon
@@ -461,6 +492,7 @@ def main(fileName, maxEntries, maxJet, isMC, process):
                     'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',
                     'PV_npvs', 'Pileup_nTrueInt', 'sf']
     df.columns = featureNames
+    print("Start try")
     try:
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
     except:
@@ -471,13 +503,20 @@ def main(fileName, maxEntries, maxJet, isMC, process):
         except:
             sys.exit()
     # PU_SF addition
+    print("FileNumber ", fileNumber)
     if 'Data' in process:
         df['PU_SF']=1
     else:
+        print("Here")
         PU_map = load_mapping_dict('/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData/PU_PVtoPUSF.json')
         df['PU_SF'] = df['Pileup_nTrueInt'].apply(int).map(PU_map)
         df.loc[df['Pileup_nTrueInt'] > 98, 'PU_SF'] = 0
+        print("Here2")
+    print("Here3")
+    print('/scratch/' +process+"_%s.parquet"%fileNumber)
     df.to_parquet('/scratch/' +process+"_%s.parquet"%fileNumber )
+    print("Here4")
+    print("FileNumber ", fileNumber)
     print("Saving in " + '/scratch/' +process+"_%s.parquet"%fileNumber )
 
 
