@@ -331,9 +331,10 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC):
             ht = ht+Jet_pt[idx]
         features_.append((np.float32(ht)))
         #nJets with pTT > 30 and btag < 0.2
-        nJets_30_p2 = np.sum((Jet_pt>30) & (Jet_btagDeepFlavB<0.2) & (abs(Jet_eta)<2.5))
+        # Update btag 2 -> 2783
+        nJets_30_btagMedWP = np.sum((Jet_pt>30) & (Jet_btagDeepFlavB<0.2783) & (abs(Jet_eta)<2.5))
         ttbar_tag = (np.sum(Jet_pt>45)>=4) & (np.sum((Jet_pt>45) & (Jet_btagDeepFlavB<0.2))<=3) & (np.sum(Jet_btagDeepFlavB>0.9)==2)
-        features_.append(int(nJets_30_p2))
+        features_.append(int(nJets_30_btagMedWP))
         features_.append(int(ttbar_tag))
 # SV
         features_.append(int(nSV))
@@ -478,7 +479,7 @@ def main(fileName, maxEntries, maxJet, isMC, process):
                     'jet1_pt_pnet', 'jet2_pt_pnet', 
                     'dijet_pt_pnet', 'dijet_eta_pnet', 'dijet_phi_pnet', 'dijet_mass_pnet',
                 # Event Variables
-                    'nJets', 'nJets_20GeV', 'ht', 'nJets_pt30_btag0p2', 'ttbar_tag', 'nSV',  # Error
+                    'nJets', 'nJets_20GeV', 'ht', 'nJets_30_btagMedWP', 'ttbar_tag', 'nSV',  # Error
                 # Trig Muon
                     'muon_pt', 'muon_eta',  'muon_ptRel', 'muon_dxySig', 'muon_dzSig', 'muon_IP3d', 'muon_sIP3d', 'muon_tightId',
                     'muon_pfRelIso03_all', 'muon_pfRelIso04_all', 'muon_tkIsoId', 'muon_charge',
