@@ -24,7 +24,6 @@ def main(isMC, nFiles, maxEntries, maxJet):
         return
         
     time.sleep(1)
-    #sys.exit("exit")
     
     nFiles = nFiles if nFiles != -1 else len(nanoFileNames)
     if nFiles > len(nanoFileNames) :
@@ -42,14 +41,9 @@ def main(isMC, nFiles, maxEntries, maxJet):
 
         filePattern = flatPath+"/**/"+process+"_"+str(fileNumber)+".parquet"
         matching_files = glob.glob(filePattern, recursive=True)
-        #print("Checking for ", flatPath+"/**/"+process+"_"+fileNumber+".parquet")
 
         if matching_files:
-            #print(process+"_"+fileNumber+".parquet present. Skipped")
             continue
-            #pass
-        #print(process, fileNumber, str(isMC))
-        #print(flatPath)
         subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 500), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(isMC), process, str(fileNumber), flatPath])
         doneFiles = doneFiles+1
     return 
@@ -62,6 +56,5 @@ if __name__ == "__main__":
     maxJet      = int(sys.argv[4]) if len(sys.argv) > 4 else 4
     print("max jet", maxJet)
     print("*"*20)
-    print(" CHeck if the dijet is saved with pnet corrections!")
     print("*"*20)
     main(isMC, nFiles, maxEntries, maxJet)
