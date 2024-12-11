@@ -1,4 +1,4 @@
-Combination of ch1=shapeZdatacard_lcPass.txt  ch2=shapeZdatacard_lcFail_b2Med.txt  ch3=shapeZdatacard_lcFail_b2Tight.txt
+Combination of ch1=shapeHdatacard_lcPass.txt  ch2=shapeHdatacard_lcFail_b2Med.txt  ch3=shapeHdatacard_lcFail_b2Tight.txt
 imax 3 number of bins
 jmax 6 number of processes minus 1
 kmax 8 number of nuisance parameters
@@ -11,16 +11,16 @@ bin          ch1    ch2    ch3
 observation  -1     -1     -1   
 ----------------------------------------------------------------------------------------------------------------------------------
 bin                             ch1    ch1    ch1    ch1    ch1    ch1    ch1    ch2    ch2    ch2    ch2    ch2    ch2    ch2    ch3    ch3    ch3    ch3    ch3    ch3    ch3  
-process                         ZJets  H      VV     ST     ttbar  WJets  QCD    ZJets  H      VV     ST     ttbar  WJets  QCD    ZJets  H      VV     ST     ttbar  WJets  QCD  
+process                         H      ZJets  VV     ST     ttbar  WJets  QCD    H      ZJets  VV     ST     ttbar  WJets  QCD    H      ZJets  VV     ST     ttbar  WJets  QCD  
 process                         0      1      2      3      4      5      6      0      1      2      3      4      5      6      0      1      2      3      4      5      6    
 rate                            -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1     -1   
 ----------------------------------------------------------------------------------------------------------------------------------
-H_xsec                  lnN     -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -    
+H_xsec                  lnN     1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -    
 QCD_closure             lnN     -      -      -      -      -      -      1.01   -      -      -      -      -      -      1.01   -      -      -      -      -      -      1.01 
 ST_xsec                 lnN     -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -    
 VV_xsec                 lnN     -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -    
 W_xsec                  lnN     -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -    
-Z_xsec                  lnN     1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -    
+Z_xsec                  lnN     -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -    
 lumi                    lnN     1.025  1.025  1.025  1.025  1.025  1.025  -      1.025  1.025  1.025  1.025  1.025  1.025  -      1.025  1.025  1.025  1.025  1.025  1.025  -    
 ttbar_xsec              lnN     -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -      -      -      -      -      1.05   -      -    
-syst group = ttbar_xsec Z_xsec QCD_closure lumi VV_xsec H_xsec ST_xsec W_xsec
+syst group = Z_xsec ST_xsec VV_xsec lumi QCD_closure W_xsec ttbar_xsec H_xsec

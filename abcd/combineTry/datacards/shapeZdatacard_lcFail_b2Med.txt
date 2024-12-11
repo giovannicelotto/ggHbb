@@ -2,12 +2,12 @@ imax 1 number of bins
 jmax 6 number of processes minus 1
 kmax 8 number of nuisance parameters
 ----------------------------------------------------------------------------------------------------------------------------------
-shapes *    lc3_cs0  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_lc3_cs0.root $PROCESS
+shapes *    lcFail_b2Med  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_lcFail_b2Med.root $PROCESS
 ----------------------------------------------------------------------------------------------------------------------------------
-bin          lc3_cs0
+bin          lcFail_b2Med
 observation  -1
 ----------------------------------------------------------------------------------------------------------------------------------
-bin                             lc3_cs0     lc3_cs0     lc3_cs0     lc3_cs0     lc3_cs0     lc3_cs0     lc3_cs0
+bin                             lcFail_b2Med     lcFail_b2Med     lcFail_b2Med     lcFail_b2Med     lcFail_b2Med     lcFail_b2Med     lcFail_b2Med
 process                         ZJets     H     VV     ST     ttbar     WJets     QCD
 process                         0     1     2     3     4     5     6
 rate                            -1     -1     -1     -1     -1     -1     -1
@@ -19,6 +19,6 @@ ST_xsec                  lnN     -     -     -     1.05     -     -     -
 ttbar_xsec               lnN     -     -     -     -     1.05     -     -
 W_xsec                   lnN     -     -     -     -     -     1.05     -
 lumi                     lnN     1.025     1.025     1.025     1.025     1.025     1.025     -
-QCD_closure              lnN     -     -     -     -     -     -     1.05
+QCD_closure              lnN     -     -     -     -     -     -     1.01
 ----------------------------------------------------------------------------------------------------------------------------------
 syst      group = Z_xsec H_xsec VV_xsec ST_xsec ttbar_xsec W_xsec lumi QCD_closure

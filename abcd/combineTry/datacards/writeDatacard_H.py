@@ -6,14 +6,14 @@ channels = [
         "total"
     ]
 for channel in channels:
-    datacard_name = "/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeZdatacard_%s.txt"%channel
+    datacard_name = "/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeHdatacard_%s.txt"%channel
     bin_name = channel
-    processes = ["ZJets", "H", "VV", "ST", "ttbar", "WJets", "QCD"]
+    processes = ["H", "ZJets", "VV", "ST", "ttbar", "WJets", "QCD"]
     process_indices = [0, 1, 2, 3, 4, 5, 6]
     rates = [-1, -1, -1, -1, -1, -1, -1]
     nuisances = [
-        ("Z_xsec", [1.05, "-", "-", "-", "-", "-", "-"]),
-        ("H_xsec", ["-", 1.05, "-", "-", "-", "-", "-"]),
+        ("H_xsec", [1.05, "-", "-", "-", "-", "-", "-"]),
+        ("Z_xsec", ["-", 1.05, "-", "-", "-", "-", "-"]),
         ("VV_xsec", ["-", "-", 1.05, "-", "-", "-", "-"]),
         ("ST_xsec", ["-", "-", "-", 1.05, "-", "-", "-"]),
         ("ttbar_xsec", ["-", "-", "-", "-", 1.05, "-", "-"]),
@@ -49,4 +49,4 @@ for channel in channels:
             file.write(f"{nuisance:<24} lnN     {'     '.join(map(str, values))}\n")
 #
         file.write("-" * 130 + "\n")
-        file.write("syst      group = Z_xsec H_xsec VV_xsec ST_xsec ttbar_xsec W_xsec lumi QCD_closure")
+        file.write("syst      group = H_xsec Z_xsec VV_xsec ST_xsec ttbar_xsec W_xsec lumi QCD_closure")
