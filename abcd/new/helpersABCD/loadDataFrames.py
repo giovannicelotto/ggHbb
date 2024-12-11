@@ -4,9 +4,53 @@ import json, sys, glob, re
 import pandas as pd
 import mplhep as hep
 hep.style.use("CMS")
-from functions import loadMultiParquet, getDfProcesses, sortPredictions
+from functions import loadMultiParquet, getDfProcesses_v2, sortPredictions, loadMultiParquet_v2, getDfProcesses
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
+def loadPredictions(processes, isMCList, predictionsFileNames, fileNumberList):
+    preds = []
+    predictionsFileNamesNew = []
+    for isMC, p in zip(isMCList, processes):
+        idx = isMCList.index(isMC)
+        print("Process %s # %d"%(p, isMC))
+        l =[]
+        for fileName in predictionsFileNames[idx]:
+            fn = int(re.search(r'fn(\d+)\.parquet', fileName).group(1))
+            if fn in fileNumberList[idx]:
+                l.append(fileName)
+        predictionsFileNamesNew.append(l)
+
+        print(len(predictionsFileNamesNew[idx]), " files for process")
+        df = pd.read_parquet(predictionsFileNamesNew[idx])
+        preds.append(df)
+    return preds
+
+
+def getPredictionNamesNumbers(processes,isMCList, predictionsPath):
+    # Get predictions names path for all the datasets
+    predictionsFileNames = []
+    for p in processes:
+        print(p)
+        tempFileNames = glob.glob(predictionsPath+"/%s/others/*.parquet"%p)
+        sortedFileNames = sorted(tempFileNames, key=lambda x: int(''.join(filter(str.isdigit, x))))
+        predictionsFileNames.append(sortedFileNames)
+        if len(predictionsFileNames)==0:
+            print("*"*10)
+            print("No Files found for process ", p)
+            print("*"*10)
+    predictionsFileNumbers = []
+    for isMC, p in zip(isMCList, processes):
+        idx = isMCList.index(isMC)
+        print("Process %s # %d"%(p, isMC))
+        l = []
+        for fileName in predictionsFileNames[idx]:
+            fn = re.search(r'fn(\d+)\.parquet', fileName).group(1)
+            l.append(int(fn))
+        predictionsFileNumbers.append(l)
+
+    return predictionsFileNames, predictionsFileNumbers
+
+
 
 
 def loadDataFrames(nReal, nMC, predictionsPath, columns):
@@ -40,7 +84,7 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
             print("*"*10)
             print("No Files found for process ", p)
             print("*"*10)
-
+    print(sortedFileNames[:10])
     # For each fileNumber extract the fileNumber
     predictionsFileNumbers = []
     for isMC, p in zip(isMCList, processes):
@@ -60,7 +104,8 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
     dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC,
                                                           columns=columns,
                                                           returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
-                                                          returnFileNumberList=True)
+                                                        returnFileNumberList=True)
+    print("Lenght of dfs0", len(dfs[0]))
     if isMCList[-1]==39:
         nReal = nReal *2
         print("Duplicating nReal")
@@ -86,7 +131,7 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
 
     # preprocess for feeding the NN in order to have same cuts
     dfs = preprocessMultiClass(dfs=dfs)
-
+    print("Length of dfs0 post process",len(dfs[0]))
     for idx, df in enumerate(dfs):
         print(idx)
         dfs[idx]['PNN'] = np.array(preds[idx])

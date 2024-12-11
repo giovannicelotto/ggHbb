@@ -49,7 +49,7 @@ def plot4ABCD(regions, bins, x1, x2, t1, t2, suffix, blindPar):
 
 
 
-def SM_SR(regions, hB_ADC, bins, dfs, isMCList, dfProcesses, x1, t1, x2, t2, nReal, suffix, blindPar):
+def SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcesses, x1, t1, x2, t2, lumi, suffix, blindPar):
     x = (bins[1:] + bins[:-1])/2
     blind, higgs_peak, blind_range = blindPar
     blind_mask = (~((bins[:-1] > higgs_peak - blind_range) & (bins[:-1] < higgs_peak + blind_range))) if blind else np.ones(len(bins)-1, dtype=bool)
@@ -77,8 +77,8 @@ def SM_SR(regions, hB_ADC, bins, dfs, isMCList, dfProcesses, x1, t1, x2, t2, nRe
             'H'      : h.copy() ,
         }
 
-    for idx, df in enumerate(dfs[1:]):
-        isMC = isMCList[idx+1]
+    for idx, df in enumerate(dfsMC):
+        isMC = isMCList[idx]
         process = dfProcesses.process[isMC]
         mB      = (df[x1]>t1 ) & (df[x2]>t2 ) 
 
@@ -130,15 +130,15 @@ def SM_SR(regions, hB_ADC, bins, dfs, isMCList, dfProcesses, x1, t1, x2, t2, nRe
     ax[1].set_xlabel("Dijet Mass [GeV]")
     ax[1].set_ylabel("Ratio")
     ax[0].set_ylabel("Counts")
-    ax[1].errorbar(x, hExcess.values()/countsDict['mc'].values(), yerr=np.sqrt(hExcess.variances())/countsDict['mc'].values() , marker='o', color='black', linestyle='none')
-    hep.cms.label(lumi=np.round(nReal*0.774/1017, 3), ax=ax[0])
+    ax[1].errorbar(x, hExcess.values()/countsDict['mc'].values()*blind_mask, yerr=np.sqrt(hExcess.variances()*blind_mask)/countsDict['mc'].values() , marker='o', color='black', linestyle='none')
+    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
     fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/SMnonQCD/SMnonQCD_closure_%s.png"%suffix)
     return countsDict
 
 
 
 
-def QCD_SR(bins, hB_ADC, qcd_mc, nReal, suffix, blindPar):
+def QCD_SR(bins, hB_ADC, qcd_mc, lumi, suffix, blindPar):
     x = (bins[1:] + bins[:-1])/2
     blind, higgs_peak, blind_range = blindPar
     blind_mask = (~((bins[:-1] > higgs_peak - blind_range) & (bins[:-1] < higgs_peak + blind_range))) if blind else np.ones(len(bins)-1, dtype=bool)
@@ -155,11 +155,11 @@ def QCD_SR(bins, hB_ADC, qcd_mc, nReal, suffix, blindPar):
     ax[1].set_ylabel("Ratio")
     ax[0].set_ylabel("Counts")
     ax[0].legend()
-    hep.cms.label(lumi=np.round(nReal*0.774/1017, 3), ax=ax[0])
+    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
     fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/QCDclosure/QCD_closure_%s.png"%suffix, bbox_inches='tight')
 
 
-def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, nReal, suffix, blindPar):
+def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar):
     x = (bins[1:] + bins[:-1])/2
     blind, higgs_peak, blind_range = blindPar
     blind_mask = (~((bins[:-1] > higgs_peak - blind_range) & (bins[:-1] < higgs_peak + blind_range))) if blind else np.ones(len(bins)-1, dtype=bool)
@@ -190,5 +190,5 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, nReal, suffix, blindPar):
     ax[1].errorbar(x, regions["B"].values()*blind_mask/mcPlusQCD.values(), yerr=np.sqrt(regions["B"].variances())/mcPlusQCD.values() , marker='o', color='black', linestyle='none')
     ax[1].set_xlabel("Dijet Mass [GeV]")
     ax[1].set_ylabel("Ratio")
-    hep.cms.label(lumi=np.round(nReal*0.774/1017, 3), ax=ax[0])
+    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
     fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/ZQCDplusSM/ZQCDplusSM_%s.png"%suffix)

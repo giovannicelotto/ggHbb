@@ -4,12 +4,17 @@ import pandas as pd
 import mplhep as hep
 hep.style.use("CMS")
 
-def plotDfs(dfs, isMCList, dfProcesses, nbin, nReal, log=True):
-    fig, ax =plt.subplots(1, 1)
+def plotDfs(dfsData,dfsMC, isMCList, dfProcesses, nbin, lumi, blindPar, log=True):
     bins_mass = np.linspace(40, 300, nbin)
-    c = np.histogram(dfs[0].dijet_mass, bins=bins_mass)[0]
+    blind, higgs_peak, blind_range = blindPar
+    blind_mask = (~((bins_mass[:-1] > higgs_peak - blind_range) & (bins_mass[:-1] < higgs_peak + blind_range))) if blind else np.ones(len(bins_mass)-1, dtype=bool)
+    fig, ax =plt.subplots(1, 1)
+    cDataTot =np.zeros(len(bins_mass)-1)
+    for df in dfsData:
+        c = np.histogram(dfsData[0].dijet_mass, bins=bins_mass)[0]
+        cDataTot = cDataTot + c
     x = (bins_mass[:-1] + bins_mass[1:])/2
-    ax.errorbar(x, c, yerr=np.sqrt(c), linestyle='none', color='black', marker='o')
+    ax.errorbar(x, cDataTot*blind_mask, yerr=np.sqrt(cDataTot)*blind_mask, linestyle='none', color='black', marker='o')
     countsDict = {
             'Data':np.zeros(len(bins_mass)-1),
             'H':np.zeros(len(bins_mass)-1),
@@ -21,8 +26,8 @@ def plotDfs(dfs, isMCList, dfProcesses, nbin, nReal, log=True):
             'Z+Jets':np.zeros(len(bins_mass)-1),
         }
     cTot = np.zeros(len(bins_mass)-1)
-    for idx, df in enumerate(dfs[1:]):
-        isMC = isMCList[idx+1]
+    for idx, df in enumerate(dfsMC):
+        isMC = isMCList[idx]
         process = dfProcesses.process[isMC]
         print(idx, process, isMC)
         c = np.histogram(df.dijet_mass, bins=bins_mass,weights=df.weight)[0]
@@ -53,13 +58,13 @@ def plotDfs(dfs, isMCList, dfProcesses, nbin, nReal, log=True):
             continue
         ax.hist(bins_mass[:-1], bins=bins_mass, weights=countsDict[key], bottom=cTot, label=key)
         cTot = cTot + countsDict[key]
-    ax.legend()
+    ax.legend(loc='upper right')
     if log:
         ax.set_yscale('log')
         ax.set_ylim(10, ax.get_ylim()[1])
     ax.set_ylabel("Counts")
     ax.set_xlabel("Dijet Mass [GeV]")
-    hep.cms.label(lumi=round(nReal*0.774/1017,2))
+    hep.cms.label(lumi=round(lumi,2))
 
 
     return fig

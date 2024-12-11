@@ -19,8 +19,8 @@ from hist import Hist
 import hist
 
 # %%
-nReal = 80
-nMC = -1
+nReal = 300
+nMC = 30
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18"
 columns = ['dijet_pt',           'dijet_mass',       #'dijet_pt',             
            #'jet1_pt',
@@ -30,15 +30,13 @@ columns = ['dijet_pt',           'dijet_mass',       #'dijet_pt',
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
           #'jet3_mass',   
           #'ttbar_tag'  ,
-          'nJets_pt30_btag0p2',
+          #'nJets_pt30_btag0p2',
           #'Pileup_nTrueInt',  
           'dijet_cs',   'leptonClass',          
           'PU_SF', 'sf', 
           ]
 
 dfs, isMCList, dfProcesses, nReal = loadDataFrames(nReal=nReal, nMC=nMC, predictionsPath=predictionsPath, columns=columns)
-for idx, df in enumerate(dfs):
-    dfs[idx]['dijet_cs_abs'] = 1-abs(dfs[idx].dijet_cs)
 
 # %%
 # save a copy of the dataframes before applying any cut

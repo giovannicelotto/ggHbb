@@ -1,11 +1,11 @@
 import sys
 sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
-from plot import plot4ABCD, QCD_SR, QCDplusSM_SR, SM_SR
+from plot_v2 import plot4ABCD, QCD_SR, QCDplusSM_SR, SM_SR
 from createRootHists import createRootHists
 from hist import Hist
 import matplotlib.pyplot as plt
 
-def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, blindPar):
+def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi, suffix, blindPar):
     hA = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
     hB = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
     hC = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
@@ -19,14 +19,15 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, bl
 
 
     # Fill regions with data
-    mA      = (dfs[0][x1]<t1 ) & (dfs[0][x2]>t2 ) 
-    mB      = (dfs[0][x1]>t1 ) & (dfs[0][x2]>t2 ) 
-    mC      = (dfs[0][x1]<t1 ) & (dfs[0][x2]<t2 ) 
-    mD      = (dfs[0][x1]>t1 ) & (dfs[0][x2]<t2 ) 
-    regions['A'].fill(dfs[0][mA][xx])
-    regions['B'].fill(dfs[0][mB][xx])
-    regions['C'].fill(dfs[0][mC][xx])
-    regions['D'].fill(dfs[0][mD][xx])
+    for df in dfsData:
+        mA      = (df[x1]<t1 ) & (df[x2]>t2 ) 
+        mB      = (df[x1]>t1 ) & (df[x2]>t2 ) 
+        mC      = (df[x1]<t1 ) & (df[x2]<t2 ) 
+        mD      = (df[x1]>t1 ) & (df[x2]<t2 ) 
+        regions['A'].fill(df[mA][xx])
+        regions['B'].fill(df[mB][xx])
+        regions['C'].fill(df[mC][xx])
+        regions['D'].fill(df[mD][xx])
 
     print("Data counts in ABCD regions")
     print("Region A : ", regions["A"].sum())
@@ -34,8 +35,8 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, bl
     print("Region C : ", regions["C"].sum())
     print("Region D : ", regions["D"].sum())
     # remove MC from non QCD processes simulations from A, C, D
-    for idx, df in enumerate(dfs[1:]):
-        print(idx, dfProcesses.process[isMCList[idx+1]])
+    for idx, df in enumerate(dfsMC):
+        print(idx, dfProcessesMC.process[isMCList[idx]])
         mA      = (df[x1]<t1 ) & (df[x2]>t2 ) 
         mB      = (df[x1]>t1 ) & (df[x2]>t2 ) 
         mC      = (df[x1]<t1 ) & (df[x2]<t2 ) 
@@ -56,7 +57,7 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, bl
     
     plt.close('all')    
 # Second Plot
-    countsDict = SM_SR(regions, hB_ADC, bins, dfs, isMCList, dfProcesses, x1, t1, x2, t2, nReal, suffix=suffix, blindPar=blindPar)
+    countsDict = SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix=suffix, blindPar=blindPar)
     plt.close('all')
 
 
@@ -71,13 +72,13 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, bl
         countsDict[key].values()[:] = -countsDict[key].values()[:]
     print("regions B values", regions["B"].values())
     qcd_mc = regions['B'] + countsDict['H'] + countsDict['ttbar'] + countsDict['ST'] + countsDict['VV'] + countsDict['VV'] + countsDict['WJets'] + countsDict['ZJets']
-    # Restore positive histograms
+    ## Restore positive histograms
     for key in countsDict:
         countsDict[key].values()[:] = -countsDict[key].values()[:]
     print(print("regions B values unchagned", regions["B"].values()))
-    QCD_SR(bins, hB_ADC, qcd_mc, nReal=nReal, suffix=suffix, blindPar=blindPar)
+    QCD_SR(bins, hB_ADC, qcd_mc, lumi=lumi, suffix=suffix, blindPar=blindPar)
     plt.close('all')
-    QCDplusSM_SR(bins, regions, countsDict, hB_ADC, nReal=nReal, suffix=suffix, blindPar=blindPar)
+    QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi=lumi, suffix=suffix, blindPar=blindPar)
     plt.close('all')
-
-    createRootHists(countsDict, hB_ADC, regions, bins, suffix)
+#
+    #createRootHists(countsDict, hB_ADC, regions, bins, suffix)

@@ -18,3 +18,11 @@ __pycache__/
 *.keras
 status*.txt
 CMSSW_14*
+systematics/**/*json
+systematics/**/*gz
+systematics/**/*yml
+systematics/**/*__empty*
+systematics/**/README.md
+systematics/**/*.html
+systematics/**/*.sh
+systematics/**/*.php

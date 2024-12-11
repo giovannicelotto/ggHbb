@@ -5,10 +5,11 @@ import json, sys, glob, re
 import pandas as pd
 import mplhep as hep
 hep.style.use("CMS")
-from functions import loadMultiParquet
+from functions import loadMultiParquet, getDfProcesses
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
 from plotDfs import plotDfs
+import pickle
 # %%
 
 nReal, nMC = 30, -1
@@ -111,6 +112,22 @@ dfs[0]['weight'] = np.ones(len(dfs[0]))
 #for idx, df in enumerate(dfs):
 #    dfs[idx]['dijet_cs_abs'] = 1-abs(df.dijet_cs)
 # %%
+with open('/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/oldDf/dataframes.pkl', 'rb') as f:
+    dfs = pickle.load(f)
+# %%
+nReal = 2000
+isMCList = [0, 
+                1,
+                2,
+                3, 4, 5,
+                6,7,8,9,10,11,
+                12,13,14,
+                15,16,17,18,19,
+                20, 21, 22, 23, 36,
+                39    # Data2A
+    ]
+dfProcesses = getDfProcesses()
+
 x1 = 'jet1_btagDeepFlavB'
 x2 = 'PNN'
 t11 = 0.7100
