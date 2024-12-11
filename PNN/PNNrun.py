@@ -16,14 +16,14 @@ from helpers.PNNClassifier import PNNClassifier
 from helpers.saveDataAndPredictions import save
 from helpers.doPlots import runPlots
 from helpers.flattenWeights import flattenWeights
-
+# %%
 
 # Define folder of input and output. Create the folders if not existing
-inFolder, outFolder = getInfolderOutfolder(name = "nov18")
+inFolder, outFolder = getInfolderOutfolder(name = "dec10")
 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
 featuresForTraining, columnsToRead = getFeatures(outFolder)
-
+# %%
 # define the parameters for the nn
 hp = getParams()
 
@@ -36,18 +36,18 @@ nReal, nMC = 10, -1
 # reweight each sample to have total weight 1, shuffle and split in train and test
 data = loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp)
 Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = data
-#featuresForTraining = featuresForTraining + ['massHypo']
+featuresForTraining = featuresForTraining + ['massHypo']
 
 # %%
 # Higgs and Data have flat distribution in m_jj
-#rWtrain, rWtest = flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, inFolder, outName=outFolder+ "/performance/massReweighted.png")
-rWtrain, rWtest = Wtrain.copy(), Wtest.copy()
+rWtrain, rWtest = flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, inFolder, outName=outFolder+ "/performance/massReweighted.png")
+#rWtrain, rWtest = Wtrain.copy(), Wtest.copy()
 
 plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xtest[Ytest==0], Xtest[Ytest==1]],
                        outFile=outFolder+"/performance/features.png", legendLabels=['Data Train', 'Higgs Train', 'Data Test', 'Higgs Test'],
                        colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
                        alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=False,
-                       weights=[Wtrain[Ytrain==0], Wtrain[Ytrain==1], Wtest[Ytest==0], Wtest[Ytest==1]], error=True)
+                       weights=[rWtrain[Ytrain==0], rWtrain[Ytrain==1], rWtest[Ytest==0], rWtest[Ytest==1]], error=True)
 # %%
 # scale with standard scalers and apply log to any pt and mass distributions
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=True)

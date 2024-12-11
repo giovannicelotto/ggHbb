@@ -3,9 +3,10 @@ import glob, sys, re, os
 import random
 import subprocess
 import time
+import argparse
 import os
 
-def main(isMC, nFiles):
+def main(isMC, nFiles, modelName):
     # Define name of the process, folder for the files and xsections
     
     df=pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
@@ -44,15 +45,15 @@ def main(isMC, nFiles):
 
 
         # check if the predictions was already done:
-        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/%s/others"%process):
-            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/%s/others"%process)
-        pattern = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/%s/**/yMC%d_fn%d.parquet" % (process, isMC, fileNumber)
+        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_%s/%s/others"%(modelName, process)):
+            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_%s/%s/others"%(modelName, process))
+        pattern = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_%s/%s/**/yMC%d_fn%d.parquet" % (modelName, process, isMC, fileNumber)
         matching_files = glob.glob(pattern, recursive=True)
 
         if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(isMC))
-            subprocess.run(['sbatch', '-J', "y%d_%d"%(isMC, random.randint(1, 20)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(isMC), process])
+            subprocess.run(['sbatch', '-J', "y%d_%d"%(isMC, random.randint(1, 20)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(isMC), process, modelName])
             doneFiles = doneFiles + 1
         else:
             print("..")
@@ -61,6 +62,17 @@ def main(isMC, nFiles):
         
 
 if __name__ == "__main__":
-    isMC = int(sys.argv[1])
-    nFiles = int(sys.argv[2])
-    main(isMC=isMC, nFiles=nFiles)
+    
+    parser = argparse.ArgumentParser(description="Script.")
+
+    # Define arguments
+    parser.add_argument("-MC", "--MC", type=int, help="number of isMC code", default=1)
+    parser.add_argument("-m", "--modelName", type=str, help="suffix of the model", default="dec10")
+    parser.add_argument("-n", "--nFiles", type=int, help="number of files", default=1)
+
+    args = parser.parse_args()
+
+    isMC = args.MC
+    nFiles = args.nFiles
+    modelName = args.modelName
+    main(isMC=isMC, nFiles=nFiles, modelName=modelName)

@@ -6,9 +6,9 @@ from sklearn.model_selection import train_test_split
 from preprocessMultiClass import preprocessMultiClass
 
 
-def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
+def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresForTraining, hp):
 
-    nData, nHiggs = int(1e5), int(1e5)
+    nData, nHiggs = int(size), int(size)
 
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/"
     paths = [
@@ -22,10 +22,9 @@ def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
     
 
     dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False)
-    dfs = preprocessMultiClass(dfs)
 
     # Uncomment in case you want discrete parameter for mass hypotheses
-    massHypothesis = np.array([125]+massHypothesis)
+    dfs = preprocessMultiClass(dfs)
     
     # method v1
     #dfs[0]['massHypo'] = dfs[0]['dijet_mass'].apply(lambda x: massHypothesis[np.abs(massHypothesis - x).argmin()])
@@ -33,10 +32,11 @@ def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
     #    dfs[idx+1]['massHypo'] = massHypothesis[idx]
     #    print("Process %d Mass %d"%(idx, massHypothesis[idx]))
 
-    # method v2
-    for idx, df in enumerate(dfs):
-        dfs[idx]['massHypo'] = dfs[idx]['dijet_mass'].apply(lambda x: massHypothesis[np.abs(massHypothesis - x).argmin()])
-
+    if 'massHypo' in featuresForTraining:
+        massHypothesis = np.array([125]+massHypothesis)
+        for idx, df in enumerate(dfs):
+            dfs[idx]['massHypo'] = dfs[idx]['dijet_mass'].apply(lambda x: massHypothesis[np.abs(massHypothesis - x).argmin()])
+    advFeature='jet1_btagDeepFlavB'
 
 
     
@@ -48,6 +48,13 @@ def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
             dfs[idx] = df.head(nHiggs)
     for idx, df in enumerate(dfs):
         print("%d elements in df %d"%(len(df), idx))
+    genMass = np.concatenate([np.zeros(len(dfs[0])),
+               np.ones(len(dfs[1]))*massHypothesis[0],
+               np.ones(len(dfs[2]))*massHypothesis[1],
+               np.ones(len(dfs[3]))*massHypothesis[2],
+               np.ones(len(dfs[4]))*massHypothesis[3],
+               np.ones(len(dfs[5]))*massHypothesis[4],
+               np.ones(len(dfs[6]))*massHypothesis[5]])
     # Create the labels for Background (0) and Signal (1)
     lenBkg  = len(dfs[0])
     lenS = 0
@@ -74,10 +81,13 @@ def loadData(nReal, nMC, outFolder, columnsToRead, featuresForTraining, hp):
     W = np.concatenate([Ws[0], W_H])
     
     X, Y, W = shuffle(X, Y, W, random_state=1999)
-    Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest = train_test_split(X, Y, W, test_size=hp['test_split'], random_state=1999)
+
+    Xtrain, Xtest, Ytrain, Ytest, advFeatureTrain, advFeatureTest, Wtrain, Wtest, genMassTrain, genMassTest = train_test_split(X, Y, X[advFeature], W, genMass, test_size=hp['test_split'], random_state=1999)
+    Xtrain = Xtrain.drop([advFeature], axis=1)
+    Xtest = Xtest.drop([advFeature], axis=1)
 
     assert len(Wtrain)==len(Xtrain)
     assert len(Wtest)==len(Xtest)
     Ytrain, Ytest, Wtrain, Wtest = Ytrain.reshape(-1), Ytest.reshape(-1), Wtrain.reshape(-1), Wtest.reshape(-1)
-    return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest
+    return Xtrain, Xtest, Ytrain, Ytest, advFeatureTrain, advFeatureTest, Wtrain, Wtest, genMassTrain, genMassTest
 

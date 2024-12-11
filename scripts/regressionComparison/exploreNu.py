@@ -8,7 +8,7 @@ hep.style.use("CMS")
 # %%
 # Get filenames
 nFiles = -1
-fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/genMatched/*.parquet")
+fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/genMatched/GluGluHToBB/*.parquet")
 fileNames = fileNames if nFiles==-1 else fileNames[:nFiles]
 print("nFiles : %d"%len(fileNames))
 # %%

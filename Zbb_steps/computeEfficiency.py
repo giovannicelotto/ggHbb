@@ -67,13 +67,14 @@ print(predictionsFileNumbers)
 # *****************************
 efficiencies = []
 dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=np.append(featuresForTraining, ['sf', 'PU_SF', 'Muon_fired_HLT_Mu9_IP6']), returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True)
+# %%
 for id,df in enumerate(dfs):
     if id==0:
         continue
     print((df.sf*df.PU_SF).sum()/numEventsList[id])
     efficiencies.append((df.sf*df.PU_SF).sum()/numEventsList[id])
 
-
+np.save("/t3home/gcelotto/ggHbb/Zbb_steps/eff1st.npy", efficiencies)
 # %%
 preds = []
 predictionsFileNamesNew = []
@@ -97,6 +98,15 @@ for isMC, p in zip(isMCList, processes):
 # *   2nd KIND OF EFFICIENCY  *
 # *****************************
 eff2nd = []
+dfs = cut(dfs, 'jet1_pt', 20, None)
+dfs = cut(dfs, 'jet2_pt', 20, None)
+dfs = cut(dfs, 'jet1_eta', -2.5, None)
+dfs = cut(dfs, 'jet2_eta', -2.5, None)
+dfs = cut(dfs, 'jet1_eta', None, 2.5)
+dfs = cut(dfs, 'jet2_eta', None, 2.5)
+dfs = cut(dfs, 'jet1_mass', 0, None)
+dfs = cut(dfs, 'jet2_mass', 0, None)
+dfs = cut(dfs, 'jet3_mass', 0, None)
 dfs = preprocessMultiClass(dfs=dfs)
 for id,df in enumerate(dfs):
     if id==0:
@@ -114,7 +124,8 @@ for idx, df in enumerate(dfs):
 # *****************************
 
 eff3rd = []
-dfs = cut(dfs, 'jet1_btagDeepFlavB', 0.6, None)
+dfs = cut(dfs, 'jet2_btagDeepFlavB', 0.2783, None)
+dfs = cut(dfs, 'jet1_btagDeepFlavB', 0.71, None)
 dfs = cut(dfs, 'PNN', 0.4, None)
 for id,df in enumerate(dfs):
     if id==0:
@@ -122,7 +133,7 @@ for id,df in enumerate(dfs):
     print((df.sf*df.PU_SF).sum()/numEventsList[id])
     eff3rd.append((df.sf*df.PU_SF).sum()/numEventsList[id])
 # %%
-np.save("/t3home/gcelotto/ggHbb/Zbb_steps/eff1st.npy", efficiencies)
+
 np.save("/t3home/gcelotto/ggHbb/Zbb_steps/eff2nd.npy", eff2nd)
 np.save("/t3home/gcelotto/ggHbb/Zbb_steps/eff3rd.npy", eff3rd)
 # %%

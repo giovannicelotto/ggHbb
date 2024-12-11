@@ -9,7 +9,7 @@ from computeFWHM import compute_fwhm
 # %%
 # Get filenames
 nFiles = -1
-fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/genMatched/*.parquet")
+fileNames = glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/genMatched/GluGluHToBB/*.parquet")
 fileNames = fileNames if nFiles==-1 else fileNames[:nFiles]
 print("nFiles : %d"%len(fileNames))
 # %%
@@ -81,7 +81,7 @@ x = (cuts[1:] + cuts[:-1])/2
 
 ax.plot(x, mean_reg, label='Reg2018', color='C0')
 ax.plot(x, mean_pnet, label='PNetRegNeutrino', color='C1')
-ax.plot(x, mean_part, label='ParTNeutrino', color='C2')
+#ax.plot(x, mean_part, label='ParTNeutrino', color='C2')
 
 ax.text(x=0.1, y=0.8, s="|$\eta$|<%.1f"%eta, transform=ax.transAxes)
 ax.text(x=0.1, y=0.75, s="Jet p$_T^{raw}$ > 10 GeV", transform=ax.transAxes)
@@ -91,7 +91,7 @@ ax.text(x=0.1, y=0.75, s="Jet p$_T^{raw}$ > 10 GeV", transform=ax.transAxes)
 #ax.fill_between(x, mean_real - std_real, mean_real + std_real, color='blue', alpha=0.2)
 ax.fill_between(x, mean_reg - std_reg,   mean_reg  + std_reg, color='C0', alpha=0.2)
 ax.fill_between(x, mean_pnet - std_pnet, mean_pnet + std_pnet, color='C1', alpha=0.2)
-ax.fill_between(x, mean_part - std_part, mean_part + std_part, color='C2', alpha=0.2)
+#ax.fill_between(x, mean_part - std_part, mean_part + std_part, color='C2', alpha=0.2)
 
 
 ax.hlines(y=1, xmin=ax.get_xlim()[0], xmax=ax.get_xlim()[1], linestyle='dotted', color='black')
@@ -109,11 +109,11 @@ ax.set_ylim(0.8,1.3)
 idx=10
 mask = (df_new.jet_pt* (1-df_new.jet_rawFactor) > cuts[idx]) & (df_new.jet_pt* (1-df_new.jet_rawFactor) < cuts[idx+1]) & (abs(df_new.jet_eta)<eta)
 df_new_ = df_new[mask]
-bins = np.linspace(0, 2, 101)
+bins = np.linspace(0, 2, 301)
 fig, ax = plt.subplots(1, 1)
 creg = ax.hist(df_new_.jet_pt*df_new_.jet_bReg2018 / df_new_.genJetNu_pt, bins=bins, histtype='step', label='Reg2018')[0]
 cpnet = ax.hist(df_new_.jet_pt_pnet / df_new_.genJetNu_pt, bins=bins, histtype='step', label='PNetNu')[0]
-cpart = ax.hist(df_new_.jet_pt* (1-df_new_.jet_rawFactor) * df_new_.jet_ParTAK4RegPtRawCorr * df_new_.jet_UParTAK4RegPtRawCorrNeutrino / df_new_.genJetNu_pt, bins=bins, histtype='step', label='ParTNu')[0]
+#cpart = ax.hist(df_new_.jet_pt* (1-df_new_.jet_rawFactor) * df_new_.jet_ParTAK4RegPtRawCorr * df_new_.jet_UParTAK4RegPtRawCorrNeutrino / df_new_.genJetNu_pt, bins=bins, histtype='step', label='ParTNu')[0]
 ax.text(x=0.05, y=0.8, s="|$\eta$|<%.1f"%eta, transform=ax.transAxes, fontsize=18)
 ax.text(x=0.05, y=0.75, s="%d < Jet p$_T^{raw}$ < %d GeV" % (cuts[idx], cuts[idx+1]), transform=ax.transAxes, fontsize=18)
 ax.set_xlabel("Response ($p_T/p_T^{gen}$)")
@@ -121,39 +121,39 @@ ax.set_ylabel("Counts")
 ax.legend()
 ax.text(x=0.96, y=0.7, s="Resp : %.3f"%(np.median(df_new_.jet_pt*df_new_.jet_bReg2018 / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C0', fontsize=18)
 ax.text(x=0.96, y=0.65, s="Resp : %.3f"%(np.median(df_new_.jet_pt_pnet / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C1', fontsize=18)
-ax.text(x=0.96, y=0.6, s="Resp : %.3f"%(np.median(df_new_.jet_pt* (1-df_new_.jet_rawFactor) * df_new_.jet_ParTAK4RegPtRawCorr * df_new_.jet_UParTAK4RegPtRawCorrNeutrino / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
+#ax.text(x=0.96, y=0.6, s="Resp : %.3f"%(np.median(df_new_.jet_pt* (1-df_new_.jet_rawFactor) * df_new_.jet_ParTAK4RegPtRawCorr * df_new_.jet_UParTAK4RegPtRawCorrNeutrino / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
 
 ax.text(x=0.96, y=0.5, s="Std : %.3f"%(np.std(df_new_.jet_pt*df_new_.jet_bReg2018 / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C0', fontsize=18)
 ax.text(x=0.96, y=0.45, s="Std : %.3f"%(np.std(df_new_.jet_pt_pnet / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C1', fontsize=18)
-ax.text(x=0.96, y=0.4, s="Std : %.3f"%(np.std(df_new_.jet_pt* (1-df_new_.jet_rawFactor) * df_new_.jet_ParTAK4RegPtRawCorr * df_new_.jet_UParTAK4RegPtRawCorrNeutrino / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
+#ax.text(x=0.96, y=0.4, s="Std : %.3f"%(np.std(df_new_.jet_pt* (1-df_new_.jet_rawFactor) * df_new_.jet_ParTAK4RegPtRawCorr * df_new_.jet_UParTAK4RegPtRawCorrNeutrino / df_new_.genJetNu_pt)), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
 
 
 x = (bins[1:] + bins[:-1])/2
 fwhm_reg, x1, x2 = compute_fwhm(x, creg)
 fwhm_pnet, x1, x2 = compute_fwhm(x, cpnet)
-fwhm_part, x1, x2 = compute_fwhm(x, cpart)
+#fwhm_part, x1, x2 = compute_fwhm(x, cpart)
 
 ax.text(x=0.96, y=0.3, s="FWHM : %.3f"%(fwhm_reg), transform=ax.transAxes, ha='right', color='C0', fontsize=18)
 ax.text(x=0.96, y=0.25, s="FWHM : %.3f"%(fwhm_pnet), transform=ax.transAxes, ha='right', color='C1', fontsize=18)
-ax.text(x=0.96, y=0.2, s="FWHM : %.3f"%(fwhm_part), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
+#ax.text(x=0.96, y=0.2, s="FWHM : %.3f"%(fwhm_part), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
 
 # %%
 
 
 fig, ax = plt.subplots(1, 1)
-bins=np.linspace(0.5, 1.75, 81)
+bins=np.linspace(0.5, 1.75, 151)
 m = (df.jet2_pt>15) & (df.jet1_pt>15) & (abs(df.jet1_eta)<2.5) & (abs(df.jet2_eta)<2.5)
 creg = ax.hist(df.dijet_mass_2018[m] / df.genDijetNu_mass[m] , bins=bins, histtype='step', label='Reg2018')[0]
 cpnet = ax.hist(df.dijet_mass_pnetNu[m] / df.genDijetNu_mass[m] , bins=bins, histtype='step', label='PNetNu')[0]
-cpart = ax.hist(df.dijet_mass_partTNu[m] / df.genDijetNu_mass[m] , bins=bins, histtype='step', label='ParTNu')[0]
+#cpart = ax.hist(df.dijet_mass_partTNu[m] / df.genDijetNu_mass[m] , bins=bins, histtype='step', label='ParTNu')[0]
 
 ax.text(x=0.96, y=0.7, s="Resp : %.3f"%(np.median(df.dijet_mass_2018[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C0', fontsize=18)
 ax.text(x=0.96, y=0.65, s="Resp : %.3f"%(np.median(df.dijet_mass_pnetNu[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C1', fontsize=18)
-ax.text(x=0.96, y=0.6, s="Resp : %.3f"%(np.median(df.dijet_mass_partTNu[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
+#ax.text(x=0.96, y=0.6, s="Resp : %.3f"%(np.median(df.dijet_mass_partTNu[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
 
 ax.text(x=0.96, y=0.5, s="Std : %.3f"%(np.std(df.dijet_mass_2018[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C0', fontsize=18)
 ax.text(x=0.96, y=0.45, s="Std : %.3f"%(np.std(df.dijet_mass_pnetNu[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C1', fontsize=18)
-ax.text(x=0.96, y=0.4, s="Std : %.3f"%(np.std(df.dijet_mass_partTNu[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
+#ax.text(x=0.96, y=0.4, s="Std : %.3f"%(np.std(df.dijet_mass_partTNu[m] / df.genDijetNu_mass[m])), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
 ax.legend()
 ax.set_xlabel("$m_{jj}^{reco} / m_{jj}^{gen}$")
 
@@ -161,11 +161,11 @@ ax.set_xlabel("$m_{jj}^{reco} / m_{jj}^{gen}$")
 x = (bins[1:] + bins[:-1])/2
 fwhm_reg, x1, x2 = compute_fwhm(x, creg)
 fwhm_pnet, x1, x2 = compute_fwhm(x, cpnet)
-fwhm_part, x1, x2 = compute_fwhm(x, cpart)
+#fwhm_part, x1, x2 = compute_fwhm(x, cpart)
 
 ax.text(x=0.96, y=0.3, s="FWHM : %.3f"%(fwhm_reg), transform=ax.transAxes, ha='right', color='C0', fontsize=18)
 ax.text(x=0.96, y=0.25, s="FWHM : %.3f"%(fwhm_pnet), transform=ax.transAxes, ha='right', color='C1', fontsize=18)
-ax.text(x=0.96, y=0.2, s="FWHM : %.3f"%(fwhm_part), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
+#ax.text(x=0.96, y=0.2, s="FWHM : %.3f"%(fwhm_part), transform=ax.transAxes, ha='right', color='C2', fontsize=18)
 
 # %%
 
@@ -649,9 +649,10 @@ c_deep = np.histogram(df[m].jet1_btagDeepFlavB, bins=bins)[0]
 c_pnet, c_parT, c_deep = c_pnet/np.sum(c_pnet), c_parT/np.sum(c_parT), c_deep/np.sum(c_deep)
 ax[0].hist(bins[:-1], bins=bins, weights=c_deep, histtype='step', label='jet1_btagDeepFlavB')
 ax[0].hist(bins[:-1], bins=bins, weights=c_pnet, histtype='step', label='jet1_btagPNetB')
-ax[0].hist(bins[:-1], bins=bins, weights=c_parT, histtype='step', label='jet1_tagUParTAK4B')
+#ax[0].hist(bins[:-1], bins=bins, weights=c_parT, histtype='step', label='jet1_tagUParTAK4B')
 ax[0].text(x=0.05, y=0.5, s="Entries : %dK"%(len(df[m])/1000), transform=ax[0].transAxes)
 ax[0].text(x=0.05, y=0.45, s="$|\eta|$<2.5", transform=ax[0].transAxes)
+ax[0].set_xlabel("Leading Jet b-score")
 ax[0].legend()
 
 m = (abs(df.jet2_eta)<2.5) & (df.jet2_pt>0)
@@ -662,9 +663,10 @@ c_deep = np.histogram(df[m].jet2_btagDeepFlavB, bins=bins)[0]
 c_pnet, c_parT, c_deep = c_pnet/np.sum(c_pnet), c_parT/np.sum(c_parT), c_deep/np.sum(c_deep)
 ax[1].hist(bins[:-1], bins=bins, weights=c_deep, histtype='step', label='jet2_btagDeepFlavB')
 ax[1].hist(bins[:-1], bins=bins, weights=c_pnet, histtype='step', label='jet2_btagPNetB')
-ax[1].hist(bins[:-1], bins=bins, weights=c_parT, histtype='step', label='jet2_tagUParTAK4B')
+#ax[1].hist(bins[:-1], bins=bins, weights=c_parT, histtype='step', label='jet2_tagUParTAK4B')
 ax[1].text(x=0.05, y=0.5, s="Entries : %dK"%(len(df[m])/1000), transform=ax[1].transAxes)
 ax[1].text(x=0.05, y=0.45, s="$|\eta|$<2.5", transform=ax[1].transAxes)
+ax[1].set_xlabel("Subleading Jet b-score")
 ax[1].legend()
 
 # %%

@@ -1,9 +1,9 @@
+# %%
 import matplotlib.pyplot as plt
 import numpy as np
 import mplhep as hep
-
 hep.style.use("CMS")
-
+# %%
 # Data
 processes = [
     "GluGluHToBB",
@@ -63,3 +63,13 @@ fig.tight_layout()
 ax.set_ylim(0, ax.get_ylim()[1]*1.4)
 # Show the plot
 fig.savefig("/t3home/gcelotto/ggHbb/Zbb_steps/allSteps.png")
+
+# %%
+eff_3rd
+eff_Z = eff_3rd[1:]
+from functions import getZXsections, getXSectionBR
+xsections = getZXsections(EWK=True)
+# %%
+print("N(Z) Full Lumi in SR : ", np.sum(xsections * eff_Z * 41.6 * 1000))
+print("N(H) Full Lumi in SR : ", np.sum(getXSectionBR() * eff_3rd[0] * 41.6 * 1000))
+# %%

@@ -13,5 +13,6 @@ def getInfolderOutfolder(name):
     if not os.path.exists(outFolder+"/performance"):
         os.makedirs(outFolder+"/performance")
         os.makedirs(outFolder+"/model")
-
+    print("InFolder :", inFolder)
+    print("OutFolder :", outFolder)
     return inFolder, outFolder

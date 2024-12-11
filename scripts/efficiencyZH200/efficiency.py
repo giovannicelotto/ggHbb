@@ -8,7 +8,7 @@ from functions import loadMultiParquet, getZXsections, getXSectionBR,cut
 # %%
 nReal = 50
 nMC = -1
-columnsToRead = ['jet1_pt', 'jet2_pt', 'muon_pt', 'sf', 'PU_SF', 'jet1_id', 'jet2_id', 'muon_eta', 'Muon_fired_HLT_Mu9_IP6']
+columnsToRead = ['jet1_pt', 'jet2_pt', 'muon_pt', 'sf', 'PU_SF', 'jet1_id', 'jet2_id', 'muon_eta', 'Muon_fired_HLT_Mu9_IP6', 'dijet_mass']
 flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
 paths = [
         flatPathCommon + "/Data1A/training",
@@ -24,7 +24,8 @@ dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, 
 
 # %%
 dfs = cut(dfs, 'Muon_fired_HLT_Mu9_IP6', 0.5, None)
-#dfs = cut(dfs, 'jet1_pt', 20, None)
+dfs = cut(dfs, 'muon_eta', -0.8, None)
+dfs = cut(dfs, 'muon_eta', None, 0.8)
 #dfs = cut(dfs, 'jet2_pt', 20, None)
 # %%
 W_Z = []
@@ -39,6 +40,9 @@ dfH = dfs[1]
 dfZ = pd.concat(dfs[2:-1])
 dfRes = dfs[-1]
 dfdata = dfs[0]
+
+
+
 # %%
 
 
@@ -60,21 +64,6 @@ ax.legend()
 
 # mask with Muon > X GeV
 # %%
-threshold = 14
-
-mdata = dfdata.muon_pt>threshold
-mH = dfH.muon_pt>threshold
-mZ = dfZ.muon_pt>threshold
-mRes = dfRes.muon_pt>threshold
-cdata_cut = np.histogram(np.clip(dfdata[mdata].muon_pt, bins[0], bins[-1]), bins=bins)[0]
-cH_cut = np.histogram(np.clip(dfH[mH].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_H[mH])[0]
-cZ_cut = np.histogram(np.clip(dfZ[mZ].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_Z[mZ])[0]
-cRes_cut = np.histogram(np.clip(dfRes[mRes].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_Res[mRes])[0]
-print("Efficiencies for %d GeV:\n"%threshold)
-print("Higgs : ", np.sum(cH_cut)/np.sum(cH))
-print("Data : ", np.sum(cdata_cut)/np.sum(cdata))
-print("Z : ", np.sum(cZ_cut)/np.sum(cZ))
-print("ggSpin0(200) : ", np.sum(cRes_cut)/np.sum(cRes))
 
 threshold = 12
 
@@ -86,11 +75,38 @@ cdata_cut = np.histogram(np.clip(dfdata[mdata].muon_pt, bins[0], bins[-1]), bins
 cH_cut = np.histogram(np.clip(dfH[mH].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_H[mH])[0]
 cZ_cut = np.histogram(np.clip(dfZ[mZ].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_Z[mZ])[0]
 cRes_cut = np.histogram(np.clip(dfRes[mRes].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_Res[mRes])[0]
-print("Efficiencies for %d GeV:\n"%threshold)
+print("\nEfficiencies for %d GeV:"%threshold)
+effH_12 = np.sum(cH_cut)/np.sum(cH)
+effData_12 = np.sum(cdata_cut)/np.sum(cdata)
+effZ_12 = np.sum(cZ_cut)/np.sum(cZ)
+effSpin_12 = np.sum(cRes_cut)/np.sum(cRes)
 print("Higgs : ", np.sum(cH_cut)/np.sum(cH))
 print("Data : ", np.sum(cdata_cut)/np.sum(cdata))
 print("Z : ", np.sum(cZ_cut)/np.sum(cZ))
 print("ggSpin0(200) : ", np.sum(cRes_cut)/np.sum(cRes))
+
+
+
+threshold = 14
+
+mdata = dfdata.muon_pt>threshold
+mH = dfH.muon_pt>threshold
+mZ = dfZ.muon_pt>threshold
+mRes = dfRes.muon_pt>threshold
+cdata_cut = np.histogram(np.clip(dfdata[mdata].muon_pt, bins[0], bins[-1]), bins=bins)[0]
+cH_cut = np.histogram(np.clip(dfH[mH].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_H[mH])[0]
+cZ_cut = np.histogram(np.clip(dfZ[mZ].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_Z[mZ])[0]
+cRes_cut = np.histogram(np.clip(dfRes[mRes].muon_pt, bins[0], bins[-1]), bins=bins, weights=W_Res[mRes])[0]
+effH_14 = np.sum(cH_cut)/np.sum(cH)
+effData_14 = np.sum(cdata_cut)/np.sum(cdata)
+effZ_14 = np.sum(cZ_cut)/np.sum(cZ)
+effSpin_14 = np.sum(cRes_cut)/np.sum(cRes)
+print("\nEfficiencies for %d GeV:"%threshold)
+print("Higgs : ", np.sum(cH_cut)/np.sum(cH))
+print("Data : ", np.sum(cdata_cut)/np.sum(cdata))
+print("Z : ", np.sum(cZ_cut)/np.sum(cZ))
+print("ggSpin0(200) : ", np.sum(cRes_cut)/np.sum(cRes))
+
 
 # %%
 thresholds = np.linspace(0, 20, 300)
@@ -119,7 +135,13 @@ ax.plot(thresholds, effH, label='ggH')
 ax.plot(thresholds, effZ, label='ZJets')
 ax.plot(thresholds, effRes, label='ggSpin0(200)')
 ax.plot(thresholds, effdata, label='Data 1A')
-ax.set_title("Efficiency drop for Triggering Muon pt threshold")
+
+#ax.hlines(y=[effData_12, effH_12, effZ_12, effSpin_12], xmin=thresholds[0], xmax=12, color='gray', linestyle='dotted')
+#ax.hlines(y=[effData_14, effH_14, effZ_14, effSpin_14], xmin=thresholds[0], xmax=14, color='gray', linestyle='dotted')
+
+
+hep.cms.label()
+ax.set_ylabel("Efficiency [%]")
 ax.grid(True)
 ax.set_ylim(0.25, 1.01)
 ax.set_xlim(0,16 )

@@ -41,8 +41,8 @@ def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, inFolder, outNam
     fig, ax =plt.subplots(1, 1, figsize=(12,8), constrained_layout=True)
     ax.hist(dfTrain_QCD.dijet_mass, bins=bins, weights=Wtrain_QCD, label='Data', alpha=0.4, color='gray')
     ax.hist(dfTrain_H.dijet_mass, bins=bins, weights=Wtrain_H, alpha=0.4, label='H', linewidth=5, color='red')
+    
     ax.hist(dfTrain_QCD.dijet_mass, bins=bins, weights=rWtrain_QCD, label='Data reweighted', histtype=u'step', linewidth=3, linestyle='dashed', color='blue')
-
     ax.hist(dfTrain_H.dijet_mass, bins=bins, weights=rWtrain_H, histtype=u'step', label='H reweighted', linewidth=5, linestyle='dotted', color='red')
     ax.set_yscale('log')
     ax.set_xlabel("Dijet Mass [GeV]")

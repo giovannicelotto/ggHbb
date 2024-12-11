@@ -15,9 +15,10 @@
 file_path=$1
 isMC=$2
 process=$3
+modelName=$4
 
 echo "$file_path"
-python /t3home/gcelotto/ggHbb/PNN/slurm/predict.py $file_path $isMC
+python /t3home/gcelotto/ggHbb/PNN/slurm/predict.py $file_path $isMC $modelName
 
 # extract the fileName:
 filename=$(basename "$file_path")
@@ -26,5 +27,5 @@ source_dir="/scratch"
 
 echo "Moving to "
 echo "yMC"$isMC"_fn"$number".parquet"
-xrdcp -f -N "$source_dir/yMC"$isMC"_fn"$number".parquet" "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/"$process"/others/yMC"$isMC"_fn"$number".parquet"
-xrdfs root://t3dcachedb.psi.ch stat /pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18/$process/others/yMC${isMC}_fn${number}.parquet
+xrdcp -f -N "$source_dir/yMC"$isMC"_fn"$number".parquet" "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_"$modelName"/"$process"/others/yMC"$isMC"_fn"$number".parquet"
+xrdfs root://t3dcachedb.psi.ch stat /pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_dec10/$process/others/yMC${isMC}_fn${number}.parquet

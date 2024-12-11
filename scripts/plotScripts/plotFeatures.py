@@ -20,8 +20,10 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
     common_columns = set(data[0].columns) 
     for df in data[1:]:
         common_columns.intersection_update(df.columns)  # Update with the intersection of columns
-    # Drop columns that are not in the common set from each DataFrame
-    data = [df[list(common_columns)] for df in data]
+    ordered_common_columns = [col for col in data[0].columns if col in common_columns]
+
+    # Retain only the common columns in their original order for each DataFrame
+    data = [df[ordered_common_columns] for df in data]
 
 
     xlims = getBins(dictFormat=True)

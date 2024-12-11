@@ -9,12 +9,13 @@ from functions import cut, getDfProcesses, loadMultiParquet
 import sys
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
+from helpers.getFeatures import getFeatures
 # %%
 dfProcess = getDfProcesses()
 isMCList = [0,
-            20, # ZJetsQQ200-400
-            47, # ZJetsBB200-400
-            53  # ZJetsqq200-400
+            2, # ZJetsQQ200-400
+            45, # ZJetsBB200-400
+            51  # ZJetsqq200-400
             ]
 flatPaths = dfProcess.flatPath[isMCList]
 dfs = loadMultiParquet(flatPaths, nReal=5, nMC=-1, columns=None, returnFileNumberList=False, selectFileNumberList=None, returnNumEventsTotal=False)
@@ -25,15 +26,34 @@ dfqq, dfBB, dfQQ = cut([dfqq, dfBB, dfQQ], 'jet2_btagDeepFlavB', 0.2783, None)
 dfqq, dfBB, dfQQ = cut([dfqq, dfBB, dfQQ], 'jet1_pt', 20, None)
 dfqq, dfBB, dfQQ = cut([dfqq, dfBB, dfQQ], 'jet1_pt', 20, None)
 # %%
+featuresForTraining, columnsToRead = getFeatures()
+from tensorflow.keras.models import load_model
+from helpers.scaleUnscale import scale
+sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
+outFolder="/t3home/gcelotto/ggHbb/PNN/results/nov18"
+modelName="myModel.h5"
+model = load_model(outFolder +"/model/"+modelName)
+dfqq_scaled  = scale(dfqq.copy(), scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
+dfBB_scaled  = scale(dfBB.copy(), scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
+dfQQ_scaled  = scale(dfQQ.copy(), scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
+dfqq['PNN'] = model.predict(dfqq_scaled[featuresForTraining])
+dfBB['PNN'] = model.predict(dfBB_scaled[featuresForTraining])
+dfQQ['PNN'] = model.predict(dfQQ_scaled[featuresForTraining])
+# %%
+dfqq, dfBB, dfQQ = cut([dfqq, dfBB, dfQQ], 'PNN', 0.4, None)
+# %%
 fig, ax = plt.subplots(1, 1)
 bins=np.linspace(10, 300, 101)
 cqq = ax.hist(dfqq.dijet_mass, bins=bins, label='cc ss uu dd', weights=dfqq.sf*dfqq.PU_SF)[0]
 cBB = ax.hist(dfBB.dijet_mass, bins=bins, label='bb stacked', bottom=cqq, weights=dfBB.sf*dfBB.PU_SF)[0]
 cQQ = ax.hist(dfQQ.dijet_mass, bins=bins, histtype='step', linewidth=2, label='QQ inclusive', weights=dfQQ.sf*dfQQ.PU_SF)[0]
 cBB = ax.hist(dfBB.dijet_mass, bins=bins, histtype='step', label='bb', weights=dfBB.sf*dfBB.PU_SF)[0]
+ax.set_xlabel("Dijet Mass [Gev]")
+ax.set_ylabel("Counts [a.u.]")
 ax.legend()
 # %%
 cQQ - cBB - cqq
+print("Contamination: %.3f"%(np.sum(cqq)*100/np.sum(cQQ)))
 # %%
 
 
