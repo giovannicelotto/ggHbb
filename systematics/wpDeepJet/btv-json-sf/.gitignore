@@ -1,0 +1,10 @@
+ScaleFactorCombinationTools/*
+data/*/*json
+*.png
+*.eps
+*.tex
+*.root
+inputs/*/*/*.pdf
+plots/*/*.pdf
+plots/*/*.png
+__pycache__
