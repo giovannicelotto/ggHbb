@@ -24,8 +24,11 @@ from helpers.flattenWeights import flattenWeights
 
 # Define folder of input and output. Create the folders if not existing
 hp = getParams()
-sampling=False
+sampling=True
+boosted=True
+
 outFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data"
+outFolder = outFolder+"_highPt" if boosted else outFolder
 if not os.path.exists(outFolder):
     os.makedirs(outFolder)
 
@@ -39,11 +42,11 @@ featuresForTraining, columnsToRead = getFeatures(outFolder, massHypo=True)
 if sampling:
     data = loadData_sampling(nReal=199, nMC=-1, size=5e6, outFolder=outFolder,
                             columnsToRead=columnsToRead, featuresForTraining=featuresForTraining, test_split=hp["test_split"],
-                            boosted=False)
+                            boosted=boosted)
 else:
     data = loadData_adversarial(nReal=199, nMC=-1, size=5e6, outFolder=outFolder,
                             columnsToRead=columnsToRead, featuresForTraining=featuresForTraining, test_split=hp["test_split"],
-                            boosted=False)
+                            boosted=boosted)
 XtrainVal, Xtest, YtrainVal, Ytest, advFeatureTrainVal, advFeatureTest, WtrainVal, Wtest, genMassTrainVal, genMassTest = data
 Xtrain, Xval, Ytrain, Yval, advFeatureTrain, advFeatureVal, Wtrain, Wval, genMassTrain, genMassVal = train_test_split(XtrainVal, YtrainVal, advFeatureTrainVal, WtrainVal, genMassTrainVal, test_size=hp['val_split'], random_state=1999)
 
