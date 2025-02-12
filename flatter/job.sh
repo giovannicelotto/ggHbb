@@ -2,8 +2,8 @@
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=4G                       # 2G for Data needed   
-#SBATCH --partition=standard              # Specify your cluster partition
-#SBATCH --time=4:00:00  
+#SBATCH --partition=short              # Specify your cluster partition
+#SBATCH --time=1:00:00  
 #SBATCH --output=/t3home/gcelotto/slurm/output/saveFlat_1.out  # Output file for stdout
 #SBATCH --error=/t3home/gcelotto/slurm/output/saveFlat_1.out    # Output file for stderr
 #SBATCH --dependency=singleton

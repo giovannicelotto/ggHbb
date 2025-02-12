@@ -9,6 +9,7 @@ import os
 import re
 import pandas as pd
 import ROOT
+from functions import getDfProcesses_v2
 import random
 sys.path.append("/t3home/gcelotto/ggHbb/flatter/")
 from treeFlatter import jetsSelector
@@ -58,6 +59,8 @@ def saveMatchedJets(fileNames, path, prefix):
             Jet_rawFactor               = branches["Jet_rawFactor"][ev]
             Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
             Jet_tagUParTAK4B            = branches["Jet_tagUParTAK4B"][ev]
+            Jet_jetId                   =branches["Jet_jetId"][ev]
+            Jet_puId                    =branches["Jet_puId"][ev]
 
             Jet_PNetRegPtRawCorr              = branches["Jet_PNetRegPtRawCorr"][ev]
             Jet_PNetRegPtRawCorrNeutrino      = branches["Jet_PNetRegPtRawCorrNeutrino"][ev]
@@ -116,7 +119,7 @@ def saveMatchedJets(fileNames, path, prefix):
             
             # choice of jets is done in any case (unless no muon in jets)
             jetsToCheck = np.min([4, nJet])
-            selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
+            selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_jetId, Jet_puId)
             if selected1==999:
                 continue
             if selected2==999:
@@ -320,10 +323,10 @@ def saveMatchedJets(fileNames, path, prefix):
 
 
 def main(nFiles, particle):
-    df=pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
+    df=getDfProcesses_v2()[0]
     if particle == 'H':
-        path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Oct09/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/241009_135255/0000"
-        fileNames = glob.glob(path+'/**/GluGlu*.root', recursive=True)
+        path = df.nanoPath[0]
+        fileNames = glob.glob(path+'/**/*.root', recursive=True)
         print("Looking for files in ", path)
         prefix="GluGluHToBB"
     #elif particle=="Z":

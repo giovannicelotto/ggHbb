@@ -10,7 +10,6 @@ import pandas as pd
 def plot_lossTorch(train_loss_history, val_loss_history, 
               train_classifier_loss_history, val_classifier_loss_history,
               train_dcor_loss_history, val_dcor_loss_history,
-              best_epoch,
               outFolder):
     """
     Plots the loss histories for training and validation.
@@ -22,28 +21,58 @@ def plot_lossTorch(train_loss_history, val_loss_history,
         val_classifier_loss_history (list or np.array): Validation classifier loss history.
         train_dcor_loss_history (list or np.array): Training dCor loss history.
         val_dcor_loss_history (list or np.array): Validation dCor loss history.
-        best_epoch (int): Number of the epoch where the best weights were found
+        
         outFolder (str): Output folder path to save the plot.
     """
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(train_loss_history, label='Train Loss')
-    ax.plot(val_loss_history, label='Validation Loss', linestyle='dashed')
+    # Create 3 vertically stacked subplots with shared x-axis
+    fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 20))
 
-    ax.plot(train_classifier_loss_history, label='Train Classifier Loss')
-    ax.plot(val_classifier_loss_history, label='Validation Classifier Loss', linestyle='dashed')
+    # --- Plot 1: Total Loss ---
+    inf = 0.8*min([np.min(train_loss_history), np.min(val_loss_history)])
+    sup = 1.5*max([np.min(train_loss_history), np.min(val_loss_history)])
+    axes[0].plot(train_loss_history, label='Total Train Loss', color='blue')
+    axes[0].plot(val_loss_history, label='Total Validation Loss', linestyle='dashed', color='red')
+    axes[0].legend()
+    axes[0].set_ylim(inf, sup)
+    axes[0].vlines(x=np.argmin(val_loss_history), ymin=axes[0].get_ylim()[0], ymax=axes[0].get_ylim()[1],
+                color='black', linestyle='dashed', label='Best Epoch')
+    #axes[0].set_yscale('log')
+    axes[0].set_title("Total Loss")
 
-    ax.plot(np.array(train_dcor_loss_history), label='Train dCor Loss')
-    ax.plot(np.array(val_dcor_loss_history), label='Validation dCor Loss', linestyle='dashed')
+    # --- Plot 2: Classifier Loss ---
+    inf = 0.8*min([np.min(train_classifier_loss_history), np.min(val_classifier_loss_history)])
+    sup = 1.5*max([np.min(train_classifier_loss_history), np.min(val_classifier_loss_history)])
+    axes[1].plot(train_classifier_loss_history, label='Train Classifier Loss', color='blue')
+    axes[1].plot(val_classifier_loss_history, label='Validation Classifier Loss', linestyle='dashed', color='red')
+    axes[1].legend()
+    axes[1].set_ylim(inf, sup)
+    axes[1].vlines(x=np.argmin(val_loss_history), ymin=axes[1].get_ylim()[0], ymax=axes[1].get_ylim()[1],
+                color='black', linestyle='dashed', label='Best Epoch')
+    #axes[1].set_yscale('log')
+    axes[1].set_title("Classifier Loss")
 
-    ax.set_yscale('log')
-    ax.set_ylim(ax.get_ylim())
-    ax.set_xlim(ax.get_xlim())
-    if best_epoch is not None:
-        ax.vlines(x=best_epoch, ymin=ax.get_ylim()[0], ymax=ax.get_ylim()[1], color='black', linestyle='dashed', label='Best Epoch')
-    ax.legend()
+    # --- Plot 3: dCor Loss ---
+    inf = 0.8*min([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
+    sup = 1.5*max([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
+    axes[2].plot(np.array(train_dcor_loss_history), label='Train dCor Loss', color='blue')
+    axes[2].plot(np.array(val_dcor_loss_history), label='Validation dCor Loss', linestyle='dashed', color='red')
+    axes[2].legend()
+    axes[2].set_ylim(inf, sup)
+    axes[2].vlines(x=np.argmin(val_loss_history), ymin=axes[2].get_ylim()[0], ymax=axes[2].get_ylim()[1],
+                color='black', linestyle='dashed', label='Best Epoch')
+    #axes[2].set_yscale('log')
+    axes[2].set_title("Distance Correlation (dCor) Loss")
+
+    # Set shared labels and adjust layout
+    axes[-1].set_xlabel('Epoch')
+    for ax in axes:
+        ax.set_ylabel('Loss')
+        ax.grid(True)
 
     # Save the figure
+    fig.tight_layout()  # Ensures no overlap between plots
     fig.savefig(f"{outFolder}/performance/loss.png")
+    print(f"Saved in {outFolder}/performance/loss.png")
     plt.close(fig)
 
 def doPlotLoss(fit, outName, earlyStop, patience):
@@ -118,7 +147,7 @@ def roc(thresholds, signal_predictions, realData_predictions, weights_signal, si
     ax.set_xlabel("Background Efficiency")
     ax.set_xlim(1e-5,1)
     ax.set_ylim(1e-5,1)
-    ax.text(x=0.95, y=0.32, s="AUC Test : %.3f"%roc_auc, ha='right')
+    ax.text(x=0.95, y=0.32, s="AUC Val : %.3f"%roc_auc, ha='right')
     if signalTrain_predictions is not None:
         ax.text(x=0.95, y=0.28, s="AUC Train: %.3f"%roc_auc_train, ha='right')
     ax.legend()
@@ -128,11 +157,12 @@ def roc(thresholds, signal_predictions, realData_predictions, weights_signal, si
     else:
         plt.show()
     plt.close('all')
+    return roc_auc
 
-def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName):
+def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName, log=True):
     #signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions = np.arctanh(signal_predictions), np.arctanh(realData_predictions), np.arctanh(signalTrain_predictions), np.arctanh(realDataTrain_predictions)
     fig, ax = plt.subplots(1, 1)
-    bins=np.linspace(0, 1, 20)
+    bins=np.linspace(0, 1, 50)
     
     # Hist the predictions
     sig_test_counts = np.histogram(signal_predictions, bins=bins)[0]
@@ -159,14 +189,19 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=sig_train_counts, yerr=sig_train_counts_err, linestyle='none', marker='o',label='Signal Train', color='C1')
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=bkg_train_counts, yerr=bkg_train_counts_err, linestyle='none', marker='o',label='Data Train', color='C0')
     ax.legend(loc='upper center')
-    ax.set_yscale('log')
+    if log:
+        ax.set_yscale('log')
     ax.set_xlabel("NN output")
     hep.cms.label()
     fig.savefig(outName, bbox_inches='tight')
 
 def getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
     from shap import GradientExplainer
+
     featuresForTraining = Xtest.columns.values
+    if nFeatures == -1:
+        nFeatures = len(featuresForTraining)
+
     data = Xtest if tensor is None else tensor
     explainer = GradientExplainer(model=model, data=data)
 
@@ -181,18 +216,19 @@ def getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tens
     ordered_featuresForTraining = np.array(featuresForTraining)[indices][:nFeatures]
     orderd_shap_values_average = shap_values_average[indices][:nFeatures]
 
-    fig, ax =plt.subplots(1, 1, figsize=(10, 5), constrained_layout=True)
+    fig, ax =plt.subplots(1, 1, figsize=(15, 5), constrained_layout=True)
     bins = np.arange(len(ordered_featuresForTraining)+1)
     c0=ax.hist(bins[:-1],bins=bins, width=0.3,color='C0', weights=orderd_shap_values_average ,label=class_names)[0]
     ax.set_xticks(np.arange(len(ordered_featuresForTraining)), labels=ordered_featuresForTraining)
     featureImportance = {}
     for feature, shap in zip(ordered_featuresForTraining, orderd_shap_values_average):
         featureImportance[feature] = shap
-    plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+    plt.setp(ax.get_xticklabels(), rotation=90, ha="right",
              rotation_mode="anchor")
     ax.legend()
     ax.set_ylabel("Mean(|SHAP|)")
     plt.savefig(outName)
+    return featureImportance
     
 def getShapNew(Xtest, model, outName, nFeatures, class_names='NN output'):
     from shap import GradientExplainer
@@ -228,23 +264,36 @@ def getShapNew(Xtest, model, outName, nFeatures, class_names='NN output'):
 
 
 
-def ggHscoreScan(Xtest, Ytest, YPredTest, Wtest, outName):
-    fig, ax = plt.subplots(1, 1, figsize=(10, 5), constrained_layout=True)
+def ggHscoreScan(Xtest, Ytest, YPredTest, Wtest, outName, genMassTest, t = [0, 0.4, 1]):
+    fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
+    fig.align_ylabels([ax[0],ax[1]])
 
-    bins = np.linspace(0, 300, 100)
-    t = [0, 0.2, 0.4, 0.6, 0.8, 0.9]
+    bins = np.linspace(40, 300, 51)
     assert len(Ytest)==len(YPredTest)
 
     Ytest=Ytest.reshape(-1)
     YPredTest=YPredTest.reshape(-1)
 
+    combinedMask = Ytest==0
+    refCounts = np.histogram(Xtest.dijet_mass[combinedMask], bins=bins)[0]
+    err_refCounts = np.sqrt(refCounts)
+    refCounts_n = refCounts/np.sum(refCounts)
+    ax[0].hist(Xtest.dijet_mass[combinedMask], bins=bins, weights=Wtest[combinedMask], label='Inclusive', histtype=u'step', density=True, color='black')[0]
 
-    for i in range(len(t)):
-            combinedMask = (Ytest==0) & (YPredTest>t[i]) 
-            ax.hist(Xtest.dijet_mass[combinedMask], bins=bins, weights=Wtest[combinedMask], label='ggH score >%.1f'%t[i], histtype=u'step', density=True)[0]
-
-    ax.legend()
-    ax.set_title("Dijet Mass : ggH score scan")
+    x = (bins[1:] + bins[:-1])/2
+    for i in range(len(t)-1):
+        combinedMask = (Ytest==0) & (YPredTest>t[i]) & (YPredTest<t[i+1]) 
+        currentCounts = np.histogram(Xtest.dijet_mass[combinedMask], bins=bins)[0]
+        effSig = np.sum(Wtest[(genMassTest==125) & (YPredTest>t[i]) & (YPredTest<t[i+1])])/np.sum(Wtest[(genMassTest==125)])
+        effBkg = np.sum(Wtest[(genMassTest==0) & (YPredTest>t[i]) & (YPredTest<t[i+1])])/np.sum(Wtest[(genMassTest==0)])
+        ax[0].hist(Xtest.dijet_mass[combinedMask], bins=bins, label='%.1f < ggH score < %.1f Sig Gain %.2f'%(t[i],t[i+1],effSig/np.sqrt(effBkg) ), histtype=u'step', density=True, color='C%d'%i)
+        err_currentCounts = np.sqrt(currentCounts)
+        currentCounts_n = currentCounts/np.sum(currentCounts)
+        ax[1].errorbar(x, currentCounts_n/refCounts_n, yerr = currentCounts_n/refCounts_n * np.sqrt(1/currentCounts  +  1/refCounts), label='ggH score >%.1f'%t[i], color='C%d'%i, linestyle='none', marker='o')
+    ax[1].set_ylim(0.9, 1.1)
+    ax[0].legend()
+    ax[0].set_xlim(bins[0], bins[-1])
+    ax[1].hlines(xmin=bins[0], xmax=bins[-1], y=1, color='black')
     if outName is not None:
         fig.savefig(outName, bbox_inches='tight')
 
@@ -259,14 +308,44 @@ def runPlots(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest,
         signalTrain_predictions=signalTrain_predictions, realDataTrain_predictions=realDataTrain_predictions, weights_signalTrain=Wtrain[Ytrain==1],
         outName=outFolder+"/performance/roc.png")
     NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output.png")
-    ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, outName=outFolder + "/performance/ggHScoreScan.png")
+    ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, genMassTest=genMassTest, outName=outFolder + "/performance/ggHScoreScan.png")
     # scale
     Xtest  = scale(Xtest, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)        
     getShapNew(Xtest=Xtest[featuresForTraining].head(1000), model=model, outName=outFolder+'/performance/shap.png', nFeatures=15, class_names=['NN output'])
 
+def auc_vs_m(Ytrain, Ytest, YPredTrain, YPredTest, genMassTrain, genMassTest, outFile):
+    from sklearn.metrics import roc_auc_score
+    
+    bkgTrain = (genMassTrain==0)
+    bkgTest = (genMassTest==0)
+
+    aucTrain ={}
+    aucTest ={}
+    for m in [50, 70, 100, 125, 200, 300]:
+        maskTrain = (genMassTrain==m)
+        maskTest = (genMassTest==m)
+        combinedMaskTrain = (maskTrain) | (bkgTrain)
+        combinedMaskTest = (maskTest) | (bkgTest)
+        
+        aucTrain[m] = roc_auc_score(y_true=Ytrain[combinedMaskTrain], y_score=YPredTrain[combinedMaskTrain])
+        aucTest[m] = roc_auc_score(y_true=Ytest[combinedMaskTest], y_score=YPredTest[combinedMaskTest])
+
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(aucTrain.keys(), aucTrain.values(), label='Train AUC', marker='o')
+    ax.plot(aucTest.keys(), aucTest.values(), label='Test AUC', marker='s')
 
 
-def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, featuresForTraining, model, inFolder, outFolder, genMassTrain, genMassTest):
+    ax.set_xlabel('Mass Values (m)', fontsize=12)
+    ax.set_ylabel('AUC Score', fontsize=12)
+    ax.legend(fontsize=10)
+    ax.grid(True)
+
+    fig.savefig(outFile)
+
+
+
+
+def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, featuresForTraining, model, inFolder, outFolder, genMassTrain, genMassTest, results):
     import torch
     # Split predictions for signal and Data
     signal_predictions = YPredTest[Ytest==1]
@@ -276,19 +355,23 @@ def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPred
 
     h125_trainPredictions = YPredTrain[genMassTrain==125]
     h125_testPredictions = YPredTest[genMassTest==125]
-    
+    auc_vs_m(Ytrain, Ytest, YPredTrain, YPredTest, genMassTrain, genMassTest, outFile=outFolder+"/performance/auc_vs_m.png")
     roc(thresholds=np.linspace(0, 1, 100), signal_predictions=signal_predictions, realData_predictions=realData_predictions, weights_signal=Wtest[Ytest==1],
         signalTrain_predictions=signalTrain_predictions, realDataTrain_predictions=realDataTrain_predictions, weights_signalTrain=Wtrain[Ytrain==1],
         outName=outFolder+"/performance/roc_ggS0.png")
-    roc(thresholds=np.linspace(0, 1, 100), signal_predictions=h125_testPredictions, realData_predictions=realData_predictions, weights_signal=Wtest[genMassTest==125],
+    results['roc_125'] = roc(thresholds=np.linspace(0, 1, 100), signal_predictions=h125_testPredictions, realData_predictions=realData_predictions, weights_signal=Wtest[genMassTest==125],
         signalTrain_predictions=h125_trainPredictions, realDataTrain_predictions=realDataTrain_predictions, weights_signalTrain=Wtrain[genMassTrain==125],
         outName=outFolder+"/performance/roc_h125.png")
     
     NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output_ggS0.png")
     NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125.png")
+    NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125_log.png", log=False)
 
     ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, outName=outFolder + "/performance/ggHScoreScan.png")
     # scale
     Xtest  = scale(Xtest, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
-    #X_tensor_test = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
-    #getShapTorch(Xtest=Xtest[featuresForTraining].head(1000), model=model, outName=outFolder+'/performance/shap.png', nFeatures=15, class_names=['NN output'], tensor=X_tensor_test)
+    nEvents = 1000
+    X_tensor_test = torch.tensor(np.float32(Xtest[featuresForTraining].values[:nEvents])).float()
+    print("Shap started")
+    getShapTorch(Xtest=Xtest[featuresForTraining].head(nEvents), model=model, outName=outFolder+'/performance/shap.png', nFeatures=15, class_names=['NN output'], tensor=X_tensor_test)
+    return results

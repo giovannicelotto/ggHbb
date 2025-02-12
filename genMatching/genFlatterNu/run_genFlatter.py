@@ -3,13 +3,13 @@ import glob, sys, re, os
 import random
 import subprocess
 import time
-from functions import getDfProcesses
+from functions import getDfProcesses_v2
 
 
 def main(isMC, nFiles):
     # Define name of the process, folder for the files and xsections
     
-    df=getDfProcesses()
+    df=getDfProcesses_v2()[0]
 
     nanoPath = df.nanoPath[isMC]
     flatPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/genMatched"

@@ -20,7 +20,7 @@ paths = [
         flatPathCommon + "/ZJets/ZJetsToQQ_HT-800toInf"]
 m=200
 paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
-dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=True, selectFileNumberList=None, returnFileNumberList=True)
+dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=True, selectFileNumberList=None, returnFileNumberList=True, filters=None)
 
 # %%
 dfs = cut(dfs, 'Muon_fired_HLT_Mu9_IP6', 0.5, None)

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 hep.style.use("CMS")
 def plotCriterionEfficiency(tag):
-    with open("/t3home/gcelotto/ggHbb/outputs/dict_criterionEfficiency%s.pkl"%tag, 'rb') as file:
+    with open("/t3home/gcelotto/ggHbb/outputs/dict_criterionEfficiency_%s_HS.pkl"%tag, 'rb') as file:
         criterionSummary = pickle.load(file)
     oneTimeTrue = True
     fig, ax = plt.subplots(1, 1)
@@ -16,6 +16,16 @@ def plotCriterionEfficiency(tag):
         outOfEta = value[5]
         total = matched + non_matched
         assert(matched == correct_choice + wrong_choice + noDijetWithTrigMuon + outOfEta)
+
+        totalEntriesVisited = non_matched + matched
+        
+        print("\nTotal Entries visited                                      : %d  \t  %.2f%%" %(totalEntriesVisited, totalEntriesVisited/totalEntriesVisited*100))
+        print("Non matched events                                           : %d  \t  %.2f%%" %(non_matched, non_matched/totalEntriesVisited*100))
+        print("Events matched                                               : %d  \t  %.2f%%" %(matched, matched/totalEntriesVisited*100))
+        print("Correct choice of jets                                       : %d  \t  %.2f%%" %(correct_choice, correct_choice/totalEntriesVisited*100))
+        print("Wrong choice of jets                                         : %d  \t  %.2f%%" %(wrong_choice , wrong_choice/totalEntriesVisited*100))
+        print("No Dijet with trigger inside within 2.5. No choice made      : %d  \t  %.2f%%" %(noDijetWithTrigMuon , noDijetWithTrigMuon/totalEntriesVisited*100))
+        print("Out of Eta                                                   : %d  \t  %.2f%%" %(outOfEta , outOfEta/totalEntriesVisited*100))
 
 
         # matched
@@ -45,5 +55,5 @@ def plotCriterionEfficiency(tag):
 
 
 if __name__ == "__main__":
-    tag=""
+    tag="DeepJet"
     plotCriterionEfficiency(tag)

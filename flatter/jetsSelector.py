@@ -6,6 +6,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
     selected2 = 999
     muonIdx = 999
     muonIdx2 = 999
+# Fill the list of Jets with TrigMuon inside
 # Jets With Muon is the list of jets with a muon that triggers inside their cone
     jetsWithMuon, muonIdxs = [], []
     for i in range(nJet): 
@@ -25,17 +26,19 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
                     continue
     assert len(muonIdxs)==len(jetsWithMuon)
 # Now loop over these jets as first element of the pair
-    # if two jets
+    # 2+ Jets With Trig
     if len(muonIdxs)>=2:
         selected1=jetsWithMuon[0]
         selected2=jetsWithMuon[1]
         muonIdx=muonIdxs[0]
         muonIdx2=muonIdxs[1]
+    # No Jets With Trig Muon -> idxs are set to 999 (events to be rejected)
     elif len(muonIdxs)==0:
         selected1=999
         selected2=999
         muonIdx=999
         muonIdx2=999
+    # 1 Jet. Choose the second in a way
     elif len(muonIdxs)==1:
         selected1 = jetsWithMuon[0]
         muonIdx = muonIdxs[0]
@@ -51,6 +54,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
                 muonIdx2 = 999
         if selected2 == 999: # case there are not 2 jets in the acceptance set also the first to 999 to say there is no pair chosen
             selected1 = 999
+    # No other possibilities
     else:
         assert False
     return selected1, selected2, muonIdx, muonIdx2

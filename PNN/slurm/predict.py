@@ -28,7 +28,7 @@ def predict(file_path, isMC, modelName):
 
                                     ('jet1_mass', '>', 0),
                                     ('jet2_mass', '>', 0),
-                                    ('jet3_mass', '>',  0),
+                                    ('jet3_mass', '>', 0),
 
 
                                     ('jet1_eta', '>', -2.5),

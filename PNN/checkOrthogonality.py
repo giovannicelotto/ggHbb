@@ -38,8 +38,10 @@ def checkOrthogonality(df, featureToPlot, mask1, mask2, label_mask1, label_mask2
     observed = np.maximum(hNN_Tight, 1e-10)
     expected = np.maximum(hNN_Medium, 1e-10)
     chi2_stat =  sum((observed-expected)**2/(err_Tight**2+err_Medium**2+eps))
-    p_value = chi2.sf(chi2_stat, len(observed)-2)
-    print(f"Chi-squared / ndof = {chi2_stat:.4f} / {len(observed)-2:d}")
+    ndof = len(observed)-1
+    p_value = chi2.sf(chi2_stat, ndof)
+    # len - 1 because of normalization
+    print(f"Chi-squared / ndof = {chi2_stat:.4f} / {ndof:d}")
     
     if ax==None:
         fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
@@ -51,7 +53,7 @@ def checkOrthogonality(df, featureToPlot, mask1, mask2, label_mask1, label_mask2
         ax[0].set_ylabel("Normalized Counts")
         #ax[0].text(x=0.25, y=0.5, s="KS Test: statistic = %.3f"%(ks_stat), transform=ax[0].transAxes)
         ax[0].text(x=0.25, y=0.45, s="KS Test: pvalue = %.2f"%(ks_p_value), transform=ax[0].transAxes)
-        ax[0].text(x=0.25, y=0.4, s="$\chi^2$ / ndof = %.1f / %d (pval = %.2f)"%(chi2_stat, len(observed)-2, p_value), transform=ax[0].transAxes)
+        ax[0].text(x=0.25, y=0.4, s="$\chi^2$ / ndof = %.2f / %d (pval = %.2f)"%(chi2_stat, len(observed)-1, p_value), transform=ax[0].transAxes)
         ax[1].set_ylabel("Ratio")
         ax[1].set_xlabel(label_toPlot)
         hep.cms.label(ax=ax[0], lumi = np.round(0.774*nReal/1017, 3))
@@ -65,17 +67,18 @@ def checkOrthogonality(df, featureToPlot, mask1, mask2, label_mask1, label_mask2
             ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1]*1.2)
             ax.legend()
         ax.text(x=0.02, y=0.85, s="KS Test: pvalue = %.2f"%(ks_p_value), transform=ax.transAxes, fontsize=14)
-        ax.text(x=0.02, y=0.75, s="$\chi^2$ / ndof = %.1f / %d (pval = %.2f)"%(chi2_stat, len(observed)-2, p_value), transform=ax.transAxes, fontsize=14)
+        ax.text(x=0.02, y=0.75, s="$\chi^2$ / ndof = %.1f / %d (pval = %.2f)"%(chi2_stat, len(observed)-1, p_value), transform=ax.transAxes, fontsize=14)
+        ax.set_ylim(0, 2)
         return ks_p_value, p_value, chi2_stat
         
 
 
 
-def checkOrthogonalityInMassBins(df, featureToPlot, mask1, mask2, label_mask1, label_mask2, label_toPlot, bins, mass_bins, mass_feature='dijet_mass', figsize=(15, 15), outName=None):
+def checkOrthogonalityInMassBins(df, featureToPlot, mask1, mask2, label_mask1, label_mask2, label_toPlot, bins, mass_bins, mass_feature='dijet_mass', figsize=(5, 15), outName=None):
     # Create the figure grid based on the number of mass bins
     n_mass_bins = len(mass_bins) - 1
-    n_cols = 3  # Number of columns in the grid
-    n_rows = (n_mass_bins + n_cols - 1) // n_cols  # Calculate rows needed
+    n_cols = 3  
+    n_rows = (n_mass_bins + n_cols - 1) // n_cols  
     fig, axes = plt.subplots(n_rows, n_cols, figsize=figsize, constrained_layout=True, sharex='row', sharey='row')
     axes = axes.flatten()
     ks_p_value_list=[]
@@ -126,3 +129,42 @@ def checkOrthogonalityInMassBins(df, featureToPlot, mask1, mask2, label_mask1, l
     if outName is not None:
             fig.savefig(outName)
     return ks_p_value_list, p_value_list, chi2_values_list
+
+
+def plotLocalPvalues(pvalues, mass_bins, pvalueLabel="KS", type='P-value', outFolder=None, color='blue'):
+    labels=[]
+    for low, high in zip(mass_bins[:-1], mass_bins[1:]):
+        labels.append("%.1f ≤ $m_{jj}$ < %.1f"%(low, high))
+
+    # Create the bar plot
+    fig, ax = plt.subplots(figsize=(15, 6))
+    bars = ax.bar(labels, pvalues, color=color, edgecolor='black')
+
+    # Annotate the bars with the p-value
+    for bar, pval in zip(bars, pvalues):
+        height = bar.get_height()
+        if type=='P-value':
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,  # X coordinate
+                height,  # Y coordinate
+                f"{pval:.3f}",  # Text to display
+                ha='center', va='bottom', fontsize=10, color='black'
+            )
+        else:
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,  # X coordinate
+                height,  # Y coordinate
+                f"{pval:.5f}",  # Text to display
+                ha='center', va='bottom', fontsize=10, color='black'
+            )
+            ax.set_xlim(ax.get_xlim())
+            ax.hlines(xmin = ax.get_xlim()[0], xmax = ax.get_xlim()[1], y=np.mean(pvalues), linestyle='dotted', color='red', label='Mean')
+
+    # Customize the plot
+    ax.set_xlabel("Bins", fontsize=16)
+    ax.set_ylabel("%s %s"%(type, pvalueLabel), fontsize=16)
+    #ax.set_title("P-value Distribution Across Bins", fontsize=14)
+    ax.set_ylim(0, max(pvalues) * 1.2)  # Add some space above the tallest bar for annotations
+    plt.xticks(rotation=45, ha='right')  # Rotate labels for better readability
+    if outFolder is not None:
+        fig.savefig(outFolder, bbox_inches='tight')

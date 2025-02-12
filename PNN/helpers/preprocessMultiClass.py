@@ -21,9 +21,10 @@ def preprocessMultiClass(dfs):
         # end useless
         
         beforeCutMass = len(df)
+
         df = df[(df.dijet_mass>40) & (df.dijet_mass<300)]
         afterCutMass = len(df)
-        print("Df Idx %d : Eff. cut mass %.1f"%(idx, afterCutMass/beforeCutMass*100))
+        print("Df Idx %d : Eff. cut mass %d / %d = %.1f"%(idx, afterCutMass, beforeCutMass, afterCutMass/beforeCutMass*100))
         
 
         if df.isna().sum().sum()>0:

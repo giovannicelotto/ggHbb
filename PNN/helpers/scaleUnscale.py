@@ -7,14 +7,10 @@ import numpy as np
 def scale(data, featuresForTraining, scalerName, fit=False, weights=None):
     '''
     apply log to features with pt and mass in name
-    
-    
-    
-    
-    
+      
     '''
     for colName in featuresForTraining:
-        if ("_pt" in colName) | ("_mass" in colName) | (colName=="ht"):
+        if (("_pt" in colName) | ("_mass" in colName) | (colName=="ht")) :
             if "normalized" in colName:
                 #print("normalized found in ", colName)
                 continue
@@ -47,7 +43,6 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None):
         if col not in featuresForTraining:
             dataScaled[col] = data[col]
             
-    #dataScaled['sf'] = data['sf']
     
     return dataScaled
 
@@ -68,3 +63,37 @@ def unscale(data, featuresForTraining, scalerName):
         if feature not in featuresForTraining:
             dataUnscaled[feature] = data[feature]
     return dataUnscaled
+
+
+def test_gaussianity_validation(Xtrain, Xval, featuresForTraining, inFolder):
+
+    import matplotlib.pyplot as plt
+    train_means = Xtrain[featuresForTraining].mean(axis=0)
+    train_stds = Xtrain[featuresForTraining].std(axis=0)
+    val_means = Xval[featuresForTraining].mean(axis=0)
+    val_stds = Xval[featuresForTraining].std(axis=0)
+
+    # Create a plot for means with error bars
+    fig, ax = plt.subplots(1, 1, figsize=(20, 12))
+
+    # Plotting the training set means and standard deviations
+    ax.errorbar(range(len(featuresForTraining)), train_means, yerr=train_stds/np.sqrt(len(Xval)), fmt='o', label='Train Set', color='blue', capsize=5)
+    ax.errorbar(np.arange(len(featuresForTraining))+0.2, val_means, yerr=val_stds/np.sqrt(len(Xval)), fmt='o', label='Validation Set', color='red', capsize=5)
+    from scipy.stats import shapiro
+
+    stat_val, p_val = shapiro(val_means)
+    print("Shapiro-Wilk Test for Validation Set Means: Stat =", stat_val, "p-value =", p_val)
+
+    if p_val > 0.05:
+        print("Validation Set Means follow a Gaussian distribution (fail to reject H0).")
+    else:
+        print("Validation Set Means do not follow a Gaussian distribution (reject H0).")
+    ax.text(x=0.05, y=0.1, s="Shapiro-Wilk p-value : %.2f"%p_val, transform=ax.transAxes)
+
+    ax.axhline(0, color='black', linestyle='--', linewidth=1)
+
+    ax.set_xticks(range(len(featuresForTraining)), featuresForTraining, rotation=90)
+    ax.set_xlabel('Features')
+    ax.set_ylabel('Mean Values')
+    ax.legend()
+    fig.savefig(inFolder+"/test_gaussianity_validation_set.png", bbox_inches='tight')

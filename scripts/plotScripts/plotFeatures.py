@@ -63,10 +63,11 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
             for idx, df in enumerate(data):
                 
                 if weights is None:
-                    weightsDf=df.sf
+                    weightsDf=df.sf*df.PU_SF
                 else:
                     weightsDf = weights[idx]
                 counts = np.zeros(len(bins)-1)
+                
                 feature_data = df[featureName].astype(int) if df[featureName].dtype == bool else df[featureName]
                 counts = np.histogram(np.clip(feature_data, bins[0], bins[-1]),weights = weightsDf if featureName!='sf' else None, bins=bins)[0]
                               

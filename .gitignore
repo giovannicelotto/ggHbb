@@ -27,3 +27,9 @@ systematics/**/*.html
 systematics/**/*.sh
 systematics/**/*.php
 *.pth
+model_summary*
+dict.json
+training.txt
+model.pth
+model/*
+performance/*

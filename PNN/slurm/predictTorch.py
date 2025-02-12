@@ -7,16 +7,16 @@ from helpers.preprocessMultiClass import preprocessMultiClass
 from helpers.scaleUnscale import scale
 from helpers.getFeatures import getFeatures
 import numpy as np
-from functions import getCommonFilters
+from functions import getCommonFilters, cut
 
 # change the model
 # change the features
 # change the scaler
 
-def predict(file_path, isMC, modelName):
+def predict(file_path, modelName):
     #featuresForTraining, columnsToRead = getFeatures(outFolder=None)
     modelDir = "/t3home/gcelotto/ggHbb/PNN/results/%s/model"%(modelName)
-    featuresForTraining = np.load("/t3home/gcelotto/ggHbb/PNN/results/Dec16_30/featuresForTraining.npy")
+    featuresForTraining = np.load("/t3home/gcelotto/ggHbb/PNN/results/%s/featuresForTraining.npy"%modelName)
     model = torch.load(modelDir+"/model.pth", map_location=torch.device('cpu'))
 
     # Load data from file_path and preprocess it as needed
@@ -29,7 +29,6 @@ def predict(file_path, isMC, modelName):
     Xtest['massHypo'] = Xtest['dijet_mass'].apply(lambda x: mass_hypo_list[np.abs(mass_hypo_list - x).argmin()])
     
     data = [Xtest]
-
     data = preprocessMultiClass(data)
 
     # Perform prediction
@@ -48,14 +47,14 @@ def predict(file_path, isMC, modelName):
 
 if __name__ == "__main__":
     file_path   = sys.argv[1]
-    isMC        = sys.argv[2]
+    process        = sys.argv[2]
     modelName        = sys.argv[3]
 
     
-    predictions = predict(file_path, isMC, modelName)
+    predictions = predict(file_path, modelName)
     predictions = pd.DataFrame(predictions, columns=['PNN'])
     match = re.search(r'_(\d+)\.parquet$', file_path)
     if match:
         number = int(match.group(1))
-    predictions.to_parquet("/scratch/yMC%d_fn%d.parquet"%(int(isMC), number))
-    print("saved in /scratch/yMC%d_fn%d.parquet"%(int(isMC), number))
+    predictions.to_parquet("/scratch/y%s_FN%d.parquet"%(process, number))
+    print("saved in /scratch/y%d_FN%d.parquet"%(process, number))

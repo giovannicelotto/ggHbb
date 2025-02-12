@@ -4,6 +4,7 @@ import json, sys, glob, re
 import pandas as pd
 import mplhep as hep
 hep.style.use("CMS")
+import os
 from functions import loadMultiParquet, getDfProcesses_v2, sortPredictions, loadMultiParquet_v2, getDfProcesses
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
@@ -15,13 +16,22 @@ def loadPredictions(processes, isMCList, predictionsFileNames, fileNumberList):
         print("Process %s # %d"%(p, isMC))
         l =[]
         for fileName in predictionsFileNames[idx]:
-            fn = int(re.search(r'fn(\d+)\.parquet', fileName).group(1))
+            fn = int(re.search(r'FN(\d+)\.parquet', fileName).group(1))
             if fn in fileNumberList[idx]:
                 l.append(fileName)
         predictionsFileNamesNew.append(l)
 
         print(len(predictionsFileNamesNew[idx]), " files for process")
-        df = pd.read_parquet(predictionsFileNamesNew[idx])
+        try:
+            df = pd.read_parquet(predictionsFileNamesNew[idx])
+        except:
+            print("Error opening a file")
+            for f in predictionsFileNamesNew[idx]:
+                try:
+                    df = pd.read_parquet(f)
+                except:
+                    os.remove(f)
+            df = pd.read_parquet(predictionsFileNamesNew[idx])
         preds.append(df)
     return preds
 
@@ -30,11 +40,17 @@ def getPredictionNamesNumbers(processes,isMCList, predictionsPath):
     # Get predictions names path for all the datasets
     predictionsFileNames = []
     for p in processes:
-        print(p)
-        tempFileNames = glob.glob(predictionsPath+"/%s/others/*.parquet"%p)
-        sortedFileNames = sorted(tempFileNames, key=lambda x: int(''.join(filter(str.isdigit, x))))
+        print("Process ", p)
+        tempFileNames = glob.glob(predictionsPath+"/%s/*.parquet"%p)
+        print("Predictions in ", predictionsPath+"/%s/*.parquet"%p)
+        print(len(tempFileNames), " predictions found")
+        #split the predictions fileNames based on the string yProcessName_ e.g. yData1A_
+        #take the last part of the split. Will return FN%d.parquet
+        # filter only the digits inside the string
+        # convert the digits as a unique integer and use it to sort ascending
+        sortedFileNames = sorted(tempFileNames, key=lambda x: int(''.join(filter(str.isdigit, x.split("y%s_"%p)[-1]))))
         predictionsFileNames.append(sortedFileNames)
-        if len(predictionsFileNames)==0:
+        if len(sortedFileNames)==0:
             print("*"*10)
             print("No Files found for process ", p)
             print("*"*10)
@@ -44,7 +60,7 @@ def getPredictionNamesNumbers(processes,isMCList, predictionsPath):
         print("Process %s # %d"%(p, isMC))
         l = []
         for fileName in predictionsFileNames[idx]:
-            fn = re.search(r'fn(\d+)\.parquet', fileName).group(1)
+            fn = re.search(r'FN(\d+)\.parquet', fileName).group(1)
             l.append(int(fn))
         predictionsFileNumbers.append(l)
 
@@ -63,7 +79,7 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
                 12,13,14,
                 15,16,17,18,19,
                 20, 21, 22, 23, 36,
-                39    # Data2A
+                #39    # Data2A
     ]
 
     # Take the DataFrame with processes, path, xsection. Filter the needed rows (processes)
@@ -71,7 +87,7 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
     processes = dfProcesses.process[isMCList].values
 
     # Put all predictions used for training in the proper folder. They will not be used here
-    sortPredictions()
+    #sortPredictions(predictionsPath=predictionsPath)
 
     # Get predictions names path for all the datasets
     predictionsFileNames = []
@@ -79,6 +95,7 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
         print(p)
         tempFileNames = glob.glob(predictionsPath+"/%s/others/*.parquet"%p)
         sortedFileNames = sorted(tempFileNames, key=lambda x: int(''.join(filter(str.isdigit, x))))
+        print(len(sortedFileNames), "predictions available")
         predictionsFileNames.append(sortedFileNames)
         if len(predictionsFileNames)==0:
             print("*"*10)
@@ -93,10 +110,12 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
         l = []
         for fileName in predictionsFileNames[idx]:
             print
-            fn = re.search(r'fn(\d+)\.parquet', fileName).group(1)
+            fn = re.search(r'FN(\d+)\.parquet', fileName).group(1)
             l.append(int(fn))
         predictionsFileNumbers.append(l)
-
+    print("*"*50)
+    print("FileNumbers", predictionsFileNumbers)
+    print("*"*50)
     # Load flattuple for fileNumbers matching
     paths = list(dfProcesses.flatPath[isMCList])
     dfs= []
@@ -117,8 +136,8 @@ def loadDataFrames(nReal, nMC, predictionsPath, columns):
         print("Process %s # %d"%(p, isMC))
         l =[]
         for fileName in predictionsFileNames[idx]:
-            print(fileName)
-            fn = int(re.search(r'fn(\d+)\.parquet', fileName).group(1))
+            #print(fileName)
+            fn = int(re.search(r'FN(\d+)\.parquet', fileName).group(1))
             if fn in fileNumberList[idx]:
                 l.append(fileName)
         predictionsFileNamesNew.append(l)

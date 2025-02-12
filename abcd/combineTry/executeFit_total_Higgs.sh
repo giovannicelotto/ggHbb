@@ -1,12 +1,14 @@
+cd /t3home/gcelotto/ggHbb/abcd/combineTry
 datacard="/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeHdatacard_total.txt"
-combine -M AsymptoticLimits $datacard --rMin -10 --rMax 10 --mass 125 --run expected -n hbb_total.expected
+rmin=-3
+rmax=5
+combine -M AsymptoticLimits $datacard --rMin $rmin --rMax $rmax --mass 125 --run expected -n hbb_total.expected
 
-combine -M MultiDimFit $datacard --expectSignal 1 -t -1 --algo grid --points 100 --rMin -10 --rMax 10 --mass 125  -n hbb_total.expected
-combine -M MultiDimFit $datacard --expectSignal 1 -t -1 --algo grid --points 100 --rMin -10 --rMax 10 --mass 125 -n hbb_total_statOnly.expected --freezeParameters all --saveWorkspace
-#plot1DScan.py /t3home/gcelotto/ggHbb/abcd/combineTry/higgsCombinehbb_total_statOnly.expected.MultiDimFit.mH125.root -o scan_statOnly_H125_expected --main-label "Stat Only"
+combine -M MultiDimFit $datacard --expectSignal 1 -t -1 --algo grid --points 100 --rMin $rmin --rMax $rmax  --mass 125  -n hbb_total.expected
+combine -M MultiDimFit $datacard --expectSignal 1 -t -1 --algo grid --points 100 --rMin $rmin --rMax $rmax  --mass 125 -n hbb_total_statOnly.expected --freezeParameters all --saveWorkspace
+#plot1DScan.py higgsCombinehbb_total_statOnly.expected.MultiDimFit.mH125.root --output plots/scan_H125_expected_stat --main-label "Stat Only"
 plot1DScan.py higgsCombinehbb_total.expected.MultiDimFit.mH125.root   --others "higgsCombinehbb_total_statOnly.expected.MultiDimFit.mH125.root:Expected Stat Only:2" \
-    -o scan_comparison_H125_expected --main-label "Expected"
-mv scan_comparison*.p* plots/
+    --output plots/scan_H125_expected --main-label "Expected"
 
 #plot1DScan.py /t3home/gcelotto/ggHbb/abcd/combineTry/higgsCombinehbb_total.expected.MultiDimFit.mH125.root -o scan_total_H125_expected --main-label "Expected"
 

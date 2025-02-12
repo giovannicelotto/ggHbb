@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, inFolder, outName):
+def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName):
 # **********
 # TRAIN
 # **********
@@ -22,20 +22,20 @@ def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, inFolder, outNam
 # **********
 # TEST
 # **********
-    Wtest_QCD = Wtest[Ytest==0]
-    Wtest_H = Wtest[Ytest==1]
+    Wval_QCD = Wval[Yval==0]
+    Wval_H = Wval[Yval==1]
 
-    dfTest_QCD = Xtest[Ytest==0]
-    dfTest_H = Xtest[Ytest==1]
+    dfTest_QCD = Xval[Yval==0]
+    dfTest_H = Xval[Yval==1]
 
     bins = np.linspace(40, 300, 51)
-    countsQCDTrain = np.histogram(Xtest.dijet_mass[Ytest==0], bins=bins, weights=Wtest_QCD)[0]
-    countsHTrain = np.histogram(Xtest.dijet_mass[Ytest==1], bins=bins, weights=Wtest_H)[0]
+    countsQCDTrain = np.histogram(Xval.dijet_mass[Yval==0], bins=bins, weights=Wval_QCD)[0]
+    countsHTrain = np.histogram(Xval.dijet_mass[Yval==1], bins=bins, weights=Wval_H)[0]
 
-    rWtest_QCD=Wtest_QCD*(1/countsQCDTrain[np.digitize(np.clip(dfTest_QCD.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
-    rWtest_H=Wtest_H*(1/countsHTrain[np.digitize(np.clip(dfTest_H.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
+    rWval_QCD=Wval_QCD*(1/countsQCDTrain[np.digitize(np.clip(dfTest_QCD.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
+    rWval_H=Wval_H*(1/countsHTrain[np.digitize(np.clip(dfTest_H.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
 
-    rWtest_QCD, rWtest_H = rWtest_QCD/np.sum(rWtest_QCD), rWtest_H/np.sum(rWtest_H)
+    rWval_QCD, rWval_H = rWval_QCD/np.sum(rWval_QCD), rWval_H/np.sum(rWval_H)
 
 
     fig, ax =plt.subplots(1, 1, figsize=(12,8), constrained_layout=True)
@@ -53,11 +53,11 @@ def flattenWeights(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, inFolder, outNam
 
 
     rWtrain = Wtrain.copy()
-    rWtest = Wtest.copy()
+    rWval = Wval.copy()
     rWtrain[Ytrain==0] = rWtrain_QCD
     rWtrain[Ytrain==1] = rWtrain_H
-    rWtest[Ytest==0] = rWtest_QCD
-    rWtest[Ytest==1] = rWtest_H
-    np.save(inFolder + "/rWTrain.npy", rWtrain)
-    np.save(inFolder + "/rWTest.npy",  rWtest)
-    return rWtrain, rWtest
+    rWval[Yval==0] = rWval_QCD
+    rWval[Yval==1] = rWval_H
+    #np.save(inFolder + "/rWTrain.npy", rWtrain)
+    #np.save(inFolder + "/rWTest.npy",  rWval)
+    return rWtrain, rWval

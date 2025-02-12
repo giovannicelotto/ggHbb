@@ -11,7 +11,7 @@ def plotDfs(dfsData,dfsMC, isMCList, dfProcesses, nbin, lumi, blindPar, log=True
     fig, ax =plt.subplots(1, 1)
     cDataTot =np.zeros(len(bins_mass)-1)
     for df in dfsData:
-        c = np.histogram(dfsData[0].dijet_mass, bins=bins_mass)[0]
+        c = np.histogram(df.dijet_mass, bins=bins_mass)[0]
         cDataTot = cDataTot + c
     x = (bins_mass[:-1] + bins_mass[1:])/2
     ax.errorbar(x, cDataTot*blind_mask, yerr=np.sqrt(cDataTot)*blind_mask, linestyle='none', color='black', marker='o')
@@ -29,12 +29,12 @@ def plotDfs(dfsData,dfsMC, isMCList, dfProcesses, nbin, lumi, blindPar, log=True
     for idx, df in enumerate(dfsMC):
         isMC = isMCList[idx]
         process = dfProcesses.process[isMC]
-        print(idx, process, isMC)
+        #print(idx, process, isMC)
         c = np.histogram(df.dijet_mass, bins=bins_mass,weights=df.weight)[0]
         if 'Data' in process:
             continue
-        elif 'GluGluHToBB' in process:
-            print(process, isMC, " for Higgs")
+        elif 'HToBB' in process:
+            #print(process, isMC, " for Higgs")
             countsDict['H'] = countsDict['H'] + c
         elif 'ST' in process:
             countsDict['ST'] = countsDict['ST'] + c
@@ -49,15 +49,20 @@ def plotDfs(dfsData,dfsMC, isMCList, dfProcesses, nbin, lumi, blindPar, log=True
             countsDict['W+Jets'] = countsDict['W+Jets'] + c
         elif (('WW' in process) | ('ZZ' in process) | ('WZ' in process)):
             countsDict['VV'] = countsDict['VV'] + c
+        else:
+            assert False, "Process not found : %s"%process
 
         #c = ax.hist(df.dijet_mass, bins=bins_mass, bottom=cTot, weights=df.weight, label=dfProcesses.process[isMC])[0]
-        
+    
+    print("*"*50)    
+    print("Inclusive counts CR + SR")    
     for key in countsDict.keys():
         print(key, np.sum(countsDict[key]))
         if np.sum(countsDict[key])==0:
             continue
         ax.hist(bins_mass[:-1], bins=bins_mass, weights=countsDict[key], bottom=cTot, label=key)
         cTot = cTot + countsDict[key]
+    print("*"*50, "\n\n")    
     ax.legend(loc='upper right')
     if log:
         ax.set_yscale('log')

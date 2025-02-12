@@ -12,7 +12,7 @@ sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
 from criterionEfficiencySummary import plotCriterionEfficiency
 sys.path.append("/t3home/gcelotto/ggHbb/flatter")
 from treeFlatter import jetsSelector
-from bdtJetSelector import bdtJetSelector
+#from bdtJetSelector import bdtJetSelector
 import xgboost as xgb
 import random
 
@@ -74,7 +74,7 @@ def evaluateCriterion(maxJet, fileNames, tag):
         maxEntries = tree.num_entries 
         totalEntriesVisited += maxEntries
         print("\nFile %d/%d :\nEntries : %d"%(fileNames.index(fileName), len(fileNames), tree.num_entries))
-    
+        
         for ev in  range(maxEntries):
             
             if (ev%(int(maxEntries/100))==0):
@@ -264,7 +264,7 @@ def main(nFiles, maxJet1, maxJet2, tag):
     '''
     
 
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/GluGluHToBB2024Oct21"
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/allSamplesWW2025Jan20/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250120_100810/0000"
     fileNames = glob.glob(path+'/**/*.root', recursive=True)
     #random.shuffle(fileNames)
     fileNames = fileNames[:nFiles]

@@ -2,8 +2,8 @@ import ROOT
 import numpy as np
 def createRootHists(countsDict, hB_ADC, regions, bins, suffix):
     
-    # Create a ROOT file to store histograms
-    root_file = ROOT.TFile("/t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_%s.root"%(suffix), "RECREATE")
+    outName="/t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_%s.root"%(suffix)
+    root_file = ROOT.TFile(outName, "RECREATE")
     
     # Create histograms for each process
     # use same bins
@@ -29,3 +29,4 @@ def createRootHists(countsDict, hB_ADC, regions, bins, suffix):
     
     # Close the file
     root_file.Close()
+    print("Closed ROOT file %s"%outName)

@@ -1,15 +1,16 @@
 import sys
 sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
-from plot import plot4ABCD, QCD_SR, QCDplusSM_SR, SM_SR
+from helpersABCD.plot_v2 import plot4ABCD, QCD_SR, QCDplusSM_SR, SM_SR
 from createRootHists import createRootHists
 from hist import Hist
 import matplotlib.pyplot as plt
 
 def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, blindPar):
-    hA = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
-    hB = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
-    hC = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
-    hD = Hist.new.Reg(len(bins)-1, bins[0], bins[-1], name="mjj").Weight()
+    hA = Hist.new.Var(bins, name="mjj").Weight()
+    hB = Hist.new.Var(bins, name="mjj").Weight()
+    hC = Hist.new.Var(bins, name="mjj").Weight()
+    hD = Hist.new.Var(bins, name="mjj").Weight()
+    inclusive = Hist.new.Var(bins, name="mjj").Weight()
     regions = {
         'A' : hA,
         'B' : hB,
@@ -27,6 +28,9 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, bl
     regions['B'].fill(dfs[0][mB][xx])
     regions['C'].fill(dfs[0][mC][xx])
     regions['D'].fill(dfs[0][mD][xx])
+    inclusive.fill(dfs[0][xx])
+    print("Inclusive bins", inclusive.values())
+    print("B bins", regions['B'].values())
 
     print("Data counts in ABCD regions")
     print("Region A : ", regions["A"].sum())
@@ -56,7 +60,7 @@ def ABCD(dfs, x1, x2, xx, bins, t1, t2, isMCList, dfProcesses, nReal, suffix, bl
     
     plt.close('all')    
 # Second Plot
-    countsDict = SM_SR(regions, hB_ADC, bins, dfs, isMCList, dfProcesses, x1, t1, x2, t2, nReal, suffix=suffix, blindPar=blindPar)
+    countsDict = SM_SR(regions, hB_ADC, bins, dfs, isMCList, dfProcesses, x1, t1, x2, t2, nReal, suffix=suffix, blindPar=blindPar, sameWidth=False)
     plt.close('all')
 
 

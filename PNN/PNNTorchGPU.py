@@ -1,18 +1,4 @@
 # %%
-# what about splitting in advance the batches in advance so that each batch is a bin of dijet mass
-# 50, 10, 20, 5, 0, 1, 2 are done in one bin
-# they are also done with gradient clipping (clipping was removed for lambda = 50)
-# torch.nn.utils.clip_grad_norm_(model.parameters(), 0.2) to be put after backward of the loss before the step taken
-# 50k events for train and val.
-# 25k events per batch
-# lr set to 1e-4
-
-
-# 51, 11, 21, 5.1, 0.01, 1.01, 2.01 are done in 3 bins
-# gradient clipping was removed
-# 50k events for train and val.
-# 50k events per batch (single batch)
-# lr set to 5e-4
 import numpy as np
 import logging
 from sklearn.model_selection import train_test_split
@@ -30,7 +16,7 @@ from helpers.getFeatures import getFeatures
 from helpers.getParams import getParams
 from helpers.loadSaved import loadXYrWSaved
 from helpers.getInfolderOutfolder import getInfolderOutfolder
-from helpers.scaleUnscale import scale, unscale
+from helpers.scaleUnscale import scale, unscale, test_gaussianity_validation
 from helpers.dcorLoss import *
 
 # Torch
@@ -50,25 +36,33 @@ hp = getParams()
 try:
     parser = argparse.ArgumentParser(description="Script.")
     #### Define arguments
-    parser.add_argument("-l", "--lambdaCor", type=float, help="lambda for penalty term", default=None)
+    parser.add_argument("-l", "--lambda_dcor", type=float, help="lambda for penalty term", default=None)
     parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=None)
+    parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=int(1e9))
+    parser.add_argument("-node", "--node", type=int, help="nodes of single layer in case of one layer for simple nn", default=None)
     args = parser.parse_args()
-    if args.lambdaCor is not None:
-        hp["lambda_reg"] = args.lambdaCor 
-        print("lambda_reg changed to ", hp["lambda_reg"])
+    if args.lambda_dcor is not None:
+        hp["lambda_dcor"] = args.lambda_dcor 
+        print("lambda_reg changed to ", hp["lambda_dcor"])
     if args.epochs is not None:
         hp["epochs"] = args.epochs 
         print("N epochs to ", hp["epochs"])
+    if args.node is not None:
+        hp["nNodes"] = [args.node]
+    size = args.size
 except:
     print("-"*40)
     print("No arguments provided for lambda!")
-    print("lambda_reg changed to ", hp["lambda_reg"])
-    hp["lambda_reg"] = 5. 
+    print("lambda_reg changed to ", hp["lambda_dcor"])
+    hp["lambda_dcor"] = 5. 
     print(hp)
     print("interactive mode")
     print("-"*40)
+    size=5000
+
+print("Size is ", size)
 # %%
-inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')))
+inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_dcor"]).replace('.', 'p')))
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
 featuresForTraining, columnsToRead = getFeatures(outFolder, massHypo=True)
 
@@ -88,25 +82,15 @@ advFeatureTrain = np.load(inFolder+"/data/advFeatureTrain.npy")
 advFeatureVal   = np.load(inFolder+"/data/advFeatureVal.npy")
 print(len(Xtrain), " events in train dataset")
 print(len(Xval), " events in val dataset")
-# %%
-#import dcor
-#dcor_results = {}
-#for column in Xtrain[featuresForTraining].columns:
-#    print(column)
-#    dcor_value = dcor.distance_correlation(advFeatureTrain[Ytrain==0], Xtrain[Ytrain==0][column])
-#    dcor_results[column] = dcor_value
-#
-## Print the results
-#print(dcor_results)
+
 # %%
 # scale with standard scalers and apply log to any pt and mass distributions
 
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=True)
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
-#advFeatureTrain = scale(pd.DataFrame(advFeatureTrain, columns=['jet1_btagDeepFlavB']),['jet1_btagDeepFlavB'],  scalerName= outFolder + "/model/myScaler_adv.pkl" ,fit=True)
-#advFeatureVal  = scale(pd.DataFrame(advFeatureVal,columns=['jet1_btagDeepFlavB']), ['jet1_btagDeepFlavB'], scalerName= outFolder + "/model/myScaler_adv.pkl" ,fit=False)
+#test_gaussianity_validation(Xtrain, Xval, featuresForTraining, inFolder)
 # %%
-size = 25000
+
 Xtrain, Ytrain, Wtrain, rWtrain, genMassTrain, advFeatureTrain, dijetMassTrain = Xtrain[:size], Ytrain[:size], Wtrain[:size], rWtrain[:size], genMassTrain[:size], advFeatureTrain[:size], dijetMassTrain[:size]
 Xval, Yval, Wval, rWval, genMassVal, advFeatureVal, dijetMassVal = Xval[:size], Yval[:size], Wval[:size], rWval[:size], genMassVal[:size], advFeatureVal[:size], dijetMassVal[:size]
 # %%
@@ -136,15 +120,15 @@ rWtrain, rWval = Wtrain.copy(), Wval.copy()
 XtrainTensor = torch.tensor(Xtrain[featuresForTraining].values, dtype=torch.float32, device=device)
 YtrainTensor = torch.tensor(Ytrain, dtype=torch.float, device=device).unsqueeze(1)
 rWtrainTensor = torch.tensor(rWtrain, dtype=torch.float32, device=device).unsqueeze(1)
-advFeatureTrain_tensor = torch.tensor(advFeatureTrain, dtype=torch.float32, device=device)
-dijetMassTrain_tensor = torch.tensor(dijetMassTrain, dtype=torch.float32, device=device)
+advFeatureTrain_tensor = torch.tensor(advFeatureTrain, dtype=torch.float32, device=device).unsqueeze(1)
+dijetMassTrain_tensor = torch.tensor(dijetMassTrain, dtype=torch.float32, device=device).unsqueeze(1)
 
 
 Xval_tensor = torch.tensor(Xval[featuresForTraining].values, dtype=torch.float32, device=device)
 Yval_tensor = torch.tensor(Yval, dtype=torch.float, device=device).unsqueeze(1)
 rWval_tensor = torch.tensor(rWval, dtype=torch.float32, device=device).unsqueeze(1)
-advFeatureVal_tensor = torch.tensor(advFeatureVal, dtype=torch.float32, device=device)
-dijetMassVal_tensor = torch.tensor(dijetMassVal, dtype=torch.float32, device=device)
+advFeatureVal_tensor = torch.tensor(advFeatureVal, dtype=torch.float32, device=device).unsqueeze(1)
+dijetMassVal_tensor = torch.tensor(dijetMassVal, dtype=torch.float32, device=device).unsqueeze(1)
 
 #Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
 
@@ -171,6 +155,7 @@ val_dataset = TensorDataset(
     val_masks.to(device)
 )
 # Drop last to drop the last (if incomplete size) batch
+hp["batch_size"] = hp["batch_size"] if hp["batch_size"]<size else size
 traindataloader = DataLoader(traindataset, batch_size=hp["batch_size"], shuffle=True, drop_last=True)
 val_dataloader = DataLoader(val_dataset, batch_size=hp["batch_size"], shuffle=False, drop_last=True)
 # %%
@@ -194,9 +179,9 @@ print("Train start")
 
 
 
-trainloss_history = []
-trainclassifier_loss_history = []
-traindcor_loss_history = []
+train_loss_history = []
+train_classifier_loss_history = []
+train_dcor_loss_history = []
 
 val_loss_history = []
 val_classifier_loss_history = []
@@ -204,7 +189,10 @@ val_dcor_loss_history = []
 best_model_weights = None # weights saved for RestoreBestWeights
 best_epoch = None
 
-mass_bins = np.linspace(40, 300, 4)
+mass_bins = np.quantile(Xtrain[Ytrain==0].dijet_mass.values, np.linspace(0, 1, 20))
+np.save(outFolder+"/mass_bins.npy", mass_bins)
+# %%
+
 
 for epoch in range(hp["epochs"]):
     model.train()
@@ -218,23 +206,23 @@ for epoch in range(hp["epochs"]):
         
         # Reset the gradients of all optimized torch.Tensor
         optimizer.zero_grad()
-        predictions = model(X_batch).squeeze().unsqueeze(1)
+        predictions = model(X_batch)
         raw_loss = criterion(predictions, Y_batch)
         # Apply weights manually
-        classifier_loss = (raw_loss * W_batch.unsqueeze(1)).mean()
+        classifier_loss = (raw_loss * W_batch).mean()
 
 
-        W_batch = torch.ones(len(W_batch), device=device).unsqueeze(1)
+        W_batch = torch.ones([len(W_batch), 1], device=device)
         dCorr_total = 0.
         for low, high in zip(mass_bins[:-1], mass_bins[1:]):
             # Mask for the current mass bin
-            bin_mask = (dijetMass_batch.unsqueeze(1) >= low) & (dijetMass_batch.unsqueeze(1) < high) & (mask_batch)
+            bin_mask = (dijetMass_batch >= low) & (dijetMass_batch < high) & (mask_batch)
 
             if (bin_mask.sum().item()==0):
                 print("No elements in this bin!")
                 continue
             bin_predictions = predictions[bin_mask]
-            bin_advFeature = advFeature_batch[bin_mask.squeeze()]
+            bin_advFeature = advFeature_batch[bin_mask]
             bin_weights = W_batch[bin_mask]
 
             # Skip if there are no examples in the bin
@@ -249,7 +237,7 @@ for epoch in range(hp["epochs"]):
         
         
         # Combined loss
-        loss = classifier_loss + hp["lambda_reg"] * dCorr_total/(len(mass_bins) -1)
+        loss = classifier_loss + hp["lambda_dcor"] * dCorr_total/(len(mass_bins) -1)
         loss.backward()
         
         optimizer.step()
@@ -277,22 +265,22 @@ for epoch in range(hp["epochs"]):
         with torch.no_grad():
             for batch in val_dataloader:
                 X_batch, Y_batch, W_batch, advFeature_batch, dijetMass_batch, mask_batch = batch
-                predictions = model(X_batch).squeeze().unsqueeze(1)
+                predictions = model(X_batch)
 
                 raw_loss = criterion(predictions, Y_batch)
             # Apply weights manually
-                classifier_loss = (raw_loss * W_batch.unsqueeze(1)).mean()
+                classifier_loss = (raw_loss * W_batch).mean()
 
                 # If there are any remaining entries after filtering, calculate dcor
-                W_batch = torch.ones(len(W_batch), device=device).unsqueeze(1)
+                W_batch = torch.ones([len(W_batch), 1], device=device)
                 dCorr_total = 0.
                 for low, high in zip(mass_bins[:-1], mass_bins[1:]):
                     # Mask for the current mass bin
-                    bin_mask = (dijetMass_batch.unsqueeze(1) >= low) & (dijetMass_batch.unsqueeze(1) < high) & (mask_batch)
+                    bin_mask = (dijetMass_batch >= low) & (dijetMass_batch < high) & (mask_batch)
 
                     # Apply bin-specific mask
                     bin_predictions = predictions[bin_mask]
-                    bin_advFeature = advFeature_batch[bin_mask.squeeze()]
+                    bin_advFeature = advFeature_batch[bin_mask]
                     bin_weights = W_batch[bin_mask]
 
                     # Skip if there are no examples in the bin
@@ -303,7 +291,7 @@ for epoch in range(hp["epochs"]):
                     dCorr_bin = distance_corr(bin_predictions, bin_advFeature, bin_weights)
                     dCorr_total += dCorr_bin
                 # Combined loss
-                loss = classifier_loss + hp["lambda_reg"] * dCorr_total/(len(mass_bins) -1)
+                loss = classifier_loss + hp["lambda_dcor"] * dCorr_total/(len(mass_bins) -1)
                 total_val_loss += loss.item()
                 total_val_classifier_loss += classifier_loss.item()
                 total_val_dcor_loss += dCorr_total.item()/(len(mass_bins) -1)
@@ -311,23 +299,23 @@ for epoch in range(hp["epochs"]):
 
     # Calculate average losses (average over batches)
     avg_trainloss = total_trainloss / len(traindataloader)
-    avg_trainclassifier_loss = total_trainclassifier_loss / len(traindataloader)
+    avg_train_classifier_loss = total_trainclassifier_loss / len(traindataloader)
     avg_traindcor_loss = total_traindcor_loss / len(traindataloader)
 
     avg_val_loss = total_val_loss / len(val_dataloader)
     avg_val_classifier_loss = total_val_classifier_loss / len(val_dataloader)
     avg_val_dcor_loss = total_val_dcor_loss / len(val_dataloader)
 
-    trainloss_history.append(avg_trainloss)
-    trainclassifier_loss_history.append(avg_trainclassifier_loss)
-    traindcor_loss_history.append(avg_traindcor_loss)
+    train_loss_history.append(avg_trainloss)
+    train_classifier_loss_history.append(avg_train_classifier_loss)
+    train_dcor_loss_history.append(avg_traindcor_loss)
     val_loss_history.append(avg_val_loss)
     val_classifier_loss_history.append(avg_val_classifier_loss)
     val_dcor_loss_history.append(avg_val_dcor_loss)
 
     # Print losses
     print(f"Epoch [{epoch+1}/{epochs}], "
-          f"Train Loss: {avg_trainloss:.4f}, Classifier Loss: {avg_trainclassifier_loss:.4f}, dCor Loss: {avg_traindcor_loss:.8f}, "
+          f"Train Loss: {avg_trainloss:.4f}, Classifier Loss: {avg_train_classifier_loss:.4f}, dCor Loss: {avg_traindcor_loss:.8f}, "
           f"Val Loss: {avg_val_loss:.4f}, Val Classifier Loss: {avg_val_classifier_loss:.4f}, Val dCor Loss: {avg_val_dcor_loss:.8f}",
           flush=(epoch % 50 == 0))
 
@@ -340,7 +328,7 @@ for epoch in range(hp["epochs"]):
     else:
         patience_counter += 1
 
-    if patience_counter >= early_stopping_patience:
+    if (patience_counter >= early_stopping_patience) & (epoch > early_stopping_patience):
         print("Early stopping triggered.")
         break
 
@@ -351,16 +339,16 @@ if best_model_weights is not None:
 
 
 # %%
-np.save(outFolder + "/model/trainloss_history.npy", trainloss_history)
+np.save(outFolder + "/model/train_loss_history.npy", train_loss_history)
 np.save(outFolder + "/model/val_loss_history.npy", val_loss_history)
-np.save(outFolder + "/model/trainclassifier_loss_history.npy", trainclassifier_loss_history)
+np.save(outFolder + "/model/train_classifier_loss_history.npy", train_classifier_loss_history)
 np.save(outFolder + "/model/val_classifier_loss_history.npy", val_classifier_loss_history)
-np.save(outFolder + "/model/traindcor_loss_history.npy", traindcor_loss_history)
+np.save(outFolder + "/model/train_dcor_loss_history.npy", train_dcor_loss_history)
 np.save(outFolder + "/model/val_dcor_loss_history.npy", val_dcor_loss_history)
 
 # %%
 torch.save(model, outFolder+"/model/model.pth")
 print("Model saved")
-# %%
-#for param in model.parameters():
-        #    print("Gradient norm:", param.grad.norm().item())
+with open(outFolder + "/model/training.txt", "w") as file:
+    for key, value in hp.items():
+        file.write(f"{key} : {value}\n")
