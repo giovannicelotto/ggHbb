@@ -11,7 +11,7 @@ current_date = datetime.now().strftime("%b%d")  # This gives the format like 'De
 # PNN helpers
 from helpers.getFeatures import getFeatures
 from helpers.getParams import getParams
-from helpers.loadSaved import loadXYrWSaved
+from helpers.loadSaved import loadXYWrWSaved
 from helpers.getInfolderOutfolder import getInfolderOutfolder
 from helpers.scaleUnscale import scale, unscale
 from helpers.dcorLoss import *
@@ -65,8 +65,10 @@ except:
     print("interactive mode")
     print("-"*40)
 # %%
+sampling = False
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco')
-inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
+inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_highPt" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
+
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
 featuresForTraining, columnsToRead = getFeatures(outFolder, massHypo=True)
 #if 'jet2_btagDeepFlavB' in featuresForTraining:
@@ -82,72 +84,38 @@ print("Before loading data")
 # fill the massHypo column
 # cut the data to have same length in all the samples
 # reweight each sample to have total weight 1, shuffle and split in train and test
-Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, rWtrain, rWval, Wtest, genMassTrain, genMassVal, genMassTest = loadXYrWSaved(inFolder=inFolder)
-Wtrain, Wval = np.load(inFolder+"/Wtrain.npy"), np.load(inFolder+"/Wval.npy")
+Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval,Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder)
 dijetMassTrain = np.array(Xtrain.dijet_mass.values)
 dijetMassVal = np.array(Xval.dijet_mass.values)
-advFeatureTrain = np.load(inFolder+"/advFeatureTrain.npy")     
-advFeatureVal   = np.load(inFolder+"/advFeatureVal.npy")
 print(len(Xtrain), " events in train dataset")
 print(len(Xval), " events in val dataset")
 # %%
-#import dcor
-#dcor_results = {}
-#for column in Xtrain[featuresForTraining].columns:
-#    print(column)
-#    dcor_value = dcor.distance_correlation(advFeatureTrain[Ytrain==0], Xtrain[Ytrain==0][column])
-#    dcor_results[column] = dcor_value
-#
-## Print the results
-#print(dcor_results)
 # %%
 # scale with standard scalers and apply log to any pt and mass distributions
 
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=True)
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
-#advFeatureTrain = scale(pd.DataFrame(advFeatureTrain, columns=['jet1_btagDeepFlavB']),['jet1_btagDeepFlavB'],  scalerName= outFolder + "/model/myScaler_adv.pkl" ,fit=True)
-#advFeatureVal  = scale(pd.DataFrame(advFeatureVal,columns=['jet1_btagDeepFlavB']), ['jet1_btagDeepFlavB'], scalerName= outFolder + "/model/myScaler_adv.pkl" ,fit=False)
 # %%
 size = hp["size"]
-Xtrain, Ytrain, Wtrain, rWtrain, genMassTrain, advFeatureTrain, dijetMassTrain = Xtrain[:size], Ytrain[:size], Wtrain[:size], rWtrain[:size], genMassTrain[:size], advFeatureTrain[:size], dijetMassTrain[:size]
-Xval, Yval, Wval, rWval, genMassVal, advFeatureVal, dijetMassVal = Xval[:size], Yval[:size], Wval[:size], rWval[:size], genMassVal[:size], advFeatureVal[:size], dijetMassVal[:size]
+Xtrain, Ytrain, Wtrain, rWtrain, genMassTrain, dijetMassTrain = Xtrain[:size], Ytrain[:size], Wtrain[:size], rWtrain[:size], genMassTrain[:size], dijetMassTrain[:size]
+Xval, Yval, Wval, rWval, genMassVal, dijetMassVal = Xval[:size], Yval[:size], Wval[:size], rWval[:size], genMassVal[:size], dijetMassVal[:size]
 print("Train Lenght after cutting", len(Xtrain))
 print("Train Lenght after cutting", len(Xval))
-# %%
-#import matplotlib.pyplot as plt
-#from hist import Hist
-#fig,ax = plt.subplots(1, 1)
-#bins = np.linspace(40, 300, 41)
-#hD = Hist.new.Reg(41, 40, 300, name="mjj", label="mjj").Weight() 
-#hS = Hist.new.Reg(41, 40, 300, name="mjj", label="mjj").Weight() 
-#
-#hD.fill(Xtrain[Ytrain==0].dijet_mass, weight=rWtrain[Ytrain==0])
-#hS.fill(Xtrain[Ytrain==1].dijet_mass, weight=rWtrain[Ytrain==1])
-##hS.fill(Xtrain[Ytrain==1].dijet_mass, weight=Wtrain[Ytrain==1])
-#
-#hD.plot(ax=ax, label='Data ')
-#hS.plot(ax=ax, linewidth=1, label='Signal')
-#ax.legend()
-#ax.text(x=0.9, y=0.2, ha='right', s="data W: %d"%(Wtrain[Ytrain==0].sum()), transform=ax.transAxes)
-#ax.text(x=0.9, y=0.1, ha='right', s="signal W: %d"%(Wtrain[Ytrain==1].sum()), transform=ax.transAxes)
-#print(Wtrain.mean())
 
 # %%
 # Comment if want to use flat in mjj
-rWtrain, rWval = Wtrain.copy(), Wval.copy()
+# rWtrain, rWval = Wtrain.copy(), Wval.copy()
 # %%
 
 XtrainTensor = torch.tensor(Xtrain[featuresForTraining].values, dtype=torch.float32, device=device)
 YtrainTensor = torch.tensor(Ytrain, dtype=torch.float, device=device).unsqueeze(1)
-rWtrainTensor = torch.tensor(rWtrain, dtype=torch.float32, device=device).unsqueeze(1)
-advFeatureTrain_tensor = torch.tensor(dijetMassTrain, dtype=torch.float32, device=device).unsqueeze(1)
+WtrainTensor = torch.tensor(Wtrain, dtype=torch.float32, device=device).unsqueeze(1)
 dijetMassTrain_tensor = torch.tensor(dijetMassTrain, dtype=torch.float32, device=device).unsqueeze(1)
 
 
 Xval_tensor = torch.tensor(Xval[featuresForTraining].values, dtype=torch.float32, device=device)
 Yval_tensor = torch.tensor(Yval, dtype=torch.float, device=device).unsqueeze(1)
-rWval_tensor = torch.tensor(rWval, dtype=torch.float32, device=device).unsqueeze(1)
-advFeatureVal_tensor = torch.tensor(dijetMassVal, dtype=torch.float32, device=device).unsqueeze(1)
+Wval_tensor = torch.tensor(Wval, dtype=torch.float32, device=device).unsqueeze(1)
 dijetMassVal_tensor = torch.tensor(dijetMassVal, dtype=torch.float32, device=device).unsqueeze(1)
 
 #Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
@@ -156,25 +124,20 @@ train_masks = (YtrainTensor < 0.5).to(device)
 val_masks = (Yval_tensor < 0.5).to(device)
 
 
-#traindataset = TensorDataset(XtrainTensor, YtrainTensor, rWtrainTensor, advFeatureTrain_tensor)
-#val_dataset = TensorDataset(Xval_tensor, Yval_tensor, rWval_tensor, advFeatureVal_tensor)
 traindataset = TensorDataset(
     XtrainTensor.to(device),
     YtrainTensor.to(device),
-    rWtrainTensor.to(device),
-    advFeatureTrain_tensor.to(device),
+    WtrainTensor.to(device),
     dijetMassTrain_tensor.to(device),
     train_masks.to(device)
 )
 val_dataset = TensorDataset(
     Xval_tensor.to(device),
     Yval_tensor.to(device),
-    rWval_tensor.to(device),
-    advFeatureVal_tensor.to(device),
+    Wval_tensor.to(device),
     dijetMassVal_tensor.to(device),
     val_masks.to(device)
 )
-#hp['batch_size'] = 10000
 # Drop last to drop the last (if incomplete size) batch
 hp["batch_size"] = hp["batch_size"] if hp["batch_size"]<size else size
 train_dataloader = DataLoader(traindataset, batch_size=hp["batch_size"], shuffle=True, drop_last=True)
@@ -225,7 +188,7 @@ for epoch in range(hp["epochs"]):
     #total_train_ks_loss = 0.0
     # Training phase
     for batch in train_dataloader:
-        X_batch, Y_batch, W_batch, advFeature_batch, dijetMass_batch, mask_batch = batch
+        X_batch, Y_batch, W_batch, dijetMass_batch, mask_batch = batch
 
         
         # Reset the gradients of all optimized torch.Tensor
@@ -239,7 +202,7 @@ for epoch in range(hp["epochs"]):
         W_batch = torch.ones([len(W_batch), 1], device=device)
             
         # Compute dCorr for the current mass bin
-        dCorr_bin = distance_corr(predictions, advFeature_batch, W_batch)
+        dCorr_bin = distance_corr(predictions, dijetMass_batch, W_batch)
         
 
 
@@ -276,7 +239,7 @@ for epoch in range(hp["epochs"]):
 
         with torch.no_grad():
             for batch in val_dataloader:
-                X_batch, Y_batch, W_batch, advFeature_batch, dijetMass_batch, mask_batch = batch
+                X_batch, Y_batch, W_batch, dijetMass_batch, mask_batch = batch
                 predictions = model(X_batch)
 
                 raw_loss = criterion(predictions, Y_batch)
@@ -288,7 +251,7 @@ for epoch in range(hp["epochs"]):
 
                     
                 # Compute dCorr for the current mass bin
-                dCorr_bin = distance_corr(predictions, advFeature_batch, W_batch)
+                dCorr_bin = distance_corr(predictions, dijetMass_batch, W_batch)
                 
                 
                 # Combined loss
