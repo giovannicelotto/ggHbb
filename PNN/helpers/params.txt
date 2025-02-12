@@ -1,0 +1,11 @@
+# Params to be read
+nReal = 9
+nMC = -1
+epochs = 5000
+patienceES = 50
+val_split = 0.25
+test_split = 0.1
+learning_rate = 1e-5
+nNodes = [64, 32, 16]
+batch_size = 512
+lambda_reg = 0.02
