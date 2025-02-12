@@ -9,7 +9,7 @@ from helpers.getFeatures import getFeatures
 from helpers.getParams import getParams
 from helpers.getInfolderOutfolder import getInfolderOutfolder
 from helpers.doPlots import runPlotsTorch, plot_lossTorch
-from helpers.loadSaved import loadXYrWSaved
+from helpers.loadSaved import loadXYWrWSaved
 import torch
 from helpers.scaleUnscale import scale, unscale
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
@@ -37,16 +37,16 @@ except:
     hp["lambda_dcor"] = 2000
     print("Interactive mode")
 # %%
-
+sampling=True
 results = {}
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
+inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_highPt" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
 modelName = "model.pth"
 featuresForTraining, columnsToRead = getFeatures(outFolder,  massHypo=True)
 
 # %%
-Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, genMassTrain, genMassVal, genMassTest = loadXYrWSaved(inFolder=inFolder+"/data")
-advFeatureTrain = np.load(inFolder+"/data/advFeatureTrain.npy")     
-advFeatureVal   = np.load(inFolder+"/data/advFeatureVal.npy")
+Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval,Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder)
+
 
 
 
@@ -139,9 +139,9 @@ fig.savefig(outFolder + "/performance/ggHScan_HighLow.png", bbox_inches='tight')
 
 
 from helpers.doPlots import ggHscoreScan
-ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal, Wtest=Wval, genMassTest=genMassVal, outName=outFolder + "/performance/ggHScoreScanMulti.png", t=[0, 0.2, 0.4, 0.6, 0.8 ])
-ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal, Wtest=Wval, genMassTest=genMassVal, outName=outFolder + "/performance/ggHScoreScan_2.png", t=[0, 0.1,1 ])
-#results = runPlotsTorch(Xtrain, Xval, Ytrain, Yval, np.ones(len(Xtrain)), np.ones(len(Xval)), YPredTrain, YPredVal, featuresForTraining, model, inFolder, outFolder, genMassTrain, genMassVal, results)
+ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal, Wtest=Wval, genMassTest=genMassVal, outName=outFolder + "/performance/ggHScoreScanMulti.png", t=[0, 0.2, 0.4, 0.6, 0.8,1 ])
+ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal, Wtest=Wval, genMassTest=genMassVal, outName=outFolder + "/performance/ggHScoreScan_2.png", t=[0, 0.5,1 ])
+results = runPlotsTorch(Xtrain, Xval, Ytrain, Yval, np.ones(len(Xtrain)), np.ones(len(Xval)), YPredTrain, YPredVal, featuresForTraining, model, inFolder, outFolder, genMassTrain, genMassVal, results)
 # %%
 train_loss_history = np.load(outFolder + "/model/train_loss_history.npy")
 val_loss_history = np.load(outFolder + "/model/val_loss_history.npy")
