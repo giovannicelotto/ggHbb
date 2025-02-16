@@ -40,8 +40,8 @@ def main(isMC, processNumber, nFiles, modelName):
 
 
         # check if the predictions was already done:
-        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s/others"%(modelName, process)):
-            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s/others"%(modelName, process))
+        if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s"%(modelName, process)):
+            os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s"%(modelName, process))
         pattern = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s/**/y%s_FN%d.parquet" % (modelName, process, process, fileNumber)
         matching_files = glob.glob(pattern, recursive=True)
 
