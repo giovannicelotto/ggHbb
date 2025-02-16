@@ -14,26 +14,28 @@ from plotDfs import plotDfs
 from hist import Hist
 
 # %%
-modelName = "Jan17_4000p0"
+modelName = "Feb13_1500p0"
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
-columns = ['dijet_mass', 
+columns = ['dijet_mass', 'dijet_pt',
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
           'leptonClass',          
-          'PU_SF', 'sf', 
-          ]
+          'PU_SF', 'sf']
 dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 if not os.path.exists(df_folder):
     os.makedirs(df_folder)
+    
 # Load data first
 # %%
 DataTakingList = [
-            0,  #1A
-            1,  #2A
-            #2,  #1D
+            #0,  #1A
+            #1,  #2A
+            2,  #1D
+            #3
             ]
 nReals = [
+    -1,
     -1,
     -1,
     -1
@@ -55,6 +57,7 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 
     dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=[nReals[dataTakingIdx]], columns=columns,
                                                           selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True)
+    dfs = cut(dfs, 'dijet_pt', 100, None)
     lumi_tot = lumi_tot + lumi
     predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
     df = preprocessMultiClass(dfs=dfs)[0].copy()
@@ -73,9 +76,11 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
     lumiName = df_folder + "/lumi_%s_%s.npy"%(dataTakingName, modelName)
     try:
         df.to_parquet(dfName)
+        print("SAved ", dfName)
     except:
         os.remove(dfName)
         df.to_parquet(dfName)
+        print("SAved ", dfName)
     try:
         np.save(lumiName, lumi)
     except:
@@ -86,13 +91,14 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 
 
 # %%
-isMCList = [0,
-            1, 
-            2,3, 4,
-            5,6,7,8, 9,10,
-            11,12,13,
-            14,15,16,17,18,
-            19,20,21, 22, 35
+isMCList = [#0,
+            #1, 
+            #2,3, 4,
+            #5,6,7,8, 9,10,
+            #11,12,13,
+            #14,15,16,17,18,
+            #19,20,21, 22,
+            #35
             ]
 nMCs = [
     -1,
@@ -118,7 +124,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
                                                              returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                              returnFileNumberList=True)
 
-
+    dfs=cut(dfs, 'dijet_pt', 100, None)
     predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
     df = preprocessMultiClass(dfs=dfs)[0].copy()
 
@@ -141,7 +147,9 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     dataFrameName = df_folder + "/df_%s_%s.parquet"%(processMC, modelName)
     try:
         df.to_parquet(dataFrameName)
+        print("Saved ", dataFrameName)
     except:
         os.remove(dataFrameName)
         df.to_parquet(dataFrameName)
+        print("Saved ", dataFrameName)
 # %%

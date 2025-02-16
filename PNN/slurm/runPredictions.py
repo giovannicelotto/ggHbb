@@ -53,7 +53,7 @@ def main(isMC, processNumber, nFiles, modelName):
         if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(processNumber))
-            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 40)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(processNumber), process, modelName])
+            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 300)), '/t3home/gcelotto/ggHbb/PNN/slurm/predict.sh', fileName, str(processNumber), process, modelName])
             doneFiles = doneFiles + 1
         else:
             print("..")

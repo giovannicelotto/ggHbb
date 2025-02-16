@@ -259,7 +259,6 @@ for epoch in range(hp["epochs"]):
                 total_val_loss += loss.item()
                 total_val_classifier_loss += classifier_loss.item()
                 total_val_dcor_loss += dCorr_bin.item()
-                #total_val_ks_loss += ks_loss.item()
 
 
     # Calculate average losses (average over batches)

@@ -40,8 +40,8 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     axes[0].set_title("Total Loss")
 
     # --- Plot 2: Classifier Loss ---
-    inf = 0.8*min([np.min(train_classifier_loss_history), np.min(val_classifier_loss_history)])
-    sup = 1.5*max([np.min(train_classifier_loss_history), np.min(val_classifier_loss_history)])
+    inf = 0.98*min([np.min(train_classifier_loss_history), np.min(val_classifier_loss_history)])
+    sup = 1.05*max([np.min(train_classifier_loss_history), np.min(val_classifier_loss_history)])
     axes[1].plot(train_classifier_loss_history, label='Train Classifier Loss', color='blue')
     axes[1].plot(val_classifier_loss_history, label='Validation Classifier Loss', linestyle='dashed', color='red')
     axes[1].legend()
@@ -367,7 +367,7 @@ def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPred
     NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125.png")
     NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125_log.png", log=False)
 
-    ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, outName=outFolder + "/performance/ggHScoreScan.png")
+    ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, genMassTest=genMassTest, outName=outFolder + "/performance/ggHScoreScan.png")
     # scale
     Xtest  = scale(Xtest, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
     nEvents = 1000

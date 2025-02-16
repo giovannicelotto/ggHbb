@@ -29,7 +29,7 @@ try:
         modelName = args.modelName
 except:
     print("Interactive mode")
-    modelName = "Feb05_900p0"
+    modelName = "Feb13_900p1"
 # %%
 #modelName = "Jan24_900p0"
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/NN_predictions/DoubleDiscoPred_%s"%modelName
@@ -55,7 +55,7 @@ if not os.path.exists(df_folder):
 DataTakingList = [
             0,  #1A
             1,  #2A
-            #2,  #1D
+            2,  #1D
             3,
             #4,
             #5,

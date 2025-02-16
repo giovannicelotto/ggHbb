@@ -57,6 +57,19 @@ def distance_corr(var_1,var_2,normedweight,power=1):
     
     return dCorr
 
+def pearsonR(var1, var2, w):
+    x_mean = torch.mean(var1)
+    y_mean = torch.mean(var2)
+
+    x_diff = var1 - x_mean
+    y_diff = var2 - y_mean
+
+    numerator = torch.sum(x_diff * y_diff)
+    denominator = torch.sqrt(torch.sum(x_diff ** 2)) * torch.sqrt(torch.sum(y_diff ** 2))
+
+    pearson_corr = numerator / (denominator + 1e-8)  # Adding epsilon for numerical stability
+
+    return abs(pearson_corr )
 
 # Function for MP
 def ddp_setup(rank: int, world_size: int):

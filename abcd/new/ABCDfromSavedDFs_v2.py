@@ -8,6 +8,7 @@ from functions import getDfProcesses, cut, getDfProcesses_v2, cut_advanced
 import numpy as np
 import argparse
 from helpersABCD.plot_v2 import pullsVsDisco, pullsVsDisco_pearson
+
 # %%
 parser = argparse.ArgumentParser(description="Script.")
 try:
@@ -19,11 +20,13 @@ try:
     dd = args.doubleDisco
 except:
     print("Interactive mode")
-    modelName = "Feb05_900p0"
+    modelName = "Feb14_900p1"
     dd = True
 outFolder = "/t3home/gcelotto/ggHbb/PNN/resultsDoubleDisco/%s"%modelName
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/%s"%modelName
 bins = np.load(outFolder+"/mass_bins.npy")
+midpoints = (bins[:-1] + bins[1:]) / 2
+bins = np.sort(np.concatenate([bins, midpoints]))
 #midpoints = (bins[:-1] + bins[1:]) / 2
 #bins = np.sort(np.concatenate([bins, midpoints]))
 
@@ -53,8 +56,8 @@ dfsData = []
 isDataList = [
              0,
              1, 
-            #2,
-            3,
+            2,
+            #3,
            # 4,
            # 5,
            # 6
@@ -78,12 +81,12 @@ x1 = 'PNN2' if dd else 'jet1_btagDeepFlavB'
 x2 = 'PNN1' if dd else 'PNN'
 xx = 'dijet_mass'
 # tight WP for btag 0.7100
-t1 = 0.5
-t2 = 0.5
+t1 = 0.35
+t2 = 0.35
 
 
 # %%
-from helpersABCD.dcorPlot_process_datataking import dcor_plot_Data, dpearson_plot_Data
+#from helpersABCD.dcorPlot_process_datataking import dcor_plot_Data, dpearson_plot_Data
 
 
 #dfsData = cut_advanced(dfsData, 'jet1_nTightMuons', 'abs(jet1_nTightMuons) < 1.1')
@@ -91,18 +94,22 @@ from helpersABCD.dcorPlot_process_datataking import dcor_plot_Data, dpearson_plo
 #dfsData = cut_advanced(dfsData, 'dijet_eta', 'abs(dijet_eta) > 3.0')
 #dfsMC = cut_advanced(dfsMC, 'dijet_eta', 'abs(dijet_eta) > 3.0')
 
-#dfsData = cut(dfsData, 'ht', 200, None)
-#dfsMC = cut(dfsMC, 'ht', 200, None)
+#dfsData = cut(dfsData, 'dijet_pt', None, 100)
+#dfsMC = cut(dfsMC, 'dijet_pt', None, 100)
 # %%
 detail = ''
 for f in dfProcessesData.process[isDataList].values:
     detail = detail + "_"+f[4:]
 
-#dcor_plot_Data(dfsData, dfProcessesData.process, isDataList, bins, outFile="/t3home/gcelotto/ggHbb/abcd/new/plots/dcor/dcor%s.png"%detail)
-fig = plotDfs(dfsData=dfsData, dfsMC=dfsMC, isMCList=isMCList, dfProcesses=dfProcessesMC, nbin=101, lumi=lumi, log=True, blindPar=(True, 105, 30))
+#dcor_data_values =  dcor_plot_Data(dfsData, dfProcessesData.process, isDataList, bins, outFile="/t3home/gcelotto/ggHbb/abcd/new/plots/dcor/dcor_%s_%s.png"%(modelName, detail), nEvents=40000)
+# %%
+#df = pd.concat(dfsData)
+#dcor_data_values =  dcor_plot_Data([df], ["Data"], [0], bins, outFile="/t3home/gcelotto/ggHbb/abcd/new/plots/dcor/dcor_%s_%s.png"%(modelName, detail), nEvents=200000)
+#fig = plotDfs(dfsData=dfsData, dfsMC=dfsMC, isMCList=isMCList, dfProcesses=dfProcessesMC, nbin=101, lumi=lumi, log=True, blindPar=(True, 105, 30))
 #dpearson_plot_Data([pd.concat(dfsData)], ['Data'], isDataList, bins, outFile="/t3home/gcelotto/ggHbb/abcd/new/plots/dpearsonR/pearson%s.png"%detail)
 # %%
 pulls_QCD_SR, err_pulls_QCD_SR = ABCD(dfsData, dfsMC,  x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi=lumi, suffix='%s%s_%s'%(modelName, "_dd" if dd else "", detail), blindPar=(True, 100.5, 40))
+
 # %%
 from scipy.stats import pearsonr
 pearson_data_values = []
@@ -120,16 +127,16 @@ import matplotlib.pyplot as plt
 
 fig, ax = plt.subplots(1, 1)
 maskBlind = pulls_QCD_SR>0
-condition1 = pearson_data_values[pulls_QCD_SR>0] > 0
-condition2 = pulls_QCD_SR[pulls_QCD_SR>0]-1 > 0
-yTrue = pulls_QCD_SR[pulls_QCD_SR>0]-1
+condition1 = pearson_data_values[maskBlind] > 0
+condition2 = pulls_QCD_SR[maskBlind]-1 > 0
+yTrue = pulls_QCD_SR[maskBlind]-1
 ax.bar(((bins[:-1]+bins[1:])/2)[maskBlind], np.where(condition1, yTrue, -yTrue), width=1, label='Sign of pearson')
 ax.bar(((bins[:-1]+bins[1:])/2)[maskBlind], np.where(condition2, yTrue*0.5, -yTrue*0.5), width=1, label='Sign of Pull')
 ax.legend()
 # %%
 
-m = np.abs(pulls_QCD_SR)>0
-popt, pcov = pullsVsDisco_pearson(pearson_data_values, pulls_QCD_SR, err_pulls_QCD_SR, mask =m, lumi=0, outName="/t3home/gcelotto/ggHbb/abcd/new/plots/pulls_vs_dcor/pulls_vs_dPearson_%s_%s.png"%(modelName, detail))
+maskBlind = (maskBlind) & (abs(pulls_QCD_SR-1)<0.04)
+popt, pcov = pullsVsDisco_pearson(pearson_data_values, pulls_QCD_SR, err_pulls_QCD_SR, mask =maskBlind, lumi=0, outName="/t3home/gcelotto/ggHbb/abcd/new/plots/pulls_vs_dcor/pulls_vs_dPearson_%s_%s.png"%(modelName, detail))
 corrections = popt[1]*pearson_data_values + popt[0]
 detailC = detail+'_corrected'
 corrections = 1/corrections

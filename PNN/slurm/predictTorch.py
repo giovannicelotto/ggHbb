@@ -7,7 +7,7 @@ from helpers.preprocessMultiClass import preprocessMultiClass
 from helpers.scaleUnscale import scale
 from helpers.getFeatures import getFeatures
 import numpy as np
-from functions import getCommonFilters, cut
+from functions import getCommonFilters
 
 # change the model
 # change the features

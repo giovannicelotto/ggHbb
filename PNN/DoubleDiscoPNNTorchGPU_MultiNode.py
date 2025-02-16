@@ -16,7 +16,6 @@ from helpers.dcorLoss import *
 import torch    
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import  DataLoader
 torch.backends.cudnn.benchmark = True
 from torch.utils.data import DataLoader, TensorDataset
 

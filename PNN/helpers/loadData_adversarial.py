@@ -12,10 +12,14 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
     nData, nHiggs = int(size), int(14e3)
 
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
-    paths = [
+    if boosted:
+        paths = [
+            flatPathCommon + "/Data1A/others",
+            flatPathCommon + "/GluGluHToBB/others"]
+    else:
+        paths = [
             flatPathCommon + "/Data1A/training",
-            flatPathCommon + "/GluGluHToBB/training"]
-    
+            flatPathCommon + "/GluGluHToBB/others"]
     massHypothesis = [50, 70, 100, 200, 300]
     for m in massHypothesis:
         paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
@@ -137,9 +141,15 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
     nData, nHiggs = int(size), int(20e3)
 
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
-    paths = [
+    
+    if boosted:
+        paths = [
+            flatPathCommon + "/Data1A/others",
+            flatPathCommon + "/GluGluHToBB/others"]
+    else:
+        paths = [
             flatPathCommon + "/Data1A/training",
-            flatPathCommon + "/GluGluHToBB/training"]
+            flatPathCommon + "/GluGluHToBB/others"]
     
     massHypothesis = [50, 70, 100, 200, 300]
     for m in massHypothesis:

@@ -7,7 +7,7 @@ from helpers.preprocessMultiClass import preprocessMultiClass
 from helpers.scaleUnscale import scale
 from helpers.getFeatures import getFeatures
 import numpy as np
-from functions import getCommonFilters
+from functions import getCommonFilters, cut
 
 # change the model
 # change the features
@@ -29,6 +29,7 @@ def predict(file_path, modelName):
     Xtest['massHypo'] = Xtest['dijet_mass'].apply(lambda x: mass_hypo_list[np.abs(mass_hypo_list - x).argmin()])
     
     data = [Xtest]
+    data = cut(data, 'dijet_pt', 100, None)
 
     data = preprocessMultiClass(data)
 

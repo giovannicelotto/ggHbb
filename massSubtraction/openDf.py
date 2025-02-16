@@ -18,8 +18,8 @@ try:
     dd = args.doubleDisco
 except:
     print("Interactive mode")
-    modelName = "Jan17_3000p0"
-    dd = True
+    modelName = "Feb13_1500p0"
+    dd = False
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 outFolder = "/t3home/gcelotto/ggHbb/PNN/results_mjjDisco/%s"%modelName 
 mass_bins = np.load(outFolder+"/mass_bins.npy")
@@ -27,13 +27,15 @@ mass_bins = np.load(outFolder+"/mass_bins.npy")
 dfs = []
 dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 dfsMC = []
-isMCList = [0,
-            1, 
-            2,3, 4,
-            5,6,7,8, 9,10,
-            11,12,13,
-            14,15,16,17,18,
-            19,20,21, 22, 35
+# %%
+isMCList = [#0,
+            #1, 
+            #2,3, 4,
+            #5,6,7,8, 9,10,
+            #11,12,13,
+            #14,15,16,17,18,
+            #19,20,21, 22,
+            #35
             ]
 for idx, p in enumerate(dfProcessesMC.process):
     if idx not in isMCList:
@@ -42,9 +44,11 @@ for idx, p in enumerate(dfProcessesMC.process):
     dfsMC.append(df)
 # %%
 dfsData = []
-isDataList = [0,
+isDataList = [
+            #0,
             #1, 
-            2
+            2,
+            #3
             ]
 
 lumis = []
@@ -52,13 +56,15 @@ for idx, p in enumerate(dfProcessesData.process):
     if idx not in isDataList:
         continue
     df = pd.read_parquet(df_folder+"/dataframes_%s_%s.parquet"%(p, modelName))
+    print("/dataframes_%s_%s.parquet"%(p, modelName))
+
     dfsData.append(df)
     lumi = np.load(df_folder+"/lumi_%s_%s.npy"%(p, modelName))
     lumis.append(lumi)
 lumi = np.sum(lumis)
 for idx, df in enumerate(dfsMC):
     dfsMC[idx].weight =dfsMC[idx].weight*lumi
-
+print("Lumi total is %.2f fb-1"%lumi)
 # %%
 fig = plotDfs(dfsData=dfsData, dfsMC=dfsMC, isMCList=isMCList, dfProcesses=dfProcessesMC, nbin=101, lumi=lumi, log=True, blindPar=(False, 125, 20))
 # %%
@@ -66,11 +72,11 @@ df=dfsData[0]
 
 import matplotlib.pyplot as plt
 from hist import Hist
-bins = np.linspace(40, 300, 201)
+bins = np.linspace(40, 300, 71)
 h_low = Hist.new.Var(bins, name="mjj").Weight()
 h_high = Hist.new.Var(bins, name="mjj").Weight()
 
-t = 0.4 
+t = 0.6
 
 h_low.fill(df.dijet_mass[df.PNN<t])
 h_high.fill(df.dijet_mass[df.PNN>t])
@@ -78,9 +84,9 @@ h_high.fill(df.dijet_mass[df.PNN>t])
 for idx, df in enumerate(dfsMC):
     print(dfProcessesMC.process[isMCList[idx]])
     m = df.PNN>t
-    h_low.fill(df.dijet_mass[~m], weight=-df.weight[~m])
-    h_high.fill(df.dijet_mass[m], weight=-df.weight[m])
-# %%
+    #h_low.fill(df.dijet_mass[~m], weight=-df.weight[~m])
+    #h_high.fill(df.dijet_mass[m], weight=-df.weight[m])
+
 fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
 fig.align_ylabels([ax[0],ax[1]])
 
@@ -116,7 +122,7 @@ for idx, p in enumerate(dfProcessesMC.process):
     
 # %%
 fig,ax = plt.subplots(1, 1)
-bins = np.linspace(0, 1, 101)
+bins = np.linspace(0, 1, 501)
 cDataTot =np.zeros(len(bins)-1)
 for df in dfsData:
     c = np.histogram(df.PNN, bins=bins)[0]
@@ -171,6 +177,7 @@ for key in countsDict.keys():
 
 ax.legend(loc='upper right')
 ax.set_yscale('log')
+#ax.set_ylim(0, 500)
 ax.set_ylabel("Counts")
 ax.set_xlabel("PNN")
 import mplhep as hep

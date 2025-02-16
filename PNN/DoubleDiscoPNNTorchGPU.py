@@ -61,9 +61,8 @@ if args.node is not None:
 if args.size is not None:
     hp["size"]=args.size
 
-#Feb12_900.0 sampling True
-#Feb12_900.1 sampling False
-sampling = True
+
+sampling = False
 
 
 # %%
@@ -99,6 +98,7 @@ print(len(Xval), " events in val dataset")
 mass_bins = np.quantile(Xtrain[Ytrain==0].dijet_mass.values, np.linspace(0, 1, 15))
 mass_bins[0], mass_bins[-1] = 40., 300.
 np.save(outFolder+"/mass_bins.npy", mass_bins)
+
 if bin_center_bool:
     bin_centers = [(mass_bins[i] + mass_bins[i+1]) / 2 for i in range(len(mass_bins) - 1)]
 
@@ -127,7 +127,12 @@ Xtrain, Ytrain, Wtrain, rWtrain, genMassTrain, dijetMassTrain = Xtrain[:size], Y
 Xval, Yval, Wval, rWval, genMassVal, dijetMassVal = Xval[:size], Yval[:size], Wval[:size], rWval[:size], genMassVal[:size], dijetMassVal[:size]
 
 # %%
-
+with open(outFolder + "/model/training.txt", "w") as file:
+    for key, value in hp.items():
+        file.write(f"{key} : {value}\n")
+    file.write(f"Mass Bins: {' '.join(f'{x:.1f}' for x in mass_bins)}\n")
+    file.write("Lenght of Xtrain : %d\n"%len(Xtrain))
+# %%
 XtrainTensor = torch.tensor(Xtrain[featuresForTraining].values, dtype=torch.float32, device=device)
 YtrainTensor = torch.tensor(Ytrain, dtype=torch.float, device=device).unsqueeze(1)
 WtrainTensor = torch.tensor(Wtrain, dtype=torch.float32, device=device).unsqueeze(1)
@@ -173,6 +178,10 @@ criterion = nn.BCELoss(reduction='none')
 optimizer1 = optim.Adam(nn1.parameters(), lr=hp["learning_rate"])
 optimizer2 = optim.Adam(nn2.parameters(), lr=hp["learning_rate"])
 
+# Reduce LR by factor 1/5 every N epochs
+#scheduler1 = optim.lr_scheduler.StepLR(optimizer1, step_size=100, gamma=1/2)
+#scheduler2 = optim.lr_scheduler.StepLR(optimizer2, step_size=100, gamma=1/2)
+
 early_stopping_patience = hp["patienceES"]
 best_val_loss = float('inf')
 patience_counter = 0
@@ -186,9 +195,9 @@ print("Train start")
 
 
 
-trainloss_history = []
-trainclassifier_loss_history = []
-traindcor_loss_history = []
+train_loss_history = []
+train_classifier_loss_history = []
+train_dcor_loss_history = []
 
 val_loss_history = []
 val_classifier_loss_history = []
@@ -251,6 +260,13 @@ for epoch in range(hp["epochs"]):
         
         optimizer1.step()
         optimizer2.step()
+        #scheduler1.step()
+        #scheduler2.step()
+        #for param_group in optimizer1.param_groups:
+        #    param_group['lr'] = max(param_group['lr'], hp['min_learning_rate'])  
+        #
+        #for param_group in optimizer2.param_groups:
+        #    param_group['lr'] = max(param_group['lr'], hp['min_learning_rate'])
 
         total_trainloss += loss.item()
         total_trainclassifier_loss += classifier_loss1.item() + classifier_loss2.item()
@@ -316,9 +332,9 @@ for epoch in range(hp["epochs"]):
     avg_val_classifier_loss = total_val_classifier_loss / len(val_dataloader)
     avg_val_dcor_loss = total_val_dcor_loss / len(val_dataloader)
 
-    trainloss_history.append(avg_trainloss)
-    trainclassifier_loss_history.append(avg_train_classifier_loss)
-    traindcor_loss_history.append(avg_traindcor_loss)
+    train_loss_history.append(avg_trainloss)
+    train_classifier_loss_history.append(avg_train_classifier_loss)
+    train_dcor_loss_history.append(avg_traindcor_loss)
     val_loss_history.append(avg_val_loss)
     val_classifier_loss_history.append(avg_val_classifier_loss)
     val_dcor_loss_history.append(avg_val_dcor_loss)
@@ -343,7 +359,13 @@ for epoch in range(hp["epochs"]):
         print("Early stopping triggered.")
         break
 
-if best_model_weights is not None:
+    
+# ****
+# End of Training
+# ****
+
+
+if best_model_weights1 is not None:
     nn1.load_state_dict(best_model_weights1)
     nn2.load_state_dict(best_model_weights2)
     print("Restored the best model weights.")
@@ -351,11 +373,11 @@ if best_model_weights is not None:
 
 
 # %%
-np.save(outFolder + "/model/trainloss_history.npy", trainloss_history)
+np.save(outFolder + "/model/train_loss_history.npy", train_loss_history)
 np.save(outFolder + "/model/val_loss_history.npy", val_loss_history)
-np.save(outFolder + "/model/trainclassifier_loss_history.npy", trainclassifier_loss_history)
+np.save(outFolder + "/model/train_classifier_loss_history.npy", train_classifier_loss_history)
 np.save(outFolder + "/model/val_classifier_loss_history.npy", val_classifier_loss_history)
-np.save(outFolder + "/model/traindcor_loss_history.npy", traindcor_loss_history)
+np.save(outFolder + "/model/train_dcor_loss_history.npy", train_dcor_loss_history)
 np.save(outFolder + "/model/val_dcor_loss_history.npy", val_dcor_loss_history)
 
 # %%
@@ -364,10 +386,8 @@ torch.save(nn2, outFolder+"/model/nn2.pth")
 print("Model saved")
 end_time = time.time()
 execution_time = end_time - start_time
-with open(outFolder + "/model/training.txt", "w") as file:
-    for key, value in hp.items():
-        file.write(f"{key} : {value}\n")
-    file.write(f"Execution time: {execution_time} seconds")
+with open(outFolder + "/model/training.txt", "a+") as file:
+    file.write(f"Execution time: {execution_time} seconds\n")
 
 # %%
 #for param in model.parameters():
