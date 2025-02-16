@@ -65,7 +65,7 @@ def dcor_plot_MC(dfsMC, dfProcessesMC, isMCList, bins, outFile):
 
 
 
-def dcor_plot_Data(dfsData, processNames, isDataList, bins, outFile):
+def dcor_plot_Data(dfsData, processNames, isDataList, bins, outFile, nEvents=5000):
 
 
     dcor_data_values = []
@@ -73,11 +73,11 @@ def dcor_plot_Data(dfsData, processNames, isDataList, bins, outFile):
         print(processNames[isDataList[idx]])
         for b_low, b_high in zip(bins[:-1], bins[1:]):
             m = (df.dijet_mass > b_low) & (df.dijet_mass < b_high)
-            dcor_coef = dcor.distance_correlation(np.array(df.PNN1[m], dtype=np.float64), np.array(df.PNN2[m], dtype=np.float64))
+            dcor_coef = dcor.distance_correlation(np.array(df.PNN1[m].values[:nEvents], dtype=np.float64), np.array(df.PNN2[m].values[:nEvents], dtype=np.float64))
             dcor_data_values.append(dcor_coef)
             print("     %.1f < mjj < %.1f : %.5f"%(b_low, b_high, dcor_coef))
 
-    # %%
+
     nbins = len(bins) - 1
     n_datataking = len(dcor_data_values) // nbins
 

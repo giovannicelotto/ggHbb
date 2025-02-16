@@ -9,7 +9,7 @@ from helpers.getFeatures import getFeatures
 from helpers.getParams import getParams
 from helpers.getInfolderOutfolder import getInfolderOutfolder
 from helpers.doPlots import runPlotsTorch, plot_lossTorch
-from helpers.loadSaved import loadXYrWSaved
+from helpers.loadSaved import loadXYWrWSaved
 import torch
 from helpers.scaleUnscale import scale, unscale
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
@@ -21,6 +21,7 @@ from sklearn.feature_selection import mutual_info_regression
 from helpers.doPlots import ggHscoreScan, getShapTorch
 sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
 from checkOrthogonality import checkOrthogonality, checkOrthogonalityInMassBins, plotLocalPvalues
+from dcorLoss import Classifier
 
 # Get current month and day
 current_date = datetime.now().strftime("%b%d")  # This gives the format like 'Dec12'
@@ -46,7 +47,7 @@ inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp[
 modelName1, modelName2 = "nn1.pth", "nn2.pth"
 
 # %%
-Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, genMassTrain, genMassVal, genMassTest = loadXYrWSaved(inFolder=inFolder+"/data")
+Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/data")
 columnsToRead = getFeatures(outFolder=None,  massHypo=True)[1]
 featuresForTraining = np.load(outFolder+"/featuresForTraining.npy")
 print(featuresForTraining)
@@ -77,8 +78,22 @@ if 'bin_center' in featuresForTraining:
 advFeatureTrain = np.load(inFolder+"/data/advFeatureTrain.npy")     
 advFeatureVal   = np.load(inFolder+"/data/advFeatureVal.npy")
 
+#nn1 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=hp["nNodes"])
+#nn2 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=hp["nNodes"])
+#state_dict1 = torch.load(outFolder + "/model/nn1.pth", map_location=torch.device('cpu'))
+#state_dict2 = torch.load(outFolder + "/model/nn2.pth", map_location=torch.device('cpu'))
+#
+## Remove the 'module.' prefix if it exists
+#state_dict1 = {k.replace('module.', ''): v for k, v in state_dict1.items()}
+#state_dict2 = {k.replace('module.', ''): v for k, v in state_dict2.items()}
+#
+## Now load the state_dict into the model
+#nn1.load_state_dict(state_dict1)
+#nn2.load_state_dict(state_dict2)
+
 nn1 = torch.load(outFolder+"/model/%s"%modelName1, map_location=torch.device('cpu'))
 nn2 = torch.load(outFolder+"/model/%s"%modelName2, map_location=torch.device('cpu'))
+
 nn1.eval()
 nn2.eval()
 with open(outFolder+"/model/model_summary.txt", "w") as f:
@@ -179,6 +194,12 @@ NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YP
 NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
           signalTrain_predictions=YPredTrain2[genMassTrain==125], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
           outName=outFolder+"/performance/output2_125.png", log=False)
+NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
+          signalTrain_predictions=YPredTrain1[genMassTrain==125], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
+          outName=outFolder+"/performance/output1_125_log.png", log=True)
+NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
+          signalTrain_predictions=YPredTrain2[genMassTrain==125], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
+          outName=outFolder+"/performance/output2_125_log.png", log=True)
 # Output for 125 GeV
 plt.close('all')
 fig, ax = plt.subplots(1, 2, figsize=(15, 8))
@@ -244,6 +265,65 @@ ax.legend()
 ax.grid(alpha=0.3)
 fig.savefig(outFolder+"/performance/ROC2_125.png")
 plt.close('all')
+
+
+# Efficiency in 2D plane
+x_bins = np.linspace(0, 1, 11)
+y_bins = np.linspace(0, 1, 11)
+
+
+sig_mask = genMassVal == 125
+bkg_mask = genMassVal == 0
+
+# Create figure and axis
+fig, ax = plt.subplots(1, 1, figsize=(8, 8))
+
+# Iterate through bins
+sig_gain_start = 0
+xmax, ymax=0, 0
+efficiencySig_max, efficiencyBkg_max =0, 0
+for i in range(len(x_bins) - 1):
+    for j in range(len(y_bins) - 1):
+        x_min  = x_bins[i]
+        y_min  = y_bins[j]
+        
+        # Apply cuts
+        sig_cut = (YPredVal2[sig_mask] > x_min)  & (YPredVal1[sig_mask] > y_min) 
+        bkg_cut = (YPredVal2[bkg_mask] > x_min)  & (YPredVal1[bkg_mask] > y_min) 
+        
+        sig_count = np.sum(sig_cut)
+        bkg_count = np.sum(bkg_cut)
+        
+        efficiencySig = (sig_count / np.sum(sig_mask)) * 100 if np.sum(sig_mask) > 0 else 0
+        efficiencyBkg = (bkg_count / np.sum(bkg_mask)) * 100 if np.sum(bkg_mask) > 0 else 0
+        
+        # Place text in the middle of the cell
+        x_text = (x_min + x_bins[i+1]) / 2
+        y_text = (y_min + y_bins[j+1]) / 2
+        if efficiencySig/np.sqrt(efficiencyBkg)>sig_gain_start:
+            sig_gain_start=efficiencySig/np.sqrt(efficiencyBkg)
+            xmax=x_text
+            ymax=y_text
+            efficiencySig_max=efficiencySig
+            efficiencyBkg_max=efficiencyBkg
+        ax.text(x_text, y_text, 'Sig: %.1f%%\nBkg: %.1f%%'%(efficiencySig, efficiencyBkg),
+                ha='center', va='center', fontsize=8)
+
+ax.fill_between(x=[xmax-.05, xmax+0.05], y1=[ymax-0.05, ymax-0.05],y2=[ymax+0.05, ymax+0.05], color='green', alpha=0.4 )
+ax.text(xmax, ymax, 'Sig: %.1f%%\nBkg: %.1f%%'%(efficiencySig_max, efficiencyBkg_max),
+                ha='center', va='center', fontsize=8)
+ax.set_xlabel('Score 2')
+ax.set_ylabel('Score 1')
+ax.set_xticks(x_bins)
+ax.set_yticks(y_bins)
+ax.grid(True, linestyle='--', linewidth=0.5)
+ax.set_xlim(0, 1)
+ax.set_ylim(0, 1)
+
+fig.savefig(outFolder+"/performance/gridEfficiency.png", bbox_inches='tight')
+print("Saved ", outFolder+"/performance/gridEfficiency.png")
+
+
 # %%
 # Create a 2D histogram
 import matplotlib.colors as mcolors
@@ -287,8 +367,8 @@ plt.close('all')
 
 # %%
 
-ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal1, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN1.png")
-ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal2, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN2.png")
+ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal1, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN1.png")
+ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal2, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN2.png")
 plt.close('all')
 # %%
 nn2_t =0.4
@@ -309,8 +389,8 @@ ks_p_value_PNN, p_value_PNN, chi2_values_PNN = checkOrthogonalityInMassBins(
     figsize=(20, 25),
     outName=outFolder+"/performance/PNN1_orthogonalityBinned.png" 
 )
-plotLocalPvalues(pvalues=ks_p_value_PNN, mass_bins=mass_bins, pvalueLabel="KS", outFolder=outFolder+"/performance/PNN1_KSpvalues.png")
-plotLocalPvalues(pvalues=p_value_PNN, mass_bins=mass_bins, pvalueLabel="$\chi^2$", outFolder=outFolder+"/performance/PNN1_Chi2pvalues.png")
+#plotLocalPvalues(pvalues=ks_p_value_PNN, mass_bins=mass_bins, pvalueLabel="KS", outFolder=outFolder+"/performance/PNN1_KSpvalues.png")
+#plotLocalPvalues(pvalues=p_value_PNN, mass_bins=mass_bins, pvalueLabel="$\chi^2$", outFolder=outFolder+"/performance/PNN1_Chi2pvalues.png")
 plt.close('all')
 # %%
 nn1_t = 0.4
@@ -431,7 +511,7 @@ for i, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
 from hist import Hist
 x1 = 'PNN2'
 x2 = 'PNN1'
-
+#mass_bins=np.array([40.,60.,70.,80.,90.,110.,130.,150.,200.,300.])
 hA = Hist.new.Var(mass_bins, name="mjj").Weight()
 hB = Hist.new.Var(mass_bins, name="mjj").Weight()
 hC = Hist.new.Var(mass_bins, name="mjj").Weight()
@@ -461,6 +541,7 @@ regions['D'].fill(df[mD][xx])
 
 sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
 from plot_v2 import plot4ABCD, QCD_SR
+
 hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', blindPar=(False, 125, 20), outName=outFolder+"/performance/abcd_check4R", sameWidth_flag=False)
 qcd_mc = regions['B']
 print(qcd_mc.values())

@@ -37,7 +37,7 @@ except:
     hp["lambda_dcor"] = 2000
     print("Interactive mode")
 # %%
-sampling=True
+sampling=False
 results = {}
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
 inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_highPt" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"

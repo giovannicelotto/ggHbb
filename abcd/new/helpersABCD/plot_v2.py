@@ -272,14 +272,14 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar, same
     ax[0].set_ylabel(ylabel)
     
     ax[1].set_xlim(ax[1].get_xlim())    
-    ax[1].hlines(y=0, xmin=ax[1].get_xlim()[0], xmax=ax[1].get_xlim()[1], color='black')
+    ax[1].hlines(y=1, xmin=ax[1].get_xlim()[0], xmax=ax[1].get_xlim()[1], color='black')
     mcPlusQCD = countsDict["mc"].copy()
     print("mcPlusQCD")
     print(mcPlusQCD.values())
     mcPlusQCD= mcPlusQCD + hB_ADC
-    ylims = (-3, 3) if corrections is not None else (-5, 5)
-    ax[1].set_ylim(ylims)
-    ax[1].set_yticks(ticks=[-3, -1, 1, 3])
+    #ylims = (-3, 3) if corrections is not None else (-5, 5)
+    #ax[1].set_ylim(ylims)
+    #ax[1].set_yticks(ticks=[-3, -1, 1, 3])
 
     pulls = (regions["B"].values() - mcPlusQCD.values())[blind_mask] / (np.sqrt(regions["B"].variances() + mcPlusQCD.variances())[blind_mask])
     chi2_stat = np.sum(pulls**2)
@@ -287,16 +287,16 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar, same
     p_value = 1 - chi2.cdf(chi2_stat, df=ndof)
     ax[0].text(x=0.95, y=0.9, s="$\chi^2$/ndof = %.1f/%d"%(chi2_stat, ndof), ha='right', transform=ax[0].transAxes)
     ax[0].text(x=0.95, y=0.82, s="p-value = %.3f"%p_value, ha='right', transform=ax[0].transAxes)
-    #err_pulls = regions["B"].values()*blind_mask/mcPlusQCD.values() * np.sqrt(   ()/regions["B"].values())**2 +   (np.sqrt()/mcPlusQCD.values())**2)
 
-    ax[1].errorbar(x[blind_mask], pulls, yerr=1 , marker='o', color='black', linestyle='none')
+    err_ratio = regions["B"].values()*blind_mask/mcPlusQCD.values() * np.sqrt(  regions["B"].variances()/(regions["B"].values())**2 +  mcPlusQCD.variances()/mcPlusQCD.values()**2)
+    ax[1].errorbar(x[blind_mask], (regions["B"].values()/mcPlusQCD.values())[blind_mask], yerr=err_ratio[blind_mask] , marker='o', color='black', linestyle='none')
     print("*"*10)
     print("Ratios in SR of QCD + MC")
     for val in pulls:
         print("%.4f"%(val))
     print("*"*10)
     ax[1].set_xlabel("Dijet Mass [GeV]")
-    ax[1].set_ylabel("Pulls")
+    ax[1].set_ylabel("Ratio")
     hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
     outName = "/t3home/gcelotto/ggHbb/abcd/new/plots/ZQCDplusSM/ZQCDplusSM_%s.png"%suffix
     fig.savefig(outName)
