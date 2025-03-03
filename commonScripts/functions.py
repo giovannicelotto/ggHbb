@@ -59,7 +59,7 @@ def getCommonFilters(btagTight=False):
                 
                 ('jet1_mass', '>', 0),
                 ('jet2_mass', '>', 0),
-                ('jet3_mass', '>',  0),
+                #('jet3_mass', '>',  0),
                 
                 ('jet1_eta', '>', -2.5),
                 ('jet2_eta', '>', -2.5),
@@ -68,6 +68,8 @@ def getCommonFilters(btagTight=False):
                 ('jet1_btagDeepFlavB', '>',  btag),
                 ('jet2_btagDeepFlavB', '>',  btag),
                 ('muon_pt', '>=',  9.0),
+                ('muon_eta', '>=',  -1.5),
+                ('muon_eta', '<=',  1.5),
                 ('muon_dxySig', '>=', 6.0)
                 ],
                   
@@ -78,7 +80,7 @@ def getCommonFilters(btagTight=False):
                 
                 ('jet1_mass', '>', 0),
                 ('jet2_mass', '>', 0),
-                ('jet3_mass', '>',  0),
+                #('jet3_mass', '>',  0),
                 
                 ('jet1_eta', '>', -2.5),
                 ('jet2_eta', '>', -2.5),
@@ -87,6 +89,8 @@ def getCommonFilters(btagTight=False):
                 ('jet1_btagDeepFlavB', '>',  btag),
                 ('jet2_btagDeepFlavB', '>',  btag),
                 ('muon_pt', '>=',  9.0),
+                ('muon_eta', '>=',  -1.5),
+                ('muon_eta', '<=',  1.5),
                 ('muon_dxySig', '<=', -6.0)
                 ]
 
@@ -371,7 +375,7 @@ def loadMultiParquet_v2_dep(paths, nMCs=1, columns=None, returnNumEventsTotal=Fa
         return dfs
     
 ##### new function
-def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=['dijet_mass'], selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters()):
+def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=['dijet_mass'], selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False):
     import sys
     '''
     dataTaking :list  = list of data taking idx

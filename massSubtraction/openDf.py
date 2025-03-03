@@ -3,9 +3,8 @@ import pandas as pd
 import sys
 sys.path.append("/t3home/gcelotto/ggHbb/abcd/new")
 from plotDfs import plotDfs
-from functions import getDfProcesses, cut, getDfProcesses_v2
+from functions import getDfProcesses_v2, cut
 import numpy as np
-from helpersABCD.abcd_maker_v2 import ABCD
 import argparse
 # %%
 parser = argparse.ArgumentParser(description="Script.")
@@ -18,24 +17,25 @@ try:
     dd = args.doubleDisco
 except:
     print("Interactive mode")
-    modelName = "Feb13_1500p0"
+    modelName = "Feb17_900p2"
     dd = False
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 outFolder = "/t3home/gcelotto/ggHbb/PNN/results_mjjDisco/%s"%modelName 
-mass_bins = np.load(outFolder+"/mass_bins.npy")
+#mass_bins = np.load(outFolder+"/mass_bins.npy")
 # %%
 dfs = []
 dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 dfsMC = []
 # %%
-isMCList = [#0,
-            #1, 
+isMCList = [0,
+            1, 
             #2,3, 4,
             #5,6,7,8, 9,10,
             #11,12,13,
             #14,15,16,17,18,
-            #19,20,21, 22,
-            #35
+            19,20,21, #22,
+            #35,
+            36
             ]
 for idx, p in enumerate(dfProcessesMC.process):
     if idx not in isMCList:
@@ -66,17 +66,20 @@ for idx, df in enumerate(dfsMC):
     dfsMC[idx].weight =dfsMC[idx].weight*lumi
 print("Lumi total is %.2f fb-1"%lumi)
 # %%
+#dfsMC = cut(dfsMC, 'dijet_pt', 140, None)
+#dfsData = cut(dfsData, 'dijet_pt', 140, None)
+# %%
 fig = plotDfs(dfsData=dfsData, dfsMC=dfsMC, isMCList=isMCList, dfProcesses=dfProcessesMC, nbin=101, lumi=lumi, log=True, blindPar=(False, 125, 20))
 # %%
-df=dfsData[0]
+df=pd.concat(dfsData)
 
 import matplotlib.pyplot as plt
 from hist import Hist
-bins = np.linspace(40, 300, 71)
+bins = np.linspace(100, 150, 201)
 h_low = Hist.new.Var(bins, name="mjj").Weight()
 h_high = Hist.new.Var(bins, name="mjj").Weight()
 
-t = 0.6
+t = 0.
 
 h_low.fill(df.dijet_mass[df.PNN<t])
 h_high.fill(df.dijet_mass[df.PNN>t])
@@ -98,38 +101,39 @@ c_high=h_high.values()/np.sum(h_high.values())
 err_c_low = np.sqrt(h_low.variances())/np.sum(h_low.values())
 err_c_high = np.sqrt(h_high.variances())/np.sum(h_high.values())
 
-ax[1].errorbar(x, c_low/c_high, yerr = c_low/c_high * np.sqrt((err_c_low/c_low)**2 + (err_c_high/c_high)**2) , color='red', linestyle='none', marker='o')
-ax[1].set_ylim(0.9, 1.1)
+#ax[1].errorbar(x, c_high/c_low, yerr = c_high/c_low * np.sqrt((err_c_low/c_low)**2 + (err_c_high/c_high)**2) , color='red', linestyle='none', marker='o')
+ax[1].errorbar(x, h_high.values() - h_low.values()*np.sum(h_high.values())/np.sum(h_low.values()), yerr = np.sqrt(h_high.variances() + h_low.variances()) , color='red', linestyle='none', marker='o')
+
+#ax[1].hist(bins[:-1], bins=bins, weights=cz1-cz2)
+ax[1].set_ylim(-600, None)
 ax[1].set_ylabel("Ratio")
 ax[0].legend()
 ax[0].set_xlim(bins[0], bins[-1])
 ax[1].hlines(xmin=bins[0], xmax=bins[-1], y=1, color='black')
 # %%
-
-
-
-#ndof = len(highCounts_n)
-#sigma = np.sqrt(err_highCounts_n**2 + err_lowCounts_n**2)
-#chi2_stat = np.sum(((highCounts_n - lowCounts_n)/sigma)**2)
-#from scipy.stats import  chi2
-#chi2_pvalue = 1- chi2.cdf(chi2_stat, ndof)
-#ax[0].text(x=0.1, y=0.12, s="$\chi^2$/ndof = %.1f/%d, p-value = %.3f"%(chi2_stat, ndof, chi2_pvalue), transform=ax[0].transAxes)
-
-
+dfZ = pd.concat(dfsMC[1:-1])
+dfH = dfsMC[-1]
+cz1 = np.histogram(dfZ.dijet_mass[dfZ.PNN>t], bins=bins, weights=dfZ.weight[dfZ.PNN>t])[0]
+cH = np.histogram(dfH.dijet_mass[dfH.PNN>t], bins=bins, weights=dfH.weight[dfH.PNN>t])[0]
+fig, ax = plt.subplots(1, 1)
+ax.errorbar(x, h_high.values(), yerr=np.sqrt(h_high.variances()), marker='o', color='black', linestyle='none')
+ax.errorbar(x, cH, marker='o', color='black', linestyle='none')
+#ax.fill_between(x, h_high.values()-cz1, h_high.values(),  color='blue')
+ax.set_yscale('log')
 # %%
 for idx, p in enumerate(dfProcessesMC.process):
     print(p)
     
 # %%
 fig,ax = plt.subplots(1, 1)
-bins = np.linspace(0, 1, 501)
+bins = np.linspace(0, 1, 51)
 cDataTot =np.zeros(len(bins)-1)
 for df in dfsData:
     c = np.histogram(df.PNN, bins=bins)[0]
     print(c)
     cDataTot = cDataTot + c
 x = (bins[:-1] + bins[1:])/2
-ax.errorbar(x, cDataTot, yerr=np.sqrt(cDataTot), linestyle='none', color='black', marker='o')
+#ax.errorbar(x, cDataTot, yerr=np.sqrt(cDataTot), linestyle='none', color='black', marker='o')
 
 countsDict = {
         'Data':np.zeros(len(bins)-1),
@@ -171,12 +175,12 @@ for key in countsDict.keys():
     print(key, np.sum(countsDict[key]))
     if np.sum(countsDict[key])==0:
         continue
-    ax.hist(bins[:-1], bins=bins, weights=countsDict[key], bottom=cTot, label=key)
+    ax.hist(bins[:-1], bins=bins, weights=countsDict[key], bottom=cTot, label=key, histtype='step')
     print(cTot)
     cTot = cTot + countsDict[key]
 
 ax.legend(loc='upper right')
-ax.set_yscale('log')
+#ax.set_yscale('log')
 #ax.set_ylim(0, 500)
 ax.set_ylabel("Counts")
 ax.set_xlabel("PNN")

@@ -1,10 +1,70 @@
-from functions import loadMultiParquet
+from functions import loadMultiParquet, getCommonFilters
 import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from preprocessMultiClass import preprocessMultiClass
 from functions import cut
+def match_relative_distribution(df_target, df_source, column='feature', bins = np.linspace(45, 300, 51)):
+    """
+    Sample rows from df_source to match the relative frequency distribution of df_target
+    in the specified column.
+
+    Parameters:
+    - df_target (pd.DataFrame): Reference DataFrame with desired distribution.
+    - df_source (pd.DataFrame): Source DataFrame to be sampled.
+    - column (str): Column to match distribution.
+    - num_bins (int): Number of bins to divide the column into.
+
+    Returns:
+    - pd.DataFrame: A subset of df_source with matched distribution.
+    """
+    # Create bins for both dataframes
+    df_target['bins'] = pd.cut(df_target[column], bins=bins)
+    df_source['bins'] = pd.cut(df_source[column], bins=bins)
+
+    
+    # Compute relative bin frequencies
+    target_distribution = df_target['bins'].value_counts(normalize=True)
+    source_distribution = df_source['bins'].value_counts(normalize=True)
+
+    # Compute the minimum bin ratio (smallest ratio of available-to-needed samples)
+    ratio = (source_distribution / target_distribution).dropna()  # Avoid NaN divisions
+    min_bin_ratio = ratio.min()  # Find the most difficult-to-populate bin
+
+    # Compute absolute sample sizes based on the minimum bin's ratio
+    total_samples = int(min_bin_ratio * len(df_source))  # Scale total sample count
+    sample_counts = (target_distribution * total_samples).astype(int)
+
+    print("Target distribution:\n", target_distribution)
+    print("Source distribution:\n", source_distribution)
+    print("Sampling ratios per bin:\n", ratio)
+    print("Minimum bin ratio:", min_bin_ratio)
+    print("Final sample counts per bin:\n", sample_counts)
+    
+    # Compute the number of samples to draw from each bin in df_source
+    #total_samples = len(df_source)
+    #sample_counts = (target_distribution * total_samples).astype(int)
+    #print("SAmple counts")
+    #print(sample_counts)
+    #print("Items ", sample_counts.items())
+    
+    # Sample from df_source according to the computed sample counts
+    sampled_dfs = []
+    for bin_label, count in sample_counts.items():
+        bin_df = df_source[df_source['bins'] == bin_label]
+        if len(bin_df) >= count:
+            sampled_dfs.append(bin_df.sample(n=count, replace=False))
+        else:
+            sampled_dfs.append(bin_df)  # If not enough samples, take all available
+    
+    # Concatenate sampled bins and drop the temporary bin column
+    df_sampled = pd.concat(sampled_dfs).drop(columns=['bins'], axis=1)
+
+    #print("df_source bin distribution:\n", df_source['bins'].value_counts())
+
+    #df_sampled = df_sampled.drop(['bins'], axis=1)
+    return df_sampled
 
 def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresForTraining,
                          test_split, advFeature='jet1_btagDeepFlavB', drop=True, boosted=False):
@@ -132,7 +192,7 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
     df_uniform = df.groupby('bins', group_keys=False).apply(lambda x: x.sample(n=min_bin_size, replace=False))
 
     # Drop the temporary bin column
-    df_uniform = df_uniform.drop(columns=['bins'])
+    df_uniform = df_uniform.drop(columns=['bins'], axis=1)
 
     return df_uniform
 def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTraining,
@@ -149,26 +209,40 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
     else:
         paths = [
             flatPathCommon + "/Data1A/training",
-            flatPathCommon + "/GluGluHToBB/others"]
+            flatPathCommon + "/GluGluHToBB/training"]
     
     massHypothesis = [50, 70, 100, 200, 300]
     for m in massHypothesis:
         paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
     
     
-
-    dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False)
-    if boosted:
-        dfs = cut(dfs, 'dijet_pt', 100, None)
+    
+    btagTight=True if boosted else False
+    dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False, filters=getCommonFilters(btagTight=btagTight))
+    if boosted==1:
+        dfs = cut(dfs, 'dijet_pt', 100, 160)
+        dfs = cut(dfs, 'dijet_mass', 50, None)
+    elif boosted==2:
+        dfs = cut(dfs, 'dijet_pt', 160, None)
+        dfs = cut(dfs, 'dijet_mass', 50, None)
     else:
         dfs = cut(dfs, 'dijet_pt', None, 100)
+        dfs = cut(dfs, 'dijet_mass', 45, None)
 
     # Uncomment in case you want discrete parameter for mass hypotheses
     # 50bb
     dfs[2] = dfs[2][dfs[2].dijet_mass<120]
     # 70bb
     dfs[3] = dfs[3][dfs[3].dijet_mass<140]
+    #if boosted:
+    #    # 300 GeV
+    #    dfs[-1] = dfs[-1][dfs[-1].dijet_mass>140]
+    #    # 100 GeV
+    #    dfs[4] = dfs[4][dfs[4].dijet_mass<150]
     dfs = preprocessMultiClass(dfs)
+    # Removing Higgs at 300 GEV
+    #dfs[-1] = dfs[-1].iloc[:nHiggs]
+    #dfs[4] = dfs[4].iloc[:int(nHiggs*1.5)]
 
     massHypothesis = np.array([125]+massHypothesis)
     if 'massHypo' in featuresForTraining:
@@ -201,16 +275,22 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
     dfBkg['Y']=0
     dfSig['Y']=1
 
-
-    dfSig_sampled = uniform_sample(dfSig, column='dijet_mass', num_bins=40)
+    if boosted:
+        dfSig_sampled = uniform_sample(dfSig, column='dijet_mass', num_bins=101)
+        dfBkg_sampled = uniform_sample(dfBkg, column='dijet_mass', num_bins=101)
+    else:
+        dfBkg_sampled = dfBkg.copy()
+        dfSig_sampled = match_relative_distribution(dfBkg, dfSig, column='dijet_mass', bins = np.linspace(45, 300, 51))
+        del dfBkg
 
     for m in massHypothesis:
         print("%d elements in df %d"%(len(dfSig_sampled[dfSig_sampled.genMass==m]), m))
+    print("%d elements in df %d"%(len(dfBkg_sampled[dfBkg_sampled.genMass==0]), 0))
 
     dfSig_sampled['W']=dfSig_sampled.sf/dfSig_sampled.sf.sum()
-    dfBkg['W']=dfBkg.sf/dfBkg.sf.sum()
+    dfBkg_sampled['W']=np.ones(len(dfBkg_sampled))/len(dfBkg_sampled)
 
-    X = pd.concat([dfSig_sampled, dfBkg])
+    X = pd.concat([dfSig_sampled, dfBkg_sampled])
     Y = np.array(X['Y'].values)
     W = np.array(X.W.values)
     genMass = np.array(X.genMass.values)

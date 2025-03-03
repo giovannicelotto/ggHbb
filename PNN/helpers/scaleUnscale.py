@@ -4,48 +4,64 @@ import pandas as pd
 import numpy as np
 
 
-def scale(data, featuresForTraining, scalerName, fit=False, weights=None):
-    '''
-    apply log to features with pt and mass in name
-      
-    '''
-    for colName in featuresForTraining:
-        if (("_pt" in colName) | ("_mass" in colName) | (colName=="ht")) :
-            if "normalized" in colName:
-                #print("normalized found in ", colName)
-                continue
-            print("feature: %s min: %.1f max: %.1f"%(colName, data[colName].min(), data[colName].max()))
-            data[colName] = np.log(1+data[colName])
-            #print("log done for %s"%colName)
-# fitting the scaler
-    if fit:
-        if weights is not None:
-            scaler  = preprocessing.StandardScaler().fit(data[[col for col in featuresForTraining if col!='sf']], sample_weights=weights)
-        else:
-            scaler  = preprocessing.StandardScaler().fit(data[[col for col in featuresForTraining if col!='sf']])
-
-        scaled_array = scaler.transform(data[[col for col in featuresForTraining if col!='sf']])
-        scalers = {
-            'type'  : 'standard',
-            'scaler': scaler,
-            }
-        with open(scalerName, 'wb') as file:
-            pickle.dump(scalers, file)
-# Scaling without fitting
-    else:
-        with open(scalerName, 'rb') as file:
-            scalers = pickle.load(file)
-            scaler = scalers['scaler']
-            scaled_array = scaler.transform(data[[col for col in featuresForTraining if col != 'sf']])
-            
-    dataScaled = pd.DataFrame(scaled_array, columns=[col for col in featuresForTraining if col!='sf'], index=data.index)
-    for col in data.columns:
-        if col not in featuresForTraining:
-            dataScaled[col] = data[col]
-            
+def scale(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False):
+    """
+    Apply log transformation to features containing 'pt', 'mass', or named 'ht'.
     
-    return dataScaled
+    Parameters:
+    - data (pd.DataFrame): The dataset.
+    - featuresForTraining (list of str): List of feature names to be scaled.
+    - scalerName (str): Path to save/load the scaler.
+    - fit (bool): If True, fit the scaler; otherwise, load and apply it.
+    - weights (array-like, optional): Weights for mean computation (if used in fitting).
+    
+    Returns:
+    - pd.DataFrame: The transformed and scaled dataset.
+    """
+    
+    data = data.astype(np.float32).copy()
 
+    # Apply log transformation to selected features
+    log_features = [col for col in featuresForTraining 
+                    if ("_pt" in col or "_mass" in col or col == "ht") 
+                    and "normalized" not in col]
+    #Dijet Mass not used as feature
+    #if boosted:
+    #    print("Removing Dijet Mass from features")
+    #    log_features.remove('dijet_mass')
+
+    for col in log_features:
+        print(f"Feature: {col} | Min: {data[col].min():.1f}, Max: {data[col].max():.1f}")
+        data.loc[:, col] = np.log1p(data[col])  # np.log1p(x) is equivalent to np.log(1+x)
+
+    # Select features for scaling (excluding 'sf')
+    scale_features = [col for col in featuresForTraining if col != 'sf']
+    
+    if fit:
+        # Initialize and fit the scaler
+        scaler = preprocessing.StandardScaler()
+        if weights is not None:
+            scaler.fit(data[scale_features], sample_weight=weights)
+        else:
+            scaler.fit(data[scale_features])
+
+        # Save the fitted scaler
+        with open(scalerName, 'wb') as file:
+            pickle.dump({'type': 'standard', 'scaler': scaler}, file)
+    
+    else:
+        # Load the pre-trained scaler
+        with open(scalerName, 'rb') as file:
+            scaler = pickle.load(file)['scaler']
+
+    # Merge scaled features back into the original DataFrame
+    scaled_array = scaler.transform(data[scale_features])
+    scaled_data = pd.DataFrame(scaled_array, columns=scale_features, index=data.index, dtype=np.float32)
+
+    # Merge scaled features back into the original DataFrame
+    data.update(scaled_data)
+
+    return data
 def unscale(data, featuresForTraining, scalerName):
     with open(scalerName, 'rb') as file:
         scalers = pickle.load(file)

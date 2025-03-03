@@ -211,3 +211,45 @@ def varianceDcor(dCor):
     variance = torch.var(dCor)
     return variance
     
+
+
+
+# Idea for future losses
+#import numpy as np
+#import torch
+#from scipy.stats import gaussian_kde
+#
+#def smoothness_measure(sample, bandwidth=0.1, num_points=100):
+#    """
+#    Computes a differentiable smoothness measure based on the L2 norm of the second derivative.
+#
+#    Parameters:
+#    - sample (array-like): 1D array of samples from the distribution.
+#    - bandwidth (float): Bandwidth for KDE.
+#    - num_points (int): Number of points to evaluate smoothness.
+#
+#    Returns:
+#    - smoothness (torch.Tensor): Scalar smoothness measure.
+#    """
+#    sample = np.array(sample)
+#    
+#    # Estimate PDF using Kernel Density Estimation (KDE)
+#    kde = gaussian_kde(sample, bw_method=bandwidth)
+#    
+#    # Create evaluation points
+#    x_eval = np.linspace(sample.min(), sample.max(), num_points)
+#    pdf_values = kde(x_eval)
+#    
+#    # Convert to torch tensor for differentiation
+#    x_eval_torch = torch.tensor(x_eval, dtype=torch.float32, requires_grad=True)
+#    pdf_values_torch = torch.tensor(pdf_values, dtype=torch.float32)
+#    
+#    # Compute first and second derivatives using autograd
+#    first_derivative = torch.autograd.grad(pdf_values_torch, x_eval_torch, create_graph=True)[0]
+#    second_derivative = torch.autograd.grad(first_derivative, x_eval_torch, create_graph=True)[0]
+#
+#    # Compute L2 norm of the second derivative
+#    smoothness = torch.norm(second_derivative, p=2)
+#
+#    return smoothness
+#

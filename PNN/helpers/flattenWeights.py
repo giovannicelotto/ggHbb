@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName):
+def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName, xmin=40, xmax=300, nbins=51):
 # **********
 # TRAIN
 # **********
@@ -10,7 +10,7 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName):
     dfTrain_QCD = Xtrain[Ytrain==0]
     dfTrain_H = Xtrain[Ytrain==1]
 
-    bins = np.linspace(40, 300, 51)
+    bins = np.linspace(xmin, xmax, nbins)
     countsQCDTrain = np.histogram(Xtrain.dijet_mass[Ytrain==0], bins=bins, weights=Wtrain_QCD)[0]
     countsHTrain = np.histogram(Xtrain.dijet_mass[Ytrain==1], bins=bins, weights=Wtrain_H)[0]
 
@@ -28,7 +28,7 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName):
     dfTest_QCD = Xval[Yval==0]
     dfTest_H = Xval[Yval==1]
 
-    bins = np.linspace(40, 300, 51)
+    bins = np.linspace(xmin, xmax, nbins)
     countsQCDTrain = np.histogram(Xval.dijet_mass[Yval==0], bins=bins, weights=Wval_QCD)[0]
     countsHTrain = np.histogram(Xval.dijet_mass[Yval==1], bins=bins, weights=Wval_H)[0]
 
@@ -48,7 +48,7 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName):
     ax.set_xlabel("Dijet Mass [GeV]")
     ax.set_ylabel("Normalized Counts")
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-    ax.set_xlim(40, 300)
+    ax.set_xlim(xmin, xmax)
     fig.savefig(outName)
 
 

@@ -24,7 +24,7 @@ try:
     dd = args.doubleDisco
 except:
     print("Interactive mode")
-    modelName = "Jan19_900p0"
+    modelName = "Feb25_900p0"
     dd = True
 outFolder = "/t3home/gcelotto/ggHbb/PNN/resultsDoubleDisco/%s"%modelName
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/%s"%modelName
@@ -50,7 +50,7 @@ for idx, p in enumerate(dfProcessesMC.process):
 # %%
 dfsData = []
 isDataList = [
-            0,
+            #0,
             1, 
             #2
             ]
@@ -179,17 +179,17 @@ ax_main.clabel(contour, inline=True, fontsize=8)
 
 
 ax_top = fig.add_subplot(gs[0, 1:4], sharex=ax_main)
-ax_top.hist(x, bins=30, weights=df['weight'].head(10000), color='cyan', alpha=0.7)
+ax_top.hist(x, bins=[0,0.5,1], weights=df['weight'].head(10000), color='cyan', alpha=0.7)
 ax_top.set_ylabel('Counts')
 ax_top.tick_params(axis="x", labelbottom=False)
 
 ax_left = fig.add_subplot(gs[1:4, 4], sharey=ax_main)
-ax_left.hist(y, bins=30, weights=df['weight'].head(10000), orientation='horizontal', color='cyan', alpha=0.7)
+ax_left.hist(y, bins=[0,0.5,1], weights=df['weight'].head(10000), orientation='horizontal', color='cyan', alpha=0.7)
 ax_left.set_xlabel('Counts')
 ax_left.tick_params(axis="y", labelleft=False)
 
 
-ax_main.set_xlim(0., 1)
+ax_main.set_xlim(0, 1)
 ax_main.set_ylim(0,   1)
 ax_main.vlines(x=t11, ymin=0, ymax=1, linestyles='dotted', color='black')
 ax_main.hlines(y=t22, xmin=0, xmax=1, linestyles='dotted', color='black')
@@ -332,12 +332,12 @@ ax_main.clabel(contour, inline=True, fontsize=8)
 
 
 ax_top = fig.add_subplot(gs[0, 1:4], sharex=ax_main)
-ax_top.hist(x, bins=30, weights=df['weight'].head(10000), color='black', alpha=0.7)
+ax_top.hist(x, bins=[0,0.5,1], weights=df['weight'].head(10000), color='black', alpha=0.7)
 ax_top.set_ylabel('Count')
 ax_top.tick_params(axis="x", labelbottom=False)
 
 ax_left = fig.add_subplot(gs[1:4, 4], sharey=ax_main)
-ax_left.hist(y, bins=30, weights=df['weight'].head(10000), orientation='horizontal', color='black', alpha=0.7)
+ax_left.hist(y, bins=[0,0.5,1], weights=df['weight'].head(10000), orientation='horizontal', color='black', alpha=0.7)
 ax_left.set_xlabel('Count')
 ax_left.tick_params(axis="y", labelleft=False)
 

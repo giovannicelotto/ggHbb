@@ -53,14 +53,14 @@ def plot_lossTorch(train_loss_history, val_loss_history,
 
     # --- Plot 3: dCor Loss ---
     inf = 0.8*min([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
-    sup = 1.5*max([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
+    sup = 20.*max([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
     axes[2].plot(np.array(train_dcor_loss_history), label='Train dCor Loss', color='blue')
     axes[2].plot(np.array(val_dcor_loss_history), label='Validation dCor Loss', linestyle='dashed', color='red')
     axes[2].legend()
     axes[2].set_ylim(inf, sup)
     axes[2].vlines(x=np.argmin(val_loss_history), ymin=axes[2].get_ylim()[0], ymax=axes[2].get_ylim()[1],
                 color='black', linestyle='dashed', label='Best Epoch')
-    #axes[2].set_yscale('log')
+    axes[2].set_yscale('log')
     axes[2].set_title("Distance Correlation (dCor) Loss")
 
     # Set shared labels and adjust layout
@@ -74,6 +74,22 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     fig.savefig(f"{outFolder}/performance/loss.png")
     print(f"Saved in {outFolder}/performance/loss.png")
     plt.close(fig)
+def doPlotLoss_Torch(train_loss, val_loss, outName, earlyStop):
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(train_loss)
+    ax.plot(val_loss)
+    #ax.set_title('Model Loss')
+    #ax.set_ylabel('Loss')
+    #ax.set_xlabel('Epoch')
+    
+    #ax.set_yscale('log')
+    #ax.set_ylim(ymax = max(min(train_loss), min(val_loss))*1.4, ymin = min(min(train_loss),min(val_loss))*0.9)
+    #ax.vlines(x=earlyStop, ymin=ax.get_ylim()[0], ymax=ax.get_ylim()[1])
+    ax.legend(['Train Loss', 'Val Loss'], loc='upper right')
+    fig.savefig(outName)
+    plt.cla()
+    print("Saved loss function ", outName)
+    print("Saved in ", outName)
 
 def doPlotLoss(fit, outName, earlyStop, patience):
 
@@ -162,7 +178,7 @@ def roc(thresholds, signal_predictions, realData_predictions, weights_signal, si
 def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName, log=True):
     #signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions = np.arctanh(signal_predictions), np.arctanh(realData_predictions), np.arctanh(signalTrain_predictions), np.arctanh(realDataTrain_predictions)
     fig, ax = plt.subplots(1, 1)
-    bins=np.linspace(0, 1, 50)
+    bins=np.linspace(0, 1, 25)
     
     # Hist the predictions
     sig_test_counts = np.histogram(signal_predictions, bins=bins)[0]
@@ -268,7 +284,7 @@ def ggHscoreScan(Xtest, Ytest, YPredTest, Wtest, outName, genMassTest, t = [0, 0
     fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
     fig.align_ylabels([ax[0],ax[1]])
 
-    bins = np.linspace(40, 300, 51)
+    bins = np.linspace(50, 300, 51)
     assert len(Ytest)==len(YPredTest)
 
     Ytest=Ytest.reshape(-1)
@@ -356,10 +372,10 @@ def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPred
     h125_trainPredictions = YPredTrain[genMassTrain==125]
     h125_testPredictions = YPredTest[genMassTest==125]
     auc_vs_m(Ytrain, Ytest, YPredTrain, YPredTest, genMassTrain, genMassTest, outFile=outFolder+"/performance/auc_vs_m.png")
-    roc(thresholds=np.linspace(0, 1, 100), signal_predictions=signal_predictions, realData_predictions=realData_predictions, weights_signal=Wtest[Ytest==1],
+    roc(thresholds=np.linspace(0, 1, 50), signal_predictions=signal_predictions, realData_predictions=realData_predictions, weights_signal=Wtest[Ytest==1],
         signalTrain_predictions=signalTrain_predictions, realDataTrain_predictions=realDataTrain_predictions, weights_signalTrain=Wtrain[Ytrain==1],
         outName=outFolder+"/performance/roc_ggS0.png")
-    results['roc_125'] = roc(thresholds=np.linspace(0, 1, 100), signal_predictions=h125_testPredictions, realData_predictions=realData_predictions, weights_signal=Wtest[genMassTest==125],
+    results['roc_125'] = roc(thresholds=np.linspace(0, 1, 50), signal_predictions=h125_testPredictions, realData_predictions=realData_predictions, weights_signal=Wtest[genMassTest==125],
         signalTrain_predictions=h125_trainPredictions, realDataTrain_predictions=realDataTrain_predictions, weights_signalTrain=Wtrain[genMassTrain==125],
         outName=outFolder+"/performance/roc_h125.png")
     

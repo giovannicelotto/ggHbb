@@ -38,13 +38,13 @@ try:
     if args.date is not None:
         current_date = args.date
 except:
-    current_date = "Jan24"
-    hp["lambda_reg"] = 900.0
+    current_date = "Feb25"
+    hp["lambda_reg"] = 900.1
     print("Interactive mode")
 # %%
 results = {}
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
-modelName1, modelName2 = "nn1.pth", "nn2.pth"
+modelName1, modelName2 = "nn1_e400.pth", "nn2_e400.pth"
 
 # %%
 Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/data")
@@ -146,11 +146,11 @@ Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  
 # %%
 
 # %%
-train_loss_history = np.load(outFolder + "/model/trainloss_history.npy")
+train_loss_history = np.load(outFolder + "/model/train_loss_history.npy")
 val_loss_history = np.load(outFolder + "/model/val_loss_history.npy")
-train_classifier_loss_history = np.load(outFolder + "/model/trainclassifier_loss_history.npy")
+train_classifier_loss_history = np.load(outFolder + "/model/train_classifier_loss_history.npy")
 val_classifier_loss_history = np.load(outFolder + "/model/val_classifier_loss_history.npy")
-train_dcor_loss_history = np.load(outFolder + "/model/traindcor_loss_history.npy")
+train_dcor_loss_history = np.load(outFolder + "/model/train_dcor_loss_history.npy")
 val_dcor_loss_history = np.load(outFolder + "/model/val_dcor_loss_history.npy")
 
 plot_lossTorch(train_loss_history, val_loss_history, 
@@ -371,7 +371,7 @@ ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal1, genMassTest=genMassVal
 ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal2, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN2.png")
 plt.close('all')
 # %%
-nn2_t =0.4
+nn2_t =0.5
 Xval['PNN1'] = YPredVal1
 Xval['PNN2'] = YPredVal2
 mass_bins = np.load(outFolder+"/mass_bins.npy")

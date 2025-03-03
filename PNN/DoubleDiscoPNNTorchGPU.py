@@ -43,23 +43,27 @@ parser.add_argument("-l", "--lambda_dcor", type=float, help="lambda for penalty 
 parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=None)
 parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=None)
 parser.add_argument("-bs", "--batch_size", type=int, help="Number of eventsper batch size", default=None)
-parser.add_argument("-node", "--node", type=int, help="nodes of single layer in case of one layer for simple nn", default=None)
+parser.add_argument("-n", "--nodes", type=int, help="nodes of single layer in case of one layer for simple nn", default=None)
+parser.add_argument("-lr", "--learningRate", type=str, help="learningRate", default=None)
+args = parser.parse_args()
 # %%
 # If arguments are provided change hyperparameters
-args = parser.parse_args()
-if args.lambda_dcor is not None:
-    hp["lambda_dcor"] = args.lambda_dcor 
-    print("lambda_dcor changed to ", hp["lambda_dcor"])
-if args.epochs is not None:
-    hp["epochs"] = args.epochs 
-    print("N epochs to ", hp["epochs"])
-if args.batch_size is not None:
-    hp["batch_size"] = int(args.batch_size )
-    print("N batch_size to ", hp["batch_size"])
-if args.node is not None:
-    hp["nNodes"] = [args.node]
-if args.size is not None:
-    hp["size"]=args.size
+try:
+    if args.lambda_dcor is not None:
+        hp["lambda_dcor"] = args.lambda_dcor 
+        print("lambda_dcor changed to ", hp["lambda_dcor"])
+    if args.epochs is not None:
+        hp["epochs"] = args.epochs 
+        print("N epochs to ", hp["epochs"])
+    if args.batch_size is not None:
+        hp["batch_size"] = int(args.batch_size )
+        print("N batch_size to ", hp["batch_size"])
+    if args.nodes is not None:
+        hp["nNodes"] = [args.nodes]
+    if args.size is not None:
+        hp["size"]=args.size
+except:
+    print("No arguments")
 
 
 sampling = False
@@ -135,13 +139,13 @@ with open(outFolder + "/model/training.txt", "w") as file:
 # %%
 XtrainTensor = torch.tensor(Xtrain[featuresForTraining].values, dtype=torch.float32, device=device)
 YtrainTensor = torch.tensor(Ytrain, dtype=torch.float, device=device).unsqueeze(1)
-WtrainTensor = torch.tensor(Wtrain, dtype=torch.float32, device=device).unsqueeze(1)
+WtrainTensor = torch.tensor(rWtrain, dtype=torch.float32, device=device).unsqueeze(1)
 dijetMassTrain_tensor = torch.tensor(dijetMassTrain, dtype=torch.float32, device=device).unsqueeze(1)
 
 
 Xval_tensor = torch.tensor(Xval[featuresForTraining].values, dtype=torch.float32, device=device)
 Yval_tensor = torch.tensor(Yval, dtype=torch.float, device=device).unsqueeze(1)
-Wval_tensor = torch.tensor(Wval, dtype=torch.float32, device=device).unsqueeze(1)
+Wval_tensor = torch.tensor(rWval, dtype=torch.float32, device=device).unsqueeze(1)
 dijetMassVal_tensor = torch.tensor(dijetMassVal, dtype=torch.float32, device=device).unsqueeze(1)
 
 train_masks = (YtrainTensor < 0.5).to(device)
@@ -322,6 +326,9 @@ for epoch in range(hp["epochs"]):
                 total_val_classifier_loss += classifier_loss1.item() + classifier_loss2.item()
                 total_val_dcor_loss += dCorr_total.item()/(len(mass_bins) -1)
 
+    if (epoch%100==0):
+        torch.save(nn1, outFolder+"/model/nn1_e%d.pth"%epoch)
+        torch.save(nn2, outFolder+"/model/nn2_e%d.pth"%epoch)
 
     # Calculate average losses (average over batches)
     avg_trainloss = total_trainloss / len(traindataloader)

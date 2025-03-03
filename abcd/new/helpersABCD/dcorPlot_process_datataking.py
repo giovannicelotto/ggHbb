@@ -67,9 +67,10 @@ def dcor_plot_MC(dfsMC, dfProcessesMC, isMCList, bins, outFile):
 
 def dcor_plot_Data(dfsData, processNames, isDataList, bins, outFile, nEvents=5000):
 
-
     dcor_data_values = []
     for idx, df in enumerate(dfsData):
+        if nEvents == -1:
+            nEvents = len(df)
         print(processNames[isDataList[idx]])
         for b_low, b_high in zip(bins[:-1], bins[1:]):
             m = (df.dijet_mass > b_low) & (df.dijet_mass < b_high)
@@ -94,7 +95,7 @@ def dcor_plot_Data(dfsData, processNames, isDataList, bins, outFile, nEvents=500
 
     # Define colors for different data-taking periods
     colors = ['red', 'blue', 'green', 'orange', 'purple'][:n_datataking]
-    labels = [f"{processNames[i]}" for i in range(n_datataking)]
+    labels = [f"{processNames[isDataList[i]]}" for i in range(n_datataking)]
 
     for i, dcor_values in enumerate(dcor_data_values_reshaped):
         # Offset the x positions for each data-taking period

@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 hep.style.use("CMS")
 def plotCriterionEfficiency(tag):
-    with open("/t3home/gcelotto/ggHbb/outputs/dict_criterionEfficiency_%s_HS.pkl"%tag, 'rb') as file:
+    with open("/t3home/gcelotto/ggHbb/outputs/dict_criterionEfficiency_%s.pkl"%tag, 'rb') as file:
         criterionSummary = pickle.load(file)
     oneTimeTrue = True
     fig, ax = plt.subplots(1, 1)

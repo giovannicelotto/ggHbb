@@ -25,10 +25,10 @@ from helpers.flattenWeights import flattenWeights
 # Define folder of input and output. Create the folders if not existing
 hp = getParams()
 sampling=False
-boosted=False
+boosted=0
 
 outFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data"
-outFolder = outFolder+"_highPt" if boosted else outFolder
+outFolder = outFolder+"_pt%d"%boosted if boosted else outFolder
 if not os.path.exists(outFolder):
     os.makedirs(outFolder)
 
@@ -58,7 +58,7 @@ Xtrain, Xval, Ytrain, Yval, advFeatureTrain, advFeatureVal, Wtrain, Wval, genMas
 # %%
 
 # Higgs and Data have flat distribution in m_jj only for training and validation
-rWtrain, rWval = flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, outFolder, outName=outFolder+ "/massReweighted.png")
+rWtrain, rWval = flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, outFolder, outName=outFolder+ "/massReweighted.png",xmin=int(Xtrain.dijet_mass.min()))
 
 # To have typical numbers for lr and batch size set the mean weight to 1
 rWtrain = rWtrain/np.mean(rWtrain)
@@ -66,7 +66,22 @@ rWval = rWval/np.mean(rWval)
 
 Wtrain = Wtrain/np.mean(Wtrain)
 Wval = Wval/np.mean(Wval)
+
 # %%
+fig, ax = plt.subplots(1, 1)
+bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 101)
+ax.hist(Xtrain.dijet_mass[genMassTrain==125], bins=bins, histtype='step', density=False)
+ax.hist(Xtrain.dijet_mass[genMassTrain==50], bins=bins, histtype='step', density=False)
+ax.hist(Xtrain.dijet_mass[genMassTrain==70], bins=bins, histtype='step', density=False)
+ax.hist(Xtrain.dijet_mass[genMassTrain==100], bins=bins, histtype='step', density=False)
+ax.hist(Xtrain.dijet_mass[genMassTrain==200], bins=bins, histtype='step', density=False)
+ax.hist(Xtrain.dijet_mass[genMassTrain==300], bins=bins, histtype='step', density=False)
+ax.set_xlabel("Dijet Mass [GeV]")
+ax.set_ylabel("Unweighted Counts")
+#fig.savefig(outFolder+"/dijetMass.png", bbox_inches='tight')
+# %%
+
+
 gpuFlag=False
 if gpuFlag==False:
     plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xval[Yval==0], Xval[Yval==1]],
@@ -88,31 +103,20 @@ np.save(outFolder+"/advFeatureVal.npy", advFeatureVal)
 
 # %%
 # scale with standard scalers and apply log to any pt and mass distributions
-Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True)
-Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False)
+Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True, boosted=boosted)
+Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False, boosted=boosted)
 from helpers.scaleUnscale import test_gaussianity_validation
 # %%
 test_gaussianity_validation(Xtrain, Xval, featuresForTraining, outFolder)
 # %%
 advFeatureTrain = scale(pd.DataFrame(advFeatureTrain),['jet1_btagDeepFlavB'],  scalerName= outFolder + "/myScaler_adv.pkl" ,fit=True)
 advFeatureVal  = scale(pd.DataFrame(advFeatureVal), ['jet1_btagDeepFlavB'], scalerName= outFolder + "/myScaler_adv.pkl" ,fit=False)
-if gpuFlag==True:
+if gpuFlag==False:
     plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xval[Yval==0], Xval[Yval==1]],
                        outFile=outFolder+"/featuresReweighted_scaled.png", legendLabels=['Data Train', 'Higgs Train', 'Data Val', 'Higgs Val'],
                        colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
                        alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=True,
                        weights=[Wtrain[Ytrain==0], Wtrain[Ytrain==1], Wval[Yval==0], Wval[Yval==1]], error=True)
 
-# %%
-fig, ax = plt.subplots(1, 1)
-bins=np.linspace(40, 300, 101)
-ax.hist(Xtrain.dijet_mass[genMassTrain==125], bins=bins, histtype='step', density=False)
-ax.hist(Xtrain.dijet_mass[genMassTrain==50], bins=bins, histtype='step', density=False)
-ax.hist(Xtrain.dijet_mass[genMassTrain==70], bins=bins, histtype='step', density=False)
-ax.hist(Xtrain.dijet_mass[genMassTrain==100], bins=bins, histtype='step', density=False)
-ax.hist(Xtrain.dijet_mass[genMassTrain==200], bins=bins, histtype='step', density=False)
-ax.hist(Xtrain.dijet_mass[genMassTrain==300], bins=bins, histtype='step', density=False)
-ax.set_xlabel("Dijet Mass [GeV]")
-ax.set_ylabel("Unweighted Counts")
-fig.savefig(outFolder+"/dijetMass.png", bbox_inches='tight')
+
 # %%

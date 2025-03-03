@@ -22,6 +22,11 @@ from helpers.doPlots import ggHscoreScan, getShapTorch
 sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
 from checkOrthogonality import checkOrthogonality, checkOrthogonalityInMassBins, plotLocalPvalues
 from dcorLoss import Classifier
+import os
+from helpers.doPlots import NNoutputs
+import math
+from helpers.doPlots import auc_vs_m
+from sklearn.metrics import roc_curve, auc
 
 # Get current month and day
 current_date = datetime.now().strftime("%b%d")  # This gives the format like 'Dec12'
@@ -38,15 +43,17 @@ try:
     if args.date is not None:
         current_date = args.date
 except:
-    current_date = "Jan24"
-    hp["lambda_reg"] = 900.0
+    current_date = "Feb24"
+    hp["lambda_reg"] = 900.
     print("Interactive mode")
 # %%
 results = {}
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
 modelName1, modelName2 = "nn1.pth", "nn2.pth"
-
+nn1_t = 0.4
+nn2_t =0.4
 # %%
+# Load data, neural networks and weights
 Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/data")
 columnsToRead = getFeatures(outFolder=None,  massHypo=True)[1]
 featuresForTraining = np.load(outFolder+"/featuresForTraining.npy")
@@ -79,8 +86,8 @@ advFeatureTrain = np.load(inFolder+"/data/advFeatureTrain.npy")
 advFeatureVal   = np.load(inFolder+"/data/advFeatureVal.npy")
 
 
-state_dict1 = torch.load(outFolder + "/model/nn1.pth", map_location=torch.device('cpu'))
-state_dict2 = torch.load(outFolder + "/model/nn2.pth", map_location=torch.device('cpu'))
+state_dict1 = torch.load(outFolder + "/model/%s"%modelName1, map_location=torch.device('cpu'))
+state_dict2 = torch.load(outFolder + "/model/%s"%modelName2, map_location=torch.device('cpu'))
 #
 ## Remove the 'module.' prefix if it exists
 state_dict1 = {k.replace('module.', ''): v for k, v in state_dict1.items()}
@@ -147,7 +154,15 @@ Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float
 Ytrain_tensor = torch.tensor(Ytrain).unsqueeze(1).float()
 Ytest_tensor = torch.tensor(Ytest).unsqueeze(1).float()
 Yval_tensor = torch.tensor(Yval).unsqueeze(1).float()
+
+
+
+
+
+
 # %%
+# Create the Predictions
+
 with torch.no_grad():  # No need to track gradients for inference
     YPredTrain1 = nn1(Xtrain_tensor).numpy()
     YPredTrain2 = nn2(Xtrain_tensor).numpy()
@@ -158,11 +173,18 @@ with torch.no_grad():  # No need to track gradients for inference
 Xtrain = unscale(Xtrain, featuresForTraining=featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl")
 Xval = unscale(Xval, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
 Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
-# %%
+
 
 # %%
-nRanks = 8
-for rank in range(nRanks):
+# Load the loss functions from different ranks
+rank = 0  
+while True:
+    # Check if the file for rank number N exist
+    file_path = os.path.join(outFolder, "model/train_loss_history_rank%d.npy"%rank)
+    if not os.path.exists(file_path):
+        print(f"No file found for rank {rank}, stopping.")
+        break  # Exit loop when a file is missing
+    print("Getting Loss function from rank : %d"%rank)
     train_loss_history_rank = np.load(outFolder + "/model/train_loss_history_rank%d.npy"%(rank))
     val_loss_history_rank = np.load(outFolder + "/model/val_loss_history_rank%d.npy"%(rank))
     train_classifier_loss_history_rank = np.load(outFolder + "/model/train_classifier_loss_history_rank%d.npy"%(rank))
@@ -183,6 +205,8 @@ for rank in range(nRanks):
         val_classifier_loss_history = val_classifier_loss_history + val_classifier_loss_history_rank
         train_dcor_loss_history = train_dcor_loss_history + train_dcor_loss_history_rank
         val_dcor_loss_history = val_dcor_loss_history + val_dcor_loss_history_rank
+    rank += 1
+nRanks = rank
 train_loss_history=train_loss_history/nRanks
 val_loss_history=val_loss_history/nRanks
 train_classifier_loss_history=train_classifier_loss_history/nRanks
@@ -203,27 +227,30 @@ Xval['PNN1'] = YPredVal1
 Xval['PNN2'] = YPredVal2
 Xtest['PNN1'] = YPredTest1
 Xtest['PNN2'] = YPredTest2
-fig, ax = plt.subplots(1, 2, figsize=(15, 8))
-bins=np.linspace(0, 1, 101)
-cS = np.histogram(Xval[Yval==0].PNN1,bins=bins)[0]
-cD = np.histogram(Xval[Yval==1].PNN1,bins=bins)[0]
-cS=cS/np.sum(cS)
-cD = cD/np.sum(cD)
 
-ax[0].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
-ax[0].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
-ax[0].set_xlabel("Classifer 1")
 
-cS = np.histogram(Xval[Yval==0].PNN2,bins=bins)[0]
-cD = np.histogram(Xval[Yval==1].PNN2,bins=bins)[0]
-cS=cS/np.sum(cS)
-cD = cD/np.sum(cD)
+# Spin 0 Distribution
+#fig, ax = plt.subplots(1, 2, figsize=(15, 8))
+#bins=np.linspace(0, 1, 101)
+#cS = np.histogram(Xval[Yval==0].PNN1,bins=bins)[0]
+#cD = np.histogram(Xval[Yval==1].PNN1,bins=bins)[0]
+#cS=cS/np.sum(cS)
+#cD = cD/np.sum(cD)
+#ax[0].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
+#ax[0].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
+#ax[0].set_xlabel("Classifer 1")
+#cS = np.histogram(Xval[Yval==0].PNN2,bins=bins)[0]
+#cD = np.histogram(Xval[Yval==1].PNN2,bins=bins)[0]
+#cS=cS/np.sum(cS)
+#cD = cD/np.sum(cD)
+#ax[1].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
+#ax[1].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
+#ax[1].set_xlabel("Classifier 2")
+#fig.savefig(outFolder+"/performance/outputSpin0.png", bbox_inches='tight')
 
-ax[1].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
-ax[1].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
-ax[1].set_xlabel("Classifier 2")
-fig.savefig(outFolder+"/performance/outputSpin0.png", bbox_inches='tight')
-from helpers.doPlots import NNoutputs
+
+
+
 NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
           signalTrain_predictions=YPredTrain1[genMassTrain==125], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
           outName=outFolder+"/performance/output1_125.png", log=False)
@@ -236,37 +263,43 @@ NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YP
 NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
           signalTrain_predictions=YPredTrain2[genMassTrain==125], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
           outName=outFolder+"/performance/output2_125_log.png", log=True)
-# Output for 125 GeV
-plt.close('all')
-fig, ax = plt.subplots(1, 2, figsize=(15, 8))
-bins=np.linspace(0, 1, 51)
-cS = np.histogram(Xval[genMassVal==0].PNN1,bins=bins)[0]
-cD = np.histogram(Xval[genMassVal==125].PNN1,bins=bins)[0]
-cS=cS/np.sum(cS)
-cD = cD/np.sum(cD)
-
-ax[0].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
-ax[0].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
-ax[0].set_xlabel("Classifer 1")
-
-cS = np.histogram(Xval[genMassVal==0].PNN2,bins=bins)[0]
-cD = np.histogram(Xval[genMassVal==125].PNN2,bins=bins)[0]
-cS=cS/np.sum(cS)
-cD = cD/np.sum(cD)
-
-ax[1].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
-ax[1].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
-ax[1].set_xlabel("Classifier 2")
-fig.savefig(outFolder+"/performance/output125.png", bbox_inches='tight')
-plt.close('all')
+NNoutputs(signal_predictions=YPredVal1[Yval==1], realData_predictions=YPredVal1[genMassVal==0],
+          signalTrain_predictions=YPredTrain1[Ytrain==1], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
+          outName=outFolder+"/performance/output1_Spin0_log.png", log=True)
+NNoutputs(signal_predictions=YPredVal2[Yval==1], realData_predictions=YPredVal2[genMassVal==0],
+          signalTrain_predictions=YPredTrain2[Ytrain==1], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
+          outName=outFolder+"/performance/output2_Spin0_log.png", log=True)
 # %%
-from helpers.doPlots import auc_vs_m
+
+ncols = 4
+nrows = math.ceil((len(mass_bins) - 1) / ncols)
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10))
+# Flat the axes for simplicity
+ax = ax.flatten()  
+for idx, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
+    # Signal
+    ax[idx].hist(Xval.PNN1[(Yval==0) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='blue')  
+    ax[idx].hist(Xval.PNN1[(genMassVal==125) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='red')  
+for j in range(idx + 1, len(ax)):
+    fig.delaxes(ax[j])  # Remove extra axes
+fig.savefig(outFolder+"/performance/NNscore1_dijetMass_binned.png", bbox_inches='tight')
+# Same for NN 2
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10))
+ax = ax.flatten()  
+for idx, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
+    ax[idx].hist(Xval.PNN2[(Yval==0) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='blue')  
+    ax[idx].hist(Xval.PNN2[(genMassVal==125) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='red')  
+for j in range(idx + 1, len(ax)):
+    fig.delaxes(ax[j])  # Remove extra axes
+fig.savefig(outFolder+"/performance/NNscore2_dijetMass_binned.png", bbox_inches='tight')
+# %%
+
 auc_vs_m(Ytrain, Yval, YPredTrain1, YPredVal1, genMassTrain, genMassVal, outFile=outFolder+"/performance/auc1_vs_m.png")
 auc_vs_m(Ytrain, Yval, YPredTrain2, YPredVal2, genMassTrain, genMassVal, outFile=outFolder+"/performance/auc2_vs_m.png")
 plt.close('all')
 # %%
 
-from sklearn.metrics import roc_curve, auc
+
 # ROC 1
 fig, ax = plt.subplots(1, 1)
 
@@ -407,7 +440,7 @@ ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal1, genMassTest=genMassVal
 ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal2, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN2.png")
 plt.close('all')
 # %%
-nn2_t =0.4
+
 Xval['PNN1'] = YPredVal1
 Xval['PNN2'] = YPredVal2
 mass_bins = np.load(outFolder+"/mass_bins.npy")
@@ -429,7 +462,7 @@ ks_p_value_PNN, p_value_PNN, chi2_values_PNN = checkOrthogonalityInMassBins(
 #plotLocalPvalues(pvalues=p_value_PNN, mass_bins=mass_bins, pvalueLabel="$\chi^2$", outFolder=outFolder+"/performance/PNN1_Chi2pvalues.png")
 plt.close('all')
 # %%
-nn1_t = 0.4
+
 ks_p_value_PNN, p_value_PNN, chi2_values_PNN = checkOrthogonalityInMassBins(
     df=Xval[Yval==0],
     featureToPlot='PNN2',
@@ -523,9 +556,9 @@ for blow, bhigh in zip(mass_bins[:-1], mass_bins[1:]):
     discos_bin_test.append(distance_corr)
 results['averageBin_sqaured_disco'] = np.mean(discos_bin_val)
 results['error_averageBin_sqaured_disco'] = np.std(discos_bin_val)/np.sqrt(len(discos_bin_val))
-plotLocalPvalues(discos_bin_val, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_val.png")
-plotLocalPvalues(discos_bin_train, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_train.png", color='red')
-plotLocalPvalues(discos_bin_test, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_test.png", color='green')
+plotLocalPvalues(discos_bin_val, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_val.png", entries=np.sum(Yval==0))
+plotLocalPvalues(discos_bin_train, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_train.png", color='red', entries=np.sum(Ytrain==0))
+plotLocalPvalues(discos_bin_test, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_test.png", color='green', entries=np.sum(Ytest==0))
 # %%
 print("*"*30)
 print("Pull ABCD Delta/sigmaDelta")

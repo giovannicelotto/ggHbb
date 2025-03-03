@@ -6,7 +6,7 @@ import time
 import argparse
 import os
 from functions import getDfProcesses_v2
-def main(isMC, processNumber, nFiles, modelName):
+def main(isMC, processNumber, nFiles, modelName, boosted):
     # Define name of the process, folder for the files and xsections
     
     df=getDfProcesses_v2()[0] if isMC else getDfProcesses_v2()[1]
@@ -42,13 +42,13 @@ def main(isMC, processNumber, nFiles, modelName):
         # check if the predictions was already done:
         if not os.path.exists("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s"%(modelName, process)):
             os.makedirs("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s"%(modelName, process))
-        pattern = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s/**/y%s_FN%d.parquet" % (modelName, process, process, fileNumber)
+        pattern = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s/%s/**/yMjj_%s_FN%d.parquet" % (modelName, process, process, fileNumber)
         matching_files = glob.glob(pattern, recursive=True)
 
         if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(processNumber))
-            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 40)), '/t3home/gcelotto/ggHbb/PNN/slurm/mjj/predict.sh', fileName, str(processNumber), process, modelName])
+            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 40)), '/t3home/gcelotto/ggHbb/PNN/slurm/mjj/predict.sh', fileName, str(processNumber), process, modelName, str(boosted)])
             doneFiles = doneFiles + 1
         else:
             print("..")
@@ -64,6 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("-MC", "--isMC", type=int, help="isMC True or False", default=0)
     parser.add_argument("-pN", "--processNumber", type=int, help="processNumber of MC or datataking", default=0)
     parser.add_argument("-m", "--modelName", type=str, help="suffix of the model", default="Jan08_250p0")
+    parser.add_argument("-b", "--boosted", type=int, help="boosted class", default=1)
     parser.add_argument("-n", "--nFiles", type=int, help="number of files", default=1)
 
     args = parser.parse_args()
@@ -72,4 +73,5 @@ if __name__ == "__main__":
     pN = args.processNumber
     nFiles = args.nFiles
     modelName = args.modelName
-    main(isMC=isMC, processNumber=pN, nFiles=nFiles, modelName=modelName)
+    boosted = args.boosted
+    main(isMC=isMC, processNumber=pN, nFiles=nFiles, modelName=modelName, boosted=boosted)

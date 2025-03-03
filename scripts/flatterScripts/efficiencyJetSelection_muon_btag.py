@@ -68,6 +68,7 @@ def evaluateCriterion(maxJet, fileNames, tag):
     #path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/ggH2023Dec06/GluGluHToBB_M125_13TeV_powheg_pythia8/crab_GluGluHToBB/231206_105206/0000"
     assert len(fileNames)>0, "No Filenames found. Check the path"
     for fileName in fileNames:
+        print("Opening ", fileName)
         f = uproot.open(fileName)
         tree = f['Events']
         branches = tree.arrays()
@@ -264,7 +265,8 @@ def main(nFiles, maxJet1, maxJet2, tag):
     '''
     
 
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/allSamplesWW2025Jan20/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250120_100810/0000"
+    #path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/allSamplesWW2025Jan20/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250120_100810/0000"
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/allSamplesWW2025Jan20/GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia8/crab_GluGluHToBBMINLO/250120_100840/0000"
     fileNames = glob.glob(path+'/**/*.root', recursive=True)
     #random.shuffle(fileNames)
     fileNames = fileNames[:nFiles]
@@ -282,8 +284,8 @@ def main(nFiles, maxJet1, maxJet2, tag):
     
 
 if __name__ == "__main__":
-    nFiles                   = int(sys.argv[1]) if len(sys.argv) > 1 else 20
-    maxJet1                   = int(sys.argv[2]) if len(sys.argv) > 2 else 2
-    maxJet2                   = int(sys.argv[3]) if len(sys.argv) > 3 else 8
-    tag                         = int(sys.argv[4])   # ['DeepJet', 'PNet', 'ParT'][tag]
+    nFiles              = int(sys.argv[1]) if len(sys.argv) > 1 else 20
+    maxJet1             = int(sys.argv[2]) if len(sys.argv) > 2 else 2
+    maxJet2             = int(sys.argv[3]) if len(sys.argv) > 3 else 8
+    tag                 = int(sys.argv[4])   # ['DeepJet', 'PNet', 'ParT'][tag]
     main(nFiles=nFiles, maxJet1=maxJet1, maxJet2=maxJet2, tag=tag)

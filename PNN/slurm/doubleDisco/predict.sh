@@ -16,9 +16,10 @@ file_path=$1
 pN=$2
 process=$3
 modelName=$4
+multigpu=$5
 
 echo "$file_path"
-python /t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predictTorch.py $file_path $process $modelName
+python /t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predictTorch.py $file_path $process $modelName $multigpu
 
 # extract the fileName:
 filename=$(basename "$file_path")

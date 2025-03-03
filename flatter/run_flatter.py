@@ -22,7 +22,7 @@ maxJet          = args.maxJet
 print("pN =",pN)
 print("max jet", maxJet)
 print("*"*20)
-print("*"*20)
+
 
 # Define name of the process, folder for the files and xsections
 print("isMC = ", isMC)

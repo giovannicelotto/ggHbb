@@ -19,12 +19,12 @@ try:
     dd = args.doubleDisco
 except:
     print("Interactive mode")
-    modelName = "Jan24_900p0"
+    modelName = "Feb24_900p0"
     dd = True
 outFolder = "/t3home/gcelotto/ggHbb/PNN/resultsDoubleDisco/%s"%modelName
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/%s"%modelName
-#bins = np.load(outFolder+"/mass_bins.npy")
-bins=np.linspace(40, 300, 6)
+bins = np.load(outFolder+"/mass_bins.npy")
+#bins=np.linspace(40, 300, 6)
 #midpoints = (bins[:-1] + bins[1:]) / 2
 #bins = np.sort(np.concatenate([bins, midpoints]))
 
@@ -34,16 +34,16 @@ dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 # %%
 # Loading data
 dfsMC = []
-isMCList = [#0,
-            #1, 
-            #2,3, 4,
-            #5,6,7,8, 9,10,
-            #11,12,13,
-            #14,15,16,17,18,
-            #19,20,21, 22, 35,
-            #36,
+isMCList = [0,
+            1, 
+            2,3, 4,
+            5,6,7,8, 9,10,
+            11,12,13,
+            14,15,16,17,18,
+            19,20,21, 22, 35,
+            36,
     # Spin0 200
-            #41#
+    #41#
             ]
 for idx, p in enumerate(dfProcessesMC.process):
     if idx not in isMCList:

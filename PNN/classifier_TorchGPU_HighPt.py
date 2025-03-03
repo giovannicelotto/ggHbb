@@ -30,16 +30,22 @@ gpuFlag=True if torch.cuda.is_available() else False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Define folder of input and output. Create the folders if not existing
 hp = getParams()
-
+# %%
 
 parser = argparse.ArgumentParser(description="Script.")
 #### Define arguments
 parser.add_argument("-l", "--lambda_dcor", type=float, help="lambda for penalty term", default=None)
-parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=None)
-parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=int(1e9))
+parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=1500)
+parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=1000000000)
+parser.add_argument("-lr", "--learningRate", type=float, help="learning rate", default=None)
 parser.add_argument("-bs", "--batch_size", type=int, help="Number of events perBatch", default=None)
-parser.add_argument("-node", "--node", type=int, help="nodes of single layer in case of one layer for simple nn", default=None)
+parser.add_argument("-eS", "--earlyStopping", type=int, help="patience early stop", default=None)
+parser.add_argument("-n", "--nodes",type=lambda s: [int(item) for item in s.split(',')],  # Convert comma-separated string to list of ints
+                        help="List of nodes per layer (e.g., 128,64,32 for a 3-layer NN)",default=None
+)
 args = parser.parse_args()
+
+# %%
 try:
     if args.lambda_dcor is not None:
         hp["lambda_dcor"] = args.lambda_dcor 
@@ -50,8 +56,12 @@ try:
     if args.batch_size is not None:
         hp["batch_size"] = int(args.batch_size )
         print("N batch_size to ", hp["batch_size"])
-    if args.node is not None:
-        hp["nNodes"] = [args.node]
+    if args.nodes is not None:
+        hp["nNodes"] = args.nodes
+    if args.earlyStopping is not None:
+        hp["patienceES"] = args.earlyStopping
+    if args.learningRate is not None:
+        hp["learning_rate"] = args.learningRate
     if args.size != int(1e9):
         hp["size"] = args.size
     print("After parameters")
@@ -60,17 +70,23 @@ except:
     print("-"*40)
     print("Error in passing the arguments!")
     print("lambda_dcor changed to ", hp["lambda_dcor"])
-    hp["lambda_dcor"] = 5. 
+    hp["lambda_dcor"] = 0. 
     print(hp)
     print("interactive mode")
     print("-"*40)
+    hp["size"] = 20000
+    hp["batch_size"]=1000
+    hp['nodes'] = [4, 2]
+    hp['patienceES'] = 40
 # %%
 sampling = True
-inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco')
-inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_highPt" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
+boosted = 1
+inFolder, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, boosted, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco')
+inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d"%(boosted) if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-featuresForTraining, columnsToRead = getFeatures(outFolder, massHypo=True)
+featuresForTraining, columnsToRead = getFeatures(outFolder, massHypo=False)
+featuresForTraining = featuresForTraining + ['dijet_mass']
 #if 'jet2_btagDeepFlavB' in featuresForTraining:
 #    featuresForTraining.remove('jet2_btagDeepFlavB')
 #if 'jet1_btagDeepFlavB' in featuresForTraining:
@@ -166,26 +182,16 @@ print("Train start")
 
 
 train_loss_history = []
-train_classifier_loss_history = []
-train_dcor_loss_history = []
-#train_ks_loss_history = []
 
 val_loss_history = []
-val_classifier_loss_history = []
-val_dcor_loss_history = []
-#val_ks_loss_history = []
 best_model_weights = None # weights saved for RestoreBestWeights
 best_epoch = None
 
 # %%
 
-k = 10  
 for epoch in range(hp["epochs"]):
     model.train()
     total_trainloss = 0.0
-    total_train_classifier_loss = 0.0
-    total_traindcor_loss = 0.0
-    #total_train_ks_loss = 0.0
     # Training phase
     for batch in train_dataloader:
         X_batch, Y_batch, W_batch, dijetMass_batch, mask_batch = batch
@@ -197,28 +203,13 @@ for epoch in range(hp["epochs"]):
         raw_loss = criterion(predictions, Y_batch)
         # Apply weights manually
         classifier_loss = (raw_loss * W_batch).mean()
-        
-        # set w = 1 for dcor and ks compute on bkg only
-        W_batch = torch.ones([len(W_batch), 1], device=device)
-            
-        # Compute dCorr for the current mass bin
-        dCorr_bin = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
-        
-
-
-
-
-        
         # Combined loss
-        loss = classifier_loss + hp["lambda_dcor"] * dCorr_bin 
+        loss = classifier_loss
         loss.backward()
         
         optimizer.step()
 
         total_trainloss += loss.item()
-        total_train_classifier_loss += classifier_loss.item()
-        total_traindcor_loss += dCorr_bin.item()
-        #total_train_ks_loss += ks_loss.item()
 
 
 # ______________________________________________________________________________
@@ -234,7 +225,6 @@ for epoch in range(hp["epochs"]):
         model.eval()
         total_val_loss = 0.0
         total_val_classifier_loss = 0.0
-        total_val_dcor_loss = 0.0
 
 
         with torch.no_grad():
@@ -245,46 +235,22 @@ for epoch in range(hp["epochs"]):
                 raw_loss = criterion(predictions, Y_batch)
                 # Apply weights manually
                 classifier_loss = (raw_loss * W_batch).mean()
-
-                # If there are any remaining entries after filtering, calculate dcor
-                W_batch = torch.ones([len(W_batch), 1], device=device)
-
-                    
-                # Compute dCorr for the current mass bin
-                dCorr_bin = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
-                
-                
                 # Combined loss
-                loss = classifier_loss + hp["lambda_dcor"] * dCorr_bin 
+                loss = classifier_loss 
                 total_val_loss += loss.item()
-                total_val_classifier_loss += classifier_loss.item()
-                total_val_dcor_loss += dCorr_bin.item()
 
 
     # Calculate average losses (average over batches)
     avg_trainloss = total_trainloss / len(train_dataloader)
-    avg_train_classifier_loss = total_train_classifier_loss / len(train_dataloader)
-    avg_traindcor_loss = total_traindcor_loss / len(train_dataloader)
-    #avg_train_ks_loss = total_train_ks_loss / len(train_dataloader)
-
     avg_val_loss = total_val_loss / len(val_dataloader)
-    avg_val_classifier_loss = total_val_classifier_loss / len(val_dataloader)
-    avg_val_dcor_loss = total_val_dcor_loss / len(val_dataloader)
-    #avg_val_ks_loss = total_val_ks_loss / len(val_dataloader)
 
     train_loss_history.append(avg_trainloss)
-    train_classifier_loss_history.append(avg_train_classifier_loss)
-    train_dcor_loss_history.append(avg_traindcor_loss)
-    #train_ks_loss_history.append(avg_train_ks_loss)
     val_loss_history.append(avg_val_loss)
-    val_classifier_loss_history.append(avg_val_classifier_loss)
-    val_dcor_loss_history.append(avg_val_dcor_loss)
-    #val_ks_loss_history.append(avg_val_ks_loss)
 
     # Print losses
     print(f"Epoch [{epoch+1}/{epochs}], "
-          f"Train Loss: {avg_trainloss:.4f}, Classifier Loss: {avg_train_classifier_loss:.4f}, dCor Loss: {avg_traindcor_loss:.8f}, "
-          f"Val Loss: {avg_val_loss:.4f}, Val Classifier Loss: {avg_val_classifier_loss:.4f}, Val dCor Loss: {avg_val_dcor_loss:.8f}",
+          f"Train Loss: {avg_trainloss:.4f}, "
+          f"Val Loss: {avg_val_loss:.4f}",
           flush=(epoch % 50 == 0))
 
 
@@ -310,10 +276,6 @@ if best_model_weights is not None:
 # %%
 np.save(outFolder + "/model/train_loss_history.npy", train_loss_history)
 np.save(outFolder + "/model/val_loss_history.npy", val_loss_history)
-np.save(outFolder + "/model/train_classifier_loss_history.npy", train_classifier_loss_history)
-np.save(outFolder + "/model/val_classifier_loss_history.npy", val_classifier_loss_history)
-np.save(outFolder + "/model/train_dcor_loss_history.npy", train_dcor_loss_history)
-np.save(outFolder + "/model/val_dcor_loss_history.npy", val_dcor_loss_history)
 
 # %%
 torch.save(model, outFolder+"/model/model.pth")
@@ -321,3 +283,5 @@ print("Model saved")
 with open(outFolder + "/model/training.txt", "w") as file:
     for key, value in hp.items():
         file.write(f"{key} : {value}\n")
+
+# %%

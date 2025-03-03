@@ -1,6 +1,6 @@
 import sys
 sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
-from plot_v2 import plot4ABCD, QCD_SR, QCDplusSM_SR, SM_SR
+from plot_v2 import plot4ABCD, QCD_SR, QCDplusSM_SR, SM_SR, SM_CR
 from createRootHists import createRootHists
 from hist import Hist
 import matplotlib.pyplot as plt
@@ -71,6 +71,11 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
         hB_ADC.values()[:] = hB_ADC.values()[:]*corrections 
 # Second Plot
     countsDict_SR = SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix=suffix, blindPar=blindPar,  sameWidth_flag=False)
+
+    SM_CR('A', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
+    SM_CR('C', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
+    SM_CR('D', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
+    SM_CR('B', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
     
 
 

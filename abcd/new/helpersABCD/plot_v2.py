@@ -48,12 +48,99 @@ def plot4ABCD(regions, bins, x1, x2, t1, t2, blindPar, outName=None,suffix="",  
         axx.legend(fontsize=18, loc='upper right')
     if outName is None:
         outName = "/t3home/gcelotto/ggHbb/abcd/new/plots/QCDhists_SR_CR/QCDhists_SR_CR_%s.png"%suffix
+    ax[0,0].set_yscale('log')
+    ax[0,1].set_yscale('log')
+    ax[1,0].set_yscale('log')
+    ax[1,1].set_yscale('log')
     fig.savefig(outName, bbox_inches='tight')
     print("Saved %s"%outName)
     plt.close('all')    
 
     return hB_ADC
 
+
+def SM_CR(region, bins, dfsMC, isMCList, dfProcesses, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True):
+    sameWidth=np.ones(len(bins)-1) if sameWidth_flag == True else np.diff(bins)
+    x = (bins[1:] + bins[:-1])/2
+    blind, higgs_peak, blind_range = blindPar
+    blind_mask = (~((bins[:-1] > higgs_peak - blind_range) & (bins[:-1] < higgs_peak + blind_range))) if blind else np.ones(len(bins)-1, dtype=bool)
+
+    fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
+    fig.align_ylabels([ax[0],ax[1]])
+    cTot = np.zeros(len(bins)-1)
+
+
+    h = Hist.new.Var(bins, name="mjj").Weight()
+    countsDict_CR = {
+            'Data'   : h.copy() ,
+            'VV'     : h.copy() ,
+            'ST'     : h.copy() ,
+            'ttbar'  : h.copy() ,
+            'WJets' : h.copy() ,
+            'QCD'    : h.copy() ,
+            'ZJets' : h.copy() ,
+            'H'      : h.copy() ,
+        }
+
+    for idx, df in enumerate(dfsMC):
+        isMC = isMCList[idx]
+        process = dfProcesses.process[isMC]
+        if region == 'A':
+            mRegion      = (df[x1]<t1 ) & (df[x2]>t2 ) 
+        elif region == 'B':
+            mRegion      = (df[x1]>t1 ) & (df[x2]>t2 ) 
+            
+        elif region == 'C':
+            mRegion      = (df[x1]<t1 ) & (df[x2]<t2 ) 
+        elif region == 'D':
+            mRegion      = (df[x1]>t1 ) & (df[x2]<t2 ) 
+
+        h = Hist.new.Var(bins, name="mjj").Weight()
+        h.fill(df.dijet_mass[mRegion], weight=df.weight[mRegion])
+
+        if 'Data' in process:
+            assert False
+            countsDict_CR['Data'] = countsDict_CR['Data'] + h
+            print("adding data with", process)
+        elif 'HToBB' in process:
+            countsDict_CR['H'] = countsDict_CR['H'] + h
+        elif 'ST' in process:
+            countsDict_CR['ST'] = countsDict_CR['ST'] + h
+        elif 'TTTo' in process:
+            countsDict_CR['ttbar'] = countsDict_CR['ttbar'] + h
+        elif 'QCD' in process:
+            countsDict_CR['QCD'] = countsDict_CR['QCD'] + h
+        elif 'ZJets' in process:
+            #print(process, " in ZJets")
+            countsDict_CR['ZJets'] = countsDict_CR['ZJets'] + h
+        elif 'WJets' in process:
+            #print(process, " in WJets")
+            countsDict_CR['WJets'] = countsDict_CR['WJets'] + h
+        elif (('WW' in process) | ('ZZ' in process) | ('WZ' in process)):
+            countsDict_CR['VV'] = countsDict_CR['VV'] + h
+        else:
+            #countsDict_CR['H'] = countsDict_CR['H'] + h
+            assert False, "Process not found : %s"%process
+
+    print("\n\n", "*"*50, "\n\n")
+    print("SM counts in CR")
+    for key in countsDict_CR.keys():
+        if countsDict_CR[key].values().sum()==0:
+            continue
+        print("%s      \t : %d \t %.3f"%(key, countsDict_CR[key].values().sum(), np.sqrt(countsDict_CR[key].variances().sum())/countsDict_CR[key].values().sum()))
+        ax[0].hist(bins[:-1], bins=bins, weights=countsDict_CR[key].values()/sameWidth, bottom=cTot/sameWidth, label=key)
+        cTot = cTot + countsDict_CR[key].values()
+    ax[0].legend()
+    ax[0].set_xlim(bins[0],bins[-1])
+    ax[0].set_xlabel("Dijet Mass [GeV]")
+    ylabel = "Counts" if sameWidth_flag else  "Counts / Bin Width"
+    ax[0].set_ylabel(ylabel)
+    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
+    outName = "/t3home/gcelotto/ggHbb/abcd/new/plots/SMnonQCD_CR/SMnonQCD_CR%s_%s.png"%(region, suffix)
+    fig.savefig(outName)
+    plt.close('all')
+    print("\n\n", "*"*50, "\n\n")
+    return
 
 
 def SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcesses, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True):
@@ -222,7 +309,7 @@ def QCD_SR(bins, hB_ADC, qcd_mc, lumi=0, blindPar=(False, 125, 20),  outName=Non
     ratios = hB_ADC.values()*blind_mask/qcd_mc.values()
     err_ratios = np.sqrt(hB_ADC.variances())/qcd_mc.values()
     ax[1].errorbar(x, ratios, yerr=err_ratios,linestyle='none', marker='o', color='red')
-    ylims = (0.95, 1.05) if corrected is not False else (0.9, 1.1)
+    ylims = (0.99, 1.01) if corrected is not False else (0.9, 1.1)
     ax[1].set_ylim(ylims)
     ax[1].set_xlim(bins[0], bins[-1])
     ax[1].hlines(y=1, xmin=bins[0], xmax=bins[-1], color='C0')

@@ -6,7 +6,7 @@ import time
 import argparse
 import os
 from functions import getDfProcesses_v2
-def main(isMC, processNumber, nFiles, modelName):
+def main(isMC, processNumber, nFiles, modelName, multigpu):
     # Define name of the process, folder for the files and xsections
     
     df=getDfProcesses_v2()[0] if isMC else getDfProcesses_v2()[1]
@@ -36,7 +36,6 @@ def main(isMC, processNumber, nFiles, modelName):
             fileNumber = int(match.group(1))
         else:
             print("No match found")
-        #print(fileName)
 
 
         # check if the predictions was already done:
@@ -48,7 +47,7 @@ def main(isMC, processNumber, nFiles, modelName):
         if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(processNumber))
-            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 500)), '/t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predict.sh', fileName, str(processNumber), process, modelName])
+            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 500)), '/t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predict.sh', fileName, str(processNumber), process, modelName, str(multigpu)])
             doneFiles = doneFiles + 1
         else:
             print("..")
@@ -65,6 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("-pN", "--processNumber", type=int, help="processNumber of MC or datataking", default=0)
     parser.add_argument("-m", "--modelName", type=str, help="suffix of the model", default="Jan08_250p0")
     parser.add_argument("-n", "--nFiles", type=int, help="number of files", default=1)
+    parser.add_argument("-gpu", "--gpu", type=int, help="Model trained in MultiGPU or SingleGPU", default=1)
 
     args = parser.parse_args()
 
@@ -72,4 +72,5 @@ if __name__ == "__main__":
     pN = args.processNumber
     nFiles = args.nFiles
     modelName = args.modelName
-    main(isMC=isMC, processNumber=pN, nFiles=nFiles, modelName=modelName)
+    multigpu = args.gpu
+    main(isMC=isMC, processNumber=pN, nFiles=nFiles, modelName=modelName, multigpu=multigpu)

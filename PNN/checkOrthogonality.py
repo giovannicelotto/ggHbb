@@ -131,7 +131,7 @@ def checkOrthogonalityInMassBins(df, featureToPlot, mask1, mask2, label_mask1, l
     return ks_p_value_list, p_value_list, chi2_values_list
 
 
-def plotLocalPvalues(pvalues, mass_bins, pvalueLabel="KS", type='P-value', outFolder=None, color='blue'):
+def plotLocalPvalues(pvalues, mass_bins, pvalueLabel="KS", type='P-value', outFolder=None, color='blue', entries=0):
     labels=[]
     for low, high in zip(mass_bins[:-1], mass_bins[1:]):
         labels.append("%.1f ≤ $m_{jj}$ < %.1f"%(low, high))
@@ -157,6 +157,8 @@ def plotLocalPvalues(pvalues, mass_bins, pvalueLabel="KS", type='P-value', outFo
                 f"{pval:.5f}",  # Text to display
                 ha='center', va='bottom', fontsize=10, color='black'
             )
+            if entries!=0:
+                ax.text(x=0.9, y=0.95, s="Entries : %d"%entries, transform=ax.transAxes, ha='right')
             ax.set_xlim(ax.get_xlim())
             ax.hlines(xmin = ax.get_xlim()[0], xmax = ax.get_xlim()[1], y=np.mean(pvalues), linestyle='dotted', color='red', label='Mean')
 

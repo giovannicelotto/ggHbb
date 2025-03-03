@@ -16,9 +16,11 @@ file_path=$1
 pN=$2
 process=$3
 modelName=$4
+boosted=$5
 
 echo "$file_path"
-python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/predictTorch.py $file_path $process $modelName
+echo "Calling"
+python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/predictTorch.py $file_path $process $modelName $boosted
 
 # extract the fileName:
 filename=$(basename "$file_path")
