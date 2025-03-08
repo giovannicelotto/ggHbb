@@ -52,6 +52,7 @@ def evaluateCriterion(maxJet, fileNames, tag):
     firstJetIsGood = 0   
     secondJetIsGood = 0   
     goodChoice,wrongChoice, matched, nonMatched, noPossiblePair, totalEntriesVisited, outOfEta = 0, 0, 0, 0, 0, 0, 0
+    recoJetsBelow20 =0
     # goodChoice       = events where criterion worked
     # wrongChoice      = events criterion did not work
     # mathced          = events in which Higgs daughters are matched
@@ -158,6 +159,7 @@ def evaluateCriterion(maxJet, fileNames, tag):
             if ((idxJet1==-123) | (idxJet2==-124)):
                 # events of nonMatched
                 nonMatched+=1
+            
                 # look for quarks higgs daughters
                 #mask = (GenPart_pdgId[GenPart_genPartIdxMother]==25) & (abs(GenPart_pdgId)==5)
                 #if np.sum(mask)==2: # two true bquarks
@@ -180,6 +182,12 @@ def evaluateCriterion(maxJet, fileNames, tag):
                 continue
             else:
                 matched=matched+1
+                if (Jet_pt[idxJet1]<20) | (Jet_pt[idxJet2]<20):
+                    recoJetsBelow20 +=1
+                    continue
+                if ((abs(Jet_eta[idxJet1])>etaTracker)|(abs(Jet_eta[idxJet2])>etaTracker)):
+                    outOfEta=outOfEta+1
+                    continue
                 
             assert idxJet1>-0.01
             assert idxJet2>-0.01
@@ -197,8 +205,6 @@ def evaluateCriterion(maxJet, fileNames, tag):
             
             # if the reco jets are out of 2.5 no way that the choice will be correct
             jetsToCheck = np.min([nJet, maxJet])
-            if ((abs(Jet_eta[idxJet1])>etaTracker)|(abs(Jet_eta[idxJet2])>etaTracker)):
-                outOfEta=outOfEta+1
                 #selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB)
                 #if (selected1!=999) & (selected2!=999):
                 #    jet1 = ROOT.TLorentzVector(0., 0., 0., 0.)
@@ -207,7 +213,6 @@ def evaluateCriterion(maxJet, fileNames, tag):
                 #    jet2.SetPtEtaPhiM(Jet_pt[selected2]*Jet_bReg2018[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2]*Jet_bReg2018[selected2])
                 #    wrongJetsMass.append([(jet1+jet2).Pt(), (jet1+jet2).M()])
             
-                continue
                        
             taggers = [Jet_btagDeepFlavB, Jet_btagPNetB, Jet_tagUParTAK4B]
             tagLabel = ['DeepJet', 'PNet', 'PartT'][tag]
@@ -240,6 +245,7 @@ def evaluateCriterion(maxJet, fileNames, tag):
     print("Wrong choice of jets                                         : %d  \t  %.2f%%" %(wrongChoice , wrongChoice/totalEntriesVisited*100))
     print("No Dijet with trigger inside within 2.5. No choice made      : %d  \t  %.2f%%" %(noPossiblePair , noPossiblePair/totalEntriesVisited*100))
     print("Out of Eta                                                   : %d  \t  %.2f%%" %(outOfEta , outOfEta/totalEntriesVisited*100))
+    print("Below 20 GeV                                                   : %d  \t  %.2f%%" %(recoJetsBelow20 , recoJetsBelow20/totalEntriesVisited*100))
     
     print("Consistency = nonMatched + correct + wrong + noDijetWithTrigger + outOfEta: %d  \t  %.1f" %(nonMatched+goodChoice+noPossiblePair+wrongChoice+outOfEta, (nonMatched+goodChoice+noPossiblePair+wrongChoice)/totalEntriesVisited))
     print(maxJet, maxJet==4)
@@ -266,7 +272,7 @@ def main(nFiles, maxJet1, maxJet2, tag):
     
 
     #path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/allSamplesWW2025Jan20/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250120_100810/0000"
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/allSamplesWW2025Jan20/GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia8/crab_GluGluHToBBMINLO/250120_100840/0000"
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/mc_fiducial2025Mar08/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250307_230607/0000"
     fileNames = glob.glob(path+'/**/*.root', recursive=True)
     #random.shuffle(fileNames)
     fileNames = fileNames[:nFiles]

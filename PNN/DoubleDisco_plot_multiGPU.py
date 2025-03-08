@@ -43,15 +43,60 @@ try:
     if args.date is not None:
         current_date = args.date
 except:
-    current_date = "Feb24"
-    hp["lambda_reg"] = 900.
+    current_date = "Mar05"
+    hp["lambda_reg"] = 700.1
     print("Interactive mode")
+inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
+# %%
+# Plot Loss function
+# Load the loss functions from different ranks
+rank = 0  
+while True:
+    # Check if the file for rank number N exist
+    file_path = os.path.join(outFolder, "model/train_loss_history_rank%d.npy"%rank)
+    if not os.path.exists(file_path):
+        print(f"No file found for rank {rank}, stopping.")
+        break  # Exit loop when a file is missing
+    print("Getting Loss function from rank : %d"%rank)
+    train_loss_history_rank = np.load(outFolder + "/model/train_loss_history_rank%d.npy"%(rank))
+    val_loss_history_rank = np.load(outFolder + "/model/val_loss_history_rank%d.npy"%(rank))
+    train_classifier_loss_history_rank = np.load(outFolder + "/model/train_classifier_loss_history_rank%d.npy"%(rank))
+    val_classifier_loss_history_rank = np.load(outFolder + "/model/val_classifier_loss_history_rank%d.npy"%(rank))
+    train_dcor_loss_history_rank = np.load(outFolder + "/model/train_dcor_loss_history_rank%d.npy"%(rank))
+    val_dcor_loss_history_rank = np.load(outFolder + "/model/val_dcor_loss_history_rank%d.npy"%(rank))
+    if rank == 0:
+        train_loss_history = train_loss_history_rank
+        val_loss_history = val_loss_history_rank
+        train_classifier_loss_history = train_classifier_loss_history_rank
+        val_classifier_loss_history = val_classifier_loss_history_rank
+        train_dcor_loss_history = train_dcor_loss_history_rank
+        val_dcor_loss_history = val_dcor_loss_history_rank
+    else:
+        train_loss_history = train_loss_history + train_loss_history_rank
+        val_loss_history = val_loss_history + val_loss_history_rank
+        train_classifier_loss_history = train_classifier_loss_history + train_classifier_loss_history_rank
+        val_classifier_loss_history = val_classifier_loss_history + val_classifier_loss_history_rank
+        train_dcor_loss_history = train_dcor_loss_history + train_dcor_loss_history_rank
+        val_dcor_loss_history = val_dcor_loss_history + val_dcor_loss_history_rank
+    rank += 1
+nRanks = rank
+train_loss_history = train_loss_history/nRanks
+val_loss_history = val_loss_history/nRanks
+train_classifier_loss_history = train_classifier_loss_history/nRanks
+val_classifier_loss_history = val_classifier_loss_history/nRanks
+train_dcor_loss_history = train_dcor_loss_history/nRanks
+val_dcor_loss_history = val_dcor_loss_history/nRanks
+
+best_epoch = plot_lossTorch(train_loss_history, val_loss_history, 
+              train_classifier_loss_history, val_classifier_loss_history,
+              train_dcor_loss_history, val_dcor_loss_history,
+              outFolder, gpu=True)
+print("Best epoch chosen based on val loss is %d"%best_epoch)
 # %%
 results = {}
-inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
-modelName1, modelName2 = "nn1.pth", "nn2.pth"
-nn1_t = 0.4
-nn2_t =0.4
+
+modelName1, modelName2 = "nn1_e%d.pth"%best_epoch, "nn2_e%d.pth"%best_epoch
+
 # %%
 # Load data, neural networks and weights
 Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/data")
@@ -176,48 +221,6 @@ Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  
 
 
 # %%
-# Load the loss functions from different ranks
-rank = 0  
-while True:
-    # Check if the file for rank number N exist
-    file_path = os.path.join(outFolder, "model/train_loss_history_rank%d.npy"%rank)
-    if not os.path.exists(file_path):
-        print(f"No file found for rank {rank}, stopping.")
-        break  # Exit loop when a file is missing
-    print("Getting Loss function from rank : %d"%rank)
-    train_loss_history_rank = np.load(outFolder + "/model/train_loss_history_rank%d.npy"%(rank))
-    val_loss_history_rank = np.load(outFolder + "/model/val_loss_history_rank%d.npy"%(rank))
-    train_classifier_loss_history_rank = np.load(outFolder + "/model/train_classifier_loss_history_rank%d.npy"%(rank))
-    val_classifier_loss_history_rank = np.load(outFolder + "/model/val_classifier_loss_history_rank%d.npy"%(rank))
-    train_dcor_loss_history_rank = np.load(outFolder + "/model/train_dcor_loss_history_rank%d.npy"%(rank))
-    val_dcor_loss_history_rank = np.load(outFolder + "/model/val_dcor_loss_history_rank%d.npy"%(rank))
-    if rank == 0:
-        train_loss_history = train_loss_history_rank
-        val_loss_history = val_loss_history_rank
-        train_classifier_loss_history = train_classifier_loss_history_rank
-        val_classifier_loss_history = val_classifier_loss_history_rank
-        train_dcor_loss_history = train_dcor_loss_history_rank
-        val_dcor_loss_history = val_dcor_loss_history_rank
-    else:
-        train_loss_history = train_loss_history + train_loss_history_rank
-        val_loss_history = val_loss_history + val_loss_history_rank
-        train_classifier_loss_history = train_classifier_loss_history + train_classifier_loss_history_rank
-        val_classifier_loss_history = val_classifier_loss_history + val_classifier_loss_history_rank
-        train_dcor_loss_history = train_dcor_loss_history + train_dcor_loss_history_rank
-        val_dcor_loss_history = val_dcor_loss_history + val_dcor_loss_history_rank
-    rank += 1
-nRanks = rank
-train_loss_history=train_loss_history/nRanks
-val_loss_history=val_loss_history/nRanks
-train_classifier_loss_history=train_classifier_loss_history/nRanks
-val_classifier_loss_history=val_classifier_loss_history/nRanks
-train_dcor_loss_history=train_dcor_loss_history/nRanks
-val_dcor_loss_history=val_dcor_loss_history/nRanks
-plot_lossTorch(train_loss_history, val_loss_history, 
-              train_classifier_loss_history, val_classifier_loss_history,
-              train_dcor_loss_history, val_dcor_loss_history,
-              outFolder)
-# %%
 
 
 
@@ -229,46 +232,28 @@ Xtest['PNN1'] = YPredTest1
 Xtest['PNN2'] = YPredTest2
 
 
-# Spin 0 Distribution
-#fig, ax = plt.subplots(1, 2, figsize=(15, 8))
-#bins=np.linspace(0, 1, 101)
-#cS = np.histogram(Xval[Yval==0].PNN1,bins=bins)[0]
-#cD = np.histogram(Xval[Yval==1].PNN1,bins=bins)[0]
-#cS=cS/np.sum(cS)
-#cD = cD/np.sum(cD)
-#ax[0].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
-#ax[0].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
-#ax[0].set_xlabel("Classifer 1")
-#cS = np.histogram(Xval[Yval==0].PNN2,bins=bins)[0]
-#cD = np.histogram(Xval[Yval==1].PNN2,bins=bins)[0]
-#cS=cS/np.sum(cS)
-#cD = cD/np.sum(cD)
-#ax[1].hist(bins[:-1], bins=bins, weights=cS, histtype='step', color='blue') 
-#ax[1].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red') 
-#ax[1].set_xlabel("Classifier 2")
-#fig.savefig(outFolder+"/performance/outputSpin0.png", bbox_inches='tight')
 
-
-
-
-NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
+max_nn1, secondMax_nn1 = NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
           signalTrain_predictions=YPredTrain1[genMassTrain==125], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
-          outName=outFolder+"/performance/output1_125.png", log=False)
-NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
+          outName=outFolder+"/performance/output1_125.png", log=False, doubleDisco=True)
+max_nn2, secondMax_nn2 = NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
           signalTrain_predictions=YPredTrain2[genMassTrain==125], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
-          outName=outFolder+"/performance/output2_125.png", log=False)
-NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
-          signalTrain_predictions=YPredTrain1[genMassTrain==125], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
-          outName=outFolder+"/performance/output1_125_log.png", log=True)
-NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
-          signalTrain_predictions=YPredTrain2[genMassTrain==125], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
-          outName=outFolder+"/performance/output2_125_log.png", log=True)
-NNoutputs(signal_predictions=YPredVal1[Yval==1], realData_predictions=YPredVal1[genMassVal==0],
-          signalTrain_predictions=YPredTrain1[Ytrain==1], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
-          outName=outFolder+"/performance/output1_Spin0_log.png", log=True)
-NNoutputs(signal_predictions=YPredVal2[Yval==1], realData_predictions=YPredVal2[genMassVal==0],
-          signalTrain_predictions=YPredTrain2[Ytrain==1], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
-          outName=outFolder+"/performance/output2_Spin0_log.png", log=True)
+          outName=outFolder+"/performance/output2_125.png", log=False, doubleDisco=True)
+
+nn1_t = (max_nn1 + secondMax_nn1)/2
+nn2_t = (max_nn2 + secondMax_nn2)/2
+#NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
+#          signalTrain_predictions=YPredTrain1[genMassTrain==125], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
+#          outName=outFolder+"/performance/output1_125_log.png", log=True)
+#NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
+#          signalTrain_predictions=YPredTrain2[genMassTrain==125], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
+#          outName=outFolder+"/performance/output2_125_log.png", log=True)
+#NNoutputs(signal_predictions=YPredVal1[Yval==1], realData_predictions=YPredVal1[genMassVal==0],
+#          signalTrain_predictions=YPredTrain1[Ytrain==1], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
+#          outName=outFolder+"/performance/output1_Spin0_log.png", log=True)
+#NNoutputs(signal_predictions=YPredVal2[Yval==1], realData_predictions=YPredVal2[genMassVal==0],
+#          signalTrain_predictions=YPredTrain2[Ytrain==1], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
+#          outName=outFolder+"/performance/output2_Spin0_log.png", log=True)
 # %%
 
 ncols = 4
@@ -613,8 +598,6 @@ from plot_v2 import plot4ABCD, QCD_SR
 
 hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', blindPar=(False, 125, 20), outName=outFolder+"/performance/abcd_check4R", sameWidth_flag=False)
 qcd_mc = regions['B']
-print(qcd_mc.values())
-print(hB_ADC.values())
 QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", blindPar=(False, 125, 10), outName=outFolder+"/performance/abcd_checkSR", sameWidth_flag=False)
 
 
@@ -650,7 +633,7 @@ hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', blin
 qcd_mc = regions['B']
 print(qcd_mc.values())
 print(hB_ADC.values())
-QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", blindPar=(False, 125, 10), outName=outFolder+"/performance/abcd_checkSR_test", sameWidth_flag=False, corrected=True)
+QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", blindPar=(False, 125, 10), outName=outFolder+"/performance/abcd_checkSR_test", sameWidth_flag=False, corrected=False)
 
 
 

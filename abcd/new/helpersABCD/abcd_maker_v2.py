@@ -6,7 +6,7 @@ from hist import Hist
 import matplotlib.pyplot as plt
 import numpy as np
 
-def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi, suffix, blindPar, corrections=None):
+def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi, suffix, blindPar, corrections=None, err_corrections=None):
     print("Creating histograms for SR and CR")
     hA = Hist.new.Var(bins, name="mjj").Weight()
     hB = Hist.new.Var(bins, name="mjj").Weight()
@@ -68,6 +68,7 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
     hB_ADC = plot4ABCD(regions=regions, bins=bins, x1=x1, x2=x2, t1=t1, t2=t2, suffix=suffix, blindPar=blindPar, sameWidth_flag=False)
     
     if corrections is not None:
+        hB_ADC.variances()[:] = hB_ADC.variances()[:]*corrections**2 +  (hB_ADC.values()[:]*err_corrections)**2
         hB_ADC.values()[:] = hB_ADC.values()[:]*corrections 
 # Second Plot
     countsDict_SR = SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix=suffix, blindPar=blindPar,  sameWidth_flag=False)

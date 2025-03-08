@@ -242,9 +242,9 @@ for epoch in range(hp["epochs"]):
             # Mask for the current mass bin and bkg events only
             bin_mask = (dijetMass_batch >= low) & (dijetMass_batch < high)  & (mask_batch)
 
-            if (bin_mask.sum().item()==0):
-                print("No elements in this bin!")
-                continue
+            #if (bin_mask.sum().item()==0):
+            #    print("No elements in this bin!")
+            #    continue
             bin_predictions1 = predictions1[bin_mask]
             bin_predictions2 = predictions2[bin_mask]
             bin_weights = W_batch[bin_mask]

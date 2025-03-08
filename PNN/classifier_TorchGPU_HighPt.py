@@ -37,6 +37,7 @@ parser = argparse.ArgumentParser(description="Script.")
 parser.add_argument("-l", "--lambda_dcor", type=float, help="lambda for penalty term", default=None)
 parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=1500)
 parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=1000000000)
+parser.add_argument("-b", "--boosted", type=int, help="Boosted Class", default=1)
 parser.add_argument("-lr", "--learningRate", type=float, help="learning rate", default=None)
 parser.add_argument("-bs", "--batch_size", type=int, help="Number of events perBatch", default=None)
 parser.add_argument("-eS", "--earlyStopping", type=int, help="patience early stop", default=None)
@@ -64,6 +65,8 @@ try:
         hp["learning_rate"] = args.learningRate
     if args.size != int(1e9):
         hp["size"] = args.size
+    if args.boosted != int(1e9):
+        boosted = args.boosted
     print("After parameters")
     print(hp)
 except:
@@ -80,7 +83,6 @@ except:
     hp['patienceES'] = 40
 # %%
 sampling = True
-boosted = 1
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, boosted, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco')
 inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d"%(boosted) if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
 

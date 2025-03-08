@@ -29,7 +29,7 @@ try:
         modelName = args.modelName
 except:
     print("Interactive mode")
-    modelName = "Feb27_700p0"
+    modelName = "Mar05_700p1"
 # %%
 #modelName = "Jan24_900p0"
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/NN_predictions/DoubleDiscoPred_%s"%modelName
@@ -43,8 +43,8 @@ columns = ['dijet_mass',
           'dijet_eta',
           'ht',
           'jet1_nTightMuons',
-          'Muon_fired_HLT_Mu9_IP6',
-          'Muon_fired_HLT_Mu12_IP6'
+          #'Muon_fired_HLT_Mu9_IP6',
+          #'Muon_fired_HLT_Mu12_IP6'
           ]
 dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/%s"%modelName
@@ -56,9 +56,9 @@ if not os.path.exists(df_folder):
 # %%
 DataTakingList = [
             # 0, #1A
-            #1,   #2A
+            1,   #2A
             2,   #1D
-            #3,
+            3,
             #4,
             #5,
             #6
@@ -120,18 +120,19 @@ for idx, (dataTakingIdx, dataTakingName) in enumerate(zip(DataTakingList, proces
 
 # %%
 isMCList = [
-            0,
-            1, 
-            2,3, 4,
-            5,6,7,8, 9,10,
-            11,12,13,
-            14,
-            15,16,17,18,
-            19,20,21, 22,
+            #0,
+            #1, 
+            #2,3, 4,
+            #5,6,7,8, 9,10,
+            #11,12,13,
+            #14,
+            #15,16,17,18,
+            #19,20,21, 22,
             ##23, 24, 25, 26, 27, 28, 
             ##29, 30, 31, 32, 33, 34,
             35,
             36,
+            37
     #41
             ]
 nMCs = [

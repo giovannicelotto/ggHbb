@@ -374,7 +374,10 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar, same
     p_value = 1 - chi2.cdf(chi2_stat, df=ndof)
     ax[0].text(x=0.95, y=0.9, s="$\chi^2$/ndof = %.1f/%d"%(chi2_stat, ndof), ha='right', transform=ax[0].transAxes)
     ax[0].text(x=0.95, y=0.82, s="p-value = %.3f"%p_value, ha='right', transform=ax[0].transAxes)
-
+    print("Debugging")
+    print(regions["B"].values())
+    print(blind_mask)
+    print(mcPlusQCD.values())
     err_ratio = regions["B"].values()*blind_mask/mcPlusQCD.values() * np.sqrt(  regions["B"].variances()/(regions["B"].values())**2 +  mcPlusQCD.variances()/mcPlusQCD.values()**2)
     ax[1].errorbar(x[blind_mask], (regions["B"].values()/mcPlusQCD.values())[blind_mask], yerr=err_ratio[blind_mask] , marker='o', color='black', linestyle='none')
     print("*"*10)
@@ -393,6 +396,7 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar, same
 
 
 def pullsVsDisco(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, lumi=0, outName=None):
+    assert False
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
     fig.align_ylabels([ax[0],ax[1]])
@@ -428,44 +432,57 @@ def pullsVsDisco(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, lumi=0, outN
     return popt, pcov
 
 
-def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask, lumi=0, outName=None):
+def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask, xerr, lumi=0, outName=None):
     pulls_QCDPlusSM_SR = pulls_QCDPlusSM_SR[mask]
     err_QCDPlusSM_SR = err_QCDPlusSM_SR[mask]
     import matplotlib.pyplot as plt
+    import scipy.odr as odr
     fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
     fig.align_ylabels([ax[0],ax[1]])
-    ax[0].errorbar(dcor_values[mask], pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, linestyle='none', color='black', marker='o', label='CR')
+    ax[0].errorbar(dcor_values[mask], pulls_QCDPlusSM_SR, xerr=xerr[mask], yerr=err_QCDPlusSM_SR, linestyle='none', color='black', marker='o', label='CR')
     ax[1].set_xlabel("Pearson R")
     ax[0].set_ylabel("1/Correction")
     
 
 
-    def model_function(x, q, m):
-        """Example model function: a simple linear model."""
-        return q + m * np.array(x)
-    from scipy.optimize import curve_fit
-    popt, pcov = curve_fit(model_function, dcor_values[mask], pulls_QCDPlusSM_SR, sigma=err_QCDPlusSM_SR, absolute_sigma=True)
+    def model_func(beta, x):
+        return beta[0] * x + beta[1]  # Example: Linear fit (y = a*x + b)
+    linear_model = odr.Model(model_func)
+
+    # Create a data object with errors in x and y
+    data = odr.RealData(dcor_values[mask], pulls_QCDPlusSM_SR, sx=xerr[mask], sy=err_QCDPlusSM_SR)
+
+    # Set up the ODR
+    odr_fit = odr.ODR(data, linear_model, beta0=[1, 1])  # Initial guess
+
+    # Run the regression
+    output = odr_fit.run()
+    #from scipy.optimize import curve_fit
+    #popt, pcov = curve_fit(model_function, dcor_values[mask], pulls_QCDPlusSM_SR, sigma=err_QCDPlusSM_SR, absolute_sigma=True)
 
     # Extract fit parameters and their uncertainties
-    q_fit, m_fit = popt
-    a_err, b_err = np.sqrt(np.diag(pcov))
-    y_fit = model_function(dcor_values, *popt)
+    m_fit, q_fit,  = output.beta
+    m_err, q_err = output.sd_beta
+    y_fit = model_func(output.beta, dcor_values)
     ax[0].plot(dcor_values, y_fit, label=f'Fit: y = {m_fit:.2f}x + {q_fit:.2f}', color='red')
-    ax[0].errorbar(dcor_values[~mask], model_function(dcor_values[~mask], *popt), label=f'VR and SR', color='green', linestyle='none', marker='o')
+    ax[0].errorbar(dcor_values[~mask], model_func(output.beta, dcor_values[~mask]), label=f'VR and SR', color='green', linestyle='none', marker='o')
     ax[0].set_xlim(ax[1].get_xlim()[0], ax[0].get_xlim()[1])
-    ax[1].errorbar(dcor_values[mask], pulls_QCDPlusSM_SR-y_fit[mask], err_QCDPlusSM_SR, linestyle='none', color='black', marker='o')
+    ax[1].errorbar(dcor_values[mask], pulls_QCDPlusSM_SR-y_fit[mask], xerr= xerr[mask], yerr=err_QCDPlusSM_SR, linestyle='none', color='black', marker='o')
     ax[1].hlines(y=0, xmin=ax[1].get_xlim()[0], xmax=ax[1].get_xlim()[1], color='red')
 
-    chi2_stat = np.sum(((pulls_QCDPlusSM_SR-y_fit[mask])/err_QCDPlusSM_SR)**2)
+    chi2_stat = np.sum(((pulls_QCDPlusSM_SR-y_fit[mask])**2/(err_QCDPlusSM_SR**2 + (m_fit*xerr[mask])**2)))
+    print("My chi2", chi2_stat)
+    print("ODR chi2", output.res_var * (len(data.x) - len(output.beta)) )
     ndof  = np.sum(mask)
     from scipy.stats import chi2
     chi2_pvalue = 1- chi2.cdf(chi2_stat, ndof)
     ax[0].text(x=0.05, y=0.12, s="$\chi^2$/ndof = %.1f/%d, p-value = %.3f"%(chi2_stat, ndof, chi2_pvalue), transform=ax[0].transAxes, ha='left')
-    ax[0].text(x=0.05, y=0.04, s="q = %.3f +- %.3f"%(popt[0], np.sqrt(pcov[0,0])) , transform=ax[0].transAxes, ha='left')
+    ax[0].text(x=0.05, y=0.04, s="q = %.3f +- %.3f"%(q_fit, q_err) , transform=ax[0].transAxes, ha='left')
     #ax[0].text(x=0.05, y=0.10, s="m = %.3f +- %.3f"%(popt[0], np.sqrt(pcov[0,0])) , transform=ax[0].transAxes, ha='left')
     ax[0].legend()
 
     if outName is not None:
         fig.savefig(outName, bbox_inches='tight')
-
-    return popt, pcov
+# the covariance matrix is scaled with residuals
+# see https://docs.scipy.org/doc/scipy/reference/generated/scipy.odr.Output.html#scipy.odr.Output
+    return output.beta, output.sd_beta, (output.cov_beta * output.res_var)

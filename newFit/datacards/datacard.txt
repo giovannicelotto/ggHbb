@@ -1,0 +1,17 @@
+imax 1  number of channels
+jmax 1  number of backgrounds
+kmax *  number of nuisance parameters (automatic)
+
+shapes data_obs   * /t3home/gcelotto/newFit/hists/counts.root data_obs
+shapes Higgs      * /t3home/gcelotto/newFit/hists/counts.root Higgs
+shapes bkg        * /t3home/gcelotto/newFit/hists/counts.root bkg
+
+bin bin1
+observation -1 
+
+bin         bin1    bin1
+process     Higgs   bkg
+process     0       1
+rate        264     629159  
+
+* autoMCStats 1 

@@ -23,7 +23,7 @@ def get_layer_sizes(state_dict, n_input_features):
         return layer_sizes
 
 
-def predict(file_path, modelName, multigpu):
+def predict(file_path, modelName, multigpu, epoch):
     #featuresForTraining, columnsToRead = getFeatures(outFolder=None)
     # Load data from file_path and preprocess it as needed
     print(file_path)
@@ -41,8 +41,8 @@ def predict(file_path, modelName, multigpu):
         nn1.eval()
         nn2.eval()
     else:
-        state_dict1 = torch.load(outFolder + "/model/nn1.pth", map_location=torch.device('cpu'))
-        state_dict2 = torch.load(outFolder + "/model/nn2.pth", map_location=torch.device('cpu'))
+        state_dict1 = torch.load(outFolder + "/model/nn1_e%d.pth"%epoch, map_location=torch.device('cpu'))
+        state_dict2 = torch.load(outFolder + "/model/nn2_e%d.pth"%epoch, map_location=torch.device('cpu'))
         ## Remove the 'module.' prefix if it exists
         state_dict1 = {k.replace('module.', ''): v for k, v in state_dict1.items()}
         state_dict2 = {k.replace('module.', ''): v for k, v in state_dict2.items()}
@@ -102,10 +102,11 @@ if __name__ == "__main__":
     process     = sys.argv[2]
     modelName   = sys.argv[3]
     multigpu    = int(sys.argv[4])
-    print(file_path, process, modelName, multigpu)
+    epoch    = int(sys.argv[5])
+    print(file_path, process, modelName, multigpu, epoch)
 
     
-    predictions1, predictions2 = predict(file_path, modelName, multigpu)
+    predictions1, predictions2 = predict(file_path, modelName, multigpu, epoch)
     print("Shape of predictions1", predictions1.shape)
     predictions = pd.DataFrame({
     'PNN1': predictions1.reshape(-1),

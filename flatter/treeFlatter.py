@@ -52,16 +52,15 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
     
 
     # Open the WorkingPoint correction lib
-    #fname = "/t3home/gcelotto/ggHbb/systematics/wpDeepJet/btv-json-sf/data/UL2018/btagging.json.gz"
-    #if fname.endswith(".json.gz"):
-    #
-    #    with gzip.open(fname,'rt') as file:
-    #        #data = json.load(file)
-    #        data = file.read().strip()
-    #        cset = _core.CorrectionSet.from_string(data)
-    #else:
-    #    cset = _core.CorrectionSet.from_file(fname)
-    #corrDeepJet_FixedWP_muJets = cset["deepJet_mujets"]
+    fname = "/t3home/gcelotto/ggHbb/systematics/wpDeepJet/btv-json-sf/data/UL2018/btagging.json.gz"
+    if fname.endswith(".json.gz"):
+        with gzip.open(fname,'rt') as file:
+            #data = json.load(file)
+            data = file.read().strip()
+            cset = _core.CorrectionSet.from_string(data)
+    else:
+        cset = _core.CorrectionSet.from_file(fname)
+    corrDeepJet_FixedWP_muJets = cset["deepJet_mujets"]
     #corrDeepJet_shape           = cset["deepJet_shape"]
     #btag_systs = ['central','down','down_jes', 'down_pileup', 'down_statistic', 'down_type3', 'up', 'up_jes', 'up_pileup', 'up_statistic', 'up_type3', 'down_correlated', 'down_uncorrelated', 'up_correlated', 'up_uncorrelated']
     #wp_converter = cset["deepJet_wp_values"]
@@ -206,14 +205,14 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         jet1_sv_3dSig = Jet_vtx3dL[selected1]/Jet_vtx3deL[selected1] if Jet_vtx3dL[selected1]!=0 else 0
         features_.append(jet1_sv_3dSig)
         
-        #if wp_converter.evaluate("L") <= Jet_btagDeepFlavB[selected1] < wp_converter.evaluate("M"):
-        #    wp = "L"
-        #elif wp_converter.evaluate("M") <= Jet_btagDeepFlavB[selected1] < wp_converter.evaluate("T"):
-        #    wp = "M"
-        #elif wp_converter.evaluate("T") <= Jet_btagDeepFlavB[selected1]:
-        #    wp = "T"
-        #else:
-        #    wp = None  # Optional: handle case where score is below "L"
+        if wp_converter.evaluate("L") <= Jet_btagDeepFlavB[selected1] < wp_converter.evaluate("M"):
+            wp = "L"
+        elif wp_converter.evaluate("M") <= Jet_btagDeepFlavB[selected1] < wp_converter.evaluate("T"):
+            wp = "M"
+        elif wp_converter.evaluate("T") <= Jet_btagDeepFlavB[selected1]:
+            wp = "T"
+        else:
+            wp = None  # Optional: handle case where score is below "L"
         #if (isMC!=0) & (isMC!=39) & (isMC!=57):
         #    for syst in ["central", "up", "down"]:
         #        if (Jet_genJetIdx[selected1]!= -1) & (wp is not None): 

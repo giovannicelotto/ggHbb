@@ -21,9 +21,9 @@ corr1 = cset["deepJet_mujets"]
 # Step 3: Define the parameters for the query
 systematic = "central"  
 working_point = "L"  
-flavor = 3
+flavor = 5
 abseta = 1.0 
-pt = 50.0  # Example pt value (GeV)
+pt = 100.0  # Example pt value (GeV)
 sf = corrDeepJet_shape.evaluate(systematic, flavor, abseta, pt, 0.9)
 
 print(sf)

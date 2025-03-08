@@ -14,13 +14,14 @@ from plotDfs import plotDfs
 from hist import Hist
 
 # %%
-boosted = 2
-modelName = "Feb27_%d_0p0"%boosted
+boosted = 1
+modelName = "Mar06_%d_0p0"%boosted
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
-columns = ['dijet_mass', 'dijet_pt',
+columns_ = ['dijet_mass', 'dijet_pt',
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
           'leptonClass',          
           'PU_SF', 'sf']
+columns = columns_.copy()
 dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
@@ -31,7 +32,7 @@ if not os.path.exists(df_folder):
 # %%
 DataTakingList = [
             #0,  #1A
-            #1,  #2A
+            #1,   #2A
             2,  #1D
             #3,
             #4,
@@ -101,15 +102,16 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 
 
 # %%
-isMCList = [0,
+columns = columns_.copy()
+isMCList = [#0,
             1, 
-            #2,
+            ##2,
             3, 4,
-            #5,6,7,8, 9,10,
-            #11,12,13,
-            #14,15,16,17,18,
+            ##5,6,7,8, 9,10,
+            ##11,12,13,
+            ##14,15,16,17,18,
             19,20,21, 22,
-            #35,
+            ##35,
             36,
             37
             ]
@@ -139,6 +141,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
         dfs=cut(dfs, 'dijet_pt', 160, None)
     predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
     df = preprocessMultiClass(dfs=dfs)[0].copy()
+    print(df.columns)
 
 
         

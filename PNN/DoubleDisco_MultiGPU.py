@@ -108,6 +108,8 @@ class Trainer:
                 self.optimizer2.zero_grad()
                 predictions1 = self.nn1(X_batch)
                 predictions2 = self.nn2(X_batch)
+                if (predictions1.min().item()<0) | (predictions1.max().item()>1) | (predictions2.min().item()<0) | (predictions2.max().item()>1):
+                    print("Error on predictions :\nMin Prediction : %.2f %.2f \nMax Prediction : %.2f %.2f"%(predictions1.min().item(), predictions2.min().item(), predictions1.max().item(), predictions2.max().item()))
                 raw_loss1 = self.criterion(predictions1, Y_batch)
                 raw_loss2 = self.criterion(predictions2, Y_batch)
                 classifier_loss1 = (raw_loss1 * W_batch).mean()
@@ -207,8 +209,8 @@ class Trainer:
 
 
             # Calculate average losses (average over batches)
-            print("len(self.train_data)", len(self.train_data))
-            print("len(self.val_data)", len(self.val_data))
+            #print("len(self.train_data)", len(self.train_data))
+            #print("len(self.val_data)", len(self.val_data))
             avg_trainloss = total_trainloss / len(self.train_data)
             avg_train_classifier_loss = total_trainclassifier_loss / len(self.train_data)
             avg_traindcor_loss = total_traindcor_loss / len(self.train_data)
@@ -231,23 +233,24 @@ class Trainer:
                   flush=(epoch % 20 == 0))
                 
 
-            # Early Stopping check
-            if (save) & (epoch%150==0):
+            # CheckPoints
+            if (self.rank==0) & (save) & (epoch%50==0):
                 torch.save(self.nn1.state_dict(), outFolder + "/model/nn1_e%d.pth"%epoch)
                 torch.save(self.nn2.state_dict(), outFolder + "/model/nn2_e%d.pth"%epoch)
+            
+            # No early stop for GPU
+            #if avg_val_loss < best_val_loss:
+            #    best_val_loss = avg_val_loss
+            #    patience_counter = 0  # reset patience if validation loss improves
+            #    best_model_weights1 = self.nn1.state_dict()
+            #    best_model_weights2 = self.nn2.state_dict()
+            #    best_epoch= epoch
+            #else:
+            #    patience_counter += 1
 
-            if avg_val_loss < best_val_loss:
-                best_val_loss = avg_val_loss
-                patience_counter = 0  # reset patience if validation loss improves
-                best_model_weights1 = self.nn1.state_dict()
-                best_model_weights2 = self.nn2.state_dict()
-                best_epoch= epoch
-            else:
-                patience_counter += 1
-
-            if patience_counter >= hp["patienceES"]:
-                print("Early stopping triggered.")
-                break
+            #if patience_counter >= hp["patienceES"]:
+            #    print("Early stopping triggered.")
+            #    break
 
             if (self.rank == 0) & (epoch%10==0):
                 batch_total_time = time.time() - batch_start_time
@@ -263,12 +266,12 @@ class Trainer:
 
         if self.rank==0:
             # Restore best weights in case of EarlyStopping
-            if best_model_weights1 is not None:
-                self.nn1.load_state_dict(best_model_weights1)
-                self.nn2.load_state_dict(best_model_weights2)
-                if save:
-                    np.save(outFolder + "/model/epoch.npy", np.array([best_epoch]))
-                print("Restored the best model weights.")
+            #if best_model_weights1 is not None:
+            #    self.nn1.load_state_dict(best_model_weights1)
+            #    self.nn2.load_state_dict(best_model_weights2)
+            #    if save:
+            #        np.save(outFolder + "/model/epoch.npy", np.array([best_epoch]))
+            #    print("Restored the best model weights.")
             # Save model weights
             if save:
                 torch.save(self.nn1.state_dict(), outFolder + "/model/nn1.pth")
@@ -352,6 +355,7 @@ def main(rank: int, world_size: int, hp: dict,
     nn2 = torch.nn.SyncBatchNorm.convert_sync_batchnorm(nn2)
     nn1.to(rank)
     nn2.to(rank)
+
     criterion = nn.BCELoss(reduction='none')
     optimizer1 = optim.Adam(nn1.parameters(), lr=hp["learning_rate"])
     optimizer2 = optim.Adam(nn2.parameters(), lr=hp["learning_rate"])
@@ -412,7 +416,7 @@ if __name__ == "__main__":
     # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
     if not args.saveResults:
         outFolder = "/t3home/gcelotto/ggHbb/PNN/resultsDoubleDisco/commonFolder"
-    featuresForTraining, columnsToRead = getFeatures(outFolder=outFolder, massHypo=True, bin_center=hp["bin_center_bool"])
+    featuresForTraining, columnsToRead = getFeatures(outFolder=outFolder, massHypo=False, bin_center=hp["bin_center_bool"], simple=True)
 
     Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/%s"%inputSubFolder)
     dijetMassTrain = np.array(Xtrain.dijet_mass.values)

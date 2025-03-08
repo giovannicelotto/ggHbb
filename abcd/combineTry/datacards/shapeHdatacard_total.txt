@@ -2,7 +2,7 @@ imax 1 number of bins
 jmax 6 number of processes minus 1
 kmax 8 number of nuisance parameters
 ----------------------------------------------------------------------------------------------------------------------------------
-shapes *    total  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_Feb25_900p0_dd__2A_1D_3A_corrected.root $PROCESS
+shapes *    total  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_Mar05_700p1_dd__2A_1D_corrected.root $PROCESS
 ----------------------------------------------------------------------------------------------------------------------------------
 bin          total
 observation  -1

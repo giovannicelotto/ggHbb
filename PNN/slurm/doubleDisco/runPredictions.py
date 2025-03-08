@@ -6,7 +6,7 @@ import time
 import argparse
 import os
 from functions import getDfProcesses_v2
-def main(isMC, processNumber, nFiles, modelName, multigpu):
+def main(isMC, processNumber, nFiles, modelName, multigpu, epoch=None):
     # Define name of the process, folder for the files and xsections
     
     df=getDfProcesses_v2()[0] if isMC else getDfProcesses_v2()[1]
@@ -47,7 +47,7 @@ def main(isMC, processNumber, nFiles, modelName, multigpu):
         if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(processNumber))
-            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 500)), '/t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predict.sh', fileName, str(processNumber), process, modelName, str(multigpu)])
+            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 500)), '/t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predict.sh', fileName, str(processNumber), process, modelName, str(multigpu), str(epoch)])
             doneFiles = doneFiles + 1
         else:
             print("..")
@@ -62,9 +62,10 @@ if __name__ == "__main__":
     # Define arguments
     parser.add_argument("-MC", "--isMC", type=int, help="isMC True or False", default=0)
     parser.add_argument("-pN", "--processNumber", type=int, help="processNumber of MC or datataking", default=0)
-    parser.add_argument("-m", "--modelName", type=str, help="suffix of the model", default="Jan08_250p0")
+    parser.add_argument("-m", "--modelName", type=str, help="suffix of the model", default=None)
     parser.add_argument("-n", "--nFiles", type=int, help="number of files", default=1)
     parser.add_argument("-gpu", "--gpu", type=int, help="Model trained in MultiGPU or SingleGPU", default=1)
+    parser.add_argument("-e", "--epoch", type=int, help="Epoch", default=None)
 
     args = parser.parse_args()
 
@@ -73,4 +74,9 @@ if __name__ == "__main__":
     nFiles = args.nFiles
     modelName = args.modelName
     multigpu = args.gpu
-    main(isMC=isMC, processNumber=pN, nFiles=nFiles, modelName=modelName, multigpu=multigpu)
+    epoch = args.epoch
+    if (multigpu) & (epoch is None):
+        assert False, "Multigpu True and Epoch not specified"
+    if modelName is None:
+        assert False, "ModelName not specified"
+    main(isMC=isMC, processNumber=pN, nFiles=nFiles, modelName=modelName, multigpu=multigpu, epoch=epoch)

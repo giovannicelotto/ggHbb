@@ -24,8 +24,25 @@ from helpers.flattenWeights import flattenWeights
 
 # Define folder of input and output. Create the folders if not existing
 hp = getParams()
-sampling=False
-boosted=0
+try:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Process some arguments.")
+    parser.add_argument("-s", "--sampling", type=int, help="Enable sampling (default: False)", default=True)
+    parser.add_argument("-b", "--boosted", type=int, default=2, help="Set boosted value (1 100-160) or 2 160-inf)")
+
+    args = parser.parse_args()
+    sampling = args.sampling
+    boosted = args.boosted
+except:
+    print("Error occurred")
+    sampling = 1
+    boosted = 1
+
+if boosted>=1 and sampling==0:
+    assert False
+print("Sampling ", sampling)
+print("Boosted ", boosted)
 
 outFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data"
 outFolder = outFolder+"_pt%d"%boosted if boosted else outFolder

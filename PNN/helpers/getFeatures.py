@@ -1,5 +1,5 @@
 import numpy as np
-def getFeatures(outFolder=None, massHypo=False, bin_center=False):
+def getFeatures(outFolder=None, massHypo=False, bin_center=False, simple=False):
    featuresForTraining=[   
    'jet1_pt',
    #'jet1_eta', 'jet1_phi', 
@@ -121,7 +121,55 @@ def getFeatures(outFolder=None, massHypo=False, bin_center=False):
    'leptonClass',
    'PU_SF',
     'sf']
-   
+   if simple==True:
+      featuresForTraining=[   
+   'jet1_pt',
+    'jet1_sv_pt',
+   'jet1_sv_Ntrk',
+   'jet1_sv_3dSig',
+
+##
+    'jet2_pt',
+    'jet2_mass',
+
+    'jet2_btagDeepFlavB',
+    'jet2_sv_pt',
+   'jet2_sv_mass',
+   'jet2_sv_Ntrk',
+
+   'jet2_nConstituents',
+##
+
+    'dijet_dEta', 'dijet_dPhi', 
+    'dijet_twist', 'dijet_cs', 
+    'dijet_mass',
+    'cos_theta_star',
+   'dijet_pTAsymmetry',
+   'centrality',
+
+
+   'lambda2',
+   'lambda3',
+
+   'phiT_max',
+
+    'nSV',
+    'ht',
+      'nMuons',
+      'nIsoMuons',
+
+      'nJets_20',
+      'nJets_30',
+      'nJets_50',
+##
+    'muon_pt',
+
+
+    'muon_pfRelIso03_all',
+
+   ]
+      print("Simpe Training is True")
+      print("Following features have been used", featuresForTraining)
    if massHypo==True:
       featuresForTraining = featuresForTraining + ['massHypo']
       print("massHypo added to the features")

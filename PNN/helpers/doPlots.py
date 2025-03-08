@@ -6,11 +6,12 @@ import sys
 sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
 from scaleUnscale import scale
 from sklearn.metrics import roc_curve, auc
+from scipy import stats
 import pandas as pd
 def plot_lossTorch(train_loss_history, val_loss_history, 
               train_classifier_loss_history, val_classifier_loss_history,
               train_dcor_loss_history, val_dcor_loss_history,
-              outFolder):
+              outFolder, gpu=False):
     """
     Plots the loss histories for training and validation.
 
@@ -34,9 +35,7 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     axes[0].plot(val_loss_history, label='Total Validation Loss', linestyle='dashed', color='red')
     axes[0].legend()
     axes[0].set_ylim(inf, sup)
-    axes[0].vlines(x=np.argmin(val_loss_history), ymin=axes[0].get_ylim()[0], ymax=axes[0].get_ylim()[1],
-                color='black', linestyle='dashed', label='Best Epoch')
-    #axes[0].set_yscale('log')
+
     axes[0].set_title("Total Loss")
 
     # --- Plot 2: Classifier Loss ---
@@ -46,8 +45,6 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     axes[1].plot(val_classifier_loss_history, label='Validation Classifier Loss', linestyle='dashed', color='red')
     axes[1].legend()
     axes[1].set_ylim(inf, sup)
-    axes[1].vlines(x=np.argmin(val_loss_history), ymin=axes[1].get_ylim()[0], ymax=axes[1].get_ylim()[1],
-                color='black', linestyle='dashed', label='Best Epoch')
     #axes[1].set_yscale('log')
     axes[1].set_title("Classifier Loss")
 
@@ -58,8 +55,6 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     axes[2].plot(np.array(val_dcor_loss_history), label='Validation dCor Loss', linestyle='dashed', color='red')
     axes[2].legend()
     axes[2].set_ylim(inf, sup)
-    axes[2].vlines(x=np.argmin(val_loss_history), ymin=axes[2].get_ylim()[0], ymax=axes[2].get_ylim()[1],
-                color='black', linestyle='dashed', label='Best Epoch')
     axes[2].set_yscale('log')
     axes[2].set_title("Distance Correlation (dCor) Loss")
 
@@ -69,11 +64,30 @@ def plot_lossTorch(train_loss_history, val_loss_history,
         ax.set_ylabel('Loss')
         ax.grid(True)
 
+    
+    
+    if gpu==False:
+        print("Gpu False")
+        x0 = np.argmin(val_loss_history)
+
+    else:
+        print("Gpu True")
+        indices = np.arange(0, len(val_loss_history), 50)
+        x0 = indices[np.argmin(val_loss_history[indices])]
+
+    axes[0].vlines(x=x0, ymin=axes[0].get_ylim()[0], ymax=axes[0].get_ylim()[1],
+                color='black', linestyle='dashed', label='Best Epoch')
+    axes[1].vlines(x=x0, ymin=axes[1].get_ylim()[0], ymax=axes[1].get_ylim()[1],
+                color='black', linestyle='dashed', label='Best Epoch')
+    axes[2].vlines(x=x0, ymin=axes[2].get_ylim()[0], ymax=axes[2].get_ylim()[1],
+                color='black', linestyle='dashed', label='Best Epoch')
     # Save the figure
     fig.tight_layout()  # Ensures no overlap between plots
     fig.savefig(f"{outFolder}/performance/loss.png")
     print(f"Saved in {outFolder}/performance/loss.png")
     plt.close(fig)
+    if gpu:
+        return x0
 def doPlotLoss_Torch(train_loss, val_loss, outName, earlyStop):
     fig, ax = plt.subplots(1, 1)
     ax.plot(train_loss)
@@ -175,16 +189,22 @@ def roc(thresholds, signal_predictions, realData_predictions, weights_signal, si
     plt.close('all')
     return roc_auc
 
-def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName, log=True):
+def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName, log=True, doubleDisco=False):
     #signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions = np.arctanh(signal_predictions), np.arctanh(realData_predictions), np.arctanh(signalTrain_predictions), np.arctanh(realDataTrain_predictions)
     fig, ax = plt.subplots(1, 1)
-    bins=np.linspace(0, 1, 25)
+    bins=np.linspace(0, 1, 12)
     
     # Hist the predictions
     sig_test_counts = np.histogram(signal_predictions, bins=bins)[0]
     bkg_test_counts = np.histogram(realData_predictions, bins=bins)[0]
     sig_train_counts = np.histogram(signalTrain_predictions, bins=bins)[0]
     bkg_train_counts = np.histogram(realDataTrain_predictions, bins=bins)[0]
+
+    # Compute Pvalue
+    pval_sig = stats.kstest(signalTrain_predictions, signal_predictions)[1][0]
+    pval_bkg = stats.kstest(realDataTrain_predictions, realData_predictions)[1][0]
+
+
     
     # Compute errors as poissonian
     sig_train_counts_err = np.sqrt(sig_train_counts)
@@ -192,24 +212,34 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     sig_test_counts_err = np.sqrt(sig_test_counts)
     bkg_test_counts_err = np.sqrt(bkg_test_counts)
     
-
+    # Normalize Errors and Counts
     sig_test_counts_err, bkg_test_counts_err = sig_test_counts_err/np.sum(sig_test_counts), bkg_test_counts_err/np.sum(bkg_test_counts)
     sig_train_counts_err, bkg_train_counts_err = sig_train_counts_err/np.sum(sig_train_counts), bkg_train_counts_err/np.sum(bkg_train_counts)
     sig_test_counts, bkg_test_counts, sig_train_counts, bkg_train_counts = sig_test_counts/np.sum(sig_test_counts), bkg_test_counts/np.sum(bkg_test_counts), sig_train_counts/np.sum(sig_train_counts), bkg_train_counts/np.sum(bkg_train_counts)
     
+    # Plotting
     ax.hist(bins[:-1], bins=bins, weights=sig_test_counts, linewidth=2, histtype='step', label='Signal Validation', color='red')
     ax.hist(bins[:-1], bins=bins, weights=bkg_test_counts, linewidth=2, histtype='step', label='Data Validation', color='blue')
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=sig_test_counts, yerr=sig_test_counts_err, linestyle='none', color='red')
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=bkg_test_counts, yerr=bkg_test_counts_err, linestyle='none', color='blue')
+    ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1]*1.3)
+    ax.text(x=0.9, y=0.9, s="KS test Signal = %.3f"%pval_sig, ha='right', transform=ax.transAxes)
+    ax.text(x=0.9, y=0.8, s="KS test Bkg = %.3f"%pval_bkg, ha='right', transform=ax.transAxes)
     
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=sig_train_counts, yerr=sig_train_counts_err, linestyle='none', marker='o',label='Signal Train', color='C1')
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=bkg_train_counts, yerr=bkg_train_counts_err, linestyle='none', marker='o',label='Data Train', color='C0')
-    ax.legend(loc='upper center')
+    ax.legend(loc='best')
     if log:
         ax.set_yscale('log')
     ax.set_xlabel("NN output")
     hep.cms.label()
     fig.savefig(outName, bbox_inches='tight')
+
+    if doubleDisco:
+        x = (bins[1:] + bins[:-1])/2
+        max = np.argmax(sig_test_counts)
+        second_max = np.argmax(sig_test_counts[sig_test_counts != np.max(sig_test_counts)])
+        return x[max], x[second_max]
 
 def getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
     from shap import GradientExplainer
@@ -305,7 +335,7 @@ def ggHscoreScan(Xtest, Ytest, YPredTest, Wtest, outName, genMassTest, t = [0, 0
         ax[0].hist(Xtest.dijet_mass[combinedMask], bins=bins, label='%.1f < ggH score < %.1f Sig Gain %.2f'%(t[i],t[i+1],effSig/np.sqrt(effBkg) ), histtype=u'step', density=True, color='C%d'%i)
         err_currentCounts = np.sqrt(currentCounts)
         currentCounts_n = currentCounts/np.sum(currentCounts)
-        ax[1].errorbar(x, currentCounts_n/refCounts_n, yerr = currentCounts_n/refCounts_n * np.sqrt(1/currentCounts  +  1/refCounts), label='ggH score >%.1f'%t[i], color='C%d'%i, linestyle='none', marker='o')
+        ax[1].errorbar(x, currentCounts_n/(refCounts_n+1e-12), yerr = currentCounts_n/(refCounts_n+1e-12) * np.sqrt(1/(currentCounts+1e-12)  +  1/(refCounts+1e-12)), label='ggH score >%.1f'%t[i], color='C%d'%i, linestyle='none', marker='o')
     ax[1].set_ylim(0.9, 1.1)
     ax[0].legend()
     ax[0].set_xlim(bins[0], bins[-1])
@@ -379,8 +409,13 @@ def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPred
         signalTrain_predictions=h125_trainPredictions, realDataTrain_predictions=realDataTrain_predictions, weights_signalTrain=Wtrain[genMassTrain==125],
         outName=outFolder+"/performance/roc_h125.png")
     
-    NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output_ggS0.png")
-    NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125.png")
+    signalTrain_predictions = signalTrain_predictions.reshape(-1)
+    realDataTrain_predictions = realDataTrain_predictions.reshape(-1)
+    h125_trainPredictions = h125_trainPredictions.reshape(-1)
+    
+
+    #NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output_ggS0.png")
+    #NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125.png")
     NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125_log.png", log=False)
 
     ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, genMassTest=genMassTest, outName=outFolder + "/performance/ggHScoreScan.png")

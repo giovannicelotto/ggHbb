@@ -44,7 +44,7 @@ except:
 # %%
 results = {}
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
-modelName1, modelName2 = "nn1_e400.pth", "nn2_e400.pth"
+modelName1, modelName2 = "nn1.pth", "nn2.pth"
 
 # %%
 Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/data")
@@ -223,6 +223,29 @@ ax[1].hist(bins[:-1], bins=bins, weights=cD, histtype='step', color='red')
 ax[1].set_xlabel("Classifier 2")
 fig.savefig(outFolder+"/performance/output125.png", bbox_inches='tight')
 plt.close('all')
+# %%
+import math
+ncols = 4
+nrows = math.ceil((len(mass_bins) - 1) / ncols)
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10))
+# Flat the axes for simplicity
+ax = ax.flatten()  
+for idx, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
+    # Signal
+    ax[idx].hist(Xval.PNN1[(Yval==0) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='blue')  
+    ax[idx].hist(Xval.PNN1[(genMassVal==125) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='red')  
+for j in range(idx + 1, len(ax)):
+    fig.delaxes(ax[j])  # Remove extra axes
+fig.savefig(outFolder+"/performance/NNscore1_dijetMass_binned.png", bbox_inches='tight')
+# Same for NN 2
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10))
+ax = ax.flatten()  
+for idx, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
+    ax[idx].hist(Xval.PNN2[(Yval==0) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='blue')  
+    ax[idx].hist(Xval.PNN2[(genMassVal==125) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='red')  
+for j in range(idx + 1, len(ax)):
+    fig.delaxes(ax[j])  # Remove extra axes
+fig.savefig(outFolder+"/performance/NNscore2_dijetMass_binned.png", bbox_inches='tight')
 # %%
 from helpers.doPlots import auc_vs_m
 auc_vs_m(Ytrain, Yval, YPredTrain1, YPredVal1, genMassTrain, genMassVal, outFile=outFolder+"/performance/auc1_vs_m.png")

@@ -30,6 +30,7 @@ def loadPredictions(processes, isMCList, predictionsFileNames, fileNumberList):
                 try:
                     df = pd.read_parquet(f)
                 except:
+                    print("Removing %s"%f)
                     os.remove(f)
             df = pd.read_parquet(predictionsFileNamesNew[idx])
         preds.append(df)
