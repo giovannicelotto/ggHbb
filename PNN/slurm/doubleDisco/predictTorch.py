@@ -69,6 +69,8 @@ def predict(file_path, modelName, multigpu, epoch):
     data = preprocessMultiClass(data)
     Xtest = data[0]
     Xtest['massHypo'] = Xtest['dijet_mass'].apply(lambda x: mass_hypo_list[np.abs(mass_hypo_list - x).argmin()])
+    Xtest['jet1_btagTight'] = Xtest['jet1_btagDeepFlavB']>0.71
+    Xtest['jet2_btagTight'] = Xtest['jet2_btagDeepFlavB']>0.71
 
     if 'bin_center' in featuresForTraining:
         bin_centers = [(mass_bins[i] + mass_bins[i+1]) / 2 for i in range(len(mass_bins) - 1)]

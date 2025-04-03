@@ -9,13 +9,13 @@ from iminuit import Minuit
 from iminuit.cost import LeastSquares
 from scipy.stats import shapiro, kstest, norm, chi2
 import json, sys
-sys.path.append("/t3home/gcelotto/newFit/afterNN/")
+sys.path.append("/t3home/gcelotto/ggHbb/newFit/afterNN/")
 from helpers.allFunctions import *
 from helpers.createRootHist import createRootHists
 columns=['dijet_mass', 'dijet_pt']
 import yaml
 
-with open("/t3home/gcelotto/newFit/afterNN/cat2/cat2p0/config_2.yaml", "r") as f:
+with open("/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/config_2.yaml", "r") as f:
     params = yaml.safe_load(f)  # Read as dictionary
 
 x1 = params["x1"]
@@ -56,7 +56,7 @@ modelName = "Lost_22"
 path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 dfProcessesData = dfProcessesData.iloc[isDataList]
-outFolder = "/t3home/gcelotto/newFit/afterNN/catLost/catLost2"
+outFolder = "/t3home/gcelotto/ggHbb/newFit/afterNN/catLost/catLost2"
 
 # %%
 # Data
@@ -149,7 +149,7 @@ for idx, dfMC in enumerate(dfsMC_H):
     cumulativeMC +=c_
     
 
-with open("/t3home/gcelotto/newFit/afterNN/cat2/cat2p0/fit_parameters_Z_cat2p0.json", "r") as f:
+with open("/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/fit_parameters_Z_cat2p0.json", "r") as f:
     fit_parameters_zPeak = json.load(f)
 
 
@@ -231,7 +231,7 @@ chi2_pvalue = 1- chi2.cdf(chi2_stat, ndof)
 ax[0].text(x=0.05, y=0.75, s="$\chi^2$/ndof = %.1f/%d\np-value = %.3f"%(chi2_stat, ndof, chi2_pvalue), transform=ax[0].transAxes, ha='left')
 ax[0].set_yscale('log')
 
-#fig.savefig("/t3home/gcelotto/newFit/bkgPlusZPeak.png", bbox_inches='tight')
+#fig.savefig("/t3home/gcelotto/ggHbb/newFit/bkgPlusZPeak.png", bbox_inches='tight')
 
 # %%
 

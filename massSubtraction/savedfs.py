@@ -14,13 +14,11 @@ from plotDfs import plotDfs
 from hist import Hist
 
 # %%
-boosted = 1
-modelName = "Mar06_%d_0p0"%boosted
+boosted = 60
+modelName = "Mar29_%d_1p0"%boosted
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
 columns_ = ['dijet_mass', 'dijet_pt',
-          'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
-          'leptonClass',          
-          'PU_SF', 'sf']
+          'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB']
 columns = columns_.copy()
 dfProcessesMC, dfProcessesData = getDfProcesses_v2()
 
@@ -32,7 +30,7 @@ if not os.path.exists(df_folder):
 # %%
 DataTakingList = [
             #0,  #1A
-            #1,   #2A
+            1,   #2A
             2,  #1D
             #3,
             #4,
@@ -69,6 +67,8 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
         dfs=cut(dfs, 'dijet_pt', 100, 160)
     elif boosted==2:
         dfs=cut(dfs, 'dijet_pt', 160, None)
+    elif boosted==60:
+        dfs=cut(dfs, 'dijet_pt', 60, 100)
     lumi_tot = lumi_tot + lumi
     predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
     df = preprocessMultiClass(dfs=dfs)[0].copy()
@@ -103,17 +103,18 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 
 # %%
 columns = columns_.copy()
-isMCList = [#0,
+isMCList = [0,
             1, 
-            ##2,
+            ###2,
             3, 4,
-            ##5,6,7,8, 9,10,
-            ##11,12,13,
-            ##14,15,16,17,18,
+            ###5,6,7,8, 9,10,
+            ###11,12,13,
+            ###14,15,16,17,18,
             19,20,21, 22,
-            ##35,
+            35,
             36,
-            37
+            37,
+            43
             ]
 nMCs = [
     -1,
@@ -125,7 +126,9 @@ nMCs = [
     -1, -1, -1, -1, -1,
     -1
 ]
-columns = columns + ['genWeight']
+
+
+columns = columns + ['genWeight', 'jet1_btag_central', 'jet1_btag_up', 'jet1_btag_down', 'PU_SF', 'sf']
 processesMC = dfProcessesMC.process[isMCList].values
 for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     if nMCs[idx]==0:
@@ -139,6 +142,8 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
         dfs=cut(dfs, 'dijet_pt', 100, 160)
     elif boosted==2:
         dfs=cut(dfs, 'dijet_pt', 160, None)
+    elif boosted==60:
+        dfs=cut(dfs, 'dijet_pt', 60, 100)
     predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
     df = preprocessMultiClass(dfs=dfs)[0].copy()
     print(df.columns)
@@ -149,7 +154,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     print("Process ", dfProcessesMC.process[isMC], " PNN assigned")
     print("Process ", dfProcessesMC.process[isMC])
     print("Xsection ", dfProcessesMC.xsection[isMC])
-    df['weight'] = df.genWeight*df.PU_SF*df.sf*dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
+    df['weight'] = df.genWeight * df.PU_SF * df.sf * df.jet1_btag_central* dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
 
 
 # save a copy of the dataframes before applying any cut

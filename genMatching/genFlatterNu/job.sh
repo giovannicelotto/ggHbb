@@ -5,7 +5,7 @@
 #SBATCH --partition=short              # Specify your cluster partition
 #SBATCH --time=01:00:00  
 #SBATCH --output=/t3home/gcelotto/slurm/output/saveGenMatchedFlat_1.out  # Output file for stdout
-#SBATCH --error=/t3home/gcelotto/slurm/output/saveGenMatched_1.out    # Output file for stderr
+#SBATCH --error=/t3home/gcelotto/slurm/output/saveGenMatchedFlat_1.out    # Output file for stderr
 #SBATCH --dependency=singleton
 
 source_dir="/scratch"

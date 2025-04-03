@@ -15,10 +15,6 @@ from helpersABCD.abcd_maker import ABCD
 
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
-from plotDfs import plotDfs
-from hist import Hist
-import hist
-import pickle
 import argparse
 # %%
 parser = argparse.ArgumentParser(description="Script.")
@@ -29,20 +25,20 @@ try:
         modelName = args.modelName
 except:
     print("Interactive mode")
-    modelName = "Mar05_700p1"
+    modelName = "Apr01_1000p0"
 # %%
 #modelName = "Jan24_900p0"
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/NN_predictions/DoubleDiscoPred_%s"%modelName
 columns = ['dijet_mass', 
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
-          'leptonClass',          
-          'PU_SF', 'sf', 
+          #'leptonClass',          
+#          'PU_SF', 'sf', 
           'muon_dxySig',
           'muon_pt',
           'dijet_pt',
-          'dijet_eta',
-          'ht',
-          'jet1_nTightMuons',
+          #'dijet_eta',
+          #'ht',
+          #'jet1_nTightMuons',
           #'Muon_fired_HLT_Mu9_IP6',
           #'Muon_fired_HLT_Mu12_IP6'
           ]
@@ -55,23 +51,18 @@ if not os.path.exists(df_folder):
 # Load data first
 # %%
 DataTakingList = [
+            #
             # 0, #1A
-            1,   #2A
+            #1,   #2A
             2,   #1D
-            3,
+            #3,
             #4,
             #5,
             #6
             ]
-nReals = [
-    -1,
-    -1,
-    -1,
-    -1,
-    #-1,
-    #-1,
-    #-1
-]
+#nReals = [
+#]
+
 lumi_tot = 0
 processesData = dfProcessesData.process[DataTakingList].values
 for idx, (dataTakingIdx, dataTakingName) in enumerate(zip(DataTakingList, processesData)):
@@ -87,7 +78,7 @@ for idx, (dataTakingIdx, dataTakingName) in enumerate(zip(DataTakingList, proces
         paths[dataTakingIdx]=paths[dataTakingIdx]+"/others"
 
 
-    dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=[nReals[idx]], columns=columns,
+    dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=-1, columns=columns,
                                                           selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True)
     dfs=cut(dfs, 'dijet_pt', None, 100)
     lumi_tot = lumi_tot + lumi
@@ -120,16 +111,16 @@ for idx, (dataTakingIdx, dataTakingName) in enumerate(zip(DataTakingList, proces
 
 # %%
 isMCList = [
-            #0,
-            #1, 
-            #2,3, 4,
-            #5,6,7,8, 9,10,
-            #11,12,13,
-            #14,
-            #15,16,17,18,
-            #19,20,21, 22,
-            ##23, 24, 25, 26, 27, 28, 
-            ##29, 30, 31, 32, 33, 34,
+            0,
+            1, 
+            2,3, 4,
+            5,6,7,8, 9,10,
+            11,12,13,
+            14,
+            15,16,17,18,
+            19,20,21, 22,
+            #23, 24, 25, 26, 27, 28, 
+            #29, 30, 31, 32, 33, 34,
             35,
             36,
             37
@@ -160,7 +151,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
         continue
     predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
     
-    dfs, genEventSumwList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=-1, columns=columns+['genWeight'],
+    dfs, genEventSumwList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=-1, columns=columns+['genWeight', 'PU_SF', 'sf'],
                                                              returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                              returnFileNumberList=True)
 
@@ -180,9 +171,6 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
 
 
 # save a copy of the dataframes before applying any cut
-#dfs_precut = dfs.copy()
-
-#dfs = dfs_precut.copy()
 # 0.2783 WP for medium btagID
     df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.2783, max=None)[0].copy()
     df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.2783, max=None)[0].copy()

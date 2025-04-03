@@ -30,13 +30,15 @@ def predict(file_path, modelName, boosted):
     #mass_hypo_list = np.array([50, 70, 100, 200, 300, 125])
     
     #Xtest['massHypo'] = Xtest['dijet_mass'].apply(lambda x: mass_hypo_list[np.abs(mass_hypo_list - x).argmin()])
-    featuresForTraining = featuresForTraining + ['dijet_mass']
+    #featuresForTraining = featuresForTraining + ['dijet_mass']
     
     data = [Xtest]
     if int(boosted)==1:
         data = cut(data, 'dijet_pt', 100, 160)
     elif int(boosted)==2:
         data = cut(data, 'dijet_pt', 160, None)
+    elif int(boosted)==60:
+        data = cut(data, 'dijet_pt', 60, 100)
     print("File cut")
     data = preprocessMultiClass(data)
 

@@ -8,7 +8,7 @@ from scipy.stats import chi2
 import json, sys
 import pandas as pd
 from iminuit.cost import LeastSquares
-sys.path.append("/t3home/gcelotto/newFit/afterNN/")
+sys.path.append("/t3home/gcelotto/ggHbb/newFit/afterNN/")
 from helpers.allFunctions import *
 from iminuit import Minuit
 from iminuit.cost import LeastSquares
@@ -25,7 +25,7 @@ set_x_bounds(x1, x2)
 modelName = "Mar06_1_0p0"
 path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 dfProcesses = getDfProcesses_v2()[0].iloc[MCList]
-outFolder = "/t3home/gcelotto/newFit/afterNN/cat1"
+outFolder = "/t3home/gcelotto/ggHbb/newFit/afterNN/cat1"
 # %%
 dfsMC = []
 for processName in dfProcesses.process.values:
@@ -66,36 +66,26 @@ m = Minuit(least_squares,
            nL=8,
            alphaR=1.77,
            nR=0.58,
-           #fraction_gaussian=0.01,
            sigmaG=10.9,
-           #p1=-6.e-3
            )
 m.print_level=2
-#m.limits['fraction_gaussian'] = (0.0, 0.2)
 m.limits['fraction_dscb'] = (0.05, 0.95)
 m.limits['mean'] = (83, 97)
-#m.limits['nL'] = (0, 80)
 m.limits['nR'] = (1e-7, 3)
 m.limits['nL'] = (1e-12, 300)
 m.limits['sigma'] = (5, 15)
 m.limits['sigmaG'] = (5, 15)
-#m.limits['alphaL'] = (0.5, 1.5)
-#m.limits['alphaR'] = (0.3, 4)
-#m.limits['normSig'] = (cTot.sum()*(bins[1]-bins[0])/2, cTot.sum()*(bins[1]-bins[0])*2)
 m.errors["alphaL"] = 0.2
 m.errors["alphaR"] = 0.1
 m.errors["sigma"] = 1
 m.errors["nR"] = 0.1
 m.errors["nL"] = 100
 m.errors["normSig"]=50
-#m.errors["fraction_dscb"]=0.3
-#m.errors["fraction_gaussian"]=0.3
+
 
 
 m.migrad(ncall=20000, iterate=10)
-#m.simplex()  
-#m.minos()
-#m.hesse(ncall=20000)
+
 # %%
 cTot = np.zeros(len(bins)-1)
 err = np.zeros(len(bins)-1)

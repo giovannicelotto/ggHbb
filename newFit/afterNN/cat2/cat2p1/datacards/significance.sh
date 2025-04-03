@@ -1,1 +1,1 @@
-combine -M Significance datacard_H.txt -t -1 --expectSignal=1
+combine -M Significance /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/datacards/datacard_H.txt -t -1 --expectSignal=1

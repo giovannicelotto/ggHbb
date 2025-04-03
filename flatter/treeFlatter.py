@@ -9,16 +9,19 @@ from correctionlib import _core
 import gzip
 from getFlatFeatureNames import getFlatFeatureNames
 from jetsSelector import jetsSelector
+from getJetSysJEC import getJetSysJEC
+import time
 
 syst2 = []
 
-def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
+def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method):
+    start_time = time.time()
     maxEntries=int(maxEntries)
     maxJet=int(maxJet)
-    #isMC=int(isMC)
+    #pN=int(pN)
     print("fileName", fileName)
     print("maxEntries", maxEntries)
-    #print("isMC", isMC)
+    #print("pN", pN)
     print("maxJet", maxJet)
     '''Require one muon in the dijet. Choose dijets based on their bscore. save all the features of the event append them in a list'''
     f = uproot.open(fileName)
@@ -35,13 +38,13 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
     histPath = "/t3home/gcelotto/ggHbb/trgMu_scale_factors.root"
     f = ROOT.TFile(histPath, "READ")
     hist = f.Get("hist_scale_factor")
-    #if (isMC==2) | (isMC==20) | (isMC==21) | (isMC==22) | (isMC==23) | (isMC==36):
+    #if (pN==2) | (pN==20) | (pN==21) | (pN==22) | (pN==23) | (pN==36):
     #    GenPart_pdgId = branches["GenPart_pdgId"]
     #    GenPart_genPartIdxMother = branches["GenPart_genPartIdxMother"]
     #    maskBB = ak.sum((abs(GenPart_pdgId)==5) & ((GenPart_pdgId[GenPart_genPartIdxMother])==23), axis=1)==2
     #    myrange = np.arange(tree.num_entries)[~maskBB]
 #
-    #elif (isMC==45) | (isMC==46) | (isMC==47) | (isMC==48) | (isMC==49) | (isMC==50):
+    #elif (pN==45) | (pN==46) | (pN==47) | (pN==48) | (pN==49) | (pN==50):
     #    GenPart_pdgId = branches["GenPart_pdgId"]
     #    GenPart_genPartIdxMother = branches["GenPart_genPartIdxMother"]
     #    maskBB = ak.sum((abs(GenPart_pdgId)==5) & ((GenPart_pdgId[GenPart_genPartIdxMother])==23), axis=1)==2
@@ -61,9 +64,11 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
     else:
         cset = _core.CorrectionSet.from_file(fname)
     corrDeepJet_FixedWP_muJets = cset["deepJet_mujets"]
+    corrDeepJet_FixedWP_light = cset["deepJet_incl"]
+    wp_converter = cset["deepJet_wp_values"]
+    
     #corrDeepJet_shape           = cset["deepJet_shape"]
     #btag_systs = ['central','down','down_jes', 'down_pileup', 'down_statistic', 'down_type3', 'up', 'up_jes', 'up_pileup', 'up_statistic', 'up_type3', 'down_correlated', 'down_uncorrelated', 'up_correlated', 'up_uncorrelated']
-    #wp_converter = cset["deepJet_wp_values"]
     for ev in myrange:
         
         features_ = []
@@ -73,34 +78,43 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
                 # the exact output you're looking for:
                 sys.stdout.write("%d%%"%(ev/maxEntries*100))
                 sys.stdout.flush()
-    
-    # Reco Jets
+
+
+##############################
+#
+#           Branches
+#
+##############################
+
+    # Reco Jets 
         nJet                        = branches["nJet"][ev]
         Jet_eta                     = branches["Jet_eta"][ev]
         Jet_pt                      = branches["Jet_pt"][ev]
         Jet_phi                     = branches["Jet_phi"][ev]
         Jet_mass                    = branches["Jet_mass"][ev]
 
+        # ID
         Jet_jetId                   = branches["Jet_jetId"][ev]
         Jet_puId                    = branches["Jet_puId"][ev]
 
-        Jet_area                    = branches["Jet_area"][ev]
+        # Taggers
         Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
         Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
-        Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
-        Jet_PNetRegPtRawCorr        = branches["Jet_PNetRegPtRawCorr"][ev]
-        Jet_PNetRegPtRawCorrNeutrino= branches["Jet_PNetRegPtRawCorrNeutrino"][ev]
-        Jet_PNetRegPtRawRes         = branches["Jet_PNetRegPtRawRes"][ev]
-        Jet_rawFactor               = branches["Jet_rawFactor"][ev]
-
+        #Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
+        #Jet_PNetRegPtRawCorr        = branches["Jet_PNetRegPtRawCorr"][ev]
+        #Jet_PNetRegPtRawCorrNeutrino= branches["Jet_PNetRegPtRawCorrNeutrino"][ev]
+        #Jet_PNetRegPtRawRes         = branches["Jet_PNetRegPtRawRes"][ev]
+        
+        # Vtx
         Jet_vtx3dL                  = branches["Jet_vtx3dL"][ev]
         Jet_vtx3deL                 = branches["Jet_vtx3deL"][ev]
         Jet_vtxPt                   = branches["Jet_vtxPt"][ev]
         Jet_vtxMass                 = branches["Jet_vtxMass"][ev]
         Jet_vtxNtrk                 = branches["Jet_vtxNtrk"][ev]
 
-
-
+        # Others
+        Jet_area                    = branches["Jet_area"][ev]
+        Jet_rawFactor               = branches["Jet_rawFactor"][ev]
         Jet_qgl                     = branches["Jet_qgl"][ev]
         Jet_nMuons                  = branches["Jet_nMuons"][ev]
         Jet_nConstituents           = branches["Jet_nConstituents"][ev]
@@ -108,6 +122,10 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         Jet_muonIdx1                = branches["Jet_muonIdx1"][ev]
         Jet_muonIdx2                = branches["Jet_muonIdx2"][ev]
 
+        # Jet sys
+        listJetSys = getJetSysJEC(branches, ev)
+        
+        # Regression
         Jet_bReg2018                 = branches["Jet_bReg2018"][ev]
 
     # Muons
@@ -132,9 +150,8 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
     # Electrons Tracks
         nElectron                   = branches["nElectron"][ev]
         Electron_pfRelIso           = branches["Electron_pfRelIso"][ev]
-        #nProbeTracks                = branches["nProbeTracks"][ev]
 
-
+    # Triggers
         Muon_fired_HLT_Mu12_IP6 =       branches["Muon_fired_HLT_Mu12_IP6"][ev]
         Muon_fired_HLT_Mu7_IP4 =        branches["Muon_fired_HLT_Mu7_IP4"][ev]
         Muon_fired_HLT_Mu8_IP3 =        branches["Muon_fired_HLT_Mu8_IP3"][ev]
@@ -148,25 +165,35 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         nSV                    =        branches["nSV"][ev]
         PV_npvs                =        branches["PV_npvs"][ev]
 
+    # Data MC dependent
         if 'Data' in processName:
             Pileup_nTrueInt = 0
         else:
+            Jet_hadronFlavour           = branches["Jet_hadronFlavour"][ev]
             Pileup_nTrueInt         = branches["Pileup_nTrueInt"][ev]
             Jet_genJetIdx           = branches["Jet_genJetIdx"][ev]
             GenJet_hadronFlavour    = branches["GenJet_hadronFlavour"][ev]
             genWeight    = branches["genWeight"][ev]
 
-        jetsToCheck = np.min([maxJet, nJet])                                 # !!! max 4 jets to check   !!!
+
+
+##############################
+#
+#           Filling the rows
+#
+##############################
+
+        maskJets = (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4))
+        jetsToCheck = np.min([maxJet, nJet])                                
         jet1  = ROOT.TLorentzVector(0.,0.,0.,0.)
         jet2  = ROOT.TLorentzVector(0.,0.,0.,0.)
         jet3  = ROOT.TLorentzVector(0.,0.,0.,0.)
         dijet = ROOT.TLorentzVector(0.,0.,0.,0.)
         jetsToCheck = np.min([maxJet, nJet])
         
-        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId)
+        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, method=method, Jet_pt=Jet_pt)
 
         if selected1==999:
-            #print("skipped")
             continue
         if selected2==999:
             assert False
@@ -190,12 +217,13 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         features_.append(counterMuTight)                 
         features_.append(Jet_nElectrons[selected1])         
         features_.append(Jet_btagDeepFlavB[selected1])
-        features_.append(Jet_btagPNetB[selected1])
+        features_.append(int(Jet_btagDeepFlavB[selected1]>0.71))
+        #features_.append(Jet_btagPNetB[selected1])
         features_.append(selected1)
         features_.append(Jet_rawFactor[selected1])
         features_.append(Jet_bReg2018[selected1])
-        features_.append(Jet_PNetRegPtRawCorr[selected1])
-        features_.append(Jet_PNetRegPtRawCorrNeutrino[selected1])
+        #features_.append(Jet_PNetRegPtRawCorr[selected1])
+        #features_.append(Jet_PNetRegPtRawCorrNeutrino[selected1])
         
         features_.append(Jet_jetId[selected1])
         features_.append(Jet_puId[selected1])
@@ -213,16 +241,21 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
             wp = "T"
         else:
             wp = None  # Optional: handle case where score is below "L"
-        #if (isMC!=0) & (isMC!=39) & (isMC!=57):
-        #    for syst in ["central", "up", "down"]:
-        #        if (Jet_genJetIdx[selected1]!= -1) & (wp is not None): 
-        #            if abs(GenJet_hadronFlavour[Jet_genJetIdx[selected1]])!=0:
-        #                jet1_btag_sf = corrDeepJet_FixedWP_muJets.evaluate(syst, wp, abs(GenJet_hadronFlavour[Jet_genJetIdx[selected1]]), abs(jet1.Eta()), jet1.Pt())
-        #            else:
-        #                jet1_btag_sf = -1 # -1 for usdg
-        #        else:
-        #            jet1_btag_sf = 0    # 0 for non matched jets or jets with bscore below L
-        #        features_.append(jet1_btag_sf)
+        if 'Data' not in process:
+            # add btag systematics
+            for syst in ["central", "up", "down"]:
+                if wp==None:
+                    jet1_btag_sf=1
+                elif (abs(Jet_hadronFlavour[selected1])==4) | abs(Jet_hadronFlavour[selected1])==5:
+                    jet1_btag_sf = corrDeepJet_FixedWP_muJets.evaluate(syst, wp, abs(Jet_hadronFlavour[selected1]), abs(jet1.Eta()), float(Jet_pt[selected1]))
+                elif (abs(Jet_hadronFlavour[selected1])==0) :
+                    jet1_btag_sf = corrDeepJet_FixedWP_light.evaluate(syst, wp, abs(Jet_hadronFlavour[selected1]), abs(jet1.Eta()), float(Jet_pt[selected1]))
+                else:
+                    assert False
+                features_.append(jet1_btag_sf)
+            # add JEC systematics
+            for syst in listJetSys:
+                features_.append(syst[selected1])
 
         
 
@@ -240,12 +273,13 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         features_.append(counterMuTight)   
         features_.append(Jet_nElectrons[selected2])
         features_.append(Jet_btagDeepFlavB[selected2])
-        features_.append(Jet_btagPNetB[selected2])
+        features_.append(int(Jet_btagDeepFlavB[selected2]>0.71))
+        #features_.append(Jet_btagPNetB[selected2])
         features_.append(selected2)
         features_.append(Jet_rawFactor[selected2])
         features_.append(Jet_bReg2018[selected2])
-        features_.append(Jet_PNetRegPtRawCorr[selected2])
-        features_.append(Jet_PNetRegPtRawCorrNeutrino[selected2])
+        #features_.append(Jet_PNetRegPtRawCorr[selected2])
+        #features_.append(Jet_PNetRegPtRawCorrNeutrino[selected2])
         features_.append(Jet_jetId[selected2])
         features_.append(Jet_puId[selected2])
         features_.append(Jet_vtxPt[selected2])
@@ -253,8 +287,32 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         features_.append(Jet_vtxNtrk[selected2])
         jet2_sv_3dSig = Jet_vtx3dL[selected2]/Jet_vtx3deL[selected2] if Jet_vtx3dL[selected2]!=0 else 0
         features_.append(jet2_sv_3dSig)
+
+        if wp_converter.evaluate("L") <= Jet_btagDeepFlavB[selected2] < wp_converter.evaluate("M"):
+            wp = "L"
+        elif wp_converter.evaluate("M") <= Jet_btagDeepFlavB[selected2] < wp_converter.evaluate("T"):
+            wp = "M"
+        elif wp_converter.evaluate("T") <= Jet_btagDeepFlavB[selected2]:
+            wp = "T"
+        else:
+            wp = None  # Optional: handle case where score is below "L"
+        if 'Data' not in process:
+            # add btag systematics
+            for syst in ["central", "up", "down"]:
+                if wp==None:
+                    jet2_btag_sf=1
+                elif (abs(Jet_hadronFlavour[selected2])==4) | abs(Jet_hadronFlavour[selected2])==5:
+                    jet2_btag_sf = corrDeepJet_FixedWP_muJets.evaluate(syst, wp, abs(Jet_hadronFlavour[selected2]), abs(jet1.Eta()), float(Jet_pt[selected2]))
+                elif (abs(Jet_hadronFlavour[selected2])==0) :
+                    jet2_btag_sf = corrDeepJet_FixedWP_light.evaluate(syst, wp, abs(Jet_hadronFlavour[selected2]), abs(jet1.Eta()), float(Jet_pt[selected2]))
+                else:
+                    assert False
+                features_.append(jet2_btag_sf)
+            # add JEC systematics
+            for syst in listJetSys:
+                features_.append(syst[selected2])
         
-        #if (isMC!=0) & (isMC!=39) & (isMC!=57):
+        #if 'Data' not in process
         #    for syst in syst2:
         #        if (Jet_genJetIdx[selected1]!= -1) & (wp is not None): 
         #            if abs(GenJet_hadronFlavour[Jet_genJetIdx[selected1]])!=0:
@@ -281,7 +339,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
                         if (np.sqrt((Muon_eta[muIdx]-Jet_eta[i])**2 + (Muon_phi[muIdx]-Jet_phi[i])**2)<0.4) & (Muon_tightId[muIdx]):
                             counterMuTight=counterMuTight+1
                     features_.append(int(counterMuTight))   
-                    features_.append(np.float32(Jet_btagPNetB[i]))
+                    #features_.append(np.float32(Jet_btagPNetB[i]))
                     features_.append(np.float32(Jet_btagDeepFlavB[i]))
                     features_.append(jet3.DeltaR(dijet))
                     break
@@ -291,7 +349,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
             features_.append(np.float32(0))
             features_.append(np.float32(0)) #mass
             features_.append(int(0))                
-            features_.append(np.float32(0))         # pnet
+            #features_.append(np.float32(0))         # pnet
             features_.append(np.float32(0))         # deepjet
             features_.append(np.float32(0))         # deltaR
 
@@ -316,7 +374,7 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         features_.append(np.float32(cs_angle))
         features_.append(dijet.Pt()/(jet1.Pt()+jet2.Pt()))
 
-        boost_vector = -dijet.BoostVector()  # Boost to the bb system's rest frame
+        boost_vector = - dijet.BoostVector()  # Boost to the bb system's rest frame
 
         jet1_rest = ROOT.TLorentzVector(jet1)  # Make a copy to boost
         jet1_rest.Boost(boost_vector)     # Boost jet1 into the rest frame
@@ -334,15 +392,13 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         features_.append(centrality)
 
 
+# Event Jet variables
         Jet_px = Jet_pt * np.cos(Jet_phi)
         Jet_py = Jet_pt * np.sin(Jet_phi)
         Jet_pz = Jet_pt * np.sinh(Jet_eta)
 
-        #jet1_components = [jet1.Px(), jet1.Py(), jet1.Pz()]
-        #jet2_components = [jet2.Px(), jet2.Py(), jet2.Pz()]
 
-        # Step 1: Extract the 3-momentum components for all jets
-        ptot_squared = np.sum(Jet_px**2 + Jet_py**2 + Jet_pz**2)
+        ptot_squared = np.sum(Jet_px[maskJets]**2 + Jet_py[maskJets]**2 + Jet_pz[maskJets]**2)
         S_xx = np.sum(Jet_px * Jet_px) / ptot_squared
         S_xy = np.sum(Jet_px * Jet_py) / ptot_squared
         S_xz = np.sum(Jet_px * Jet_pz) / ptot_squared
@@ -362,10 +418,6 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         # spherical approx lambda1 = lambda2 = lambda 3
         sphericity = 3/2*(lambda2+lambda3)
         features_.append(sphericity)
-        
-        # planar approx lambda1 = lambda2 >> lambda 3
-        #planarity = 2 * (lambda2 - lambda3) / (lambda1 + lambda2 + lambda3)
-        #features_.append(planarity)
 
         features_.append(lambda1)
         features_.append(lambda2)
@@ -373,8 +425,8 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
 
         # thrust axis
         Jet_phiT = np.linspace(0, 3.14, 500)
-        Jet_pt_extended = Jet_pt[:, np.newaxis]  # Shape (nJet, 1)
-        Jet_phi_extended = Jet_phi[:, np.newaxis]  # Shape (nJet, 1)
+        Jet_pt_extended = Jet_pt[maskJets, np.newaxis]  # Shape (nJet, 1)
+        Jet_phi_extended = Jet_phi[maskJets, np.newaxis]  # Shape (nJet, 1)
         T_values = np.sum(Jet_pt_extended * np.abs(np.cos(Jet_phi_extended - Jet_phiT)), axis=0)
 
 
@@ -401,32 +453,36 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
         #features_.append(np.float32(jet2_unc.M()))
         #features_.append(np.float32(dijet_unc.Pt()))
         #features_.append(np.float32(dijet_unc.M()))
-        jet1.SetPtEtaPhiM(Jet_pt[selected1]*(1-Jet_rawFactor[selected1])*Jet_PNetRegPtRawCorr[selected1]*Jet_PNetRegPtRawCorrNeutrino[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1])
-        jet2.SetPtEtaPhiM(Jet_pt[selected2]*(1-Jet_rawFactor[selected2])*Jet_PNetRegPtRawCorr[selected2]*Jet_PNetRegPtRawCorrNeutrino[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2])
-        dijet_pnet = jet1+jet2
-        features_.append(jet1.Pt())
-        features_.append(jet2.Pt())
-        features_.append(dijet_pnet.Pt())
-        features_.append(dijet_pnet.Eta())
-        features_.append(dijet_pnet.Phi())
-        features_.append(dijet_pnet.M())
+        features_.append(Jet_pt[selected1])
+        features_.append(Jet_pt[selected2])
+        #jet1.SetPtEtaPhiM(Jet_pt[selected1]*(1-Jet_rawFactor[selected1])*Jet_PNetRegPtRawCorr[selected1]*Jet_PNetRegPtRawCorrNeutrino[selected1],Jet_eta[selected1],Jet_phi[selected1],Jet_mass[selected1])
+        #jet2.SetPtEtaPhiM(Jet_pt[selected2]*(1-Jet_rawFactor[selected2])*Jet_PNetRegPtRawCorr[selected2]*Jet_PNetRegPtRawCorrNeutrino[selected2],Jet_eta[selected2],Jet_phi[selected2],Jet_mass[selected2])
+        #dijet_pnet = jet1+jet2
+        #features_.append(jet1.Pt())
+        #features_.append(jet2.Pt())
+        #features_.append(dijet_pnet.Pt())
+        #features_.append(dijet_pnet.Eta())
+        #features_.append(dijet_pnet.Phi())
+        #features_.append(dijet_pnet.M())
 # Event variables
 # nJets
-        features_.append(int(nJet))
-        features_.append(int(np.sum(Jet_pt>20)))
-        features_.append(int(np.sum(Jet_pt>30)))
-        features_.append(int(np.sum(Jet_pt>50)))
+        features_.append(int(np.sum(maskJets)))
+        features_.append(int(np.sum(Jet_pt[maskJets]>20)))
+        features_.append(int(np.sum(Jet_pt[maskJets]>30)))
+        features_.append(int(np.sum(Jet_pt[maskJets]>50)))
+        
+        # Loop over indices idx of masked Jets
         ht = 0
-        for idx in range(nJet):
+        for idx in np.arange(nJet)[maskJets]:
             ht = ht+Jet_pt[idx]
         features_.append((np.float32(ht)))
         features_.append(nMuon)
         features_.append(np.sum(Muon_pfRelIso04_all<0.15))
         features_.append(nElectron)
         #features_.append(nProbeTracks)
-        features_.append(np.sum((Jet_pt>20) & (Jet_btagDeepFlavB>0.0490)))
-        features_.append(np.sum((Jet_pt>20) & (Jet_btagDeepFlavB>0.2783)))
-        features_.append(np.sum((Jet_pt>20) & (Jet_btagDeepFlavB>0.7100)))
+        #features_.append(np.sum((Jet_pt[maskJets]>20) & (Jet_btagDeepFlavB[maskJets]>0.0490)))
+        #features_.append(np.sum((Jet_pt[maskJets]>20) & (Jet_btagDeepFlavB[maskJets]>0.2783)))
+        #features_.append(np.sum((Jet_pt[maskJets]>20) & (Jet_btagDeepFlavB[maskJets]>0.7100)))
 
 
 # SV
@@ -547,16 +603,17 @@ def treeFlatten(fileName, maxEntries, maxJet, isMC, processName):
             features_.append(genWeight)
         assert Muon_isTriggering[muonIdx1]
         file_.append(features_)
-    
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Execution Time: {execution_time:.6f} seconds")
     return file_
-def main(fileName, maxEntries, maxJet, isMC, process):
+def main(fileName, maxEntries, maxJet, pN, process, method):
     print("FileName", fileName)
-    print("Process", process)
-    assert maxJet==4
-    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, isMC=isMC, processName=process)
+    print("Process", process, flush=True)
+    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, pN=pN, processName=process, method=method)
     df=pd.DataFrame(fileData)
     
-    featureNames = getFlatFeatureNames(mc=True if ((isMC!=0) & (isMC!=39) & (isMC!=57)) else False)
+    featureNames = getFlatFeatureNames(mc=True if 'Data' not in process else False)
 
     df.columns = featureNames
     print("Start try")
@@ -586,12 +643,12 @@ def main(fileName, maxEntries, maxJet, isMC, process):
     print("FileNumber ", fileNumber)
     print("Saving in " + '/scratch/' +process+"_%s.parquet"%fileNumber )
 
-
 if __name__ == "__main__":
     fileName    = sys.argv[1]
     maxEntries  = int(sys.argv[2])
     maxJet      = int(sys.argv[3])
-    isMC        = int(sys.argv[4] )
+    pN        = int(sys.argv[4] )
     process     = sys.argv[5] 
+    method = int(sys.argv[6])
     
-    main(fileName, maxEntries, maxJet, isMC, process)
+    main(fileName, maxEntries, maxJet, pN, process, method)

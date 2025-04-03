@@ -14,8 +14,8 @@ def main(isMC, processNumber, nFiles, modelName, boosted):
     flatPath = list(df.flatPath)[processNumber]
     process = list(df.process)[processNumber]
     print("NN predictions for %s"%process)
-    if (processNumber==0) & (isMC==1):
-        flatPath="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/training"
+    #if (processNumber==0) & (isMC==1):
+    #    flatPath="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/training"
     
 
     files = glob.glob("/t3home/gcelotto/ggHbb/PNN/slurm/outputFiles/*.out")

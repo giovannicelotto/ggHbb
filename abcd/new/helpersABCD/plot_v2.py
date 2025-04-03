@@ -135,7 +135,7 @@ def SM_CR(region, bins, dfsMC, isMCList, dfProcesses, x1, t1, x2, t2, lumi, suff
     ax[0].set_xlabel("Dijet Mass [GeV]")
     ylabel = "Counts" if sameWidth_flag else  "Counts / Bin Width"
     ax[0].set_ylabel(ylabel)
-    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
+    hep.cms.label(lumi=np.round(lumi, 2), ax=ax[0])
     outName = "/t3home/gcelotto/ggHbb/abcd/new/plots/SMnonQCD_CR/SMnonQCD_CR%s_%s.png"%(region, suffix)
     fig.savefig(outName)
     plt.close('all')
@@ -243,7 +243,7 @@ def SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcesses, x1, t1, 
     ylabel = "Counts" if sameWidth_flag else  "Counts / Bin Width"
     ax[0].set_ylabel(ylabel)
     ax[1].errorbar(x, hExcess.values()/countsDict_SR['mc'].values()*blind_mask, yerr=np.sqrt(hExcess.variances()*blind_mask)/countsDict_SR['mc'].values() , marker='o', color='black', linestyle='none')
-    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
+    hep.cms.label(lumi=np.round(lumi, 2), ax=ax[0])
     outName = "/t3home/gcelotto/ggHbb/abcd/new/plots/SMnonQCD/SMnonQCD_closure_%s.png"%suffix
     fig.savefig(outName)
     plt.close('all')
@@ -318,7 +318,7 @@ def QCD_SR(bins, hB_ADC, qcd_mc, lumi=0, blindPar=(False, 125, 20),  outName=Non
     ylabel = "Counts" if sameWidth_flag == True else "Counts / Bin Width"
     ax[0].set_ylabel(ylabel) 
     ax[0].legend()
-    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
+    hep.cms.label(lumi=np.round(lumi, 2), ax=ax[0])
     if outName is None:
         assert False, "outName not None"
     fig.savefig(outName, bbox_inches='tight')
@@ -353,7 +353,7 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar, same
         cTot = cTot + countsDict[key].values()/sameWidth
 
 
-    ax[0].legend()
+    
     ax[0].set_yscale('log')
     ylabel = "Counts" if sameWidth_flag else "Counts / Bin Width"
     ax[0].set_ylabel(ylabel)
@@ -374,6 +374,7 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar, same
     p_value = 1 - chi2.cdf(chi2_stat, df=ndof)
     ax[0].text(x=0.95, y=0.9, s="$\chi^2$/ndof = %.1f/%d"%(chi2_stat, ndof), ha='right', transform=ax[0].transAxes)
     ax[0].text(x=0.95, y=0.82, s="p-value = %.3f"%p_value, ha='right', transform=ax[0].transAxes)
+    ax[0].legend()
     print("Debugging")
     print(regions["B"].values())
     print(blind_mask)
@@ -387,8 +388,9 @@ def QCDplusSM_SR(bins, regions, countsDict, hB_ADC, lumi, suffix, blindPar, same
     print("*"*10)
     ax[1].set_xlabel("Dijet Mass [GeV]")
     ax[1].set_ylabel("Ratio")
-    hep.cms.label(lumi=np.round(lumi, 3), ax=ax[0])
+    hep.cms.label(lumi=np.round(lumi, 2), ax=ax[0])
     outName = "/t3home/gcelotto/ggHbb/abcd/new/plots/ZQCDplusSM/ZQCDplusSM_%s.png"%suffix
+    #ax[0].set_ylim(10**3, ax[0].get_ylim()[1])
     fig.savefig(outName)
     print(outName)
 
@@ -441,7 +443,7 @@ def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask
     fig.align_ylabels([ax[0],ax[1]])
     ax[0].errorbar(dcor_values[mask], pulls_QCDPlusSM_SR, xerr=xerr[mask], yerr=err_QCDPlusSM_SR, linestyle='none', color='black', marker='o', label='CR')
     ax[1].set_xlabel("Pearson R")
-    ax[0].set_ylabel("1/Correction")
+    ax[0].set_ylabel("Ratio")
     
 
 
@@ -460,14 +462,34 @@ def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask
     #from scipy.optimize import curve_fit
     #popt, pcov = curve_fit(model_function, dcor_values[mask], pulls_QCDPlusSM_SR, sigma=err_QCDPlusSM_SR, absolute_sigma=True)
 
+
+
+    
+
+
     # Extract fit parameters and their uncertainties
     m_fit, q_fit,  = output.beta
     m_err, q_err = output.sd_beta
+
+
+    # Distance formula from point (x0, y0) to line y = mx + c
+    numerator = (pulls_QCDPlusSM_SR - q_fit - m_fit * dcor_values[mask])
+    denominator = np.sqrt(m_fit**2 + 1)
+    orthogonal_distance = numerator / denominator
+    
+    # Compute total error (propagate x and y errors)
+    total_error = np.sqrt((xerr[mask]**2 * m_fit**2 + err_QCDPlusSM_SR**2) / (m_fit**2 + 1))
+    
+    # Normalized distance
+    normalized_distance = orthogonal_distance / total_error
+
+
     y_fit = model_func(output.beta, dcor_values)
     ax[0].plot(dcor_values, y_fit, label=f'Fit: y = {m_fit:.2f}x + {q_fit:.2f}', color='red')
     ax[0].errorbar(dcor_values[~mask], model_func(output.beta, dcor_values[~mask]), label=f'VR and SR', color='green', linestyle='none', marker='o')
     ax[0].set_xlim(ax[1].get_xlim()[0], ax[0].get_xlim()[1])
-    ax[1].errorbar(dcor_values[mask], pulls_QCDPlusSM_SR-y_fit[mask], xerr= xerr[mask], yerr=err_QCDPlusSM_SR, linestyle='none', color='black', marker='o')
+    #ax[1].errorbar(dcor_values[mask], pulls_QCDPlusSM_SR-y_fit[mask], xerr= xerr[mask], yerr=err_QCDPlusSM_SR, linestyle='none', color='black', marker='o')
+    ax[1].errorbar(dcor_values[mask], normalized_distance, xerr= 0, yerr=1, linestyle='none', color='black', marker='o')
     ax[1].hlines(y=0, xmin=ax[1].get_xlim()[0], xmax=ax[1].get_xlim()[1], color='red')
 
     chi2_stat = np.sum(((pulls_QCDPlusSM_SR-y_fit[mask])**2/(err_QCDPlusSM_SR**2 + (m_fit*xerr[mask])**2)))
@@ -480,6 +502,9 @@ def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask
     ax[0].text(x=0.05, y=0.04, s="q = %.3f +- %.3f"%(q_fit, q_err) , transform=ax[0].transAxes, ha='left')
     #ax[0].text(x=0.05, y=0.10, s="m = %.3f +- %.3f"%(popt[0], np.sqrt(pcov[0,0])) , transform=ax[0].transAxes, ha='left')
     ax[0].legend()
+    ax[1].set_ylabel("Diagonal Distance")
+    ax[0].yaxis.set_label_coords(-0.15, 1)  # Align in x, center in y
+    ax[1].yaxis.set_label_coords(-0.15, 1.2)  # Align in x, move up in y
 
     if outName is not None:
         fig.savefig(outName, bbox_inches='tight')

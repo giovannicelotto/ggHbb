@@ -94,12 +94,13 @@ def dcor_plot_Data(dfsData, processNames, isDataList, bins, outFile, nEvents=500
     fig, ax = plt.subplots(figsize=(12, 6))
 
     # Define colors for different data-taking periods
-    colors = ['red', 'blue', 'green', 'orange', 'purple'][:n_datataking]
+    #colors = ['red', 'blue', 'green', 'orange', 'purple', 'brown', 'C1'][:n_datataking]
     labels = [f"{processNames[isDataList[i]]}" for i in range(n_datataking)]
-
+    print(len(labels), " nLabels")
+    print(len(isDataList), " nProcesses")
     for i, dcor_values in enumerate(dcor_data_values_reshaped):
         # Offset the x positions for each data-taking period
-        ax.bar(x + i * bar_width, dcor_values, bar_width, label=labels[i], color=colors[i])
+        ax.bar(x + i * bar_width, dcor_values, bar_width, label=labels[i])
     ax.legend()
 
     # Customize the plot

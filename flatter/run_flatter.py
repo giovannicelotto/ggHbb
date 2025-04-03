@@ -12,6 +12,8 @@ parser.add_argument("-pN", "--processNumber", type=int, help="process Number for
 parser.add_argument("-n", "--nFiles", type=int, help="number of files to flatten per process", default=-1)
 parser.add_argument("-mE", "--maxEntries", type=int, help="max number of Entries", default=-1)
 parser.add_argument("-mJ", "--maxJet", type=int, help="max number of jet", default=4)
+parser.add_argument("-m", "--method", type=int, help="method of selecting jets", default=-1)
+
 args = parser.parse_args()
 
 isMC            = True if args.isMC==1 else False
@@ -19,6 +21,9 @@ pN              = args.processNumber
 nFiles          = args.nFiles
 maxEntries      = args.maxEntries
 maxJet          = args.maxJet
+method          = args.method
+
+assert method!=-1, "Select a method -m 0 or 1"
 print("pN =",pN)
 print("max jet", maxJet)
 print("*"*20)
@@ -61,5 +66,5 @@ for nanoFileName in nanoFileNames:
 
     if matching_files:
         continue
-    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 500), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath])
+    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 500), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method)])
     doneFiles = doneFiles+1

@@ -36,10 +36,16 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
         inclusive.fill(df[xx])
 
     print("Data counts in ABCD regions before MC subtraction")
-    print("Region A : ", (regions["A"].sum()))
-    print("Region B : ", (regions["B"].sum()))
-    print("Region C : ", (regions["C"].sum()))
-    print("Region D : ", (regions["D"].sum()))
+    print("Region A Sum ", regions["A"].sum())
+    print("Region B Sum ", regions["B"].sum())
+    print("Region C Sum ", regions["C"].sum())
+    print("Region D Sum ", regions["D"].sum())
+
+    originalVariances = {
+        'A' : regions["A"].variances()[:].copy(),
+        'B' : regions["B"].variances()[:].copy(),
+        'C' : regions["C"].variances()[:].copy(),
+        'D' : regions["D"].variances()[:].copy()}
     
     # remove MC from non QCD processes simulations from A, C, D
     print("Removing MC from CRs")
@@ -57,10 +63,24 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
         # In B don't do it, we want to see the excess from Data - QCD = MCnonQCD
         
     print("Data counts in ABCD regions after MC subtraction")
-    print("Region A : ", (regions["A"].sum()))
-    print("Region B : ", (regions["B"].sum()))
-    print("Region C : ", (regions["C"].sum()))
-    print("Region D : ", (regions["D"].sum()))
+    print("Region A Sum ", regions["A"].sum())
+    print("Region B Sum ", regions["B"].sum())
+    print("Region C Sum ", regions["C"].sum())
+    print("Region D Sum ", regions["D"].sum())
+
+    variancesAfterMCSubtraction = {
+        'A' : regions["A"].variances()[:],
+        'B' : regions["B"].variances()[:],
+        'C' : regions["C"].variances()[:],
+        'D' : regions["D"].variances()[:]}
+    
+    print("Error new after subtraction / Error before subtraction")
+    for idx, region in enumerate(regions.keys()):
+        print("Region ", region)
+        errorRatio = np.sqrt(np.array(variancesAfterMCSubtraction[region])/np.array(originalVariances[region]))
+        np.set_printoptions(precision=5)
+        print(errorRatio)
+
 # Fist Plot
     # Compute hB_ADC from ABCD. Note A, D, C are not poissonian after subtraction
     # Plot 4 regions of ABCD
@@ -70,6 +90,16 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
     if corrections is not None:
         hB_ADC.variances()[:] = hB_ADC.variances()[:]*corrections**2 +  (hB_ADC.values()[:]*err_corrections)**2
         hB_ADC.values()[:] = hB_ADC.values()[:]*corrections 
+
+    x=bins[1:]+bins[:-1]
+    fig, ax =plt.subplots(1, 1)
+    ax.errorbar(x-np.diff(bins)/6, np.zeros(len(x)), yerr=np.sqrt(originalVariances['B']), label='original')
+    ax.errorbar(x+0*np.diff(bins)/6, np.zeros(len(x)), yerr=np.sqrt(variancesAfterMCSubtraction['B']), label='After MC subtraction')
+    ax.errorbar(x+np.diff(bins)/6, np.zeros(len(x)), yerr=np.sqrt(hB_ADC.variances()[:]), label='ABCD estimation')
+    ax.legend()
+    ax.set_ylabel("Uncertainty in SR")
+    ax.set_xlabel("Dijet Mass [GeV]")
+    fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/variances/var_%s.png"%suffix, bbox_inches='tight')
 # Second Plot
     countsDict_SR = SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix=suffix, blindPar=blindPar,  sameWidth_flag=False)
 
@@ -91,6 +121,8 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
     for key in countsDict_SR:
         countsDict_SR[key].values()[:] = -countsDict_SR[key].values()[:]
     
+    print("Variances with ABCD")
+    print(hB_ADC.variances()[:])
     pulls_QCD_SR, err_QCD_SR = QCD_SR(bins, hB_ADC, qcd__DataMinusMC, lumi=lumi, suffix=suffix, blindPar=blindPar,  sameWidth_flag=False, outName="/t3home/gcelotto/ggHbb/abcd/new/plots/QCDclosure/QCD_closure_%s.png"%suffix, corrected=True if corrections is not None else False)
     plt.close('all')
     pulls_QCDPlusSM_SR = QCDplusSM_SR(bins, regions, countsDict_SR, hB_ADC, lumi=lumi, suffix=suffix, blindPar=blindPar, sameWidth_flag=False, corrections=corrections)
