@@ -96,7 +96,7 @@ def getCommonFilters(btagTight=False):
 
     ]
     return filters
-def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters()):
+def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False):
     '''
     paths = array of string 
             or list of numbers (integers) with the isMC number
@@ -141,6 +141,9 @@ def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False,
     for nMC, path,processName in zip(nMCs, paths, df_processesMC.process): 
         assert isinstance(path, str), "Paths do not contains strings: %s"%str(path)
         # loop over processes
+        if training:
+            if path == "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/others":
+                path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/training"
         print("PATH : ", path)
         fileNames = glob.glob(os.path.join(path, '**', '*.parquet'), recursive=True)
         fileNames = sorted(
@@ -375,7 +378,7 @@ def loadMultiParquet_v2_dep(paths, nMCs=1, columns=None, returnNumEventsTotal=Fa
         return dfs
     
 ##### new function
-def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=['dijet_mass'], selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False):
+def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=None, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False):
     import sys
     '''
     dataTaking :list  = list of data taking idx
@@ -390,6 +393,7 @@ def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=['dijet_mass']
     '''
     
     print("LoadMultiParquet Data v.Jan25")
+    # Check on the arguments
     if isinstance(nReals, int):
         print("nReal is integer setting the same")
         nReals = [nReals for i in range(len(dataTaking))]
@@ -405,6 +409,7 @@ def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=['dijet_mass']
         assert len(dataTaking)==len(selectFileNumberList), "mismatch between len data taking and len selectFileNumberList"
         assert isinstance(selectFileNumberList[0], list), "selectFileNumberList needs to be a list of list if not set to None"
     
+
     dfs = []
     df_processesData = getDfProcesses_v2()[1].iloc[dataTaking]
     flatPaths = list(df_processesData.flatPath)
@@ -421,8 +426,12 @@ def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=['dijet_mass']
         print("\n\n", processName, " | ", lumi, " | ", nReal, " requested", " | ", nFiles, " avail. at nano", )
         if dataTakingIdx == 0:
             assert processName=='Data1A'
-            flatPaths[flatPaths.index(path)] = path+"/others"
-            path = path+"/others"
+            if training:
+                flatPaths[flatPaths.index(path)] = path+"/training"    
+                path = path+"/training"
+            else:
+                flatPaths[flatPaths.index(path)] = path+"/others"
+                path = path+"/others"
         # loop over processes
         print("PATH : ", path)
 
