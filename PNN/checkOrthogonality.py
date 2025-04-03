@@ -84,6 +84,7 @@ def checkOrthogonalityInMassBins(df, featureToPlot, mask1, mask2, label_mask1, l
     ks_p_value_list=[]
     p_value_list=[]
     chi2_values_list=[]
+    
     # Loop through dijet_mass bins and plot for each
     for i, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
         # Define mass mask

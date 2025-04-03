@@ -67,7 +67,7 @@ def match_relative_distribution(df_target, df_source, column='feature', bins = n
     return df_sampled
 
 def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresForTraining,
-                         test_split, advFeature='jet1_btagDeepFlavB', drop=True, boosted=False):
+                         test_split, drop=True, boosted=False, dataTaking='1A'):
 
     nData, nHiggs = int(size), int(14e3)
 
@@ -77,9 +77,14 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
             flatPathCommon + "/Data1A/others",
             flatPathCommon + "/GluGluHToBB/others"]
     else:
-        paths = [
-            flatPathCommon + "/Data1A/training",
-            flatPathCommon + "/GluGluHToBB/others"]
+        if dataTaking=='1A':
+            paths = [
+                flatPathCommon + "/Data1A/training",
+                flatPathCommon + "/GluGluHToBB/training"]
+        elif dataTaking=='1D':
+            paths = [
+                flatPathCommon + "/Data1D/training",
+                flatPathCommon + "/GluGluHToBB/training"]
     massHypothesis = [50, 70, 100, 200, 300]
     for m in massHypothesis:
         paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
@@ -87,6 +92,8 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
     
 
     dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False)
+    #if dataTaking=='1A':
+    #    dfs=cut(dfs, 'muon_pt', 12, None)
     if boosted:
         dfs = cut(dfs, 'dijet_pt', 100, None)
     else:
@@ -105,10 +112,18 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
     #    dfs[idx+1]['massHypo'] = massHypothesis[idx]
     #    print("Process %d Mass %d"%(idx, massHypothesis[idx]))
 
+    massHypothesis = np.array([125]+massHypothesis)
     if 'massHypo' in featuresForTraining:
-        massHypothesis = np.array([125]+massHypothesis)
         for idx, df in enumerate(dfs):
             dfs[idx]['massHypo'] = dfs[idx]['dijet_mass'].apply(lambda x: massHypothesis[np.abs(massHypothesis - x).argmin()])
+    if 'jet1_btagTight' in featuresForTraining:
+        for idx, df in enumerate(dfs):
+            dfs[idx]['jet1_btagTight'] = dfs[idx]['jet1_btagDeepFlavB']>0.71
+    
+    if 'jet2_btagTight' in featuresForTraining:
+        for idx, df in enumerate(dfs):
+            dfs[idx]['jet2_btagTight'] = dfs[idx]['jet2_btagDeepFlavB']>0.71
+
 
 
     
@@ -155,16 +170,13 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
     
     X, Y, W, genMass = shuffle(X, Y, W, genMass, random_state=1999)
 
-    Xtrain, Xtest, Ytrain, Ytest, advFeatureTrain, advFeatureTest, Wtrain, Wtest, genMassTrain, genMassTest = train_test_split(X, Y, X[advFeature], W, genMass, test_size=test_split, random_state=1999)
-    if drop:
-        Xtrain = Xtrain.drop([advFeature], axis=1)
-        Xtest = Xtest.drop([advFeature], axis=1)
+    Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, genMassTrain, genMassTest = train_test_split(X, Y, W, genMass, test_size=test_split, random_state=1999)
 
     assert len(Wtrain)==len(Xtrain)
     assert len(Wtest)==len(Xtest)
 
     Ytrain, Ytest, Wtrain, Wtest = Ytrain.reshape(-1), Ytest.reshape(-1), Wtrain.reshape(-1), Wtest.reshape(-1)
-    return Xtrain, Xtest, Ytrain, Ytest, advFeatureTrain, advFeatureTest, Wtrain, Wtest, genMassTrain, genMassTest
+    return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, genMassTrain, genMassTest
 
 
 # New function with sampling
@@ -196,12 +208,13 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
 
     return df_uniform
 def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTraining,
-                         test_split, advFeature='jet1_btagDeepFlavB', drop=True, boosted=False):
+                         test_split,  drop=True, boosted=False):
 
-    nData, nHiggs = int(size), int(20e3)
 
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     
+    # PATHS definition
+    # rewrite here using the dfProcesses
     if boosted:
         paths = [
             flatPathCommon + "/Data1A/others",
@@ -215,16 +228,30 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
     for m in massHypothesis:
         paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
     
+    # end
     
-    
-    btagTight=True if boosted else False
+    btagTight = True if boosted==1 or boosted==2 else False
+
+
+    # Load from paths
     dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False, filters=getCommonFilters(btagTight=btagTight))
+
+
     if boosted==1:
         dfs = cut(dfs, 'dijet_pt', 100, 160)
         dfs = cut(dfs, 'dijet_mass', 50, None)
     elif boosted==2:
         dfs = cut(dfs, 'dijet_pt', 160, None)
         dfs = cut(dfs, 'dijet_mass', 50, None)
+    elif boosted==60:
+        dfs = cut(dfs, 'dijet_pt', 60, 100)
+        dfs = cut(dfs, 'dijet_mass', 50, None)
+    elif boosted==22:
+        dfs = cut(dfs, 'dijet_pt', 100, None)
+        dfs = cut(dfs, 'dijet_mass', 50, None)
+        for idx, df in enumerate(dfs):
+            df = df[~((df.jet1_btagDeepFlavB>0.71) & (df.jet2_btagDeepFlavB>0.71))]
+            dfs[idx] = df
     else:
         dfs = cut(dfs, 'dijet_pt', None, 100)
         dfs = cut(dfs, 'dijet_mass', 45, None)
@@ -248,17 +275,18 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
     if 'massHypo' in featuresForTraining:
         for idx, df in enumerate(dfs):
             dfs[idx]['massHypo'] = dfs[idx]['dijet_mass'].apply(lambda x: massHypothesis[np.abs(massHypothesis - x).argmin()])
-
-
+    
     
 
-    genMass = np.concatenate([np.zeros(len(dfs[0])),
-               np.ones(len(dfs[1]))*massHypothesis[0],
-               np.ones(len(dfs[2]))*massHypothesis[1],
-               np.ones(len(dfs[3]))*massHypothesis[2],
-               np.ones(len(dfs[4]))*massHypothesis[3],
-               np.ones(len(dfs[5]))*massHypothesis[4],
-               np.ones(len(dfs[6]))*massHypothesis[5]])
+    
+# Useless array
+#    genMass = np.concatenate([np.zeros(len(dfs[0])),
+#               np.ones(len(dfs[1]))*massHypothesis[0],
+#               np.ones(len(dfs[2]))*massHypothesis[1],
+#               np.ones(len(dfs[3]))*massHypothesis[2],
+#               np.ones(len(dfs[4]))*massHypothesis[3],
+#               np.ones(len(dfs[5]))*massHypothesis[4],
+#               np.ones(len(dfs[6]))*massHypothesis[5]])
     
     dfSig = pd.concat(dfs[1:])
     dfBkg = dfs[0]
@@ -286,7 +314,7 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
     for m in massHypothesis:
         print("%d elements in df %d"%(len(dfSig_sampled[dfSig_sampled.genMass==m]), m))
     print("%d elements in df %d"%(len(dfBkg_sampled[dfBkg_sampled.genMass==0]), 0))
-
+# Here should add more SF!!
     dfSig_sampled['W']=dfSig_sampled.sf/dfSig_sampled.sf.sum()
     dfBkg_sampled['W']=np.ones(len(dfBkg_sampled))/len(dfBkg_sampled)
 
@@ -299,13 +327,10 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
     
     X, Y, W, genMass = shuffle(X, Y, W, genMass, random_state=1999)
 
-    Xtrain, Xtest, Ytrain, Ytest, advFeatureTrain, advFeatureTest, Wtrain, Wtest, genMassTrain, genMassTest = train_test_split(X, Y, X[advFeature], W, genMass, test_size=test_split, random_state=1999)
-    if drop:
-        Xtrain = Xtrain.drop([advFeature], axis=1)
-        Xtest = Xtest.drop([advFeature], axis=1)
+    Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, genMassTrain, genMassTest = train_test_split(X, Y, W, genMass, test_size=test_split, random_state=1999)
 
     assert len(Wtrain)==len(Xtrain)
     assert len(Wtest)==len(Xtest)
 
     Ytrain, Ytest, Wtrain, Wtest = Ytrain.reshape(-1), Ytest.reshape(-1), Wtrain.reshape(-1), Wtest.reshape(-1)
-    return Xtrain, Xtest, Ytrain, Ytest, advFeatureTrain, advFeatureTest, Wtrain, Wtest, genMassTrain, genMassTest
+    return Xtrain, Xtest, Ytrain, Ytest,  Wtrain, Wtest, genMassTrain, genMassTest

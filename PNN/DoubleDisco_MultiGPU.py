@@ -86,7 +86,15 @@ class Trainer:
         val_dcor_loss_history           = []    
 
         batch_start_time = time.time()
+        final_lambda_dcor = hp["lambda_dcor"]  # Store the final value
+        hp["lambda_dcor"] = 0  # Start with 0
+        warmup_epochs = 100
+        step_size = 10  # Increase every 10 epochs
         for epoch in range(hp["epochs"]):
+            if epoch % step_size == 0 and epoch <= warmup_epochs:
+                hp["lambda_dcor"] = final_lambda_dcor * (epoch / warmup_epochs)
+            if epoch > warmup_epochs:
+                hp["lambda_dcor"] = final_lambda_dcor
             self.train_data.sampler.set_epoch(epoch)
             self.nn1.train()
             self.nn2.train()
@@ -234,9 +242,19 @@ class Trainer:
                 
 
             # CheckPoints
-            if (self.rank==0) & (save) & (epoch%50==0):
-                torch.save(self.nn1.state_dict(), outFolder + "/model/nn1_e%d.pth"%epoch)
-                torch.save(self.nn2.state_dict(), outFolder + "/model/nn2_e%d.pth"%epoch)
+            if (epoch%50==0):
+                if (self.rank==0) & (save):
+                    torch.save(self.nn1.state_dict(), outFolder + "/model/nn1_e%d.pth"%epoch)
+                    torch.save(self.nn2.state_dict(), outFolder + "/model/nn2_e%d.pth"%epoch)
+
+                if save:
+                    np.save(outFolder + "/model/train_loss_history_rank%d.npy"%self.rank, train_loss_history)
+                    np.save(outFolder + "/model/val_loss_history_rank%d.npy"%self.rank, val_loss_history)
+                    np.save(outFolder + "/model/train_classifier_loss_history_rank%d.npy"%self.rank, train_classifier_loss_history)
+                    np.save(outFolder + "/model/val_classifier_loss_history_rank%d.npy"%self.rank, val_classifier_loss_history)
+                    np.save(outFolder + "/model/train_dcor_loss_history_rank%d.npy"%self.rank, train_dcor_loss_history)
+                    np.save(outFolder + "/model/val_dcor_loss_history_rank%d.npy"%self.rank, val_dcor_loss_history)
+
             
             # No early stop for GPU
             #if avg_val_loss < best_val_loss:
@@ -370,7 +388,7 @@ def main(rank: int, world_size: int, hp: dict,
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Script.")
+    parser=argparse.ArgumentParser(description="Script.")
     parser.add_argument("-l", "--lambda_dcor", type=str, help="lambda for penalty term", default=905)
     parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=5000)
     parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=3000000)
@@ -379,8 +397,10 @@ if __name__ == "__main__":
                         help="List of nodes per layer (e.g., 128,64,32 for a 3-layer NN)",default=None
 )
     parser.add_argument("-sampling", "--sampling", type=int, help="input data from sampling signal method (True) or equal size of sample (false)", default=False)
+    parser.add_argument("-b", "--boosted", type=int, help="pt 0-100 100-160 160-Inf", default=0)
+    parser.add_argument("-dt", "--datataking", type=str, help="1A or 1D", default='1D')
     parser.add_argument("-bin_center", "--bin_center_bool", type=int, help="Use bin center as feature", default=True)
-    parser.add_argument("-mH", "--massHypo", type=int, help="Use closest dijet mass discrete value as feature", default=True)
+    parser.add_argument("-mH", "--massHypo", type=int, help="Use closest dijet mass discrete value as feature", default=False)
     parser.add_argument("-save", "--saveResults", type=int, help="saveResults (False in case of HP tuning)", default=True)
     parser.add_argument("-modelName", "--modelName", type=str, help="modelName (Only for HP tuning)", default='None')
     parser.add_argument("-lr", "--learningRate", type=str, help="learningRate", default=None)
@@ -413,12 +433,17 @@ if __name__ == "__main__":
 
     inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults="DoubleDisco", createFolder=True if args.saveResults else False)
     inputSubFolder = 'data' if not hp["sampling"] else 'data_sampling'
+    inputSubFolder = inputSubFolder+"_pt%d_%s"%(args.boosted, args.datataking)
+    print("Input subfolder", inputSubFolder)
     # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
     if not args.saveResults:
         outFolder = "/t3home/gcelotto/ggHbb/PNN/resultsDoubleDisco/commonFolder"
     featuresForTraining, columnsToRead = getFeatures(outFolder=outFolder, massHypo=False, bin_center=hp["bin_center_bool"], simple=True)
 
     Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/%s"%inputSubFolder)
+    rWtrain[Ytrain==0]=rWtrain[Ytrain==0]*2
+    rWval[Yval==0]=rWval[Yval==0]*2
+
     dijetMassTrain = np.array(Xtrain.dijet_mass.values)
     dijetMassVal = np.array(Xval.dijet_mass.values)
     print(len(Xtrain), " events in train dataset")
@@ -444,8 +469,8 @@ if __name__ == "__main__":
             np.nan  # Assign NaN for out-of-range dijet_mass
         )
 
-    Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl", fit=True)
-    Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl", fit=False)
+    Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl", fit=True, scaler='robust')
+    Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl", fit=False, scaler='robust')
 
     size = hp['size']
     Xtrain, Ytrain, Wtrain, rWtrain, genMassTrain, dijetMassTrain = Xtrain[:size], Ytrain[:size], Wtrain[:size], rWtrain[:size], genMassTrain[:size], dijetMassTrain[:size]

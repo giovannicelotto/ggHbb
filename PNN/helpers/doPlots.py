@@ -34,7 +34,7 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     axes[0].plot(train_loss_history, label='Total Train Loss', color='blue')
     axes[0].plot(val_loss_history, label='Total Validation Loss', linestyle='dashed', color='red')
     axes[0].legend()
-    axes[0].set_ylim(inf, sup)
+    #axes[0].set_ylim(inf, sup)
 
     axes[0].set_title("Total Loss")
 
@@ -44,7 +44,7 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     axes[1].plot(train_classifier_loss_history, label='Train Classifier Loss', color='blue')
     axes[1].plot(val_classifier_loss_history, label='Validation Classifier Loss', linestyle='dashed', color='red')
     axes[1].legend()
-    axes[1].set_ylim(inf, sup)
+    #axes[1].set_ylim(inf, sup)
     #axes[1].set_yscale('log')
     axes[1].set_title("Classifier Loss")
 
@@ -72,7 +72,7 @@ def plot_lossTorch(train_loss_history, val_loss_history,
 
     else:
         print("Gpu True")
-        indices = np.arange(0, len(val_loss_history), 50)
+        indices = np.arange(100, len(val_loss_history), 50)
         x0 = indices[np.argmin(val_loss_history[indices])]
 
     axes[0].vlines(x=x0, ymin=axes[0].get_ylim()[0], ymax=axes[0].get_ylim()[1],
@@ -189,10 +189,10 @@ def roc(thresholds, signal_predictions, realData_predictions, weights_signal, si
     plt.close('all')
     return roc_auc
 
-def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName, log=True, doubleDisco=False):
+def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName, log=True, doubleDisco=False, label='NN output'):
     #signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions = np.arctanh(signal_predictions), np.arctanh(realData_predictions), np.arctanh(signalTrain_predictions), np.arctanh(realDataTrain_predictions)
     fig, ax = plt.subplots(1, 1)
-    bins=np.linspace(0, 1, 12)
+    bins=np.linspace(0, 1, 31)
     
     # Hist the predictions
     sig_test_counts = np.histogram(signal_predictions, bins=bins)[0]
@@ -201,8 +201,9 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     bkg_train_counts = np.histogram(realDataTrain_predictions, bins=bins)[0]
 
     # Compute Pvalue
-    pval_sig = stats.kstest(signalTrain_predictions, signal_predictions)[1][0]
-    pval_bkg = stats.kstest(realDataTrain_predictions, realData_predictions)[1][0]
+    print(stats.kstest(signalTrain_predictions, signal_predictions)[1])
+    pval_sig = stats.kstest(signalTrain_predictions, signal_predictions)[1]
+    pval_bkg = stats.kstest(realDataTrain_predictions, realData_predictions)[1]
 
 
     
@@ -231,7 +232,7 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     ax.legend(loc='best')
     if log:
         ax.set_yscale('log')
-    ax.set_xlabel("NN output")
+    ax.set_xlabel(label)
     hep.cms.label()
     fig.savefig(outName, bbox_inches='tight')
 
@@ -416,6 +417,8 @@ def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPred
 
     #NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output_ggS0.png")
     #NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125.png")
+    print(signalTrain_predictions)
+    print(signal_predictions)
     NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125_log.png", log=False)
 
     ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, genMassTest=genMassTest, outName=outFolder + "/performance/ggHScoreScan.png")
@@ -424,5 +427,6 @@ def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPred
     nEvents = 1000
     X_tensor_test = torch.tensor(np.float32(Xtest[featuresForTraining].values[:nEvents])).float()
     print("Shap started")
-    getShapTorch(Xtest=Xtest[featuresForTraining].head(nEvents), model=model, outName=outFolder+'/performance/shap.png', nFeatures=15, class_names=['NN output'], tensor=X_tensor_test)
+    if model is not None:
+        getShapTorch(Xtest=Xtest[featuresForTraining].head(nEvents), model=model, outName=outFolder+'/performance/shap.png', nFeatures=-1, class_names=['NN output'], tensor=X_tensor_test)
     return results

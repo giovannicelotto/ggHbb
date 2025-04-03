@@ -9,7 +9,7 @@ from datetime import datetime
 current_date = datetime.now().strftime("%b%d")  # This gives the format like 'Dec12'
 
 # PNN helpers
-from helpers.getFeatures import getFeatures
+from helpers.getFeatures import getFeatures, getFeaturesHighPt
 from helpers.getParams import getParams
 from helpers.loadSaved import loadXYWrWSaved
 from helpers.getInfolderOutfolder import getInfolderOutfolder
@@ -84,15 +84,10 @@ except:
 # %%
 sampling = True
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, boosted, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco')
-inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d"%(boosted) if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
+inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1A"%(boosted) if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-featuresForTraining, columnsToRead = getFeatures(outFolder, massHypo=False)
-featuresForTraining = featuresForTraining + ['dijet_mass']
-#if 'jet2_btagDeepFlavB' in featuresForTraining:
-#    featuresForTraining.remove('jet2_btagDeepFlavB')
-#if 'jet1_btagDeepFlavB' in featuresForTraining:
-#    featuresForTraining.remove('jet1_btagDeepFlavB')
+featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder, massHypo=False)
 
 # %%
 # define the parameters for the nn

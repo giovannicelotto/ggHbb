@@ -19,7 +19,7 @@ import pandas as pd
 import argparse
 from datetime import datetime
 from sklearn.feature_selection import mutual_info_regression
-
+import glob
 # Get current month and day
 current_date = datetime.now().strftime("%b%d")  # This gives the format like 'Dec12'
 # %%
@@ -35,31 +35,35 @@ try:
         hp["lambda_dcor"] = args.lambda_dcor 
     if args.date is not None:
         current_date = args.date
+    if args.boosted is not None:
+        boosted = args.boosted
 except:
-    hp["lambda_dcor"] = 1.
+    hp["lambda_dcor"] = 0.
+    current_date="Mar29"
+    boosted=60
     print("Interactive mode")
 # %%
 sampling=True
-boosted = args.boosted
 results = {}
 inFolder_, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, boosted, str(hp["lambda_dcor"]).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
-inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d"%boosted if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
+inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1A"%boosted if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_highPt"
 modelName = "model.pth"
 featuresForTraining = list(np.load(outFolder+"/featuresForTraining.npy"))
-featuresForTraining +=['dijet_mass']
-#featuresForTraining.remove('massHypo')
+#featuresForTraining +=['dijet_mass']
+#featuresForTraining.remove('jet2_btagDeepFlavB')
 # %%
 Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval,Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder)
 
 
 # Take the test dataset from the other folder which is unbiased wrt to sampling
 if sampling:
-    Xtest = pd.read_parquet(inFolder_+"/data_highPt/Xtest.parquet")
-    Ytest = np.load(inFolder_+"/data_highPt/Ytest.npy")
-    Wtest = np.load(inFolder_+"/data_highPt/Wtest.npy")
-    genMassTest = np.load(inFolder_+"/data_highPt/genMassTest.npy")
+    Xtest = pd.read_parquet(inFolder+"/Xtest.parquet")
+    Ytest = np.load(inFolder+"/Ytest.npy")
+    Wtest = np.load(inFolder+"/Wtest.npy")
+    genMassTest = np.load(inFolder+"/genMassTest.npy")
 
-
+rawFiles = pd.read_parquet(glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A/training/*.parquet")[:10])
+rawFiles = rawFiles[(rawFiles.jet1_btagTight>0.5) & (rawFiles.jet2_btagTight>0.5)]
 
 
 # %%
@@ -79,21 +83,26 @@ with open(outFolder+"/model/model_summary.txt", "w") as f:
         if hasattr(module, 'bias') and isinstance(module.bias, torch.Tensor):
             f.write(f"  Bias Shape: {tuple(module.bias.shape)}\n")
         f.write("\n")
+
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 Xtest  = scale(Xtest, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+rawFiles  = scale(rawFiles, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 
 Xtrain_tensor = torch.tensor(np.float32(Xtrain[featuresForTraining].values)).float()
 Xval_tensor = torch.tensor(np.float32(Xval[featuresForTraining].values)).float()
 Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
+rawFiles_tensor = torch.tensor(np.float32(rawFiles[featuresForTraining].values)).float()
 # %%
 with torch.no_grad():  # No need to track gradients for inference
     YPredTrain = model(Xtrain_tensor).numpy()
     YPredVal = model(Xval_tensor).numpy()
     YPredTest = model(Xtest_tensor).numpy()
+    YPredRawFiles = model(rawFiles_tensor).numpy()
 Xtrain = unscale(Xtrain, featuresForTraining=featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl")
 Xval = unscale(Xval, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
 Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
+rawFiles = unscale(rawFiles, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
 
 # %%
 
@@ -155,6 +164,7 @@ from helpers.doPlots import ggHscoreScan
 ggHscoreScan(Xtest=Xval,    Ytest=Yval,     YPredTest=YPredVal,     Wtest=Wval,     genMassTest=genMassVal,     outName=outFolder + "/performance/ggHScoreScanMulti.png", t=[0, 0.2, 0.4, 0.6, 0.8,1 ])
 ggHscoreScan(Xtest=Xval,    Ytest=Yval,     YPredTest=YPredVal,     Wtest=Wval,     genMassTest=genMassVal,     outName=outFolder + "/performance/ggHScoreScan_2.png", t=[0, 0.5,1 ])
 ggHscoreScan(Xtest=Xtest,   Ytest=Ytest,    YPredTest=YPredTest,    Wtest=Wtest,    genMassTest=genMassTest,    outName=outFolder + "/performance/ggHScoreScanTest_2.png", t=[0, 0.5,1 ])
+ggHscoreScan(Xtest=rawFiles,   Ytest=np.zeros(len(rawFiles)),    YPredTest=YPredRawFiles,    Wtest=np.ones(len(rawFiles)),    genMassTest=np.zeros(len(rawFiles)),    outName=outFolder + "/performance/ggHScoreScan_rawFiles.png", t=[0, 0.6,1 ])
 
 
 
@@ -189,7 +199,7 @@ ggHscoreScan(Xtest=Xtest,   Ytest=Ytest,    YPredTest=YPredTest,    Wtest=Wtest,
 
 # %%
 # Sig Bkg Efficiency and SIG
-ts = np.linspace(0, 1, 50)
+ts = np.linspace(0, 1, 21)
 efficiencies = {
     'sigTrain':[],
     'bkgTrain':[],
@@ -246,6 +256,20 @@ fig, ax =plt.subplots(1, 1)
 ax.hist(Xval.dijet_mass[Yval==0], bins=np.linspace(30, 310, 100))
 fig.savefig(outFolder+"/performance/dijetMassVal")
 plt.close('all')
+# %%
+print("Efficiency at WP")
+if boosted == 2:
+    sigEff = np.sum(YPredTest[(genMassTest==125) ] > 0.45)/len(YPredTest[(genMassTest==125) ])
+    bkgEff = np.sum(YPredTest[(genMassTest==0) ] > 0.45)/len(YPredTest[(genMassTest==0) ])
+    print(sigEff, bkgEff)
+
+    sigEff = np.sum(YPredTest[(genMassTest==125) ] > 0.7)/len(YPredTest[(genMassTest==125) ])
+    bkgEff = np.sum(YPredTest[(genMassTest==0) ] > 0.7)/len(YPredTest[(genMassTest==0) ])
+    print(sigEff, bkgEff)
+elif boosted == 1:
+    sigEff = np.sum(YPredTest[(genMassTest==125) ] > 0.4)/len(YPredTest[(genMassTest==125) ])
+    bkgEff = np.sum(YPredTest[(genMassTest==0) ] > 0.4)/len(YPredTest[(genMassTest==0) ])
+    print(sigEff, bkgEff)
 
 
 

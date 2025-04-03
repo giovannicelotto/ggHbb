@@ -43,10 +43,11 @@ try:
     if args.date is not None:
         current_date = args.date
 except:
-    current_date = "Mar05"
-    hp["lambda_reg"] = 700.1
+    current_date = "Apr02"
+    hp["lambda_reg"] = 800.
     print("Interactive mode")
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
+inputSubFolder = "data_pt0_1D"
 # %%
 # Plot Loss function
 # Load the loss functions from different ranks
@@ -91,15 +92,15 @@ best_epoch = plot_lossTorch(train_loss_history, val_loss_history,
               train_classifier_loss_history, val_classifier_loss_history,
               train_dcor_loss_history, val_dcor_loss_history,
               outFolder, gpu=True)
+#best_epoch = 550
 print("Best epoch chosen based on val loss is %d"%best_epoch)
 # %%
 results = {}
-
 modelName1, modelName2 = "nn1_e%d.pth"%best_epoch, "nn2_e%d.pth"%best_epoch
 
 # %%
 # Load data, neural networks and weights
-Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/data")
+Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/"+inputSubFolder)
 columnsToRead = getFeatures(outFolder=None,  massHypo=True)[1]
 featuresForTraining = np.load(outFolder+"/featuresForTraining.npy")
 print(featuresForTraining)
@@ -127,8 +128,7 @@ if 'bin_center' in featuresForTraining:
         np.array(bin_centers)[bin_indices],
         np.nan  # Assign NaN for out-of-range dijet_mass
     )
-advFeatureTrain = np.load(inFolder+"/data/advFeatureTrain.npy")     
-advFeatureVal   = np.load(inFolder+"/data/advFeatureVal.npy")
+
 
 
 state_dict1 = torch.load(outFolder + "/model/%s"%modelName1, map_location=torch.device('cpu'))
@@ -235,13 +235,15 @@ Xtest['PNN2'] = YPredTest2
 
 max_nn1, secondMax_nn1 = NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
           signalTrain_predictions=YPredTrain1[genMassTrain==125], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
-          outName=outFolder+"/performance/output1_125.png", log=False, doubleDisco=True)
+          outName=outFolder+"/performance/output1_125.png", log=False, doubleDisco=True, label='NN1 output')
 max_nn2, secondMax_nn2 = NNoutputs(signal_predictions=YPredVal2[genMassVal==125], realData_predictions=YPredVal2[genMassVal==0],
           signalTrain_predictions=YPredTrain2[genMassTrain==125], realDataTrain_predictions=YPredTrain2[genMassTrain==0],
-          outName=outFolder+"/performance/output2_125.png", log=False, doubleDisco=True)
+          outName=outFolder+"/performance/output2_125.png", log=False, doubleDisco=True, label= 'NN2 output')
 
 nn1_t = (max_nn1 + secondMax_nn1)/2
 nn2_t = (max_nn2 + secondMax_nn2)/2
+print("NN1_t", nn1_t)
+print("NN2_t", nn2_t)
 #NNoutputs(signal_predictions=YPredVal1[genMassVal==125], realData_predictions=YPredVal1[genMassVal==0],
 #          signalTrain_predictions=YPredTrain1[genMassTrain==125], realDataTrain_predictions=YPredTrain1[genMassTrain==0],
 #          outName=outFolder+"/performance/output1_125_log.png", log=True)
@@ -258,22 +260,25 @@ nn2_t = (max_nn2 + secondMax_nn2)/2
 
 ncols = 4
 nrows = math.ceil((len(mass_bins) - 1) / ncols)
-fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10))
-# Flat the axes for simplicity
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10), constrained_layout=True)
+fig.subplots_adjust(hspace=0.4) 
 ax = ax.flatten()  
 for idx, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
     # Signal
     ax[idx].hist(Xval.PNN1[(Yval==0) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='blue')  
     ax[idx].hist(Xval.PNN1[(genMassVal==125) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='red')  
+    ax[idx].set_xlabel("%.1f < mjj < %.1f"%(low, high))
 for j in range(idx + 1, len(ax)):
     fig.delaxes(ax[j])  # Remove extra axes
 fig.savefig(outFolder+"/performance/NNscore1_dijetMass_binned.png", bbox_inches='tight')
 # Same for NN 2
-fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10))
+fig, ax = plt.subplots(nrows=nrows, ncols=ncols, figsize=(15, 10), constrained_layout=True)
+fig.subplots_adjust(hspace=0.4) 
 ax = ax.flatten()  
 for idx, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
     ax[idx].hist(Xval.PNN2[(Yval==0) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='blue')  
     ax[idx].hist(Xval.PNN2[(genMassVal==125) & (Xval.dijet_mass > low) & (Xval.dijet_mass < high)], bins=np.linspace(0, 1, 11), density=True, histtype='step', color='red')  
+    ax[idx].set_xlabel("%.1f < mjj < %.1f"%(low, high))
 for j in range(idx + 1, len(ax)):
     fig.delaxes(ax[j])  # Remove extra axes
 fig.savefig(outFolder+"/performance/NNscore2_dijetMass_binned.png", bbox_inches='tight')
@@ -437,43 +442,35 @@ ks_p_value_PNN, p_value_PNN, chi2_values_PNN = checkOrthogonalityInMassBins(
     label_mask1  = 'PNN2 High',
     label_mask2  = 'PNN2 Low',
     label_toPlot = 'PNN1',
-    bins=np.linspace(0., 1, 3),
+    bins=np.array([0, nn1_t,1]),
     mass_bins=mass_bins,
     mass_feature='dijet_mass',
     figsize=(20, 25),
     outName=outFolder+"/performance/PNN1_orthogonalityBinned.png" 
 )
-#plotLocalPvalues(pvalues=ks_p_value_PNN, mass_bins=mass_bins, pvalueLabel="KS", outFolder=outFolder+"/performance/PNN1_KSpvalues.png")
-#plotLocalPvalues(pvalues=p_value_PNN, mass_bins=mass_bins, pvalueLabel="$\chi^2$", outFolder=outFolder+"/performance/PNN1_Chi2pvalues.png")
+plotLocalPvalues(pvalues=ks_p_value_PNN, mass_bins=mass_bins, pvalueLabel="KS", outFolder=outFolder+"/performance/PNN1_KSpvalues.png")
+plotLocalPvalues(pvalues=p_value_PNN, mass_bins=mass_bins, pvalueLabel="$\chi^2$", outFolder=outFolder+"/performance/PNN1_Chi2pvalues.png")
 plt.close('all')
 # %%
 
 ks_p_value_PNN, p_value_PNN, chi2_values_PNN = checkOrthogonalityInMassBins(
-    df=Xval[Yval==0],
-    featureToPlot='PNN2',
-    mask1=np.array(Xval[Yval==0]['PNN1'] >= nn1_t),
-    mask2=np.array(Xval[Yval==0]['PNN1'] < nn1_t),
-    label_mask1  = 'PNN1 High',
-    label_mask2  = 'PNN1 Low',
-    label_toPlot = 'PNN2',
-    bins=np.linspace(0., 1, 3),
-    mass_bins=mass_bins,
-    mass_feature='dijet_mass',
-    figsize=(20, 25),
-    outName=outFolder+"/performance/PNN2_orthogonalityBinned.png" 
-)
+        df=Xval[Yval==0],
+        featureToPlot='PNN2',
+        mask1=np.array(Xval[Yval==0]['PNN1'] >= nn1_t),
+        mask2=np.array(Xval[Yval==0]['PNN1'] < nn1_t),
+        label_mask1  = 'PNN1 High',
+        label_mask2  = 'PNN1 Low',
+        label_toPlot = 'PNN2',
+        bins=np.array([0, nn2_t,1]),
+        mass_bins=mass_bins,
+        mass_feature='dijet_mass',
+        figsize=(20, 25),
+        outName=outFolder+"/performance/PNN2_orthogonalityBinned.png" 
+        )
 
 plotLocalPvalues(pvalues=ks_p_value_PNN, mass_bins=mass_bins, pvalueLabel="KS", outFolder=outFolder+"/performance/PNN2_KSpvalues.png")
 plotLocalPvalues(pvalues=p_value_PNN, mass_bins=mass_bins, pvalueLabel="$\chi^2$", outFolder=outFolder+"/performance/PNN2_Chi2pvalues.png")
 plt.close('all')
-
-
-
-
-
-
-
-
 
 
 

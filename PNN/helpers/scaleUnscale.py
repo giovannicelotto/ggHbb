@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 
-def scale(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False):
+def scale(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False, log=True, scaler='standard'):
     """
     Apply log transformation to features containing 'pt', 'mass', or named 'ht'.
     
@@ -20,26 +20,31 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None, booste
     """
     
     data = data.astype(np.float32).copy()
+    if log:
+        # Apply log transformation to selected features
+        log_features = [col for col in featuresForTraining 
+                        if ("_pt" in col or "_mass" in col or col == "ht") 
+                        and "normalized" not in col]
+        #Dijet Mass not used as feature
+        #if boosted:
+        #    print("Removing Dijet Mass from features")
+        #    log_features.remove('dijet_mass')
 
-    # Apply log transformation to selected features
-    log_features = [col for col in featuresForTraining 
-                    if ("_pt" in col or "_mass" in col or col == "ht") 
-                    and "normalized" not in col]
-    #Dijet Mass not used as feature
-    #if boosted:
-    #    print("Removing Dijet Mass from features")
-    #    log_features.remove('dijet_mass')
-
-    for col in log_features:
-        print(f"Feature: {col} | Min: {data[col].min():.1f}, Max: {data[col].max():.1f}")
-        data.loc[:, col] = np.log1p(data[col])  # np.log1p(x) is equivalent to np.log(1+x)
+        for col in log_features:
+            print(f"Feature: {col} | Min: {data[col].min():.1f}, Max: {data[col].max():.1f}")
+            data.loc[:, col] = np.log1p(data[col])  # np.log1p(x) is equivalent to np.log(1+x)
 
     # Select features for scaling (excluding 'sf')
     scale_features = [col for col in featuresForTraining if col != 'sf']
     
     if fit:
         # Initialize and fit the scaler
-        scaler = preprocessing.StandardScaler()
+        if scaler=='robust':
+            scaler = preprocessing.RobustScaler()
+        elif scaler=='standard':
+            scaler = preprocessing.StandardScaler()
+        else:
+            assert False
         if weights is not None:
             scaler.fit(data[scale_features], sample_weight=weights)
         else:
@@ -62,7 +67,11 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None, booste
     data.update(scaled_data)
 
     return data
-def unscale(data, featuresForTraining, scalerName):
+def unscale(data, featuresForTraining, scalerName, log=True):
+    if log:
+        log_features = [col for col in featuresForTraining 
+                        if ("_pt" in col or "_mass" in col or col == "ht") 
+                        and "normalized" not in col]
     with open(scalerName, 'rb') as file:
         scalers = pickle.load(file)
         scaler = scalers['scaler']
@@ -70,10 +79,11 @@ def unscale(data, featuresForTraining, scalerName):
         dataUnscaled = pd.DataFrame(scaled_array, columns=[col for col in featuresForTraining if col!='sf'], index=data.index)
         #dataUnscaled['sf'] = data['sf']
 
-    
-    for colName in featuresForTraining:
-        if ("_pt" in colName) | ("_mass" in colName) | (colName=="ht"):
+    if log:
+        for colName in log_features:
+            print(colName, " inverted trasnform")
             dataUnscaled[colName] = np.exp(dataUnscaled[colName]) - 1
+            print(f"Feature: {colName} | Min: {dataUnscaled[colName].min():.1f}, Max: {dataUnscaled[colName].max():.1f}")
     
     for feature in data.columns:
         if feature not in featuresForTraining:
