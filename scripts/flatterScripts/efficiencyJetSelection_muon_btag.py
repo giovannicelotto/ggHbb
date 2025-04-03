@@ -52,6 +52,7 @@ def evaluateCriterion(maxJet, fileNames, tag):
     firstJetIsGood = 0   
     secondJetIsGood = 0   
     goodChoice,wrongChoice, matched, nonMatched, noPossiblePair, totalEntriesVisited, outOfEta = 0, 0, 0, 0, 0, 0, 0
+    within3Jets = 0
     recoJetsBelow20 =0
     # goodChoice       = events where criterion worked
     # wrongChoice      = events criterion did not work
@@ -216,7 +217,15 @@ def evaluateCriterion(maxJet, fileNames, tag):
                        
             taggers = [Jet_btagDeepFlavB, Jet_btagPNetB, Jet_tagUParTAK4B]
             tagLabel = ['DeepJet', 'PNet', 'PartT'][tag]
-            selected1, selected2, muonIdx, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, taggers[tag], Jet_puId, Jet_jetId)
+            selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, method=1, Jet_pt=Jet_pt)
+            if nJet>2:
+                for i in range(nJet):
+                    if (i==selected1) | (i==selected2):
+                        continue
+                    else:
+                        selected3 = i
+                        break
+
 
             #print(ev, idxJet1, idxJet2, selected1, selected2)
             if ((idxJet1==selected1) | (idxJet2==selected1)):
@@ -225,6 +234,14 @@ def evaluateCriterion(maxJet, fileNames, tag):
                 secondJetIsGood=secondJetIsGood+1
             if ((idxJet1==selected1) & (idxJet2==selected2) | (idxJet1==selected2) & (idxJet2==selected1)): #choice we made is good
                 goodChoice=goodChoice+1
+            if ((idxJet1==selected1) & (idxJet2==selected2) |
+                (idxJet1==selected2) & (idxJet2==selected1) |
+                (idxJet1==selected1) & (idxJet2==selected3) |
+                (idxJet1==selected3) & (idxJet2==selected1) |
+                (idxJet1==selected2) & (idxJet2==selected3) |
+                (idxJet1==selected3) & (idxJet2==selected2)): 
+                
+                within3Jets=within3Jets+1
             elif (selected1==999) & (selected2==999):       #no choice made (event skipped)
                 noPossiblePair+=1
             else:
@@ -245,8 +262,8 @@ def evaluateCriterion(maxJet, fileNames, tag):
     print("Wrong choice of jets                                         : %d  \t  %.2f%%" %(wrongChoice , wrongChoice/totalEntriesVisited*100))
     print("No Dijet with trigger inside within 2.5. No choice made      : %d  \t  %.2f%%" %(noPossiblePair , noPossiblePair/totalEntriesVisited*100))
     print("Out of Eta                                                   : %d  \t  %.2f%%" %(outOfEta , outOfEta/totalEntriesVisited*100))
-    print("Below 20 GeV                                                   : %d  \t  %.2f%%" %(recoJetsBelow20 , recoJetsBelow20/totalEntriesVisited*100))
-    
+    print("Below 20 GeV                                                 : %d  \t  %.2f%%" %(recoJetsBelow20 , recoJetsBelow20/totalEntriesVisited*100))
+    print("Within 3 jets                                                : %d  \t  %.2f%%"%(within3Jets, within3Jets/totalEntriesVisited*100))
     print("Consistency = nonMatched + correct + wrong + noDijetWithTrigger + outOfEta: %d  \t  %.1f" %(nonMatched+goodChoice+noPossiblePair+wrongChoice+outOfEta, (nonMatched+goodChoice+noPossiblePair+wrongChoice)/totalEntriesVisited))
     print(maxJet, maxJet==4)
     if int(maxJet)==4:
@@ -272,7 +289,7 @@ def main(nFiles, maxJet1, maxJet2, tag):
     
 
     #path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/allSamplesWW2025Jan20/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250120_100810/0000"
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/mc_fiducial2025Mar08/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250307_230607/0000"
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/MCfiducial_corrections2025Mar10/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250310_104448/0000/training"
     fileNames = glob.glob(path+'/**/*.root', recursive=True)
     #random.shuffle(fileNames)
     fileNames = fileNames[:nFiles]
