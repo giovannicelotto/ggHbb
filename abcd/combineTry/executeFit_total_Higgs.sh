@@ -1,7 +1,19 @@
 cd /t3home/gcelotto/ggHbb/abcd/combineTry
 datacard="/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeHdatacard_total.txt"
-rmin=-3
-rmax=5
+# Define the dynamic part of the filename (e.g., "2A_1D_3A" or "2A_1D")
+dynamic_part="1D"  # Change this value as needed
+model="Apr01_1000p0"
+
+# Define the new ROOT filename based on the dynamic part
+new_root_file="/t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_${model}_dd__${dynamic_part}_corrected.root"
+
+# Use sed to replace the line in place
+sed -i "s|shapes \*    total  .*root|shapes *    total  ${new_root_file} \$PROCESS|" "$datacard"
+
+
+
+rmin=-2.5
+rmax=4.5
 combine -M AsymptoticLimits $datacard --rMin $rmin --rMax $rmax --mass 125 --run expected -n hbb_total.expected
 
 combine -M MultiDimFit $datacard --expectSignal 1 -t -1 --algo grid --points 100 --rMin $rmin --rMax $rmax  --mass 125  -n hbb_total.expected
