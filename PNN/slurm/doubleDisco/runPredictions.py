@@ -47,7 +47,7 @@ def main(isMC, processNumber, nFiles, modelName, multigpu, epoch=None):
         if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(processNumber))
-            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 500)), '/t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predict.sh', fileName, str(processNumber), process, modelName, str(multigpu), str(epoch)])
+            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 100)), '/t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predict.sh', fileName, str(processNumber), process, modelName, str(multigpu), str(epoch)])
             doneFiles = doneFiles + 1
         else:
             print("..")

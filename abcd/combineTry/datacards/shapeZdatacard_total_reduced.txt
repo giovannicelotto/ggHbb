@@ -1,0 +1,24 @@
+imax 1 number of bins
+jmax 2 number of processes minus 1
+kmax * number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z    *  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/merged_btagSystematics.root  ZJets_Nominal ZJets_$SYSTEMATIC 
+shapes H    *  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/merged_btagSystematics.root  H_Nominal H_$SYSTEMATIC 
+shapes QCD    *  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/merged_btagSystematics.root  QCD_Nominal QCD_$SYSTEMATIC 
+shapes data_obs    *  /t3home/gcelotto/ggHbb/abcd/combineTry/shapes/merged_btagSystematics.root  data_obs_Nominal data_obs_$SYSTEMATIC 
+----------------------------------------------------------------------------------------------------------------------------------
+bin          total
+observation  -1
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             total       total     total     
+process                         Z       H         QCD
+process                         0           1       2    
+rate                            -1          -1     -1     
+----------------------------------------------------------------------------------------------------------------------------------
+Z_xsec                   lnN     1.05       -       -
+H_xsec                   lnN     -          1.05     -
+lumi                     lnN     1.025      1.025   -
+btag_                    shapes  1      1       1
+----------------------------------------------------------------------------------------------------------------------------------
+syst      group = Z_xsec H_xsec  lumi 
+* autoMCStats 1

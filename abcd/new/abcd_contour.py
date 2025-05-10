@@ -5,200 +5,132 @@ import json, sys, glob, re
 import pandas as pd
 import mplhep as hep
 hep.style.use("CMS")
-from functions import loadMultiParquet, getDfProcesses
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
 from plotDfs import plotDfs
+from functions import getDfProcesses_v2
 import pickle
-# %%
-
-nReal, nMC = 30, -1
-
-
-predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/PNNpredictions_nov18"
-isMCList = [0, 1,
-            2,
-            3, 4, 5,
-            6,7,8,9,10,11,
-            12,13,14,
-            15,16,17,18,19,
-            20, 21, 22, 23, 36,
-            #39    # Data2A
-]
-
-dfProcesses = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processes.csv")
-processes = dfProcesses.process[isMCList].values
-
-# Get predictions names path for both datasets
-predictionsFileNames = []
-for p in processes:
-    print(p)
-    predictionsFileNames.append(glob.glob(predictionsPath+"/%s/others/*.parquet"%p))
-
-
-# %%
-predictionsFileNumbers = []
-for isMC, p in zip(isMCList, processes):
-    idx = isMCList.index(isMC)
-    print("Process %s # %d"%(p, isMC))
-    l = []
-    for fileName in predictionsFileNames[idx]:
-        print
-        fn = re.search(r'fn(\d+)\.parquet', fileName).group(1)
-        l.append(int(fn))
-
-    predictionsFileNumbers.append(l)
-# %%
-paths = list(dfProcesses.flatPath[isMCList])
-dfs= []
-print(predictionsFileNumbers)
-dfs, numEventsList, fileNumberList = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC,
-                                                      columns=['sf', 'dijet_mass',# 'dijet_pt', 'jet1_pt',
-                                                               #'jet2_pt','jet1_mass', 'jet2_mass', 'jet1_eta',
-                                                               #'jet2_eta', 'dijet_dR',
-                                                                #'jet3_mass',
-                                                                #'Pileup_nTrueInt',
-                                                               'jet2_btagDeepFlavB', #'dijet_cs', 'nJets_20GeV',
-                                                               'jet1_btagDeepFlavB', 'PU_SF'],
-                                                               returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
-                                                               returnFileNumberList=True)
-if isMCList[-1]==39:
-    nReal = nReal *2
-    print("Duplicating nReal")
-# %%
-preds = []
-predictionsFileNamesNew = []
-for isMC, p in zip(isMCList, processes):
-    idx = isMCList.index(isMC)
-    print("Process %s # %d"%(p, isMC))
-    l =[]
-    for fileName in predictionsFileNames[idx]:
-        print(fileName)
-        fn = int(re.search(r'fn(\d+)\.parquet', fileName).group(1))
-        if fn in fileNumberList[idx]:
-            l.append(fileName)
-    predictionsFileNamesNew.append(l)
-    
-    print(len(predictionsFileNamesNew[idx]), " files for process")
-    df = pd.read_parquet(predictionsFileNamesNew[idx])
-    preds.append(df)
-
-
-# given the fn load the data
-
-
-# preprocess 
-dfs = preprocessMultiClass(dfs=dfs)
-# %%
-for idx, df in enumerate(dfs):
-    print(idx)
-    dfs[idx]['PNN'] = np.array(preds[idx])
-
-# %%
-for idx, df in enumerate(dfs):
-    isMC = isMCList[idx]
-    print("isMC ", isMC)
-    print("Process ", dfProcesses.process[isMC])
-    print("Xsection ", dfProcesses.xsection[isMC])
-    dfs[idx]['weight'] = df.PU_SF*df.sf*dfProcesses.xsection[isMC] * nReal * 1000 * 0.774 /1017/numEventsList[idx]
-
-# make uinque data columns
-if isMCList[-1]==39:
-    dfs[0]=pd.concat([dfs[0], dfs[-1]])
-    dfs = dfs[:-1]       # remove the last element (data2a)
-#set to 1 weights of data
-dfs[0]['weight'] = np.ones(len(dfs[0]))
-# %%
-#for idx, df in enumerate(dfs):
-#    dfs[idx]['dijet_cs_abs'] = 1-abs(df.dijet_cs)
-# %%
-with open('/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/oldDf/dataframes.pkl', 'rb') as f:
-    dfs = pickle.load(f)
-# %%
-nReal = 2000
-isMCList = [0, 
-                1,
-                2,
-                3, 4, 5,
-                6,7,8,9,10,11,
-                12,13,14,
-                15,16,17,18,19,
-                20, 21, 22, 23, 36,
-                39    # Data2A
-    ]
-dfProcesses = getDfProcesses()
-
-x1 = 'jet1_btagDeepFlavB'
-x2 = 'PNN'
-t11 = 0.7100
-t12 = 0.7100
-t21 =0.4
-t22 = 0.4
-xx = 'dijet_mass'
-# further preprocess
-from functions import cut
-dfs = cut (data=dfs, feature='jet2_btagDeepFlavB', min=0.2783, max=None)
-dfs = cut (data=dfs, feature='jet1_btagDeepFlavB', min=0.2783, max=None)
-
-
-# %%
-#fig = plotDfs(dfs=dfs, isMCList=isMCList, dfProcesses=dfProcesses)
-
-
-# %%
-dfZ = []
-for idx,df in enumerate(dfs):
-    if (isMCList[idx] == 2) | (isMCList[idx] == 20) | (isMCList[idx] == 21) | (isMCList[idx] == 22) | (isMCList[idx] == 23) | (isMCList[idx] == 36):
-        dfZ.append(df)
-dfZ=pd.concat(dfZ)
-
-
-# %%
-
-# do hist or contour in the abcd regions
-dfW=[]
-for idx,df in enumerate(dfs):
-    if (isMCList[idx] >= 15) & (isMCList[idx] < 20):
-        dfW.append(df)
-dfW=pd.concat(dfW)
-
-
-df_tt=[]
-for idx,df in enumerate(dfs):
-    if (isMCList[idx] >= 12) & (isMCList[idx] < 15):
-        df_tt.append(df)
-df_tt=pd.concat(df_tt)
-
-
-df_st=[]
-for idx,df in enumerate(dfs):
-    if (isMCList[idx] >= 6) & (isMCList[idx] < 12):
-        df_st.append(df)
-df_st=pd.concat(df_st)
-
-df_VV=[]
-for idx,df in enumerate(dfs):
-    if (isMCList[idx] >= 3) & (isMCList[idx] <= 5 ):
-        df_VV.append(df)
-df_VV=pd.concat(df_VV)
-
-# %%
-# %%
-df = dfs[0].copy()
-mA      = (df[x1]<t11 ) & (df[x2]>t22 ) 
-mB      = (df[x1]>t12 ) & (df[x2]>t22 ) 
-mC      = (df[x1]<t11 ) & (df[x2]<t21 ) 
-mD      = (df[x1]>t12 ) & (df[x2]<t21 ) 
-
-
-
-print("Region A : ", np.sum(df.weight[mA])/df.weight.sum())
-print("Region B : ", np.sum(df.weight[mB])/df.weight.sum())
-print("Region C : ", np.sum(df.weight[mC])/df.weight.sum())
-print("Region D : ", np.sum(df.weight[mD])/df.weight.sum())
-
-# %%
 from scipy.stats import gaussian_kde
+from matplotlib.lines import Line2D  # 
+import matplotlib.gridspec as gridspec
+import seaborn as sns
+# %%
+dataFrames_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/Apr17_100p0"
+dfProcess = getDfProcesses_v2()[0]
+Z_processes = [1, 3, 4, 19, 20, 21, 22, 35]
+H_processes = [0,37]
+
+Z_names = []
+for processName in dfProcess.process.iloc[Z_processes]:
+    Z_names.append(dataFrames_folder+"/df_dd_%s_Apr17_100p0.parquet"%(processName))
+
+df_Z = pd.read_parquet(Z_names)
+
+H_names = []
+for processName in dfProcess.process.iloc[H_processes]:
+    H_names.append(dataFrames_folder+"/df_dd_%s_Apr17_100p0.parquet"%(processName))
+
+df_H = pd.read_parquet(H_names)
+
+
+df_data = pd.read_parquet(dataFrames_folder+"/dataframes_dd_Data1A_Apr17_100p0.parquet")
+# %%
+x1 = 'PNN1'
+x2 = 'PNN2'
+t11 = 0.56
+t12 = 0.56
+t21 =0.58
+t22 = 0.58
+xx = 'dijet_mass'
+# %%
+def computeSig(df_data, df_H, t11, t22):
+    t12 = t11
+    t21 = t22
+    mA_data      = (df_data[x1]<t11 ) & (df_data[x2]>t22 ) 
+    mB_data      = (df_data[x1]>t12 ) & (df_data[x2]>t22 ) 
+    mC_data      = (df_data[x1]<t11 ) & (df_data[x2]<t21 ) 
+    mD_data      = (df_data[x1]>t12 ) & (df_data[x2]<t21 ) 
+
+    N_A = np.sum(df_data.weight[mA_data])/df_data.weight.sum()
+    N_B = np.sum(df_data.weight[mB_data])/df_data.weight.sum()
+    N_C = np.sum(df_data.weight[mC_data])/df_data.weight.sum()
+    N_D = np.sum(df_data.weight[mD_data])/df_data.weight.sum()
+
+    mA_H      = (df_H[x1]<t11 ) & (df_H[x2]>t22 ) 
+    mB_H      = (df_H[x1]>t12 ) & (df_H[x2]>t22 ) 
+    mC_H      = (df_H[x1]<t11 ) & (df_H[x2]<t21 ) 
+    mD_H      = (df_H[x1]>t12 ) & (df_H[x2]<t21 ) 
+
+    effSig = np.sum(df_H.weight[mB_H])/df_H.weight.sum()
+    errorQCD = N_A * N_D / (N_C+1e-12) * np.sqrt(1/(N_A+1e-12) + 1/(N_C+1e-12) + 1/(N_D+1e-12))
+
+    if N_C == 0:
+        return 0, 0, 0
+
+    return effSig,  errorQCD/(N_B+1e-12), effSig/(errorQCD+1e-12)
+
+
+t1_space = np.linspace(0.1, 0.9, 20)
+t2_space = np.linspace(0.1, 0.9, 20)
+sig_results = np.empty((len(t1_space), len(t2_space)))
+effH_results = np.empty((len(t1_space), len(t2_space)))
+errData_results = np.empty((len(t1_space), len(t2_space)))
+
+for idx, t1 in enumerate(t1_space):
+    for jdx, t2 in enumerate(t2_space):
+        print(t1, t2)
+        effH_results[idx, jdx], errData_results[idx, jdx], sig_results[idx, jdx] = computeSig(df_data=df_data, df_H=df_H, t11=t1 ,t22=t2)
+        print(effH_results[idx, jdx], errData_results[idx, jdx], sig_results[idx, jdx])
+# %%
+
+from matplotlib.colors import LogNorm
+# Assuming sig_results, t1_space, t2_space already exist from your loop
+
+fig, ax = plt.subplots(figsize=(8, 6))
+sig_results = np.where(sig_results > 0, sig_results, 1e-10)
+sig_results = np.where(errData_results>1e-10, sig_results, 1e-10)
+# Create the heatmap
+sns.heatmap(sig_results, 
+            xticklabels=np.round(t2_space, 2), 
+            yticklabels=np.round(t1_space, 2), 
+            cmap="viridis", 
+            norm=LogNorm(vmin=sig_results.min(), vmax=sig_results.max()),
+            cbar_kws={'label': 'Sig Value'},
+            ax=ax)
+
+# Set labels and title
+ax.set_xlabel('t2')
+ax.set_ylabel('t1')
+ax.set_title('Sig Results over t1/t2 space')
+
+# Rotate ticks for clarity
+ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
+
+fig.tight_layout()
+plt.show()
+
+
+# %%
+mA_data      = (df_data[x1]<t11 ) & (df_data[x2]>t22 ) 
+mB_data      = (df_data[x1]>t12 ) & (df_data[x2]>t22 ) 
+mC_data      = (df_data[x1]<t11 ) & (df_data[x2]<t21 ) 
+mD_data      = (df_data[x1]>t12 ) & (df_data[x2]<t21 ) 
+
+mA_H      = (df_H[x1]<t11 ) & (df_H[x2]>t22 ) 
+mB_H      = (df_H[x1]>t12 ) & (df_H[x2]>t22 ) 
+mC_H      = (df_H[x1]<t11 ) & (df_H[x2]<t21 ) 
+mD_H      = (df_H[x1]>t12 ) & (df_H[x2]<t21 ) 
+
+
+print("Efficiency   | Data | Higgs  |")
+print("Region A     | %.2f | %.2f  |"%(np.sum(df_data.weight[mA_data])/df_data.weight.sum() * 100, np.sum(df_H.weight[mA_H])/df_H.weight.sum()*100))
+print("Region B     | %.2f | %.2f  |"%(np.sum(df_data.weight[mB_data])/df_data.weight.sum() * 100, np.sum(df_H.weight[mB_H])/df_H.weight.sum()*100))
+print("Region C     | %.2f | %.2f  |"%(np.sum(df_data.weight[mC_data])/df_data.weight.sum() * 100, np.sum(df_H.weight[mC_H])/df_H.weight.sum()*100))
+print("Region D     | %.2f | %.2f  |"%(np.sum(df_data.weight[mD_data])/df_data.weight.sum() * 100, np.sum(df_H.weight[mD_H])/df_H.weight.sum()*100))
+
+# %%
+
 def compute_kde(df, grid_size=100):
     x = df[x1].values  # Column 'x1' for x-axis
     y = df[x2].values  # Column 'x2' for y-axis
@@ -231,8 +163,6 @@ def compute_2d_hist(df, grid_size=50):
 
 # Contour for Higgs
 
-from matplotlib.lines import Line2D  # 
-import matplotlib.gridspec as gridspec
 
 fig = plt.figure(figsize=(8, 8))
 gs = gridspec.GridSpec(4, 5, hspace=0.05, wspace=0.05)
@@ -242,7 +172,7 @@ legend_elements = [
     Line2D([0], [0], color='cyan', lw=2, label='H')
 ]
 
-df = dfs[1]
+df = df_H
 X, Y, Z, x, y  = compute_kde(df.head(10000))
 contour = ax_main.contour(X, Y, Z, levels=10, cmap='Blues')  # Plot contour for df4
 ax_main.clabel(contour, inline=True, fontsize=8)
@@ -280,7 +210,7 @@ legend_elements = [
 ]
 
 
-df = dfZ
+df = df_Z
 X, Y, Z, x, y  = compute_kde(df.head(10000))
 contour = ax_main.contour(X, Y, Z, levels=10, cmap='Blues')  # Plot contour for df4
 ax_main.clabel(contour, inline=True, fontsize=8)
@@ -308,82 +238,6 @@ fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/contours/Z.png", bbox_inches=
 
 # %%
 
-# Contour for W
-
-fig = plt.figure(figsize=(8, 8))
-gs = gridspec.GridSpec(4, 5, hspace=0.05, wspace=0.05)
-ax_main = fig.add_subplot(gs[1:4, 1:4])
-legend_elements = [
-
-    Line2D([0], [0], color='red', lw=2, label='W'),
-
-]
-
-df = dfW
-X, Y, Z, x, y  = compute_kde(df.head(10000))
-contour = ax_main.contour(X, Y, Z, levels=10, cmap='Reds')  # Plot contour for df4
-ax_main.clabel(contour, inline=True, fontsize=8)
-
-
-ax_top = fig.add_subplot(gs[0, 1:4], sharex=ax_main)
-ax_top.hist(x, bins=30, weights=df['weight'].head(10000), color='red', alpha=0.7)
-ax_top.set_ylabel('Count')
-ax_top.tick_params(axis="x", labelbottom=False)
-
-ax_left = fig.add_subplot(gs[1:4, 4], sharey=ax_main)
-ax_left.hist(y, bins=30, weights=df['weight'].head(10000), orientation='horizontal', color='red', alpha=0.7)
-ax_left.set_xlabel('Count')
-ax_left.tick_params(axis="y", labelleft=False)
-
-
-ax_main.set_xlim(0.2783, 1)
-ax_main.set_ylim(0,   1)
-ax_main.vlines(x=t11, ymin=0, ymax=1, linestyles='dotted', color='black')
-ax_main.hlines(y=t22, xmin=0, xmax=1, linestyles='dotted', color='black')
-ax_main.legend(handles=legend_elements)
-ax_main.set_xlabel(x1)
-ax_main.set_ylabel(x2)
-fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/contours/W.png", bbox_inches='tight')
-# %%
-
-# Contour for tt
-
-fig = plt.figure(figsize=(8, 8))
-gs = gridspec.GridSpec(4, 5, hspace=0.05, wspace=0.05)
-ax_main = fig.add_subplot(gs[1:4, 1:4])
-legend_elements = [
-
-    Line2D([0], [0], color='green', lw=2, label='tt'),
-]
-
-
-df = df_tt
-X, Y, Z, x, y  = compute_kde(df.head(10000))
-contour = ax_main.contour(X, Y, Z, levels=10, cmap='Greens')  # Plot contour for df4
-ax_main.clabel(contour, inline=True, fontsize=8)
-
-
-ax_top = fig.add_subplot(gs[0, 1:4], sharex=ax_main)
-ax_top.hist(x, bins=30, weights=df['weight'].head(10000), color='green', alpha=0.7)
-ax_top.set_ylabel('Count')
-ax_top.tick_params(axis="x", labelbottom=False)
-
-ax_left = fig.add_subplot(gs[1:4, 4], sharey=ax_main)
-ax_left.hist(y, bins=30, weights=df['weight'].head(10000), orientation='horizontal', color='green', alpha=0.7)
-ax_left.set_xlabel('Count')
-ax_left.tick_params(axis="y", labelleft=False)
-
-
-ax_main.set_xlim(0.2783, 1)
-ax_main.set_ylim(0,   1)
-ax_main.vlines(x=t11, ymin=0, ymax=1, linestyles='dotted', color='black')
-ax_main.hlines(y=t22, xmin=0, xmax=1, linestyles='dotted', color='black')
-ax_main.legend(handles=legend_elements)
-ax_main.set_xlabel(x1)
-ax_main.set_ylabel(x2)
-fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/contours/ttbar.png", bbox_inches='tight')
-# %%
-
 # Contour for Data
 
 fig = plt.figure(figsize=(8, 8))
@@ -395,19 +249,18 @@ legend_elements = [
 ]
 
 
-df = dfs[0]
-X, Y, Z, x, y  = compute_kde(df.head(10000))
-contour = ax_main.contour(X, Y, Z, levels=10, cmap='Grays')  # Plot contour for df4
+X, Y, Z, x, y  = compute_kde(df_data.head(10000))
+contour = ax_main.contour(X, Y, Z, levels=10, cmap='Grays')  # Plot contour for df_data4
 ax_main.clabel(contour, inline=True, fontsize=8)
 
 
 ax_top = fig.add_subplot(gs[0, 1:4], sharex=ax_main)
-ax_top.hist(x, bins=30, weights=df['weight'].head(10000), color='black', alpha=0.7)
+ax_top.hist(x, bins=30, weights=df_data['weight'].head(10000), color='black', alpha=0.7)
 ax_top.set_ylabel('Count')
 ax_top.tick_params(axis="x", labelbottom=False)
 
 ax_left = fig.add_subplot(gs[1:4, 4], sharey=ax_main)
-ax_left.hist(y, bins=30, weights=df['weight'].head(10000), orientation='horizontal', color='black', alpha=0.7)
+ax_left.hist(y, bins=30, weights=df_data['weight'].head(10000), orientation='horizontal', color='black', alpha=0.7)
 ax_left.set_xlabel('Count')
 ax_left.tick_params(axis="y", labelleft=False)
 
@@ -420,91 +273,4 @@ ax_main.legend(handles=legend_elements)
 ax_main.set_xlabel(x1)
 ax_main.set_ylabel(x2)
 fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/contours/Data.png", bbox_inches='tight')
-# %%
-
-
-# Contour for VV
-
-fig = plt.figure(figsize=(8, 8))
-gs = gridspec.GridSpec(4, 5, hspace=0.05, wspace=0.05)
-ax_main = fig.add_subplot(gs[1:4, 1:4])
-legend_elements = [
-
-    Line2D([0], [0], color='orange', lw=2, label='VV')
-]
-
-
-df = df_VV
-X, Y, Z, x, y  = compute_kde(df.head(10000))
-contour = ax_main.contour(X, Y, Z, levels=10, cmap='copper')  # Plot contour for df4
-ax_main.clabel(contour, inline=True, fontsize=8)
-
-
-ax_top = fig.add_subplot(gs[0, 1:4], sharex=ax_main)
-ax_top.hist(x, bins=30, weights=df['weight'].head(10000), color='orange', alpha=0.7)
-ax_top.set_ylabel('Count')
-ax_top.tick_params(axis="x", labelbottom=False)
-
-ax_left = fig.add_subplot(gs[1:4, 4], sharey=ax_main)
-ax_left.hist(y, bins=30, weights=df['weight'].head(10000), orientation='horizontal', color='orange', alpha=0.7)
-ax_left.set_xlabel('Count')
-ax_left.tick_params(axis="y", labelleft=False)
-
-
-ax_main.set_xlim(0.2783, 1)
-ax_main.set_ylim(0,   1)
-ax_main.vlines(x=t11, ymin=0, ymax=1, linestyles='dotted', color='black')
-ax_main.hlines(y=t22, xmin=0, xmax=1, linestyles='dotted', color='black')
-ax_main.legend(handles=legend_elements)
-ax_main.set_xlabel(x1)
-ax_main.set_ylabel(x2)
-fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/contours/VV.png", bbox_inches='tight')
-
-# %%
-
-
-# Contour for ST
-
-fig = plt.figure(figsize=(8, 8))
-gs = gridspec.GridSpec(4, 5, hspace=0.05, wspace=0.05)
-ax_main = fig.add_subplot(gs[1:4, 1:4])
-legend_elements = [
-
-    Line2D([0], [0], color='orange', lw=2, label='ST')
-]
-
-
-df = df_st
-X, Y, Z, x, y  = compute_kde(df.head(10000))
-contour = ax_main.contour(X, Y, Z, levels=10, cmap='Purples')  # Plot contour for df4
-ax_main.clabel(contour, inline=True, fontsize=8)
-
-
-ax_top = fig.add_subplot(gs[0, 1:4], sharex=ax_main)
-ax_top.hist(x, bins=30, weights=df['weight'].head(10000), color='purple', alpha=0.7)
-ax_top.set_ylabel('Count')
-ax_top.tick_params(axis="x", labelbottom=False)
-
-ax_left = fig.add_subplot(gs[1:4, 4], sharey=ax_main)
-ax_left.hist(y, bins=30, weights=df['weight'].head(10000), orientation='horizontal', color='purple', alpha=0.7)
-ax_left.set_xlabel('Count')
-ax_left.tick_params(axis="y", labelleft=False)
-
-
-ax_main.set_xlim(0.2783, 1)
-ax_main.set_ylim(0,   1)
-ax_main.vlines(x=t11, ymin=0, ymax=1, linestyles='dotted', color='black')
-ax_main.hlines(y=t22, xmin=0, xmax=1, linestyles='dotted', color='black')
-ax_main.legend(handles=legend_elements)
-ax_main.set_xlabel(x1)
-ax_main.set_ylabel(x2)
-fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/contours/ST.png", bbox_inches='tight')
-
-
-
-
-
-# %%
-import dcor
-m = dcor.distance_correlation(dfs[0][x1], dfs[0][x2])
 # %%

@@ -1,11 +1,11 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=4G                       # 2G for Data needed   
-#SBATCH --partition=standard              # Specify your cluster partition
-#SBATCH --time=10:00:00  
-#SBATCH --output=/t3home/gcelotto/slurm/output/flat/%x_%j.out    # Alternative method using job name and job ID
-#SBATCH --error=/t3home/gcelotto/slurm/output/flat/%x_%j.out 
+#SBATCH --mem=2G                       # 2G for Data needed   
+#SBATCH --partition=short              # Specify your cluster partition
+#SBATCH --time=1:00:00  
+#SBATCH --output=/t3home/gcelotto/slurm/output/flat/%x.out    # Alternative method using job name and job ID
+#SBATCH --error=/t3home/gcelotto/slurm/output/flat/%x.out 
 #SBATCH --dependency=singleton
 
 echo "Before getting arguments"
@@ -18,9 +18,11 @@ process="$5"
 fileNumber="$6" 
 flatPath="$7"
 method="$8"
+jec="$9"
 echo "Before startin the python"
 echo "Method is "$method
-python /t3home/gcelotto/ggHbb/flatter/treeFlatter.py $nanoFileName $maxEntries $maxJet $isMC $process $method
+echo "JEC is "$jec
+python /t3home/gcelotto/ggHbb/flatter/treeFlatter.py $nanoFileName $maxEntries $maxJet $isMC $process $method $jec
 
 
 echo "Going to copy"

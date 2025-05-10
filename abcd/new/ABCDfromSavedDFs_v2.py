@@ -43,10 +43,10 @@ dfsMC = []
 isMCList = [0,
             1, 
             2,3,
-            4,
-            5,6,7,8, 9,10,
-            11,12,13,
-            14,15,16,17,18,
+            #4,
+            #5,6,7,8, 9,10,
+            #11,12,13,
+            #14,15,16,17,18,
             19,20,21, 22, 35,
             36
             ]
@@ -59,13 +59,14 @@ for idx, p in enumerate(dfProcessesMC.process):
 # %%
 dfsData = []
 isDataList = [
-        #0,
-#        1,
+        0,
+        1,
         2,
-#       3,
-        #4,
-        #5,
-           # 6
+        3,
+        4,
+        5,
+        6,
+        7,
             ]
 
 lumis = []
@@ -79,6 +80,8 @@ for idx, p in enumerate(dfProcessesData.process):
 lumi = np.sum(lumis)
 for idx, df in enumerate(dfsMC):
     dfsMC[idx].weight =dfsMC[idx].weight*lumi
+
+
 
 dfsMC = cut(dfsMC, 'muon_pt', 9, None)
 dfsData = cut(dfsData, 'muon_pt', 9, None)
@@ -195,8 +198,8 @@ from helpersABCD.dcorPlot_process_datataking import dcor_plot_Data, dpearson_plo
 
 # %%
 detail = ''
-for f in dfProcessesData.process[isDataList].values:
-    detail = detail + "_"+f[4:]
+#for f in dfProcessesData.process[isDataList].values:
+#    detail = detail + "_"+f[4:]
 # %%
 dcor_data_values =  dcor_plot_Data(dfsData, dfProcessesData.process, isDataList, bins, outFile="/t3home/gcelotto/ggHbb/abcd/new/plots/dcor/dcor_%s_%s.png"%(modelName, detail), nEvents=90000)
 #dcor_MC_values =  dcor_plot_Data(dfsMC, dfProcessesMC.process, isMCList, bins, outFile="/t3home/gcelotto/ggHbb/abcd/new/plots/dcor/dcorMC_%s_%s.png"%(modelName, detail), nEvents=-1)
@@ -240,8 +243,8 @@ for b_low, b_high in zip(bins[:-1], bins[1:]):
     # Compute standard error and confidence interval
     se = np.std(boot_corrs)  
     ci_lower, ci_upper = np.percentile(boot_corrs, [2.5, 97.5])  
-    plt.hist(np.clip(boot_corrs, -0.03, 0.03), bins=np.linspace(-0.03, 0.03, 101))
-    plt.yscale('log')
+    plt.hist(np.clip(boot_corrs, -0.02, 0.02), bins=np.linspace(-0.02, 0.02, 101))
+    #plt.yscale('log')
     plt.show()
     plt.close()
     
@@ -255,7 +258,12 @@ for b_low, b_high in zip(bins[:-1], bins[1:]):
 pearson_data_values = np.array(pearson_data_values)
 bootstrap_errors = np.array(bootstrap_errors)
 confidence_intervals = np.array(confidence_intervals)
-
+# %%
+#from helpersABCD import saturationTest
+#stds = saturationTest(bins, df)
+# %%
+#fig, ax = plt.subplots(1, 1)
+#ax.plot(stds)
 # %%
 
 fig, ax = plt.subplots(1, 1)

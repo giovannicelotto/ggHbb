@@ -1,13 +1,13 @@
 rmin=0
 rmax=2
 
-datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/datacards/datacard_Z.txt"
+datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_Z_cat1.txt"
 outputCombine="/t3home/gcelotto/ggHbb/newFit/afterNN/outputCombine"
 plotFolder="/t3home/gcelotto/ggHbb/newFit/afterNN/plots"
 
 cd $outputCombine
 
-combine -M FitDiagnostics $datacard --saveNormalizations --saveShapes --redefineSignalPOIs r --robustFit 1 --mass 90
+#combine -M FitDiagnostics $datacard --saveNormalizations --saveShapes --redefineSignalPOIs r --robustFit 1 --mass 90
 combine -M MultiDimFit $datacard --algo grid --points 100 --rMin $rmin --rMax $rmax --mass 90
 mv higgsCombineTest.MultiDimFit.mH90.root higgsCombineTest.MultiDimFit.mH90_observed.root
 combine -M MultiDimFit $datacard --algo grid --points 100 --rMin $rmin --rMax $rmax --mass 90 --expectSignal 1 -t -1 

@@ -88,7 +88,7 @@ def dcor_plot_Data(dfsData, processNames, isDataList, bins, outFile, nEvents=500
     ]
 
     # Plot grouped bar plot
-    bar_width = 0.2  # Width of each bar
+    bar_width = 0.05  # Width of each bar
     x = np.arange(nbins)  # x positions for bins
 
     fig, ax = plt.subplots(figsize=(12, 6))

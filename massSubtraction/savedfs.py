@@ -20,7 +20,7 @@ predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"
 columns_ = ['dijet_mass', 'dijet_pt',
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB']
 columns = columns_.copy()
-dfProcessesMC, dfProcessesData = getDfProcesses_v2()
+dfProcessesMC, dfProcessesData, dfProcessMC_JEC = getDfProcesses_v2()
 
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 if not os.path.exists(df_folder):
@@ -28,53 +28,23 @@ if not os.path.exists(df_folder):
     
 # Load data first
 # %%
-DataTakingList = [
-            #0,  #1A
-            #1,   #2A
-            #2,  #1D
-            #3,
-            #4,
-            #5,
-            #6,
-            #7,
-            #8,
-            #9,
-            #10,
-            #11,
-            #12,
-            #13,
-            #14,
-            #15,
-            #16,
-            #17,
-            18,
-            ]
-nReals = [
-    -1, 
-    -1, 
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1
-]
+DataDict = {
+0 : 0,         
+#1 : 0,         2 : 0,         3 : 0,         4 : 0,         5 : 0,
+#6 : 0,         7 : 0,         8 : 0,         9 : 0,         10 : 0,        11 : 0,
+#12 : 0,        13 : 0,        14 : 0,        15 : 0,        16 : 0,        17 : 0, 
+#18 : 0, 
+}
+
+DataTakingList = list(DataDict.keys())
+nReals = list(DataDict.keys())
+
 lumi_tot = 0
 processesData = dfProcessesData.process[DataTakingList].values
 for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
     print(dataTakingIdx+1,"/",len(DataTakingList))
+    if nReals[dataTakingIdx]==0:
+        continue
 
     predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([dataTakingName],[dataTakingIdx], predictionsPath)
     # return ALL the available predictions fileNames and Numbers.
@@ -128,79 +98,32 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 
 # %%
 columns = columns_.copy()
-isMCList = [0,
-            #1, 
-            ####2,
-            #3, 4,
-            #####5,6,7,8, 9,10,
-            #####11,12,13,
-            #####14,15,16,17,18,
-            #19,20,21, 22,
-            ##35,
-            #36,
-            #37,
-            43,
-            44, #45, 46, 47, 48, 49, 50, 51, 53,
-            55, #56, 57, 58, 59, 60, 61, 62, 64
-            ]
-nMCs = [
-    -1,
-    -1,
-    -1, -1, -1, -1
-    -1, -1, -1, -1, -1, -1, 
-    
-    -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1,
-]
+MC_dict = {
+    #Nominal
+    0:-1, 1:-1, 3:-1, 4:-1, 19:-1, 20:-1, 21:-1, 22:-1, #35:-1,
+    36:-1, 37:-1,43:-1,
+    #JER Down
+    44:-1, 45:-1, 46:-1, 47:-1, 48:-1, 49:-1, 50:-1, 51:-1, 53:-1,55:-1,
+    #JER Up
+    56:-1, 57:-1, 58:-1, 59:-1, 60:-1, 61:-1, 62:-1, 63:-1, 65:-1, 67:-1
+}
+isMCList = list(MC_dict.keys())
+nMCs = list(MC_dict.values())
 
 
 columns = columns + ['genWeight', 'PU_SF', 'sf',
-                     'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass',
-                     'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass',
-                     'jet1_btag_central', 'jet1_btag_up', 'jet1_btag_down',
-                     'jet2_btag_central', 'jet2_btag_up', 'jet2_btag_down',
+                     'jet1_pt', #'jet1_eta', 'jet1_phi', 'jet1_mass',
+                     'jet2_pt', #'jet2_eta', 'jet2_phi', 'jet2_mass',
+                     'btag_central', 'btag_up', 'btag_down',
                         ]
 
 processesMC = dfProcessesMC.process[isMCList].values
 for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
-    if (isMC<44) & ('jet1_sys_JECAbsoluteMPFBias_Up' not in columns):
-        columnsNew = columns+['jet1_sys_JECAbsoluteMPFBias_Up', 'jet2_sys_JECAbsoluteMPFBias_Up',
-                        'jet1_sys_JECAbsoluteScale_Up', 'jet2_sys_JECAbsoluteScale_Up',
-                        'jet1_sys_JECAbsoluteStat_Up', 'jet2_sys_JECAbsoluteStat_Up',
-                        'jet1_sys_JECFlavorQCD_Up', 'jet2_sys_JECFlavorQCD_Up',
-                        'jet1_sys_JECFragmentation_Up', 'jet2_sys_JECFragmentation_Up',
-                        'jet1_sys_JECPileUpDataMC_Up', 'jet2_sys_JECPileUpDataMC_Up',
-                        'jet1_sys_JECPileUpPtBB_Up', 'jet2_sys_JECPileUpPtBB_Up',
-                        'jet1_sys_JECPileUpPtEC1_Up', 'jet2_sys_JECPileUpPtEC1_Up',
-                        'jet1_sys_JECPileUpPtEC2_Up', 'jet2_sys_JECPileUpPtEC2_Up',
-                        'jet1_sys_JECPileUpPtHF_Up', 'jet2_sys_JECPileUpPtHF_Up',
-                        'jet1_sys_JECPileUpPtRef_Up', 'jet2_sys_JECPileUpPtRef_Up',
-                        'jet1_sys_JECRelativeBal_Up', 'jet2_sys_JECRelativeBal_Up',
-                        'jet1_sys_JECRelativeFSR_Up', 'jet2_sys_JECRelativeFSR_Up',
-                        'jet1_sys_JECRelativeJEREC1_Up', 'jet2_sys_JECRelativeJEREC1_Up',
-                        'jet1_sys_JECRelativeJEREC2_Up', 'jet2_sys_JECRelativeJEREC2_Up',
-                        'jet1_sys_JECRelativeJERHF_Up', 'jet2_sys_JECRelativeJERHF_Up',
-                        'jet1_sys_JECRelativePtBB_Up', 'jet2_sys_JECRelativePtBB_Up',
-                        'jet1_sys_JECRelativePtEC1_Up', 'jet2_sys_JECRelativePtEC1_Up',
-                        'jet1_sys_JECRelativePtEC2_Up', 'jet2_sys_JECRelativePtEC2_Up',
-                        'jet1_sys_JECRelativePtHF_Up', 'jet2_sys_JECRelativePtHF_Up',
-                        'jet1_sys_JECRelativeSample_Up', 'jet2_sys_JECRelativeSample_Up',
-                        'jet1_sys_JECRelativeStatEC_Up', 'jet2_sys_JECRelativeStatEC_Up',
-                        'jet1_sys_JECRelativeStatFSR_Up', 'jet2_sys_JECRelativeStatFSR_Up',
-                        'jet1_sys_JECRelativeStatHF_Up', 'jet2_sys_JECRelativeStatHF_Up',
-                        'jet1_sys_JECSinglePionECAL_Up', 'jet2_sys_JECSinglePionECAL_Up',
-                        'jet1_sys_JECSinglePionHCAL_Up', 'jet2_sys_JECSinglePionHCAL_Up',
-                        'jet1_sys_JECTimePtEta_Up', 'jet2_sys_JECTimePtEta_Up']
-    else:
-        columnsNew=columns
-
-
-
     if nMCs[idx]==0:
         continue
     predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
     
-    dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columnsNew,
+    dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns,
                                                              returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                              returnFileNumberList=True)
     print(numEventsList[0])
@@ -219,7 +142,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     print("Process ", dfProcessesMC.process[isMC], " PNN assigned")
     print("Process ", dfProcessesMC.process[isMC])
     print("Xsection ", dfProcessesMC.xsection[isMC])
-    df['weight'] = df.genWeight * df.PU_SF * df.sf * df.jet1_btag_central * df.jet2_btag_central* dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
+    df['weight'] = df.genWeight * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
 
 
 # save a copy of the dataframes before applying any cut
@@ -238,31 +161,74 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
         df.to_parquet(dataFrameName)
         print("Saved ", dataFrameName)
 # %%
-        
-#JECAbsoluteMPFBias
-#JECAbsoluteScale
-#JECAbsoluteStat
-#JECFlavorQCD
-#JECFragmentation
-#JECPileUpDataMC
-#JECPileUpPtBB
-#JECPileUpPtEC1
-#JECPileUpPtEC2
-#JECPileUpPtHF
-#JECPileUpPtRef
-#JECRelativeBal
-#JECRelativeFSR
-#JECRelativeJEREC1
-#JECRelativeJEREC2
-#JECRelativeJERHF
-#JECRelativePtBB
-#JECRelativePtEC1
-#JECRelativePtEC2
-#JECRelativePtHF
-#JECRelativeSample
-#JECRelativeStatEC
-#JECRelativeStatFSR
-#JECRelativeStatHF
-#JECSinglePionECAL
-#JECSinglePionHCAL
-#JECTimePtEta
+
+
+
+
+##
+##      JEC Varied dataset
+##
+
+
+columns = columns_.copy()
+MC_JEC_keys = [_ for _ in range(0, 594)]
+nRealsMC_JEC_values = [int(-1) for _ in range(len(MC_JEC_keys))]
+isMCJECList = list(MC_JEC_keys)
+nMCs = list(nRealsMC_JEC_values)
+
+
+
+columns = columns + ['genWeight', 'PU_SF', 'sf',
+                     'jet1_pt', 
+                     'jet2_pt', 
+                     'btag_central', 'btag_up', 'btag_down',
+                        ]
+
+processesMC = dfProcessMC_JEC.process[isMCJECList].values
+for idx, (isMC, processMC) in enumerate(zip(isMCJECList, processesMC)):
+    if "Data" not in processMC:
+        continue
+    try:
+        if nMCs[idx]==0:
+            continue
+        predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
+        dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns,
+                                                                returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
+                                                                returnFileNumberList=True, isJEC=1)
+        print(numEventsList[0])
+        if boosted==1:
+            dfs=cut(dfs, 'dijet_pt', 100, 160)
+        elif boosted==2:
+            dfs=cut(dfs, 'dijet_pt', 160, None)
+        elif boosted==60:
+            dfs=cut(dfs, 'dijet_pt', 60, 100)
+        predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
+        df = preprocessMultiClass(dfs=dfs)[0].copy()
+
+
+
+        df['PNN'] = np.array(predsMC.PNN)
+        print("Process ", dfProcessMC_JEC.process[isMC], " PNN assigned")
+        print("Process ", dfProcessMC_JEC.process[isMC])
+        print("Xsection ", dfProcessMC_JEC.xsection[isMC])
+        df['weight'] = df.genWeight * df.PU_SF * df.sf * df.btag_central * dfProcessMC_JEC.xsection[isMC] * 1000/numEventsList[0]
+
+
+    # save a copy of the dataframes before applying any cut
+    #dfs_precut = dfs.copy()
+
+    #dfs = dfs_precut.copy()
+    # 0.2783 WP for medium btagID
+        df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.71, max=None)[0].copy()
+        df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.71, max=None)[0].copy()
+        dataFrameName = df_folder + "/df_%s_%s.parquet"%(processMC, modelName)
+        try:
+            df.to_parquet(dataFrameName)
+            print("Saved ", dataFrameName, "\n\n\n")
+        except:
+            os.remove(dataFrameName)
+            df.to_parquet(dataFrameName)
+            print("Saved ", dataFrameName, "\n\n\n")
+    except:
+        continue
+# %%

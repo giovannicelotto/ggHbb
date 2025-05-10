@@ -11,7 +11,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/newFit/afterNN/helpers")
 from allFunctions import *
 hep.style.use("CMS")
 
-def doFitParameterFixed(x,x1,x2, c, maskFit, maskUnblind, bins, dfsMC_Z, dfProcessesMC, MCList_Z, dfsMC_H, MCList_H, myBkgSignalFunctions, key, dfMC_Z, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fit_parameters_zPeak, var, params, paramsLimits):
+def doFitParameterFixed(x,x1,x2, c, maskFit, maskUnblind, bins, myBkgSignalFunctions, key, dfMC_Z, dfMC_H, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fit_parameters_zPeak, var, params, paramsLimits):
     set_x_bounds(x1, x2)
     x_fit = x[maskFit]
     y_tofit = c[maskFit]
@@ -22,18 +22,16 @@ def doFitParameterFixed(x,x1,x2, c, maskFit, maskUnblind, bins, dfsMC_Z, dfProce
     fig.align_ylabels([ax[0],ax[1]])
     ax[0].errorbar(x[maskUnblind], c[maskUnblind], yerr=np.sqrt(c)[maskUnblind], fmt='o', color='black', markersize=3, label="Data")
     # Plot Z
-    cZ = np.zeros(len(bins)-1)
-    cZ_err = np.zeros(len(bins)-1)
-    for idx, dfMC in enumerate(dfsMC_Z):
-        c_=ax[0].hist(dfMC.dijet_mass, bins=bins, weights = dfMC.weight_var, label=dfProcessesMC.iloc[MCList_Z].process.iloc[idx], bottom=cZ)[0]
-        cZ += c_
-        c_=np.histogram(dfMC.dijet_mass, bins=bins, weights = (dfMC.weight_var)**2)[0]
-        cZ_err += c_
-    cumulativeMC = cZ.copy()
+
+    cZ=ax[0].hist(dfMC_Z.dijet_mass_, bins=bins, weights = dfMC_Z.weight_, label='Zbb')[0]
+    cZ_err=np.histogram(dfMC_Z.dijet_mass_, bins=bins, weights = (dfMC_Z.weight_)**2)[0]
     cZ_err = np.sqrt(cZ_err)
+    cumulativeMC=cZ.copy()
+    
     cHiggs = np.zeros(len(bins)-1)
-    for idx, dfMC in enumerate(dfsMC_H):
-        c_=ax[0].hist(dfMC.dijet_mass, bins=bins, weights = dfMC.weight_var , label=dfProcessesMC.iloc[MCList_H].process.iloc[idx], bottom=cumulativeMC)[0]
+    for process in np.unique(dfMC_H.process):
+        maskProcess = dfMC_H.process==process
+        c_=ax[0].hist(dfMC_H[maskProcess].dijet_mass_, bins=bins, weights = dfMC_H.weight_[maskProcess] , label=process, bottom=cumulativeMC)[0]
         cHiggs += c_
         cumulativeMC +=c_
 
@@ -42,13 +40,13 @@ def doFitParameterFixed(x,x1,x2, c, maskFit, maskUnblind, bins, dfsMC_Z, dfProce
     # Minuit fits
 
     params["normBkg"] = c.sum()*(bins[1]-bins[0])-cZ.sum()*(bins[1]-bins[0])
-    params["normSig"] = cZ.sum()*(bins[1]-bins[0]) -  dfMC_Z[dfMC_Z.dijet_mass<bins[0]].weight.sum()
+    params["normSig"] = cZ.sum()*(bins[1]-bins[0]) -  dfMC_Z[dfMC_Z.dijet_mass_<bins[0]].weight_.sum()
 
     least_squares = LeastSquares(x_fit, y_tofit, yerr, myBkgSignalFunctions[key])
     allPars = inspect.signature(myBkgSignalFunctions[key])
     allPars = list(allPars.parameters.keys())
-    print("These are all params")
-    print(allPars)
+    #print("These are all params")
+    #print(allPars)
     for par in allPars:
         if par in params.keys():
             # parameter was already initialized
@@ -59,38 +57,39 @@ def doFitParameterFixed(x,x1,x2, c, maskFit, maskUnblind, bins, dfsMC_Z, dfProce
         elif par=='x':
             continue
         else:
-            print("Set to MC")
+            #print(par, " set to MC")
             params[par]=fit_parameters_zPeak['parameters'][var][par]['value']
 
     
-    print("Final parameters")
-    print(params)
-    
+    #print("Final parameters")
+    #print(params)
+    #print(params)
     m_tot = Minuit(least_squares,
                     **params
                     )
     for par in m_tot.parameters:
         if par in myBkgParams[key]:
-            print(par, "not fixed")
+            #print(par, "not fixed")
             continue
         else:
             m_tot.fixed[par]=True
 
         # Apply limits using the dictionary
     for par in m_tot.parameters:
+        #print(par)
         if par in paramsLimits:
             m_tot.limits[par] = paramsLimits[par]  # Assign limits from the dictionary
         else:
             m_tot.limits[par] = None  # No limits if not specified
 
 
-
+    
 
     m_tot.migrad(ncall=100000, iterate=200)
     m_tot.hesse()
 
     p_tot = m_tot.values
-    print(p_tot)
+    #print(p_tot)
 
     # Generate fit curves
     x_plot = np.linspace(bins[0], bins[-1], 500)
@@ -106,7 +105,7 @@ def doFitParameterFixed(x,x1,x2, c, maskFit, maskUnblind, bins, dfsMC_Z, dfProce
     ax[1].errorbar(x[maskFit], (c-myBkgFunctions[key](x, *p_tot[myBkgParams[key]]))[maskFit], yerr=np.sqrt(c)[maskFit], fmt='o', color='black', markersize=3)
     ax[1].set_ylim(ax[1].get_ylim())
     if fit_parameters_zPeak["fitFunction"]=='zPeak_dscb':
-        print(fit_parameters_zPeak['parameters']['nominal']['alphaL']['value'])
+        #print(fit_parameters_zPeak['parameters']['nominal']['alphaL']['value'])
         ax[1].plot(x, zPeak_dscb(x, *p_tot[[ 'normSig', 'fraction_dscb', 'mean', 'sigma', 'alphaL', 'nL', 'alphaR', 'nR', 'sigmaG']]), color='red', linewidth=2)
     elif fit_parameters_zPeak["fitFunction"]=='zPeak_rscb':
         ax[1].plot(x, zPeak_rscb(x, *p_tot[[ 'normSig', 'fraction_dscb', 'mean', 'sigma', 'alphaR', 'nR', 'sigmaG']]), color='red', linewidth=2)
@@ -125,9 +124,9 @@ def doFitParameterFixed(x,x1,x2, c, maskFit, maskUnblind, bins, dfsMC_Z, dfProce
     ndof = m_tot.ndof
     chi2_pvalue = 1- chi2.cdf(chi2_stat, ndof)
     ax[0].text(x=0.05, y=0.75, s="$\chi^2$/ndof = %.1f/%d\np-value = %.3f"%(chi2_stat, ndof, chi2_pvalue), transform=ax[0].transAxes, ha='left')
-    ax[0].set_yscale('log')
+    #ax[0].set_yscale('log')
 
-    #fig.savefig(plotFolder+"/bkgPlusZPeak.png", bbox_inches='tight')
+    fig.savefig(plotFolder+"/bkgPlusZPeak.png", bbox_inches='tight')
 
-
+    plt.close()
     return x_fit, y_tofit, yerr, m_tot, cZ, cZ_err

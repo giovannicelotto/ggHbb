@@ -8,6 +8,8 @@ from torch.utils.data.distributed import DistributedSampler #takes input data an
 from torch.nn.parallel import DistributedDataParallel as DDP 
 from torch.distributed import init_process_group, destroy_process_group #initialize and destroy the distributed process group
 import os
+import random
+import numpy as np
 #import torch.optim as optim
 def distance_corr(var_1,var_2,normedweight,power=1):
     """var_1: First variable to decorrelate (eg mass)
@@ -83,6 +85,14 @@ def ddp_setup(rank: int, world_size: int):
    torch.cuda.set_device(rank)
    init_process_group(backend="nccl", rank=rank, world_size=world_size)
 
+def set_seed(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)  # For single-GPU
+    torch.cuda.manual_seed_all(seed)  # For multi-GPU
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 # Neural Network Classifier
 class Classifier(nn.Module):
@@ -152,6 +162,9 @@ class Classifier(nn.Module):
     # this is autocalled for predictions. apply the model (self) to x
     def forward(self, x):
         return self.fc(x)
+
+
+
 def kolmogorov_smirnov_distance_weighted(p, scores, threshold, k):
     """
     Compute the Kolmogorov-Smirnov distance between two 1D distributions with sigmoid-based weights.

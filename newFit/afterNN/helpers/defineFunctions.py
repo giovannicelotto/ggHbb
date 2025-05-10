@@ -7,11 +7,19 @@ def defineFunctions():
     3:exp_pol3,
     5:exp_pol5,
     6:expExp_pol2,
+    7:expExp_pol2_turnOn,
+    8:exp_pol2_turnOn3,
+    9:exp_gaus_turnOn,
+    10:expExp_pol2_turnOnPol3,
 # For RSCB?
     101:exp_pol1,
     102:exp_pol2,
     103:exp_pol3,
     106:expExp_pol2,
+    107:expExp_pol2_turnOn,
+    108:exp_pol2_turnOn3,
+    109:exp_gaus_turnOn,
+    110:kinThreshold
 
 
     }
@@ -23,11 +31,19 @@ def defineFunctions():
     3:continuum_DSCB3,
     5:continuum_DSCB5,
     6:expExpPol2_DSCB,
+    7:expExp_pol2_turnOn_DSCB,
+    8:exp_pol2_turnOn3_DSCB,
+    9:exp_gaus_turnOn_DSCB,
+    10:expExp_pol2_turnOnPol3_DSCB,
 
-    101:continuum_DSCB1,
-    102:continuum_DSCB2,
-    103:continuum_DSCB3,
+    101:continuum_RSCB1,
+    102:continuum_RSCB2,
+    103:continuum_RSCB3,
     106:expExpPol2_RSCB,
+    107:expExp_pol2_turnOn_RSCB,
+    108:exp_pol2_turnOn3_RSCB,
+    109:exp_gaus_turnOn_RSCB,
+    110:kinThreshold_RSCB
     }
 
     myBkgParams = {
@@ -37,10 +53,18 @@ def defineFunctions():
     3:["normBkg", "B", "b", "c", "d"],
     5:["normBkg", "B", "b", "c", "d", "e", "f"],
     6:["normBkg", "B", "C", "b", "c"],
+    7:["normBkg", "B", "C", "b", "c", "aa", "bb", "f"],
+    8:["normBkg", "B", "C", "b", "c", "aa", "bb", "cc","f"],
+    9:["normBkg", "B", "C", "b", "c", "mu_to", "sigma_to", "f"],
+    10:["normBkg", "B", "C", "b", "c", "d","aa", "bb", "f"],
     
     101:["normBkg", "B", "b"],
     102:["normBkg", "B", "b", "c"],
     103:["normBkg", "B", "b", "c", "d"],
-    106:["normBkg", "B", "C", "b", "c"]
+    106:["normBkg", "B", "C", "b", "c"],
+    107:["normBkg", "B", "C", "b", "c", "aa", "bb", "f"],
+    108:["normBkg", "B", "b", "c", "aa", "bb", "cc","f"],
+    109:["normBkg", "B", "b", "c", "mu_to", "sigma_to", "f"],
+    110:["normBkg", "B", "m0", "p1", "p2"]
 }
     return myBkgFunctions, myBkgSignalFunctions, myBkgParams

@@ -72,9 +72,10 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
     nData, nHiggs = int(size), int(14e3)
 
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
-    if boosted:
+    if boosted==2:
+        folder = "others" if dataTaking=='1A' else "training2"
         paths = [
-            flatPathCommon + "/Data1A/others",
+            flatPathCommon + "/Data%s/%s"%(dataTaking, folder),
             flatPathCommon + "/GluGluHToBB/others"]
     else:
         if dataTaking=='1A':
@@ -82,10 +83,16 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
                 flatPathCommon + "/Data1A/training",
                 flatPathCommon + "/GluGluHToBB/training"]
         elif dataTaking=='1D':
-            paths = [
-                flatPathCommon + "/Data1D/training",
-                flatPathCommon + "/GluGluHToBB/training"]
+            if boosted==1:
+                paths = [
+                    flatPathCommon + "/Data1D/training2",
+                    flatPathCommon + "/GluGluHToBB/training"]
+            else:
+                paths = [
+                    flatPathCommon + "/Data1D/training",
+                    flatPathCommon + "/GluGluHToBB/training"]
     massHypothesis = [50, 70, 100, 200, 300]
+    #massHypothesis = [ 70, 100, 200]
     for m in massHypothesis:
         paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
     
@@ -94,8 +101,8 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
     dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False)
     #if dataTaking=='1A':
     #    dfs=cut(dfs, 'muon_pt', 12, None)
-    if boosted:
-        dfs = cut(dfs, 'dijet_pt', 100, None)
+    if boosted==1:
+        dfs = cut(dfs, 'dijet_pt', 100, 160)
     else:
         dfs = cut(dfs, 'dijet_pt', None, 100)
 
@@ -103,7 +110,7 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
     # 50bb
     dfs[2] = dfs[2][dfs[2].dijet_mass<120]
     # 70bb
-    dfs[3] = dfs[3][dfs[3].dijet_mass<140]
+    dfs[2] = dfs[2][dfs[2].dijet_mass<140]
     dfs = preprocessMultiClass(dfs)
     
     # method v1
@@ -140,7 +147,8 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
                np.ones(len(dfs[3]))*massHypothesis[2],
                np.ones(len(dfs[4]))*massHypothesis[3],
                np.ones(len(dfs[5]))*massHypothesis[4],
-               np.ones(len(dfs[6]))*massHypothesis[5]])
+               np.ones(len(dfs[6]))*massHypothesis[5]
+               ])
     for idx, df in enumerate(dfs):
         print("%d elements in df %d"%(len(df), idx))
     # Create the labels for Background (0) and Signal (1)
@@ -208,16 +216,17 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
 
     return df_uniform
 def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTraining,
-                         test_split,  drop=True, boosted=False):
+                         test_split,  drop=True, boosted=False, dataTaking='1A'):
 
 
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     
-    # PATHS definition
+    # PATHS definition            
     # rewrite here using the dfProcesses
     if boosted:
+        folder = "others" if dataTaking=='1A' else "training2"
         paths = [
-            flatPathCommon + "/Data1A/others",
+            flatPathCommon + "/Data%s/%s"%(dataTaking, folder),
             flatPathCommon + "/GluGluHToBB/others"]
     else:
         paths = [

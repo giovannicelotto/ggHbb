@@ -1,6 +1,6 @@
-datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/datacards/datacard_Z.txt"
-rmin=0
-rmax=2
+datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_Z_cat2p0.txt"
+rmin=0.3
+rmax=1.7
 outputCombine="/t3home/gcelotto/ggHbb/newFit/afterNN/outputCombine"
 plotFolder="/t3home/gcelotto/ggHbb/newFit/afterNN/plots"
 cd $outputCombine
@@ -17,7 +17,7 @@ plot1DScan.py --POI r $outputCombine"/higgsCombineTest.MultiDimFit.mH90_observed
 
 cd $outputCombine
 text2workspace.py $datacard -m 90
-workspace="/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/datacards/datacard_Z.root"
+workspace="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_Z_cat2p0.root"
 combineTool.py -M Impacts -d $workspace  -m 90 --doInitialFit --robustFit 1
 combineTool.py -M Impacts -d $workspace  -m 90 --doFits --robustFit 1
 combineTool.py -M Impacts -d $workspace  -m 90 -o impacts_total.json

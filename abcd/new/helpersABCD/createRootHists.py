@@ -1,7 +1,8 @@
 import ROOT
 import numpy as np
 def createRootHists(countsDict, hB_ADC, regions, bins, suffix):
-    
+    print("bins")
+    print(bins)
     outName="/t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_%s.root"%(suffix)
     root_file = ROOT.TFile(outName, "RECREATE")
     

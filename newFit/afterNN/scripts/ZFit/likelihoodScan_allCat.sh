@@ -1,7 +1,8 @@
-dc_cat0="/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/datacards/datacard_Z.txt"
-dc_cat2p0="/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/datacards/datacard_Z.txt"
-dc_cat2p1="/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/datacards/datacard_Z.txt"
-combineCards.py $dc_cat0 $dc_cat2p0 $dc_cat2p1 > combDC.txt
+#dc_cat0="/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/datacards/datacard_Z.txt"
+dc_cat2p0="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_Z_cat2p0.txt"
+dc_cat2p1="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_Z_cat2p1.txt"
+##combineCards.py $dc_cat0 $dc_cat2p0 $dc_cat2p1 > combDC.txt
+combineCards.py $dc_cat2p0 $dc_cat2p1 > combDC.txt
 
 datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/ZFit/combDC.txt"
 rmin=0

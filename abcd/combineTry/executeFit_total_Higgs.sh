@@ -1,26 +1,31 @@
+#!/bin/bash
+
 cd /t3home/gcelotto/ggHbb/abcd/combineTry
-datacard="/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeHdatacard_total.txt"
-# Define the dynamic part of the filename (e.g., "2A_1D_3A" or "2A_1D")
-dynamic_part="1D"  # Change this value as needed
-model="Apr01_1000p0"
+datacard="/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeHdatacard_total_reduced.txt"
+workspace="/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeHdatacard_total_reduced.root"
 
-# Define the new ROOT filename based on the dynamic part
-new_root_file="/t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_${model}_dd__${dynamic_part}_corrected.root"
-
-# Use sed to replace the line in place
-sed -i "s|shapes \*    total  .*root|shapes *    total  ${new_root_file} \$PROCESS|" "$datacard"
+#text2workspace.py $datacard -m 125 -o $workspace
+#combine -M FitDiagnostics $workspace -m 125 --expectSignal 1 -t -1
+#exit
+combineTool.py -M Impacts -d $workspace -m 125 --doInitialFit --robustFit 1 --expectSignal 1 -t -1
 
 
 
-rmin=-2.5
-rmax=4.5
+combine -M Significance $datacard --expectSignal 1 --mass 125 -n hbb_total.significance
+
+rmin=-7
+rmax=7
 combine -M AsymptoticLimits $datacard --rMin $rmin --rMax $rmax --mass 125 --run expected -n hbb_total.expected
 
 combine -M MultiDimFit $datacard --expectSignal 1 -t -1 --algo grid --points 100 --rMin $rmin --rMax $rmax  --mass 125  -n hbb_total.expected
+plot1DScan.py higgsCombinehbb_total.expected.MultiDimFit.mH125.root  --output plots/scan_H125_expected --main-label "Expected"
 combine -M MultiDimFit $datacard --expectSignal 1 -t -1 --algo grid --points 100 --rMin $rmin --rMax $rmax  --mass 125 -n hbb_total_statOnly.expected --freezeParameters all --saveWorkspace
 #plot1DScan.py higgsCombinehbb_total_statOnly.expected.MultiDimFit.mH125.root --output plots/scan_H125_expected_stat --main-label "Stat Only"
 plot1DScan.py higgsCombinehbb_total.expected.MultiDimFit.mH125.root   --others "higgsCombinehbb_total_statOnly.expected.MultiDimFit.mH125.root:Expected Stat Only:2" \
     --output plots/scan_H125_expected --main-label "Expected"
+
+
+
 
 #plot1DScan.py /t3home/gcelotto/ggHbb/abcd/combineTry/higgsCombinehbb_total.expected.MultiDimFit.mH125.root -o scan_total_H125_expected --main-label "Expected"
 

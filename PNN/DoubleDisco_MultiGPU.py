@@ -91,7 +91,7 @@ class Trainer:
         warmup_epochs = 100
         step_size = 10  # Increase every 10 epochs
         for epoch in range(hp["epochs"]):
-            if epoch % step_size == 0 and epoch <= warmup_epochs:
+            if (epoch % step_size == 0) & (epoch <= warmup_epochs):
                 hp["lambda_dcor"] = final_lambda_dcor * (epoch / warmup_epochs)
             if epoch > warmup_epochs:
                 hp["lambda_dcor"] = final_lambda_dcor
@@ -367,7 +367,9 @@ def main(rank: int, world_size: int, hp: dict,
     traindataloader = DataLoader(traindataset, batch_size=hp["batch_size"], shuffle=False, drop_last=True, pin_memory=False, sampler=DistributedSampler(traindataset, num_replicas=world_size, rank=rank, drop_last=True))
     val_dataloader = DataLoader(val_dataset, batch_size=hp["val_batch_size"], shuffle=False, drop_last=True, pin_memory=False, sampler=DistributedSampler(val_dataset, num_replicas=world_size, rank=rank, drop_last=True))
 
+    set_seed(1)
     nn1 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=hp["nNodes"])
+    set_seed(2)
     nn2 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=hp["nNodes"])
     nn1 = torch.nn.SyncBatchNorm.convert_sync_batchnorm(nn1)
     nn2 = torch.nn.SyncBatchNorm.convert_sync_batchnorm(nn2)
@@ -441,8 +443,9 @@ if __name__ == "__main__":
     featuresForTraining, columnsToRead = getFeatures(outFolder=outFolder, massHypo=False, bin_center=hp["bin_center_bool"], simple=True)
 
     Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/%s"%inputSubFolder)
-    rWtrain[Ytrain==0]=rWtrain[Ytrain==0]*2
-    rWval[Yval==0]=rWval[Yval==0]*2
+    # Odd. Why this factor *2?
+    #rWtrain[Ytrain==0]=rWtrain[Ytrain==0]*2
+    #rWval[Yval==0]=rWval[Yval==0]*2
 
     dijetMassTrain = np.array(Xtrain.dijet_mass.values)
     dijetMassVal = np.array(Xval.dijet_mass.values)

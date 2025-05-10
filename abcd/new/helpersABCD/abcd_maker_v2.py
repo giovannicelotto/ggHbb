@@ -5,14 +5,33 @@ from createRootHists import createRootHists
 from hist import Hist
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
-def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi, suffix, blindPar, corrections=None, err_corrections=None):
+
+
+def ABCD(       dfData: pd.DataFrame, dfMC: pd.DataFrame,
+                x1: str,     x2: str,     xx: str, bins, t1: float,     t2: float,
+                isMCList, dfProcessesMC, lumi: float, suffix: str, blindPar:tuple, chi2_mask,
+                sameWidth_flag:bool,
+                corrections=None, err_corrections=None, var=None, covs=None
+                ):
+    
+    '''
+    blindPar = parameters of blinding. Tuple (Bool, min x, max x)
+    '''
+    x=(bins[1:]+bins[:-1])/2
+    unblinded_mask = (x < blindPar[1]) | (x > blindPar[2]) if blindPar[0]==True else np.full(len(bins)-1, True)
+    for i, (start, end) in enumerate(zip(bins[:-1], bins[1:])):
+        status = "unblinded" if unblinded_mask[i] else "blinded"
+        print("%.1f - %.1f : %s"%(start, end, status))
+
+
     print("Creating histograms for SR and CR")
     hA = Hist.new.Var(bins, name="mjj").Weight()
     hB = Hist.new.Var(bins, name="mjj").Weight()
     hC = Hist.new.Var(bins, name="mjj").Weight()
     hD = Hist.new.Var(bins, name="mjj").Weight()
-    inclusive = Hist.new.Var(bins, name="mjj").Weight()
+    #inclusive = Hist.new.Var(bins, name="mjj").Weight()
     regions = {
         'A' : hA,
         'B' : hB,
@@ -24,18 +43,18 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
 
     # Fill regions with data
     print("Filling regions with Data")
-    for idx, df in enumerate(dfsData):
-        mA      = (df[x1]<t1 ) & (df[x2]>t2 ) 
-        mB      = (df[x1]>t1 ) & (df[x2]>t2 ) 
-        mC      = (df[x1]<t1 ) & (df[x2]<t2 ) 
-        mD      = (df[x1]>t1 ) & (df[x2]<t2 ) 
-        regions['A'].fill(df[mA][xx], weight=df[mA].weight)
-        regions['B'].fill(df[mB][xx], weight=df[mB].weight)
-        regions['C'].fill(df[mC][xx], weight=df[mC].weight)
-        regions['D'].fill(df[mD][xx], weight=df[mD].weight)
-        inclusive.fill(df[xx])
 
-    print("Data counts in ABCD regions before MC subtraction")
+    mA      = (dfData[x1]<t1 ) & (dfData[x2]>t2 ) 
+    mB      = (dfData[x1]>t1 ) & (dfData[x2]>t2 ) 
+    mC      = (dfData[x1]<t1 ) & (dfData[x2]<t2 ) 
+    mD      = (dfData[x1]>t1 ) & (dfData[x2]<t2 ) 
+    regions['A'].fill(dfData[mA][xx], weight=1)
+    regions['B'].fill(dfData[mB][xx], weight=1)
+    regions['C'].fill(dfData[mC][xx], weight=1)
+    regions['D'].fill(dfData[mD][xx], weight=1)
+    #inclusive.fill(dfData[xx])
+
+    print("\n\nData counts in ABCD regions after filling")
     print("Region A Sum ", regions["A"].sum())
     print("Region B Sum ", regions["B"].sum())
     print("Region C Sum ", regions["C"].sum())
@@ -48,19 +67,20 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
         'D' : regions["D"].variances()[:].copy()}
     
     # remove MC from non QCD processes simulations from A, C, D
-    print("Removing MC from CRs")
-    for idx, df in enumerate(dfsMC):
-        print(idx, dfProcessesMC.process[isMCList[idx]])
-        mA      = (df[x1]<t1 ) & (df[x2]>t2 ) 
-        mB      = (df[x1]>t1 ) & (df[x2]>t2 ) 
-        mC      = (df[x1]<t1 ) & (df[x2]<t2 ) 
-        mD      = (df[x1]>t1 ) & (df[x2]<t2 ) 
-        # Subtract the events by filling with opposite weights (variances will be updated consequently)
-        # Hist will sum the variances. Variances theorem
-        regions['A'].fill(df[mA][xx], weight=-df[mA].weight)  
-        regions['C'].fill(df[mC][xx], weight=-df[mC].weight)  
-        regions['D'].fill(df[mD][xx], weight=-df[mD].weight)  
-        # In B don't do it, we want to see the excess from Data - QCD = MCnonQCD
+    print("\n\nRemoving MC from CRs A, C, D")
+    #for idx, df in enumerate(dfsMC):
+    #print(idx, dfProcessesMC.process[isMCList[idx]])
+    mA      = (dfMC[x1]<t1 ) & (dfMC[x2]>=t2 ) 
+    mB      = (dfMC[x1]>=t1 ) & (dfMC[x2]>=t2 ) 
+    mC      = (dfMC[x1]<t1 ) & (dfMC[x2]<t2 ) 
+    mD      = (dfMC[x1]>=t1 ) & (dfMC[x2]<t2 ) 
+    
+    # Subtract the events by filling with opposite weights (variances will be updated consequently)
+    # Hist will sum the variances. Variances theorem
+    regions['A'].fill(dfMC[mA][xx], weight=-dfMC[mA].weight)  
+    regions['C'].fill(dfMC[mC][xx], weight=-dfMC[mC].weight)  
+    regions['D'].fill(dfMC[mD][xx], weight=-dfMC[mD].weight)  
+    # In B don't do it, we want to see the excess from Data - QCD = MCnonQCD
         
     print("Data counts in ABCD regions after MC subtraction")
     print("Region A Sum ", regions["A"].sum())
@@ -85,13 +105,18 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
     # Compute hB_ADC from ABCD. Note A, D, C are not poissonian after subtraction
     # Plot 4 regions of ABCD
     # The variances are propagated from A, D, C. They give uncertainties on QCD
-    hB_ADC = plot4ABCD(regions=regions, bins=bins, x1=x1, x2=x2, t1=t1, t2=t2, suffix=suffix, blindPar=blindPar, sameWidth_flag=False)
+    hB_ADC = plot4ABCD(regions=regions, bins=bins, x1=x1, x2=x2, t1=t1, t2=t2, suffix=suffix, unblinded_mask=unblinded_mask, sameWidth_flag=sameWidth_flag)
     
     if corrections is not None:
-        hB_ADC.variances()[:] = hB_ADC.variances()[:]*corrections**2 +  (hB_ADC.values()[:]*err_corrections)**2
+        #print("Corrections applied")
+        #print(hB_ADC.variances()[:]*corrections**2)
+        #print((hB_ADC.values()[:]*err_corrections)**2)
+        #print(2*hB_ADC.values()[:]*corrections*covs)
+        
+        hB_ADC.variances()[:] = err_corrections**2
         hB_ADC.values()[:] = hB_ADC.values()[:]*corrections 
 
-    x=bins[1:]+bins[:-1]
+    
     fig, ax =plt.subplots(1, 1)
     ax.errorbar(x-np.diff(bins)/6, np.zeros(len(x)), yerr=np.sqrt(originalVariances['B']), label='original')
     ax.errorbar(x+0*np.diff(bins)/6, np.zeros(len(x)), yerr=np.sqrt(variancesAfterMCSubtraction['B']), label='After MC subtraction')
@@ -100,13 +125,15 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
     ax.set_ylabel("Uncertainty in SR")
     ax.set_xlabel("Dijet Mass [GeV]")
     fig.savefig("/t3home/gcelotto/ggHbb/abcd/new/plots/variances/var_%s.png"%suffix, bbox_inches='tight')
-# Second Plot
-    countsDict_SR = SM_SR(regions, hB_ADC, bins, dfsData, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix=suffix, blindPar=blindPar,  sameWidth_flag=False)
 
-    SM_CR('A', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
-    SM_CR('C', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
-    SM_CR('D', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
-    SM_CR('B', bins, dfsMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=False)
+
+# Second Plot
+    countsDict_SR = SM_SR(regions, hB_ADC, bins, dfData, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix=suffix, unblinded_mask=unblinded_mask,  chi2_mask=chi2_mask, sameWidth_flag=sameWidth_flag)
+
+    #SM_CR('A', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
+    #SM_CR('C', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
+    #SM_CR('D', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
+    #SM_CR('B', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
     
 
 
@@ -121,11 +148,11 @@ def ABCD(dfsData, dfsMC, x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi
     for key in countsDict_SR:
         countsDict_SR[key].values()[:] = -countsDict_SR[key].values()[:]
     
-    print("Variances with ABCD")
-    print(hB_ADC.variances()[:])
-    pulls_QCD_SR, err_QCD_SR = QCD_SR(bins, hB_ADC, qcd__DataMinusMC, lumi=lumi, suffix=suffix, blindPar=blindPar,  sameWidth_flag=False, outName="/t3home/gcelotto/ggHbb/abcd/new/plots/QCDclosure/QCD_closure_%s.png"%suffix, corrected=True if corrections is not None else False)
+    #print("Variances with ABCD")
+    #print(hB_ADC.variances()[:])
+    pulls_QCD_SR, err_QCD_SR = QCD_SR(bins, hB_ADC, qcd__DataMinusMC, lumi=lumi, suffix=suffix, unblinded_mask=unblinded_mask,  sameWidth_flag=sameWidth_flag, outName="/t3home/gcelotto/ggHbb/abcd/new/plots/QCDclosure/QCD_closure_%s.png"%suffix, corrected=True if corrections is not None else False, chi2_mask=chi2_mask)
     plt.close('all')
-    pulls_QCDPlusSM_SR = QCDplusSM_SR(bins, regions, countsDict_SR, hB_ADC, lumi=lumi, suffix=suffix, blindPar=blindPar, sameWidth_flag=False, corrections=corrections)
+    pulls_QCDPlusSM_SR = QCDplusSM_SR(bins, regions, countsDict_SR, hB_ADC, lumi=lumi, suffix=suffix, unblinded_mask=unblinded_mask, sameWidth_flag=sameWidth_flag, corrected=True if corrections is not None else False, chi2_mask=chi2_mask)
     plt.close('all')
 #
     if corrections is not None:

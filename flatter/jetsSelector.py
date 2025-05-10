@@ -1,6 +1,8 @@
 import numpy as np
 
-def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, method=0, Jet_pt=None):
+def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, maskJets, method=0, Jet_pt=None):
+    '''
+    selected1 and selected 2 are indexes in the full list of jets not just the masked jets'''
     score=-999
     selected1 = 999
     selected2 = 999
@@ -9,9 +11,12 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
 # Fill the list of Jets with TrigMuon inside
 # Jets With Muon is the list of jets with a muon that triggers inside their cone
     jetsWithMuon, muonIdxs = [], []
-    for i in range(nJet): 
+    for i in np.arange(nJet)[maskJets]: 
         if ((abs(Jet_eta[i])>2.5) | ((Jet_pt[i]<50) & (Jet_puId[i]<4)) | (Jet_jetId[i]<6)):     # exclude jets>2.5 from the jets with  muon group
+            #Masked Jets cannot be here
+            assert False
             continue
+        
         if (Jet_muonIdx1[i]>-1): #if there is a reco muon in the jet
             if (bool(Muon_isTriggering[Jet_muonIdx1[i]])):
                 if i not in jetsWithMuon:
@@ -42,6 +47,10 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
     elif len(muonIdxs)==1:
         selected1 = jetsWithMuon[0]
         muonIdx = muonIdxs[0]
+
+        # 
+        # METHOD 0
+        #         
         if method==0:
             # old method based on btag shape
             for j in range(0, jetsToCheck):
@@ -54,26 +63,31 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
                     score=currentScore
                     selected2 = j
                     muonIdx2 = 999
+
+        # 
+        # METHOD 1
+        #   
+
         elif method==1:
             # New method. List of Tight BTag jets with puID >=4 and JetID pass tight and tightLepVeto ID.
-            tightJets = (Jet_btagDeepFlavB>0.71) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4))
+            tightJets = ((Jet_btagDeepFlavB>0.71) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4)))[maskJets]
             if np.sum(tightJets)>=1:
                 #print(nJet)
                 #print(np.arange(nJet)[tightJets])
-                selected2 = np.arange(nJet)[tightJets][0]
+                selected2 = np.arange(nJet)[maskJets][tightJets][0]
 
                 pass
                 # hai vinto prendi il piú hard
             elif np.sum(tightJets)==0:
-                mediumJets = (Jet_btagDeepFlavB>0.2783) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4))
+                mediumJets = ((Jet_btagDeepFlavB>0.2783) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4)))[maskJets]
                 if np.sum(mediumJets)>=1:
-                    selected2 = np.arange(nJet)[mediumJets][0]
+                    selected2 = np.arange(nJet)[maskJets][mediumJets][0]
                     #haivinto
                     pass
                 elif np.sum(mediumJets)==0:
-                    looseJets = (Jet_btagDeepFlavB>0.0490) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4))
+                    looseJets = ((Jet_btagDeepFlavB>0.0490) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4)))[maskJets]
                     if np.sum(looseJets)>=1:
-                        selected2 = np.arange(nJet)[looseJets][0]
+                        selected2 = np.arange(nJet)[maskJets][looseJets][0]
                         #hai vinto
                         pass
                     elif np.sum(looseJets)==0:

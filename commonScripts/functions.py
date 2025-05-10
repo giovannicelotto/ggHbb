@@ -47,7 +47,8 @@ def getDfProcesses_v2 (reset=False):
         getProcessesDataFrame()
     dfProcessesMC = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesMC.csv")
     dfProcessesData = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesData.csv")
-    return dfProcessesMC, dfProcessesData
+    dfProcessesMC_JEC = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesMC_JEC.csv")
+    return dfProcessesMC, dfProcessesData, dfProcessesMC_JEC
 
 def getCommonFilters(btagTight=False):
     btag = 0.2783 if btagTight is False else 0.71
@@ -96,7 +97,7 @@ def getCommonFilters(btagTight=False):
 
     ]
     return filters
-def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False):
+def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False, isJEC=0):
     '''
     paths = array of string 
             or list of numbers (integers) with the isMC number
@@ -119,14 +120,21 @@ def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False,
     fileNamesSelected=[]
     # Check types are as expected
     if isinstance(paths[0], str):
+        print("Path is string")
         pass
     elif isinstance(paths[0], int):
+        print("Path is integer")
         paths = paths.copy()
         #for idx, isMCnumber in enumerate(paths):
-        df_processesMC = getDfProcesses_v2()[0]
+        if isJEC==0:
+            df_processesMC = getDfProcesses_v2()[0]
+        elif isJEC==1:
+            df_processesMC = getDfProcesses_v2()[2]
         df_processesMC = df_processesMC.iloc[paths]
         paths = list(df_processesMC.flatPath)
-
+    else:
+        
+        assert False, "path is of unreco type %s"%type(paths[0])
 
 
     if isinstance(nMCs, int):
@@ -137,7 +145,9 @@ def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False,
         else:
             print("Error, number of nMCs requested is different from the number of processes. Setting nMCs equal to the first instance")
             nMCs = [nMCs[0] for i in range(len(paths))]
-
+    
+    
+    print(nMCs)
     for nMC, path,processName in zip(nMCs, paths, df_processesMC.process): 
         assert isinstance(path, str), "Paths do not contains strings: %s"%str(path)
         # loop over processes
@@ -186,7 +196,24 @@ def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False,
     #return dfs
         if returnNumEventsTotal:
             genEventSumw=0
-            df = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_process/miniDf_%s.csv"%processName)
+            if isJEC:
+                processName = '_'.join(processName.split('_')[:-2])
+
+                # Handle special case of GluGLu where two dataframes are used one for train and one for test
+                #if processName == "GluGluHToBB":
+                    # Read both CSV files
+                #    df1 = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_process/miniDf_GluGluHToBB_tr.csv")
+                #    df2 = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_process/miniDf_GluGluHToBB.csv")
+                
+                    # Concatenate the two DataFrames row-wise
+                #    df = pd.concat([df1, df2], ignore_index=True)
+                
+                    # Set the 'process' column to a fixed value
+                #    df['process'] = 'GluGluHToBB'
+                #else:
+                df = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_process/miniDf_%s.csv"%processName)
+            else:
+                df = pd.read_csv("/t3home/gcelotto/ggHbb/outputs/counters/miniDf_process/miniDf_%s.csv"%processName)
             for fileName in fileNames:
                 #remove the path to file: file_name_322.parquet
                 filename = os.path.basename(fileName)
@@ -207,7 +234,7 @@ def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False,
                         print(df[df.process==processName])
                         print(df[df.fileNumber==fileNumber])
                         print("Error finding the fileNumber", processName, fileNumber)
-                        assert False
+                        assert False, "Error finding the fileNumber"
                 except:
                     process = '_'.join(filename.split('_')[:-1])  # split the process and the fileNumber and keep the process only which is GluGluHToBB in this case
                     fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1))

@@ -1,15 +1,12 @@
+#!/bin/bash
 cd /t3home/gcelotto/ggHbb/abcd/combineTry
-datacard="/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeZdatacard_total.txt"
+datacard="/t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeZdatacard_total_reduced.txt"
 
-# Define the dynamic part of the filename (e.g., "2A_1D_3A" or "2A_1D")
-dynamic_part="1D"  # Change this value as needed
-model="Apr01_1000p0"
 
-# Define the new ROOT filename based on the dynamic part
-new_root_file="/t3home/gcelotto/ggHbb/abcd/combineTry/shapes/counts_${model}_dd__${dynamic_part}_corrected.root"
+#model="Apr01_1000p0"
 
 # Use sed to replace the line in place
-sed -i "s|shapes \*    total  .*root|shapes *    total  ${new_root_file} \$PROCESS|" "$datacard"
+#sed -i "s|shapes \*    total  .*root|shapes *    total  ${new_root_file} \$PROCESS|" "$datacard"
 
 
 
@@ -27,9 +24,9 @@ rm higgsCombineTest.MultiDimFit.mH90_expected.root
 
 #cd /t3home/gcelotto/ggHbb/abcd/combineTry/
 text2workspace.py $datacard -m 90
-combineTool.py -M Impacts -d datacards/shapeZdatacard_total.root  -m 90 --doInitialFit --robustFit 1
-combineTool.py -M Impacts -d datacards/shapeZdatacard_total.root  -m 90 --doFits --robustFit 1
-combineTool.py -M Impacts -d datacards/shapeZdatacard_total.root  -m 90 -o impacts_total.json
+combineTool.py -M Impacts -d datacards/shapeZdatacard_total_reduced.root  -m 90 --doInitialFit --robustFit 1
+combineTool.py -M Impacts -d datacards/shapeZdatacard_total_reduced.root  -m 90 --doFits --robustFit 1
+combineTool.py -M Impacts -d datacards/shapeZdatacard_total_reduced.root  -m 90 -o impacts_total.json
 plotImpacts.py -i impacts_total.json -o impacts_total
 mv impacts_total.p* plots/
 rm /t3home/gcelotto/ggHbb/abcd/combineTry/datacards/shapeZdatacard_total.root

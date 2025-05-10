@@ -10,7 +10,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/newFit/afterNN/helpers")
 from allFunctions import *
 hep.style.use("CMS")
 
-def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfsMC_Z, dfProcessesMC, MCList_Z, dfsMC_H, MCList_H, myBkgSignalFunctions, key, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fitFunction):
+def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfMC_Z, dfProcessesMC, MCList_Z, dfMC_H, MCList_H, myBkgSignalFunctions, key, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fitFunction, paramsLimits):
     x_fit = x[maskFit]
     y_tofit = c[maskFit]
     yerr = np.sqrt(y_tofit)
@@ -20,15 +20,17 @@ def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfsMC_Z, dfPr
     ax[0].errorbar(x[maskUnblind], c[maskUnblind], yerr=np.sqrt(c)[maskUnblind], fmt='o', color='black', markersize=3, label="Data")
     # Plot Z
     bot = np.zeros(len(bins)-1)
-    for idx, dfMC in enumerate(dfsMC_Z):
-        c_=ax[0].hist(dfMC.dijet_mass, bins=bins, weights = dfMC.weight_var, label=dfProcessesMC.iloc[MCList_Z].process.iloc[idx], bottom=bot)[0]
-        bot += c_
+    c_=ax[0].hist(dfMC_Z.dijet_mass_, bins=bins, weights = dfMC_Z.weight_, label='Zbb', bottom=bot)[0]
+    bot += c_
     cumulativeMC = bot.copy()
     cHiggs = np.zeros(len(bins)-1)
-    for idx, dfMC in enumerate(dfsMC_H):
-        c_=ax[0].hist(dfMC.dijet_mass, bins=bins, weights = dfMC.weight_var , label=dfProcessesMC.iloc[MCList_H].process.iloc[idx], bottom=cumulativeMC)[0]
+    for process in np.unique(dfMC_H.process):
+        maskProcess = dfMC_H.process==process
+
+        c_=ax[0].hist(dfMC_H.dijet_mass_[maskProcess], bins=bins, weights = dfMC_H.weight_ [maskProcess], label=process, bottom=cumulativeMC)[0]
         cHiggs += c_
         cumulativeMC +=c_
+
     least_squares = LeastSquares(x_fit, y_tofit, yerr, myBkgSignalFunctions[key])
     params = {}
     for par in m_tot.parameters:
@@ -36,12 +38,18 @@ def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfsMC_Z, dfPr
     m_tot_2 = Minuit(least_squares,
                    **params
                    )
-
-    m_tot_2.limits['normSig'] = (m_tot.values["normSig"]/2, 2*m_tot.values["normSig"])
     for par in m_tot_2.parameters:
-        print(par)
-        if par=="normSig" or par in myBkgParams[key]:
-            print("Excluding!")
+        if par in paramsLimits:
+            m_tot_2.limits[par] = paramsLimits[par]  # Assign limits from the dictionary
+        else:
+            m_tot_2.limits[par] = None  # No limits if not specified
+    m_tot_2.limits['normSig'] = (m_tot.values["normSig"]/3, 2*m_tot.values["normSig"])
+    for par in m_tot_2.parameters:
+        #print(par)
+        #if ((par=="normSig") | (par in myBkgParams[key])):
+        if ( par in myBkgParams[key]):
+        #if ( par in myBkgParams[key]) | (par=="normSig"):
+            #print("Excluding!")
             continue
         else:
             m_tot_2.fixed[par]=True
@@ -92,5 +100,5 @@ def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfsMC_Z, dfPr
 
     #fig.savefig(plotFolder+"/mjjFit_cat1.png", bbox_inches='tight')
 
-
+    plt.close()
     return m_tot_2

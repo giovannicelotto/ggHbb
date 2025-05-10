@@ -1,4 +1,4 @@
-datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/datacards/datacard_H.txt"
+datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_H_cat1.txt"
 rmin=-3
 rmax=5
 outputCombine="/t3home/gcelotto/ggHbb/newFit/afterNN/outputCombine"

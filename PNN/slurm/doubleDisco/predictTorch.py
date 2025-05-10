@@ -64,7 +64,7 @@ def predict(file_path, modelName, multigpu, epoch):
     
     
     data = [Xtest]
-    data = cut(data, 'dijet_pt', None, 100)
+    data = cut(data, 'dijet_pt', 100, 160)
 
     data = preprocessMultiClass(data)
     Xtest = data[0]

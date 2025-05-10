@@ -38,12 +38,12 @@ try:
     dataTaking = args.dataTaking
 except:
     print("Error occurred")
-    sampling = 0
-    boosted = 0
-    dataTaking = '1A'
+    sampling = 1
+    boosted = 2
+    dataTaking = '1D'
 # %%
-if boosted>=1 and sampling==0:
-    assert False
+#if boosted>=1 and sampling==0:
+#    assert False
 if boosted==0 and sampling==1:
     assert False
 print("Sampling ", sampling)
@@ -55,7 +55,7 @@ if not os.path.exists(outFolder):
     os.makedirs(outFolder)
 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-if boosted:
+if boosted==2:
     featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder, massHypo=False)
 else:
     featuresForTraining, columnsToRead = getFeatures(outFolder, massHypo=False, bin_center=False, simple=True)
@@ -67,7 +67,7 @@ else:
 if sampling:
     data = loadData_sampling(nReal=-1, nMC=-1, size=5e6, outFolder=outFolder,
                             columnsToRead=columnsToRead, featuresForTraining=featuresForTraining, test_split=hp["test_split"],
-                            boosted=boosted)
+                            boosted=boosted, dataTaking=dataTaking)
 else:
     data = loadData_adversarial(nReal=-1, nMC=-1, size=5e6, outFolder=outFolder,
                             columnsToRead=columnsToRead, featuresForTraining=featuresForTraining, test_split=hp["test_split"],
@@ -126,8 +126,8 @@ saveXYWrW(Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest,rWtrain,
 
 # %%
 # scale with standard scalers and apply log to any pt and mass distributions
-Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True, boosted=boosted, scaler='standard')
-Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False, boosted=boosted, scaler='standard')
+Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True, boosted=boosted, scaler='robust')
+Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False, boosted=boosted, scaler='robust')
 
 # %%
 test_gaussianity_validation(Xtrain, Xval, featuresForTraining, outFolder)

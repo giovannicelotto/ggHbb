@@ -37,17 +37,23 @@ parser = argparse.ArgumentParser(description="Script.")
 try:
     parser.add_argument("-l", "--lambdaCor", type=float, help="lambda for penalty term", default=None)
     parser.add_argument("-dt", "--date", type=str, help="MonthDay format e.g. Dec17", default=None)
+    parser.add_argument("-era", "--era", type=str, help="1A or 1D", default=None)
+    parser.add_argument("-b", "--boosted", type=int, help="0 (0-100 GeV) or 1 (100-160 GeV)", default=0)
     args = parser.parse_args()
     if args.lambdaCor is not None:
         hp["lambda_reg"] = args.lambdaCor 
     if args.date is not None:
         current_date = args.date
+    if args.era is not None:
+        dataTaking = args.era
+    if args.boosted is not None:
+        boosted = args.boosted
 except:
     current_date = "Apr02"
     hp["lambda_reg"] = 800.
     print("Interactive mode")
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
-inputSubFolder = "data_pt0_1D"
+inputSubFolder = "data_pt%d_%s"%(boosted, dataTaking)
 # %%
 # Plot Loss function
 # Load the loss functions from different ranks
@@ -557,6 +563,23 @@ for i, (low, high) in enumerate(zip(mass_bins[:-1], mass_bins[1:])):
     print("Observed/Expected ABCD", regionB, "/", regionA*regionD/regionC)
 
 
+# Compute Pearson
+#pearsons_bin_val = []
+#pearsons_bin_train = []
+#pearsons_bin_test = []
+#for blow, bhigh in zip(mass_bins[:-1], mass_bins[1:]):
+#    mask = (Xval.dijet_mass >=blow) & (Xval.dijet_mass < bhigh)  & (Yval==0)
+#    distance_corr = dcor.distance_correlation(np.array(YPredVal1[mask], dtype=np.float64), np.array(YPredVal2[mask], dtype=np.float64))
+#    print("%.1f < mjj < %.1f  : %.5f"%(blow, bhigh, distance_corr))
+#    pearsons_bin_val.append(distance_corr)
+#    
+#    mask = (Xtrain.dijet_mass >=blow) & (Xtrain.dijet_mass < bhigh)  & (Ytrain==0)
+#    distance_corr = dcor.distance_correlation(np.array(YPredTrain1[mask], dtype=np.float64), np.array(YPredTrain2[mask], dtype=np.float64))
+#    pearsons_bin_train.append(distance_corr)
+#
+#    mask = (Xtest.dijet_mass >=blow) & (Xtest.dijet_mass < bhigh)  & (Ytest==0)
+#    distance_corr = dcor.distance_correlation(np.array(YPredTest1[mask], dtype=np.float64), np.array(YPredTest2[mask], dtype=np.float64))
+#    pearsons_bin_test.append(distance_corr)
 
 
 from hist import Hist
@@ -592,10 +615,10 @@ regions['D'].fill(df[mD][xx])
 
 sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
 from plot_v2 import plot4ABCD, QCD_SR
-
-hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', blindPar=(False, 125, 20), outName=outFolder+"/performance/abcd_check4R", sameWidth_flag=False)
+unblinded_mask = np.full(len(mass_bins)-1, True)
+hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_check4R", sameWidth_flag=False)
 qcd_mc = regions['B']
-QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", blindPar=(False, 125, 10), outName=outFolder+"/performance/abcd_checkSR", sameWidth_flag=False)
+QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_checkSR", sameWidth_flag=False, chi2_mask=np.array(np.ones(len(mass_bins)-1), dtype=bool))
 
 
 
@@ -626,11 +649,11 @@ regions['A'].fill(df[mA][xx])
 regions['B'].fill(df[mB][xx])
 regions['C'].fill(df[mC][xx])
 regions['D'].fill(df[mD][xx])
-hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', blindPar=(False, 125, 20), outName=outFolder+"/performance/abcd_check4R_test", sameWidth_flag=False)
+hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_check4R_test", sameWidth_flag=False)
 qcd_mc = regions['B']
 print(qcd_mc.values())
 print(hB_ADC.values())
-QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", blindPar=(False, 125, 10), outName=outFolder+"/performance/abcd_checkSR_test", sameWidth_flag=False, corrected=False)
+QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_checkSR_test", sameWidth_flag=False, corrected=False, chi2_mask=np.array(np.ones(len(mass_bins)-1), dtype=bool))
 
 
 
