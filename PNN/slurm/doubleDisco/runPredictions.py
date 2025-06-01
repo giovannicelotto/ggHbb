@@ -26,6 +26,7 @@ def main(isMC, processNumber, nFiles, modelName, multigpu, epoch=None):
 
 
     doneFiles = 0
+    dots=0
     for fileName in flatFiles:
         if doneFiles == nFiles:
             print("%d done"%nFiles)
@@ -50,7 +51,8 @@ def main(isMC, processNumber, nFiles, modelName, multigpu, epoch=None):
             subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 100)), '/t3home/gcelotto/ggHbb/PNN/slurm/doubleDisco/predict.sh', fileName, str(processNumber), process, modelName, str(multigpu), str(epoch)])
             doneFiles = doneFiles + 1
         else:
-            print("..")
+            print("Waiting" + "." * dots + " " * (3 - dots), end="\r", flush=True)
+            dots = (dots + 1) % 4
 
                      
         

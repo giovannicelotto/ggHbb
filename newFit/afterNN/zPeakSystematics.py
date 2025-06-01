@@ -78,7 +78,15 @@ fit_systematics.plot_results(x, cTot, err, m, fitregion, bins, outFolder)
 # %%
 variations = [
     'btag_up', 'btag_down',
-    'JECAbsoluteMPFBias_Up', 'JECAbsoluteMPFBias_Down','JECAbsoluteScale_Up', 'JECAbsoluteScale_Down', 'JECAbsoluteStat_Up', 'JECAbsoluteStat_Down', 'JECFlavorQCD_Up', 'JECFlavorQCD_Down', 'JECFragmentation_Up', 'JECFragmentation_Down', 'JECPileUpDataMC_Up', 'JECPileUpDataMC_Down', 'JECPileUpPtBB_Up', 'JECPileUpPtBB_Down', 'JECPileUpPtEC1_Up', 'JECPileUpPtEC1_Down', 'JECPileUpPtEC2_Up', 'JECPileUpPtEC2_Down', 'JECPileUpPtHF_Up', 'JECPileUpPtHF_Down', 'JECPileUpPtRef_Up', 'JECPileUpPtRef_Down', 'JECRelativeBal_Up', 'JECRelativeBal_Down', 'JECRelativeFSR_Up', 'JECRelativeFSR_Down', 'JECRelativeJEREC1_Up', 'JECRelativeJEREC1_Down', 'JECRelativeJEREC2_Up', 'JECRelativeJEREC2_Down', 'JECRelativeJERHF_Up', 'JECRelativeJERHF_Down','JECRelativePtBB_Up', 'JECRelativePtBB_Down', 'JECRelativePtEC1_Up', 'JECRelativePtEC1_Down', 'JECRelativePtEC2_Up', 'JECRelativePtEC2_Down', 'JECRelativePtHF_Up', 'JECRelativePtHF_Down', 'JECRelativeSample_Up', 'JECRelativeSample_Down', 'JECRelativeStatEC_Up', 'JECRelativeStatEC_Down', 'JECRelativeStatFSR_Up', 'JECRelativeStatFSR_Down', 'JECRelativeStatHF_Up', 'JECRelativeStatHF_Down', 'JECSinglePionECAL_Up', 'JECSinglePionECAL_Down', 'JECSinglePionHCAL_Up', 'JECSinglePionHCAL_Down', 'JECTimePtEta_Up', 'JECTimePtEta_Down',
+    'JECAbsoluteMPFBias_Up', 'JECAbsoluteMPFBias_Down',
+    'JECAbsoluteScale_Up', 'JECAbsoluteScale_Down', 'JECAbsoluteStat_Up', 'JECAbsoluteStat_Down', 'JECFlavorQCD_Up', 'JECFlavorQCD_Down', 
+    'JECFragmentation_Up', 'JECFragmentation_Down', 'JECPileUpDataMC_Up', 'JECPileUpDataMC_Down', 'JECPileUpPtBB_Up', 'JECPileUpPtBB_Down',
+    'JECPileUpPtEC1_Up', 'JECPileUpPtEC1_Down', 'JECPileUpPtEC2_Up', 'JECPileUpPtEC2_Down', 'JECPileUpPtHF_Up', 'JECPileUpPtHF_Down', 'JECPileUpPtRef_Up',
+    'JECPileUpPtRef_Down', 'JECRelativeBal_Up', 'JECRelativeBal_Down', 'JECRelativeFSR_Up', 'JECRelativeFSR_Down', 'JECRelativeJEREC1_Up', 'JECRelativeJEREC1_Down',
+    'JECRelativeJEREC2_Up', 'JECRelativeJEREC2_Down', 'JECRelativeJERHF_Up', 'JECRelativeJERHF_Down','JECRelativePtBB_Up', 'JECRelativePtBB_Down', 'JECRelativePtEC1_Up',
+    'JECRelativePtEC1_Down', 'JECRelativePtEC2_Up', 'JECRelativePtEC2_Down', 'JECRelativePtHF_Up', 'JECRelativePtHF_Down', 'JECRelativeSample_Up', 'JECRelativeSample_Down',
+    'JECRelativeStatEC_Up', 'JECRelativeStatEC_Down', 'JECRelativeStatFSR_Up', 'JECRelativeStatFSR_Down', 'JECRelativeStatHF_Up', 'JECRelativeStatHF_Down',
+    'JECSinglePionECAL_Up', 'JECSinglePionECAL_Down', 'JECSinglePionHCAL_Up', 'JECSinglePionHCAL_Down', 'JECTimePtEta_Up', 'JECTimePtEta_Down',
     'JER_Down', 'JER_Up'
     ]
 fit_systematics.apply_variations(variations, dfsMC, bins, fitregion, params, paramsLimits, cuts_dict)

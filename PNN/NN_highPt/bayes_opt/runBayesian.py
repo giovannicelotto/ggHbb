@@ -32,16 +32,10 @@ parser = argparse.ArgumentParser(description="Script.")
 parser.add_argument("-e", "--epochs",           type=int, help="number of epochs", default=1500)
 parser.add_argument("-s", "--size",             type=int, help="Number of events to crop training dataset", default=1000000000)
 parser.add_argument("-b", "--boosted",          type=int, help="Boosted Class", default=1)
-parser.add_argument("-d", "--dropout",          type=float, help="dropout prob", default=0.)
-parser.add_argument("-lr", "--learningRate",    type=float, help="learning rate", default=None)
-parser.add_argument("-bs", "--batch_size",      type=int, help="Number of events perBatch", default=None)
 parser.add_argument("-eS", "--earlyStopping",   type=int, help="patience early stop", default=None)
-parser.add_argument("-n", "--nodes",            type=lambda s: [int(item) for item in s.split(',')],  # Convert comma-separated string to list of ints
-                        help="List of nodes per layer (e.g., 128,64,32 for a 3-layer NN)",default=None
-)
 args = parser.parse_args()
 
-featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder=None, jet3_btagWP=True)
+featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder=None)
 print(featuresForTraining)
 inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%(args.boosted)
 outFolderForScaler = "/t3home/gcelotto/ggHbb/PNN/NN_highPt/bayes_opt"
@@ -173,8 +167,17 @@ def train_and_evaluate(hp):
     pval_bkg = stats.kstest(bkgTrain_predictions, bkg_predictions)[1]
     # Penalize overfit
     penalty = 0.0
-    if (pval_sig < 0.05) | (pval_bkg < 0.05):
-        penalty = 10.0  # Add penalty to avoid overfit
+
+    if (pval_sig < 0.01) or (pval_bkg < 0.01):
+        penalty = 1.0
+    elif (pval_sig < 0.02) or (pval_bkg < 0.02):
+        penalty = 0.8
+    elif (pval_sig < 0.03) or (pval_bkg < 0.03):
+        penalty = 0.7
+    elif (pval_sig < 0.04) or (pval_bkg < 0.04):
+        penalty = 0.6
+    elif (pval_sig < 0.05) or (pval_bkg < 0.05):
+        penalty = 0.5
 
     global best_model, best_logloss
     if (log_loss_value + penalty) < best_logloss:
@@ -197,14 +200,14 @@ def train_and_evaluate_bayes(learning_rate, batch_size_log2, dropout, n1_log2, n
         "batch_size": batch_size,
         "dropout": dropout,
         "nNodes": nodes,
-        "patienceES": 10,
-        "epochs": 100,
+        "patienceES": args.earlyStopping,
+        "epochs": args.epochs,
     }
 
     val_loss = train_and_evaluate(hp)
     end_time = time.time()
     elapsed = end_time - start_time
-    print(f"Trial completed in: {timedelta(seconds=elapsed)} ({elapsed:.2f} seconds)")
+    print(f"Trial completed in: {timedelta(seconds=elapsed)} ({elapsed:.2f} seconds)", flush=True)
 
 
 
@@ -242,12 +245,30 @@ optimizer = BayesianOptimization(
 )
 
 # Set up logger
-logger = JSONLogger(path="/t3home/gcelotto/ggHbb/PNN/NN_highPt/bayes_opt/model_b%d/logs_bayes.json"%args.boosted)
+log_path = "/t3home/gcelotto/ggHbb/PNN/NN_highPt/bayes_opt/model_b%d/logs_bayes.json"%args.boosted
+logger = JSONLogger(path=log_path)
 optimizer.subscribe(Events.OPTIMIZATION_STEP, logger)
 #
 ## Load previous logs if available
-if os.path.exists("/t3home/gcelotto/ggHbb/PNN/NN_highPt/bayes_opt/model_b%d/logs_bayes.json"%args.boosted):
-    load_logs(optimizer, logs=["/t3home/gcelotto/ggHbb/PNN/NN_highPt/bayes_opt/model_b%d/logs_bayes.json"%args.boosted])
-#    print("Loaded previous optimization logs")
+if os.path.exists(log_path):
+    load_logs(optimizer, logs=[log_path])
 
-optimizer.maximize(init_points=10, n_iter=25)
+
+
+# ---- INSERT custom known good trial(s) here ----
+# Example of known config you want to test:
+known_config = {
+    'learning_rate': 1e-3,
+    'batch_size_log2': 10,
+    'dropout': 0.2,
+    'n1_log2': 10,
+    'n2_log2': 8,
+    'n3_log2': 0,
+}
+
+# Evaluate and register manually
+target = train_and_evaluate_bayes(**known_config)
+optimizer.register(params=known_config, target=target)
+
+
+optimizer.maximize(init_points=50, n_iter=25)

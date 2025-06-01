@@ -21,8 +21,10 @@ def preprocessMultiClass(dfs):
         # end useless
         
         beforeCutMass = len(df)
+        if beforeCutMass==0:
+            continue
 
-        df = df[(df.dijet_mass>40) & (df.dijet_mass<300)]
+        df = df[(df.dijet_mass>50) & (df.dijet_mass<300)]
         afterCutMass = len(df)
         print("Df Idx %d : Eff. cut mass %d / %d = %.1f"%(idx, afterCutMass, beforeCutMass, afterCutMass/beforeCutMass*100))
         

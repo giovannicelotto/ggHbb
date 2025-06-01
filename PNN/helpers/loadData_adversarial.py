@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
+import sys
+sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
 from preprocessMultiClass import preprocessMultiClass
 from functions import cut
 def match_relative_distribution(df_target, df_source, column='feature', bins = np.linspace(45, 300, 51)):
@@ -76,29 +78,29 @@ def loadData_adversarial(nReal, nMC, size, outFolder, columnsToRead, featuresFor
         folder = "others" if dataTaking=='1A' else "training2"
         paths = [
             flatPathCommon + "/Data%s/%s"%(dataTaking, folder),
-            flatPathCommon + "/GluGluHToBB/others"]
+            flatPathCommon + "/MC/GluGluHToBB/others"]
     else:
         if dataTaking=='1A':
             paths = [
                 flatPathCommon + "/Data1A/training",
-                flatPathCommon + "/GluGluHToBB/training"]
+                flatPathCommon + "/MC/GluGluHToBB/training"]
         elif dataTaking=='1D':
             if boosted==1:
                 paths = [
                     flatPathCommon + "/Data1D/training2",
-                    flatPathCommon + "/GluGluHToBB/training"]
+                    flatPathCommon + "/MC/GluGluHToBB/training"]
             else:
                 paths = [
-                    flatPathCommon + "/Data1D/training",
-                    flatPathCommon + "/GluGluHToBB/training"]
+                    flatPathCommon + "/Data1D/training2",
+                    flatPathCommon + "/MC/GluGluHToBB/training"]
     massHypothesis = [50, 70, 100, 200, 300]
     #massHypothesis = [ 70, 100, 200]
     for m in massHypothesis:
-        paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
+        paths.append(flatPathCommon + "/MC/GluGluH_M%d_ToBB"%(m))
     
     
 
-    dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False)
+    dfs = loadMultiParquet(paths=paths, nReal=nReal, nMC=nMC, columns=columnsToRead, returnNumEventsTotal=False, filters=getCommonFilters(btagTight=True))
     #if dataTaking=='1A':
     #    dfs=cut(dfs, 'muon_pt', 12, None)
     if boosted==1:
@@ -215,6 +217,7 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
     df_uniform = df_uniform.drop(columns=['bins'], axis=1)
 
     return df_uniform
+
 def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTraining,
                          test_split,  drop=True, boosted=False, dataTaking='1A'):
 
@@ -227,15 +230,15 @@ def loadData_sampling(nReal, nMC, size, outFolder, columnsToRead, featuresForTra
         folder = "others" if dataTaking=='1A' else "training2"
         paths = [
             flatPathCommon + "/Data%s/%s"%(dataTaking, folder),
-            flatPathCommon + "/GluGluHToBB/others"]
+            flatPathCommon + "/MC/MINLOGluGluHToBB/training"]
     else:
         paths = [
-            flatPathCommon + "/Data1A/training",
-            flatPathCommon + "/GluGluHToBB/training"]
+            flatPathCommon + "/Data%s/%s"%(dataTaking, folder),
+            flatPathCommon + "/MC/MINLOGluGluHToBB/training"]
     
     massHypothesis = [50, 70, 100, 200, 300]
     for m in massHypothesis:
-        paths.append(flatPathCommon + "/GluGluH_M%d_ToBB"%(m))
+        paths.append(flatPathCommon + "/MC/GluGluH_M%d_ToBB"%(m))
     
     # end
     

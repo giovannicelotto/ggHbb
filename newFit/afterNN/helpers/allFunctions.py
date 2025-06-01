@@ -32,8 +32,8 @@ def pol3N(x, b, c, d):
 # Used functions for Z
 def dscb(x, mean, sigma, alphaL, nL, alphaR, nR):
     t = (x - mean) / sigma
-    A = (nL / abs(alphaL)) ** nL * np.exp(-0.5 * alphaL ** 2)
-    B = (nR / abs(alphaR)) ** nR * np.exp(-0.5 * alphaR ** 2)
+    A = ((nL / abs(alphaL)) ** nL) * np.exp(-0.5 * alphaL ** 2)
+    B = ((nR / abs(alphaR)) ** nR) * np.exp(-0.5 * alphaR ** 2)
 
     #Avoid negative base
     base_left = (nL / abs(alphaL) - abs(alphaL) - t)
@@ -42,6 +42,7 @@ def dscb(x, mean, sigma, alphaL, nL, alphaR, nR):
 
     base_right = nR / abs(alphaR) - abs(alphaR) + t
     base_right =np.where(base_right>0,base_right, 1e-12)
+    #base_right = np.where(base_right < 100, base_right, 100)
     right = B * base_right ** (-nR)
 
     central = np.exp(-0.5 * t ** 2)
@@ -156,6 +157,18 @@ def expExp_pol2(x, norm, B, C, b, c):
     
     return normalization_factor * unnormalized_function(x)
 
+def expPol2_expPol2(x, norm, B, C, p1, p2, p11, p12, f):
+    def unnormalized_function(x):
+        pol2 = p2 * x**2 + p1 * x + 1  
+        pol2_ = p12 * x**2 + p11 * x + 1 
+        exp1 = np.exp(-B * x)
+        exp2 = np.exp(-C * x)
+        return (f)*(exp1 * pol2) + (1-f)*(exp2*pol2_)
+    
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = norm / integral_value
+    
+    return normalization_factor * unnormalized_function(x)
 
 def expExp_pol2_turnOn(x, norm, B, C, b, c, aa, bb, f):
     def unnormalized_function(x):
@@ -163,6 +176,20 @@ def expExp_pol2_turnOn(x, norm, B, C, b, c, aa, bb, f):
         exp1 = np.exp(-B * x)
         exp2 = np.exp(-C * x)
         turnOn = bb * x**2 + aa * x + 1  # Quadratic polynomial
+        return f*(exp1 + exp2) * pol2 + (1-f)*turnOn
+    
+    # Compute normalization constant to ensure integral from x1 to x2 is 1
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = norm / integral_value
+    
+    return normalization_factor * unnormalized_function(x)
+
+def expExp_pol2_turnOnPol1(x, norm, B, C, b, c, aa, f):
+    def unnormalized_function(x):
+        pol2 = c * x**2 + b * x + 1  # Quadratic polynomial
+        exp1 = np.exp(-B * x)
+        exp2 = np.exp(-C * x)
+        turnOn =  aa * x + 1  # Quadratic polynomial
         return f*(exp1 + exp2) * pol2 + (1-f)*turnOn
     
     # Compute normalization constant to ensure integral from x1 to x2 is 1
@@ -328,5 +355,12 @@ def expExp_pol2_turnOnPol3_DSCB(x, normBkg, B, C, b, c, d, aa, bb, f, normSig, f
 def exp_pol2_turnOn3_DSCB(x, normBkg, B, b, c, aa, bb, cc, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
     return exp_pol2_turnOn3(x, normBkg, B,  b, c, aa, bb,cc, f) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
 
-def exp_gaus_turnOn_DSCB(x, normBkg, B,C, b, c, mu_to, sigma_to, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL,alphaR, nR, sigmaG):
-    return exp_gaus_turnOn(x, normBkg, B, C,b, c,mu_to, sigma_to, f) + normSig*(fraction_dscb*dscb(x, mean, sigma,  alphaL, nL,alphaR, nR) + (1-fraction_dscb)*gaussianN(x, mean, sigmaG))
+def exp_gaus_turnOn_DSCB(x, normBkg, B, b, c, mu_to, sigma_to, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL,alphaR, nR, sigmaG):
+    return exp_gaus_turnOn(x, normBkg, B, b, c,mu_to, sigma_to, f) + normSig*(fraction_dscb*dscb(x, mean, sigma,  alphaL, nL,alphaR, nR) + (1-fraction_dscb)*gaussianN(x, mean, sigmaG))
+
+
+def expPol2_expPol2_DSCB(x, normBkg, B, C, p1,p2, p11, p12, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL,alphaR, nR, sigmaG):
+        return expPol2_expPol2(x, normBkg, B, C,p1,p2, p11, p12, f) + normSig*(fraction_dscb*dscb(x, mean, sigma,  alphaL, nL,alphaR, nR) + (1-fraction_dscb)*gaussianN(x, mean, sigmaG))
+
+def expExp_pol2_turnOnPol1_DSCB(x, normBkg, B, C, b,c, aa, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL,alphaR, nR, sigmaG):
+        return expExp_pol2_turnOnPol1(x, normBkg, B, C,b,c, aa, f) + normSig*(fraction_dscb*dscb(x, mean, sigma,  alphaL, nL,alphaR, nR) + (1-fraction_dscb)*gaussianN(x, mean, sigmaG))

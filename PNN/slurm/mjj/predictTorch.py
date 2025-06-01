@@ -40,12 +40,16 @@ def predict(file_path, modelName, boosted):
     elif int(boosted)==60:
         data = cut(data, 'dijet_pt', 60, 100)
     print("File cut")
-    data = preprocessMultiClass(data)
+    data = cut(data, 'dijet_mass', 50, 300)
+    data[0]['dimuon_mass'] = np.where(data[0]['dimuon_mass']==-999, 0.106, data[0]['dimuon_mass'])
+    #data = preprocessMultiClass(data)
 
     # Perform prediction
     # scale
     print("Scaling")
     data[0]  = scale(data[0], featuresForTraining=featuresForTraining, scalerName= modelDir + "/myScaler.pkl" ,fit=False)
+    for f in data[0].columns:
+        print(f,data[0][f].isna().sum())
     nn.eval()
     data_tensor = torch.tensor(np.float32(data[0][featuresForTraining].values)).float()
     

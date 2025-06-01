@@ -7,7 +7,7 @@ def print_params(hp):
         print(f"{key:<{max_key_length}} \t: {value}")
     print("-" * 50)
 
-def getParams():
+def getParams(silent=True):
     hp = {
     #'nReal'             : 100,
     #'nMC'               : -1,
@@ -22,5 +22,8 @@ def getParams():
     'batch_size'        : 25000,
     'lambda_dcor'        : 1,
     }
-    print_params(hp)
+    if silent:
+        pass
+    else:
+        print_params(hp)
     return hp

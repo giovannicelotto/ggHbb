@@ -1,21 +1,25 @@
-rmin=0
-rmax=2
-
+cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
+cmsenv
 datacard="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_Z_cat1.txt"
+ws="/t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_Z_cat1.root"
+rmin=0.5
+rmax=1.5
 outputCombine="/t3home/gcelotto/ggHbb/newFit/afterNN/outputCombine"
 plotFolder="/t3home/gcelotto/ggHbb/newFit/afterNN/plots"
-
 cd $outputCombine
 
-#combine -M FitDiagnostics $datacard --saveNormalizations --saveShapes --redefineSignalPOIs r --robustFit 1 --mass 90
-combine -M MultiDimFit $datacard --algo grid --points 100 --rMin $rmin --rMax $rmax --mass 90
+#Create ws
+text2workspace.py $datacard  -o $ws
+
+combine -M MultiDimFit $ws --algo grid --points 100 --rMin $rmin --rMax $rmax --mass 90
 mv higgsCombineTest.MultiDimFit.mH90.root higgsCombineTest.MultiDimFit.mH90_observed.root
-combine -M MultiDimFit $datacard --algo grid --points 100 --rMin $rmin --rMax $rmax --mass 90 --expectSignal 1 -t -1 
+combine -M MultiDimFit $ws --algo grid --points 100 --rMin $rmin --rMax $rmax --mass 90 --expectSignal 1 -t -1 
 mv higgsCombineTest.MultiDimFit.mH90.root higgsCombineTest.MultiDimFit.mH90_expected.root
 cd $plotFolder
 plot1DScan.py --POI r $outputCombine"/higgsCombineTest.MultiDimFit.mH90_observed.root" --output ZObs_cat1 --others $outputCombine"/higgsCombineTest.MultiDimFit.mH90_expected.root:Expected:2" --main-label "Observed" --pdf "n" --outRoot "n"
 
 
+exit
 
 
 cd $outputCombine

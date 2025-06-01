@@ -18,12 +18,12 @@ params:
   alphaL: 0.89
   nL: 1
   alphaR: 1.77
-  nR: 0.58
+  nR: 1.1
   sigmaG: 10.9
 paramsLimits: 
   fraction_dscb: [0.05, 0.95]
   mean: [83, 97]
-  nR: [0.000001, 3]
-  nL: [0.000001, 10]
+  nR: [1.1, 3]
+  nL: [1.1, 10]
   sigma: [5, 15]
   sigmaG: [5, 15]

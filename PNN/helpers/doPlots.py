@@ -11,6 +11,7 @@ import pandas as pd
 def plot_lossTorch(train_loss_history, val_loss_history, 
               train_classifier_loss_history, val_classifier_loss_history,
               train_dcor_loss_history, val_dcor_loss_history,
+              train_closure_loss_history, val_closure_loss_history,
               outFolder, gpu=False):
     """
     Plots the loss histories for training and validation.
@@ -26,7 +27,7 @@ def plot_lossTorch(train_loss_history, val_loss_history,
         outFolder (str): Output folder path to save the plot.
     """
     # Create 3 vertically stacked subplots with shared x-axis
-    fig, axes = plt.subplots(3, 1, sharex=True, figsize=(10, 20))
+    fig, axes = plt.subplots(4, 1, sharex=True, figsize=(10, 25))
 
     # --- Plot 1: Total Loss ---
     inf = 0.8*min([np.min(train_loss_history), np.min(val_loss_history)])
@@ -49,14 +50,25 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     axes[1].set_title("Classifier Loss")
 
     # --- Plot 3: dCor Loss ---
-    inf = 0.8*min([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
-    sup = 20.*max([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
+    #inf = 0.8*min([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
+    #sup = 20.*max([np.min(train_dcor_loss_history), np.min(val_dcor_loss_history)])
     axes[2].plot(np.array(train_dcor_loss_history), label='Train dCor Loss', color='blue')
     axes[2].plot(np.array(val_dcor_loss_history), label='Validation dCor Loss', linestyle='dashed', color='red')
     axes[2].legend()
-    axes[2].set_ylim(inf, sup)
-    axes[2].set_yscale('log')
+    #axes[2].set_ylim(inf, sup)
+    #axes[2].set_yscale('log')
     axes[2].set_title("Distance Correlation (dCor) Loss")
+
+
+    # --- Plot 3: Closure Loss ---
+    inf = 0.8*min([np.min(train_closure_loss_history), np.min(val_closure_loss_history)])
+    sup = 20.*max([np.min(train_closure_loss_history), np.min(val_closure_loss_history)])
+    axes[3].plot(np.array(train_closure_loss_history), label='Train closure Loss', color='blue')
+    axes[3].plot(np.array(val_closure_loss_history), label='Validation closure Loss', linestyle='dashed', color='red')
+    axes[3].legend()
+    axes[3].set_ylim(inf, sup)
+    #axes[3].set_yscale('log')
+    axes[3].set_title("ABCD closure Loss")
 
     # Set shared labels and adjust layout
     axes[-1].set_xlabel('Epoch')
@@ -72,7 +84,8 @@ def plot_lossTorch(train_loss_history, val_loss_history,
 
     else:
         print("Gpu True")
-        indices = np.arange(100, len(val_loss_history), 50)
+        print(val_loss_history)
+        indices = np.arange(50, len(val_loss_history), 50)
         x0 = indices[np.argmin(val_loss_history[indices])]
 
     axes[0].vlines(x=x0, ymin=axes[0].get_ylim()[0], ymax=axes[0].get_ylim()[1],
@@ -81,6 +94,8 @@ def plot_lossTorch(train_loss_history, val_loss_history,
                 color='black', linestyle='dashed', label='Best Epoch')
     axes[2].vlines(x=x0, ymin=axes[2].get_ylim()[0], ymax=axes[2].get_ylim()[1],
                 color='black', linestyle='dashed', label='Best Epoch')
+    axes[3].vlines(x=x0, ymin=axes[3].get_ylim()[0], ymax=axes[3].get_ylim()[1],
+                color='black', linestyle='dashed', label='Best Epoch')
     # Save the figure
     fig.tight_layout()  # Ensures no overlap between plots
     fig.savefig(f"{outFolder}/performance/loss.png")
@@ -88,18 +103,19 @@ def plot_lossTorch(train_loss_history, val_loss_history,
     plt.close(fig)
     if gpu:
         return x0
+    
 def doPlotLoss_Torch(train_loss, val_loss, outName, earlyStop):
     fig, ax = plt.subplots(1, 1)
-    ax.plot(train_loss)
-    ax.plot(val_loss)
+    ax.plot(train_loss, label='Train loss')
+    ax.plot(val_loss, label='Val Loss')
     #ax.set_title('Model Loss')
-    #ax.set_ylabel('Loss')
-    #ax.set_xlabel('Epoch')
+    ax.set_ylabel('Loss')
+    ax.set_xlabel('Epoch')
     
     #ax.set_yscale('log')
-    #ax.set_ylim(ymax = max(min(train_loss), min(val_loss))*1.4, ymin = min(min(train_loss),min(val_loss))*0.9)
-    #ax.vlines(x=earlyStop, ymin=ax.get_ylim()[0], ymax=ax.get_ylim()[1])
-    ax.legend(['Train Loss', 'Val Loss'], loc='upper right')
+    ax.set_ylim(ymax = max(min(train_loss), min(val_loss))*1.4, ymin = min(min(train_loss),min(val_loss))*0.9)
+    ax.vlines(x=earlyStop, ymin=ax.get_ylim()[0], ymax=min(val_loss), color='black', linestyle='solid', label='Early Stop')
+    ax.legend(loc='upper right')
     fig.savefig(outName)
     plt.cla()
     print("Saved loss function ", outName)
@@ -224,6 +240,7 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=sig_test_counts, yerr=sig_test_counts_err, linestyle='none', color='red')
     ax.errorbar(x=(bins[1:]+bins[:-1])/2, y=bkg_test_counts, yerr=bkg_test_counts_err, linestyle='none', color='blue')
     ax.set_ylim(ax.get_ylim()[0], ax.get_ylim()[1]*1.3)
+
     ax.text(x=0.9, y=0.9, s="KS test Signal = %.3f"%pval_sig, ha='right', transform=ax.transAxes)
     ax.text(x=0.9, y=0.8, s="KS test Bkg = %.3f"%pval_bkg, ha='right', transform=ax.transAxes)
     
@@ -241,6 +258,8 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
         max = np.argmax(sig_test_counts)
         second_max = np.argmax(sig_test_counts[sig_test_counts != np.max(sig_test_counts)])
         return x[max], x[second_max]
+    else:
+        return pval_sig, pval_bkg
 
 def getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
     from shap import GradientExplainer
@@ -417,11 +436,11 @@ def runPlotsTorch(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPred
 
     #NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outFolder+"/performance/output_ggS0.png")
     #NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125.png")
-    print(signalTrain_predictions)
-    print(signal_predictions)
-    NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125_log.png", log=False)
+    #print(signalTrain_predictions)
+    #print(signal_predictions)
+    #NNoutputs(h125_testPredictions, realData_predictions, h125_trainPredictions, realDataTrain_predictions, outFolder+"/performance/output_125_log.png", log=False)
 
-    ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, genMassTest=genMassTest, outName=outFolder + "/performance/ggHScoreScan.png")
+    #ggHscoreScan(Xtest=Xtest, Ytest=Ytest, YPredTest=YPredTest, Wtest=Wtest, genMassTest=genMassTest, outName=outFolder + "/performance/ggHScoreScan.png")
     # scale
     Xtest  = scale(Xtest, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
     nEvents = 1000

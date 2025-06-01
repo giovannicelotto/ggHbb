@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import awkward as ak
 # %%
-path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/MCfiducial_corrections2025Mar10/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/crab_GluGluHToBB/250310_104448/0000/training/MCfiducial_corrections_ggHbb_Run2_mc_2025Mar10_10.root"
+path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/MC_fiducial_JESsmearedNominal2025Apr09/GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia8/crab_GluGluHToBBMINLO/250409_155207/0000/others/MC_fiducial_JESsmearedNominal_Run2_mc_2025Apr09_45.root"
 file = uproot.open(path)
 tree = file['Events']
 branches = tree.arrays()
@@ -50,7 +50,7 @@ Jet_puId = branches["Jet_puId"]
 m = (   (GenPart_genPartIdxMother>-1) &                         # Particles With Mother
         (GenPart_pdgId[GenPart_genPartIdxMother]==25) &         # Particles daughters of Higgs
         (GenPart_statusFlags[GenPart_genPartIdxMother]>=8192))  # Count only Higgs last copy (to avoid H->H)
-m1 = (m) & (abs(GenPart_eta)<1000)                               # Eta acceptance
+m1 = (m) & (abs(GenPart_eta)<2.5)                               # Eta acceptance
 m2 = (m1) & (GenPart_pt>0)                                     # pT acceptance
 mLast = (m2) & (abs(GenPart_pdgId)==5)                             # Flavor (redundant)
 

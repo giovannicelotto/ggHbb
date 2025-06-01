@@ -12,45 +12,49 @@ def save(Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest, YPredTrain, YPredTest, inF
     return 
 
 
-def saveXYWP(Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, YPredTrain, YPredVal, YPredTest, inFolder):
+def saveXYWP(Xtrain, Xval, Ytrain, Yval,  Wtrain, Wval, YPredTrain, YPredVal, inFolder, isTest=False, Xtest=None, Ytest=None, Wtest=None, YPredTest=None):
     
     np.save(inFolder +"/YPredTrain.npy", YPredTrain)
     np.save(inFolder +"/YPredVal.npy", YPredVal)
-    np.save(inFolder +"/YPredTest.npy", YPredTest)
     
     Xtrain.to_parquet(inFolder +"/Xtrain.parquet")
     Xval.to_parquet(inFolder +"/Xval.parquet")
-    Xtest.to_parquet(inFolder +"/Xtest.parquet")
     
     np.save(inFolder +"/Wtrain.npy", Wtrain)
     np.save(inFolder +"/Wval.npy", Wval)
-    np.save(inFolder +"/Wtest.npy", Wtest)
     
     np.save(inFolder +"/Ytrain.npy", Ytrain)
     np.save(inFolder +"/Yval.npy", Yval)
-    np.save(inFolder +"/Ytest.npy", Ytest)
+
+    if isTest:
+        np.save(inFolder +"/YPredTest.npy", YPredTest)
+        Xtest.to_parquet(inFolder +"/Xtest.parquet")
+        np.save(inFolder +"/Wtest.npy", Wtest)
+        np.save(inFolder +"/Ytest.npy", Ytest)
     return 
 
 
-def saveXYWrW(Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genmassTrain, genmassVal, genmassTest, inFolder):
+def saveXYWrW(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genmassTrain, genmassVal, inFolder,isTest=False, Xtest=None,Ytest=None,Wtest=None,genmassTest=None):
 
     
     Xtrain.to_parquet(inFolder +"/Xtrain.parquet")
     Xval.to_parquet(inFolder +"/Xval.parquet")
-    Xtest.to_parquet(inFolder +"/Xtest.parquet")
     
     np.save(inFolder +"/Wtrain.npy",   Wtrain)
     np.save(inFolder +"/Wval.npy",     Wval)
-    np.save(inFolder +"/Wtest.npy",     Wtest)
 
     np.save(inFolder +"/rWtrain.npy",   rWtrain)
     np.save(inFolder +"/rWval.npy",     rWval)
     
     np.save(inFolder +"/Ytrain.npy",    Ytrain)
     np.save(inFolder +"/Yval.npy",      Yval)
-    np.save(inFolder +"/Ytest.npy",     Ytest)
 
     np.save(inFolder +"/genMassTrain.npy",  genmassTrain)
     np.save(inFolder +"/genMassVal.npy",    genmassVal)
-    np.save(inFolder +"/genMassTest.npy",   genmassTest)
+
+    if isTest:
+        Xtest.to_parquet(inFolder +"/Xtest.parquet")
+        np.save(inFolder +"/Wtest.npy",     Wtest)
+        np.save(inFolder +"/Ytest.npy",     Ytest)
+        np.save(inFolder +"/genMassTest.npy",   genmassTest)
     return 

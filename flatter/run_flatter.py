@@ -15,6 +15,8 @@ parser.add_argument("-n", "--nFiles", type=int, help="number of files to flatten
 parser.add_argument("-mE", "--maxEntries", type=int, help="max number of Entries", default=-1)
 parser.add_argument("-mJ", "--maxJet", type=int, help="max number of jet", default=4)
 parser.add_argument("-m", "--method", type=int, help="method of selecting jets", default=-1)
+parser.add_argument("-d", "--delete", type=int, help="delete all logs file in the folder", default=0)
+parser.add_argument("-v", "--verbose", type=int, help="0 (silent), 1 (print info event by event)", default=0)
 
 args = parser.parse_args()
 
@@ -61,10 +63,11 @@ time.sleep(1)
 
 
 # Delete all *.out files
-#target_path = "/t3home/gcelotto/slurm/output/flat"
-#for file_path in glob.glob(target_path+"/*.out"):
-#    if os.path.isfile(file_path):
-#        os.remove(file_path)
+if args.delete:
+    target_path = "/t3home/gcelotto/slurm/output/flat"
+    for file_path in glob.glob(target_path+"/*.out"):
+        if os.path.isfile(file_path):
+            os.remove(file_path)
 
 nFiles = nFiles if nFiles != -1 else len(nanoFileNames)
 if nFiles > len(nanoFileNames) :
@@ -85,5 +88,5 @@ for nanoFileName in nanoFileNames:
 
     if matching_files:
         continue
-    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 100), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC)])
+    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 100), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose)])
     doneFiles = doneFiles+1

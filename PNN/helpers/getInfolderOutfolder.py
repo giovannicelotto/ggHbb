@@ -2,6 +2,9 @@ import os
 
 def getInfolderOutfolder(name, suffixResults="", createFolder=True):
     outFolder   = "/t3home/gcelotto/ggHbb/PNN/results%s/"%suffixResults+name
+    if not os.path.exists(outFolder):
+        os.makedirs(outFolder)
+
     # basicFeatures
     # allFeatures
     # prova

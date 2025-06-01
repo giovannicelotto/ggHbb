@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G
 #SBATCH --partition=short              # Specify your cluster partition
-#SBATCH --time=0-00:10:00
+#SBATCH --time=0-00:20:00
 #SBATCH --dependency=singleton
 #. /t3home/gcelotto/.bashrc
 #conda activate myenv

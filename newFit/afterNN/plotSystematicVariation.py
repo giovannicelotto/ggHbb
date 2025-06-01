@@ -17,11 +17,11 @@ except:
     idx = 2
 # %%
 path = [
-    "",
+    "/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/hists/counts_cat1.root",
     "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root",
     "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/hists/counts_cat2p1.root"
 ][idx]
-outFolder=["",
+outFolder=["/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/plots/variations",
            "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/plots/variations",
            "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/plots/variations"][idx]
 file = uproot.open(path)

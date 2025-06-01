@@ -20,23 +20,28 @@ from helpersABCD.dcorPlot_process_datataking import dcor_plot_Data
 # %%
 parser = argparse.ArgumentParser(description="Script.")
 try:
-    parser.add_argument("-m", "--modelName", type=str, help="e.g. Dec19_500p9", default=None)
-    parser.add_argument("-dd", "--doubleDisco", type=bool, help="Single Disco (False) or double Disco (True). If false use jet1btag as variable", default=True)
+    parser.add_argument("-i", "--idx", type=int, help="Category 0 or 1", default=0)
+    parser.add_argument('-v', "--variations", type=str, nargs='+', default=None)
     args = parser.parse_args()
-    if args.modelName is not None:
-        modelName = args.modelName
-    dd = args.doubleDisco
+    print(args.variations)
+    idx=args.idx
+    variations=args.variations
 except:
-    print("Interactive mode")
-    modelName = "Apr01_1000p0"
-    dd = True
+    idx=0
+    variations=None
+
 #midpoints = (bins[:-1] + bins[1:]) / 2
 #bins = np.sort(np.concatenate([bins, midpoints]))
-
-with open("/t3home/gcelotto/ggHbb/abcd/new/configABCD_100to160.yaml", "r") as f:
+configFile = ["/t3home/gcelotto/ggHbb/abcd/new/configABCD.yaml",
+               "/t3home/gcelotto/ggHbb/abcd/new/configABCD_100to160.yaml"][idx]
+with open(configFile, "r") as f:
     config = yaml.safe_load(f)
 
+dd = True
 modelName = config["modelName"]
+print(modelName)
+print(variations)
+
 dd = config["doubleDisco"]
 x1 = config["x1"]
 x2 = config["x2"]
@@ -46,14 +51,16 @@ t2 = config["t2"]
 isMCList = config["isMCList"]
 isDataList = config["isDataList"]
 detail = config["detail"]
-variations = config["variations"]
+if variations is None:
+    variations = config["variations"]
 
 
 outFolder, df_folder = "/t3home/gcelotto/ggHbb/PNN/resultsDoubleDisco/%s"%modelName, "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/%s"%modelName
 bins = np.load(outFolder+"/mass_bins.npy")
+
 # %%
 dfs = []
-dfProcessesMC, dfProcessesData = getDfProcesses_v2()
+dfProcessesMC, dfProcessesData, dfProcessesMC_JEC = getDfProcesses_v2()
 # %%
 # Loading data
 dfsMC, dfsData, lumi = getDataFrames(dfProcessesMC, dfProcessesData, isMCList, isDataList, modelName, df_folder, dd)
@@ -93,13 +100,12 @@ Analysis starts here!
 
 
 sys.path.append("/t3home/gcelotto/ggHbb/newFit/afterNN/helpers")
-from fitWithSystematics import dijet_mass_inline, apply_dijet_variation
 
 
 variation_map = {
     'Nominal': lambda df: df['weight'],
-    'btag_Up': lambda df: df['weight'] * df['jet1_btag_up'] / df['jet1_btag_central'] * df['jet2_btag_up'] / df['jet2_btag_central'],
-    'btag_Down': lambda df: df['weight'] * df['jet1_btag_down'] / df['jet1_btag_central'] * df['jet2_btag_down'] / df['jet2_btag_central'],
+    'btag_Up': lambda df: df['weight'] * df['btag_up'] / df['btag_central'],
+    'btag_Down': lambda df: df['weight'] * df['btag_down'] / df['btag_central'],
 }
 
 #variations_dijet_map = {
@@ -111,11 +117,11 @@ variation_map = {
 #    for direction in ["Up", "Down"]
 #}
 def apply_variation(df, variation):
-    df['weight'] = variation_map[variation](df)
+    df['weight_'] = variation_map[variation](df)
     return df
 
-
-
+x=(bins[1:]+bins[:-1])/2
+chi2_mask = np.array(~((x > 70.6) & (x < 150.6 )), dtype=bool)
 
 # %%
 for var in variations:
@@ -130,8 +136,6 @@ for var in variations:
     # Do the first ABCD estimation
     # Compute chi2 in the unblinded regions
     detail = config["detail"]+'_'+var
-    x=(bins[1:]+bins[:-1])/2
-    chi2_mask = np.array(~((x > 70.6) & (x < 150.6 )), dtype=bool)
     pulls_QCD_SR, err_pulls_QCD_SR = ABCD(dfData, dfMC_mod,  x1, x2, xx, bins, t1, t2, isMCList, dfProcessesMC, lumi=lumi, sameWidth_flag=False,
                                           suffix='%s%s_%s'%(modelName, "_dd" if dd else "", detail),
                                           blindPar=(True, 70.6, 150.6), chi2_mask=chi2_mask)
@@ -141,7 +145,6 @@ for var in variations:
 
     # Make some plots
     maskBlind = makePlotsPearson(pulls_QCD_SR, err_pulls_QCD_SR, pearson_data_values, bins, bootstrap_errors)
-    #maskBlind = np.full(len(maskBlind), True)
     # Fit the model
     (m_fit, q_fit), (m_err, q_err), cov_matrix_fit = pullsVsDisco_pearson(pearson_data_values, pulls_QCD_SR, err_pulls_QCD_SR, xerr=bootstrap_errors,mask =chi2_mask, lumi=0, outName="/t3home/gcelotto/ggHbb/abcd/new/plots/pulls_vs_dcor/pulls_vs_dPearson_%s_%s.png"%(modelName, detail))
 

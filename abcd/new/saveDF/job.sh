@@ -9,7 +9,16 @@
 #SBATCH --output=/t3home/gcelotto/ggHbb/abcd/new/saveDF/OutErr.out  # Output file for stdout
 #SBATCH --error=/t3home/gcelotto/ggHbb/abcd/new/saveDF/OutErr.out    # Output file for stderr
 
+model=$1
+MC=$2
+pN=$3
 
-python /t3home/gcelotto/ggHbb/abcd/new/saveDF/saveDFs.py
-source_dir="/scratch"
-xrdcp -f -N $source_dir/dataframes.pkl root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/dataframes.pkl
+
+python /t3home/gcelotto/ggHbb/abcd/new/saveDF/saveDfs_DoubleDisco_multiArgument.py -MC $MC -pN $pN -s 1 -m $model
+unique_id=$pN
+while read -r filepath; do
+    xrdcp -f -N "$filepath" root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/$model/$(basename "$filepath")
+done < /scratch/output_path_${unique_id}.txt
+
+
+#for i in {1..18}; do   sbatch /t3home/gcelotto/ggHbb/abcd/new/saveDF/job.sh Apr01_1000p0 0 $i; done

@@ -1,5 +1,6 @@
 def getFlatFeatureNames(mc=True, smeared=False):
-    features_btag = [
+    featuresMCOnly = [
+                    'jet1_genHadronFlavour', 'jet2_genHadronFlavour', 'jet3_genHadronFlavour',
                     'btag_central', 'btag_up', 'btag_down'
                     #'jet1_btag_central',            'jet1_btag_down',           'jet1_btag_up',
                     # see here if needed to divide into 4 categories:
@@ -27,14 +28,13 @@ def getFlatFeatureNames(mc=True, smeared=False):
                     'jet1_sv_pt', 'jet1_sv_mass','jet1_sv_Ntrk', 'jet1_sv_3dSig',
                 # Jet 2
                     'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass',
-                    'jet2_nMuons', 'jet2_nConstituents','jet2_nTightMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB','jet2_btagTight',#'jet2_btagPNetB',
+                    'jet2_nMuons', 'jet2_nConstituents','jet2_nTightMuons', 'jet2_nElectrons', 'jet2_btagDeepFlavB','jet2_btagTight',
                     'jet2_idx',
-                    'jet2_rawFactor', 'jet2_bReg2018',#'jet2_PNetRegPtRawCorr', 'jet2_PNetRegPtRawCorrNeutrino',
+                    'jet2_rawFactor', 'jet2_bReg2018',
                     'jet2_id', 'jet2_puId',
                     'jet2_sv_pt','jet2_sv_mass', 'jet2_sv_Ntrk','jet2_sv_3dSig',
                 # Jet 3
                     'jet3_pt', 'jet3_eta', 'jet3_phi', 'jet3_mass', 'jet3_nTightMuons',
-                    #'jet3_btagPNetB',
                     'jet3_btagDeepFlavB', 'dR_jet3_dijet',
                 # Dijet
                     'dijet_pt', 'dijet_eta', 'dijet_phi', 'dijet_mass', 'dijet_dR', 'dijet_dEta', 'dijet_dPhi', 
@@ -65,6 +65,7 @@ def getFlatFeatureNames(mc=True, smeared=False):
                     'Muon_fired_HLT_Mu12_IP6', 'Muon_fired_HLT_Mu10p5_IP3p5','Muon_fired_HLT_Mu8p5_IP3p5', 'Muon_fired_HLT_Mu7_IP4',   'Muon_fired_HLT_Mu8_IP3',  'Muon_fired_HLT_Mu8_IP5',    'Muon_fired_HLT_Mu8_IP6',
                     'Muon_fired_HLT_Mu9_IP4',   'Muon_fired_HLT_Mu9_IP5',   'Muon_fired_HLT_Mu9_IP6',
                     'PV_npvs', 'Pileup_nTrueInt', 
+                    'jet1_genHadronFlavour', 'jet2_genHadronFlavour', 'jet3_genHadronFlavour',
                     'btag_central', 'btag_up', 'btag_down',
                     'sf', 'genWeight'
                     ]
@@ -72,7 +73,7 @@ def getFlatFeatureNames(mc=True, smeared=False):
     
     if mc == False:
         #Remove all syst
-        filteredFeatureNames = [feature for feature in featureNames if feature not in features_btag]
+        filteredFeatureNames = [feature for feature in featureNames if feature not in featuresMCOnly]
         return filteredFeatureNames
     else:
         #Keep everything

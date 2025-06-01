@@ -29,7 +29,7 @@ def predict(file_path, modelName, multigpu, epoch):
     print(file_path)
     Xtest = pd.read_parquet(file_path,
                                 engine='pyarrow',
-                                 filters= getCommonFilters()        )
+                                 filters= getCommonFilters(btagTight=False)        )
     outFolder = "/t3home/gcelotto/ggHbb/PNN/resultsDoubleDisco/%s"%(modelName)
     featuresForTraining = np.load(outFolder+"/featuresForTraining.npy")
     mass_bins = np.load(outFolder+"/mass_bins.npy") 
@@ -64,13 +64,19 @@ def predict(file_path, modelName, multigpu, epoch):
     
     
     data = [Xtest]
-    data = cut(data, 'dijet_pt', 100, 160)
+    data = cut(data, 'dijet_pt', None, 100)
 
     data = preprocessMultiClass(data)
     Xtest = data[0]
     Xtest['massHypo'] = Xtest['dijet_mass'].apply(lambda x: mass_hypo_list[np.abs(mass_hypo_list - x).argmin()])
+
+
     Xtest['jet1_btagTight'] = Xtest['jet1_btagDeepFlavB']>0.71
     Xtest['jet2_btagTight'] = Xtest['jet2_btagDeepFlavB']>0.71
+    Xtest['jet3_btagWP'] = np.where(Xtest.jet3_pt == 0, -1, 0)
+    Xtest['jet3_btagWP'] = np.where(Xtest.jet3_btagDeepFlavB > 0.049, 1, Xtest['jet3_btagWP'])
+    Xtest['jet3_btagWP'] = np.where(Xtest.jet3_btagDeepFlavB > 0.2783, 2, Xtest['jet3_btagWP'])
+    Xtest['jet3_btagWP'] = np.where(Xtest.jet3_btagDeepFlavB > 0.71, 3,Xtest['jet3_btagWP'])
 
     if 'bin_center' in featuresForTraining:
         bin_centers = [(mass_bins[i] + mass_bins[i+1]) / 2 for i in range(len(mass_bins) - 1)]

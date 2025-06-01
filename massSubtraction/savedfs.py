@@ -14,7 +14,7 @@ from plotDfs import plotDfs
 from hist import Hist
 
 # %%
-boosted = 2
+boosted = 1
 modelName = "Mar21_%d_0p0"%boosted
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
 columns_ = ['dijet_mass', 'dijet_pt',
@@ -30,14 +30,14 @@ if not os.path.exists(df_folder):
 # %%
 DataDict = {
 0 : 0,         
-#1 : 0,         2 : 0,         3 : 0,         4 : 0,         5 : 0,
-#6 : 0,         7 : 0,         8 : 0,         9 : 0,         10 : 0,        11 : 0,
-#12 : 0,        13 : 0,        14 : 0,        15 : 0,        16 : 0,        17 : 0, 
-#18 : 0, 
+1 : 0,         2 : 0,         3 : 0,         4 : 0,         5 : 0,
+6 : 0,         7 : 0,         8 : 0,         9 : 0,         10 : 0,        11 : 0,
+12 : 0,        13 : 0,        14 : 0,        15 : 0,        16 : 0,        17 : 0, 
+18 : 0, 
 }
 
 DataTakingList = list(DataDict.keys())
-nReals = list(DataDict.keys())
+nReals = list(DataDict.values())
 
 lumi_tot = 0
 processesData = dfProcessesData.process[DataTakingList].values
@@ -56,7 +56,7 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
         paths[dataTakingIdx]=paths[dataTakingIdx]+"/training"
 
 
-    dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=[nReals[dataTakingIdx]], columns=columns,
+    dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=nReals[dataTakingIdx], columns=columns,
                                                           selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True, filters=getCommonFilters(btagTight=False))
     if boosted==1:
         dfs=cut(dfs, 'dijet_pt', 100, 160)
@@ -100,12 +100,12 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 columns = columns_.copy()
 MC_dict = {
     #Nominal
-    0:-1, 1:-1, 3:-1, 4:-1, 19:-1, 20:-1, 21:-1, 22:-1, #35:-1,
-    36:-1, 37:-1,43:-1,
+    0:0, 1:0, 3:0, 4:0, 19:0, 20:0, 21:0, 22:0, 35:0,
+    36:0, 37:0,43:0,
     #JER Down
-    44:-1, 45:-1, 46:-1, 47:-1, 48:-1, 49:-1, 50:-1, 51:-1, 53:-1,55:-1,
+    44:0, 45:0, 46:0, 47:0, 48:0, 49:0, 50:0, 51:0, 52:0, 53:0,54:-1, 55:0,
     #JER Up
-    56:-1, 57:-1, 58:-1, 59:-1, 60:-1, 61:-1, 62:-1, 63:-1, 65:-1, 67:-1
+    56:0, 57:0, 58:0, 59:0, 60:0, 61:0, 62:0, 63:0, 64:0, 65:0, 66:-1, 67:0
 }
 isMCList = list(MC_dict.keys())
 nMCs = list(MC_dict.values())
@@ -171,7 +171,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
 
 
 columns = columns_.copy()
-MC_JEC_keys = [_ for _ in range(0, 594)]
+MC_JEC_keys = [_ for _ in range(0, 0)]
 nRealsMC_JEC_values = [int(-1) for _ in range(len(MC_JEC_keys))]
 isMCJECList = list(MC_JEC_keys)
 nMCs = list(nRealsMC_JEC_values)
@@ -186,8 +186,9 @@ columns = columns + ['genWeight', 'PU_SF', 'sf',
 
 processesMC = dfProcessMC_JEC.process[isMCJECList].values
 for idx, (isMC, processMC) in enumerate(zip(isMCJECList, processesMC)):
-    if "Data" not in processMC:
-        continue
+    print("\n\n",idx, "/", len(isMCJECList))
+    #if "Data" not in processMC:
+    #    continue
     try:
         if nMCs[idx]==0:
             continue

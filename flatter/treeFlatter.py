@@ -277,21 +277,24 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC):
                 if ((i ==selected1) | (i==selected2)):
                     continue
                 else:
-                    jet3.SetPtEtaPhiM(Jet_pt[i],Jet_eta[i],Jet_phi[i],Jet_mass[i])
+                    selected3 = i
+                    jet3.SetPtEtaPhiM(Jet_pt[selected3],Jet_eta[selected3],Jet_phi[selected3],Jet_mass[selected3])
                     features_.append(np.float32(jet3.Pt()))
-                    features_.append(np.float32(Jet_eta[i]))
-                    features_.append(np.float32(Jet_phi[i]))
-                    features_.append(np.float32(Jet_mass[i]))
+                    features_.append(np.float32(Jet_eta[selected3]))
+                    features_.append(np.float32(Jet_phi[selected3]))
+                    features_.append(np.float32(Jet_mass[selected3]))
                     counterMuTight=0
                     for muIdx in range(len(Muon_pt)):
-                        if (np.sqrt((Muon_eta[muIdx]-Jet_eta[i])**2 + (Muon_phi[muIdx]-Jet_phi[i])**2)<0.4) & (Muon_tightId[muIdx]):
+                        if (np.sqrt((Muon_eta[muIdx]-Jet_eta[selected3])**2 + (Muon_phi[muIdx]-Jet_phi[selected3])**2)<0.4) & (Muon_tightId[muIdx]):
                             counterMuTight=counterMuTight+1
                     features_.append(int(counterMuTight))   
-                    #features_.append(np.float32(Jet_btagPNetB[i]))
-                    features_.append(np.float32(Jet_btagDeepFlavB[i]))
+                    #features_.append(np.float32(Jet_btagPNetB[selected3]))
+                    features_.append(np.float32(Jet_btagDeepFlavB[selected3]))
                     features_.append(jet3.DeltaR(dijet))
+                    
                     break
         else:
+            selected3 = None
             features_.append(np.float32(0)) #pt
             features_.append(np.float32(0))
             features_.append(np.float32(0))
@@ -514,6 +517,13 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC):
             features_.append(1)
             features_.append(1)
         else:
+# Gen Info
+            features_.append(Jet_hadronFlavour[selected1])
+            features_.append(Jet_hadronFlavour[selected2])
+            hadronFlavour3 = Jet_hadronFlavour[selected3] if selected3 is not None else -1
+            features_.append(hadronFlavour3)
+
+
 # BTag SF and Variations
             for syst in ["central", "up", "down"]:
                 btagSF = 1

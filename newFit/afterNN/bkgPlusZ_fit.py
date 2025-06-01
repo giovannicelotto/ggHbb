@@ -23,6 +23,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-i', '--idx', type=int, default=2, help='Index value (default: 2)')
 parser.add_argument('-w', '--write', type=int, default=1, help='Write Root File (1) or Not (0)')
+parser.add_argument('-l', '--lockNorm', type=int, default=1, help='Lock Normalization True (1) or False (0)')
 
 args = parser.parse_args()
 idx = args.idx
@@ -183,6 +184,7 @@ hists={
     'Higgs':{},
     'Z':{},
     'data_obs':{},
+    'Fit_noZ':{},
 }
 # %%
 for idx, var in enumerate(variations):
@@ -318,8 +320,7 @@ for idx, var in enumerate(variations):
     # Second Fitx parameters free
 
     print("Fit Free")
-    m_tot_2 = doFitParameterFree(x, m_tot, c, cZ, maskFit, maskUnblind, bins, dfMC_Z, dfProcessesMC, MCList_Z, dfMC_H, MCList_H, myBkgSignalFunctions, key, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fitFunction=fit_parameters_zPeak["fitFunction"],  paramsLimits=paramsLimits)
-    #print(m_tot_2)
+    m_tot_2 = doFitParameterFree(x, m_tot, c, cZ, maskFit, maskUnblind, bins, dfMC_Z, dfProcessesMC, MCList_Z, dfMC_H, MCList_H, myBkgSignalFunctions, key, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fitFunction=fit_parameters_zPeak["fitFunction"],  paramsLimits=paramsLimits, lockNorm=args.lockNorm)
 
     print("Plot only")
     cHiggs, cHiggs_err = plotFree(x, c, cZ, maskFit, m_tot_2, maskUnblind, bins, dfProcessesMC, dfMC_H, MCList_H, myBkgSignalFunctions, key, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, ptCut_min, ptCut_max, jet1_btagMin, jet2_btagMin, PNN_t, PNN_t_max=PNN_t_max, fitFunction=fit_parameters_zPeak["fitFunction"], var=var)
@@ -327,6 +328,7 @@ for idx, var in enumerate(variations):
 
 # Plot 2
     p_tot = m_tot_2.values
+    print(p_tot)
     cov = m_tot_2.covariance
     if cov is None:
         print(m_tot_2)
@@ -356,14 +358,18 @@ for idx, var in enumerate(variations):
     # x is bin center
     # y_data is the values for data extracted from the fit
     # cHiggs are the counts of Higgs
-
+    y_data_fit_noZ = Hist.new.Var(bins, name="mjj").Weight()
     y_data_fit = Hist.new.Var(bins, name="mjj").Weight()
     y_Higgs = Hist.new.Var(bins, name="mjj").Weight()
     y_Z = Hist.new.Var(bins, name="mjj").Weight()
     y_data_blind = Hist.new.Var(bins, name="mjj").Weight()
 
+    y_data_fit_noZ.values()[:] = np.where((x>t0) & (x<t3), myBkgFunctions[key](x, *p_tot[myBkgParams[key]]), 0)
+    y_data_fit_noZ.variances()[:] = np.where((x>t0) & (x<t3), f_var, 0)
+    
     y_data_fit.values()[:] = np.where((x>t0) & (x<t3), myBkgSignalFunctions[key](x, *p_tot), 0)
     y_data_fit.variances()[:] = np.where((x>t0) & (x<t3), f_var, 0)
+    
     y_Higgs.values()[:] = np.where((x>t0) & (x<t3), cHiggs, 0)
     y_Higgs.variances()[:] = np.where((x>t0) & (x<t3), cHiggs_err**2, 0)
 
@@ -379,9 +385,10 @@ for idx, var in enumerate(variations):
     hists['Higgs'][var]=y_Higgs
     hists['Z'][var]=y_Z
     hists['Fit'][var]=y_data_fit
+    hists['Fit_noZ'][var]=y_data_fit_noZ
+
 
 print("Creating ROOT histograms")
-outFolder="/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/hists"
   
 # %%
 

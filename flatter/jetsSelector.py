@@ -47,7 +47,6 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
     elif len(muonIdxs)==1:
         selected1 = jetsWithMuon[0]
         muonIdx = muonIdxs[0]
-
         # 
         # METHOD 0
         #         
@@ -70,22 +69,21 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
 
         elif method==1:
             # New method. List of Tight BTag jets with puID >=4 and JetID pass tight and tightLepVeto ID.
-            tightJets = ((Jet_btagDeepFlavB>0.71) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4)))[maskJets]
+            tightJets = ((Jet_btagDeepFlavB>=0.71) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>=4)))[maskJets]
             if np.sum(tightJets)>=1:
-                #print(nJet)
-                #print(np.arange(nJet)[tightJets])
+                #Leading among tight
                 selected2 = np.arange(nJet)[maskJets][tightJets][0]
 
                 pass
                 # hai vinto prendi il piú hard
             elif np.sum(tightJets)==0:
-                mediumJets = ((Jet_btagDeepFlavB>0.2783) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4)))[maskJets]
+                mediumJets = ((Jet_btagDeepFlavB>=0.2783) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>=4)))[maskJets]
                 if np.sum(mediumJets)>=1:
                     selected2 = np.arange(nJet)[maskJets][mediumJets][0]
                     #haivinto
                     pass
                 elif np.sum(mediumJets)==0:
-                    looseJets = ((Jet_btagDeepFlavB>0.0490) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4)))[maskJets]
+                    looseJets = ((Jet_btagDeepFlavB>=0.0490) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>=4)))[maskJets]
                     if np.sum(looseJets)>=1:
                         selected2 = np.arange(nJet)[maskJets][looseJets][0]
                         #hai vinto
@@ -100,4 +98,5 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
     # No other possibilities
     else:
         assert False
+
     return selected1, selected2, muonIdx, muonIdx2

@@ -20,6 +20,7 @@ rate        -1     -1
 ------------
 lumi    lnN    1.025    -
 btag_    shape  1        1
+JER_    shape   1   1
 JECAbsoluteMPFBias_ shape 1 1
 JECAbsoluteScale_ shape 1 1
 JECAbsoluteStat_ shape 1 1
@@ -48,3 +49,10 @@ JECSinglePionECAL_ shape 1 1
 JECSinglePionHCAL_ shape 1 1
 JECTimePtEta_ shape 1 1
 ------------
+lumi group = lumi
+JER group = JER_
+btag group = btag_
+JEC group = JECAbsoluteMPFBias_ JECAbsoluteScale_ JECAbsoluteStat_ JECFlavorQCD_ JECFragmentation_ JECPileUpDataMC_ JECPileUpPtBB_ JECPileUpPtEC1_ JECPileUpPtEC2_ JECPileUpPtHF_ JECPileUpPtRef_ JECRelativeBal_ JECRelativeFSR_ JECRelativeJEREC1_ JECRelativeJEREC2_ JECRelativeJERHF_ JECRelativePtBB_ JECRelativePtEC1_ JECRelativePtEC2_ JECRelativePtHF_ JECRelativeSample_ JECRelativeStatEC_ JECRelativeStatFSR_ JECRelativeStatHF_ JECSinglePionECAL_ JECSinglePionHCAL_ JECTimePtEta_
+
+
+* autoMCStats 0 0 1

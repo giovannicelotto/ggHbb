@@ -4,7 +4,7 @@ kmax *  number of nuisance parameters (automatic)
 
 
 shapes Z          * /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root Z_nominal Z_$SYSTEMATIC
-shapes bkg        * /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root Fit_nominal Fit_$SYSTEMATIC
+shapes bkg        * /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root Fit_noZ_nominal Fit_noZ_$SYSTEMATIC
 shapes data_obs   * /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root data_obs_nominal
 
 

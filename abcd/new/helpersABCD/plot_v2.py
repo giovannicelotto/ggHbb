@@ -102,7 +102,7 @@ def SM_CR(region, bins, dfMC, isMCList, dfProcesses, x1, t1, x2, t2, lumi, suffi
             mRegion      = (df[x1]>t1 ) & (df[x2]<t2 ) 
 
         h = Hist.new.Var(bins, name="mjj").Weight()
-        h.fill(df.dijet_mass[mRegion], weight=df.weight[mRegion])
+        h.fill(df.dijet_mass[mRegion], weight=df.weight_[mRegion])
 
         if 'Data' in process:
             assert False
@@ -192,7 +192,7 @@ def SM_SR(regions, hB_ADC, bins, dfData, dfMC, isMCList, dfProcesses, x1, t1, x2
 
         mB      = (df[x1]>t1 ) & (df[x2]>t2 ) 
         h = Hist.new.Var(bins, name="mjj").Weight()
-        h.fill(df.dijet_mass[mB], weight=df.weight[mB])
+        h.fill(df.dijet_mass[mB], weight=df.weight_[mB])
 
         if 'Data' in process:
             assert False
@@ -272,7 +272,7 @@ def QCD_SR(bins, hB_ADC, qcd_mc, chi2_mask, unblinded_mask,lumi=0,   outName=Non
 
     fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
     fig.align_ylabels([ax[0],ax[1]])
-    ax[0].hist(bins[:-1], bins=bins, weights=qcd_mc.values()*unblinded_mask/sameWidth, label='QCD = Data - MC')
+    ax[0].hist(bins[:-1], bins=bins, weights=qcd_mc.values()*unblinded_mask/sameWidth, label='QCD = Data - Resonant')
     ax[0].hist(bins[:-1], bins=bins, weights=(hB_ADC.values())/sameWidth, label='QCD = ABCD estimation', histtype='step', color='red', linewidth=2)
 
     observed = np.array(hB_ADC.values())[chi2_mask]
@@ -444,15 +444,15 @@ def pullsVsDisco(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, lumi=0, outN
     return popt, pcov
 
 
-def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask, xerr, lumi=0, outName=None):
+def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask, xerr, mass_bin_center, lumi=0, outName=None):
     '''
     xerr is none -> then use a normal fit
     otherwise use a residual fit
     '''
     import matplotlib.pyplot as plt
 
-    pulls_QCDPlusSM_SR = pulls_QCDPlusSM_SR[mask]
-    err_QCDPlusSM_SR = err_QCDPlusSM_SR[mask]
+    pulls_QCDPlusSM_SR_masked = pulls_QCDPlusSM_SR[mask]
+    err_QCDPlusSM_SR_masked = err_QCDPlusSM_SR[mask]
     dcor_values_masked = dcor_values[mask]
 
 
@@ -469,7 +469,7 @@ def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask
             return beta[0] * x + beta[1]
 
         linear_model = odr.Model(model_func)
-        data = odr.RealData(dcor_values_masked, pulls_QCDPlusSM_SR, sx=xerr, sy=err_QCDPlusSM_SR)
+        data = odr.RealData(dcor_values_masked, pulls_QCDPlusSM_SR_masked, sx=xerr, sy=err_QCDPlusSM_SR_masked)
         odr_fit = odr.ODR(data, linear_model, beta0=[1, 1])
         output = odr_fit.run()
 
@@ -483,10 +483,10 @@ def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask
         
         
         # Compute normalized orthogonal distance
-        numerator = (pulls_QCDPlusSM_SR - (m_fit * dcor_values_masked + q_fit))
+        numerator = (pulls_QCDPlusSM_SR_masked - (m_fit * dcor_values_masked + q_fit))
         denominator = np.sqrt(m_fit**2 + 1)
         orthogonal_distance = numerator / denominator
-        total_error = np.sqrt((xerr**2 * m_fit**2 + err_QCDPlusSM_SR**2) / (m_fit**2 + 1))
+        total_error = np.sqrt((xerr**2 * m_fit**2 + err_QCDPlusSM_SR_masked**2) / (m_fit**2 + 1))
         normalized_distance = orthogonal_distance / total_error
 
         ax[1].errorbar(dcor_values_masked, normalized_distance, xerr=0, yerr=1, linestyle='none', color='black', marker='o')
@@ -500,23 +500,28 @@ def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask
         def model_func(x, a, b):
             return a * x + b
 
-        popt, pcov = curve_fit(model_func, dcor_values_masked, pulls_QCDPlusSM_SR, sigma=err_QCDPlusSM_SR, absolute_sigma=True)
+        popt, pcov = curve_fit(model_func, dcor_values_masked, pulls_QCDPlusSM_SR_masked, sigma=err_QCDPlusSM_SR_masked, absolute_sigma=True)
         m_fit, q_fit = popt
         m_err, q_err = np.sqrt(np.diag(pcov))
         cov_matrix = pcov
         y_fit = model_func(dcor_values, *popt)
-        y_green = model_func(dcor_values[~mask], *popt)
+        y_green = pulls_QCDPlusSM_SR[~mask]
 
 
         # Plot residuals
-        deltaY = (pulls_QCDPlusSM_SR - (m_fit * dcor_values_masked + q_fit))
+        deltaY = (pulls_QCDPlusSM_SR_masked - (m_fit * dcor_values_masked + q_fit))
 
-        ax[1].errorbar(dcor_values_masked, deltaY/err_QCDPlusSM_SR, xerr=0, yerr=1, linestyle='none', color='black', marker='o')
+        ax[1].errorbar(dcor_values_masked, deltaY/err_QCDPlusSM_SR_masked, xerr=0, yerr=1, linestyle='none', color='black', marker='o')
+        ax[1].errorbar(dcor_values[~mask], (y_green-(m_fit * dcor_values[~mask] + q_fit))/err_QCDPlusSM_SR[~mask], xerr=0, yerr=1, linestyle='none', color='green', marker='o')
         ax[1].set_ylabel("Pulls")
     
     # Plotting
-    ax[0].errorbar(dcor_values_masked, pulls_QCDPlusSM_SR, xerr=xerr, yerr=err_QCDPlusSM_SR,
+    ax[0].errorbar(dcor_values_masked, pulls_QCDPlusSM_SR_masked, xerr=xerr, yerr=err_QCDPlusSM_SR_masked,
                    linestyle='none', color='black', marker='o', label='CR')
+    for idx, (x, y, m) in enumerate(zip(dcor_values_masked, pulls_QCDPlusSM_SR_masked, mass_bin_center[mask])):
+        ax[0].text(x , y + (-1)**idx *  0.01, f'{m:.1f}', fontsize=8, ha='center')
+    for idx, (x, y, m) in enumerate(zip(dcor_values[~mask], pulls_QCDPlusSM_SR[~mask], mass_bin_center[~mask])):
+        ax[0].text(x , y + (-1)**idx *  0.01, f'{m:.1f}', fontsize=8, color='green', ha='center')
     ax[0].plot(dcor_values, y_fit, label=f'Fit: y = {m_fit:.2f}x + {q_fit:.2f}', color='red')
     ax[0].errorbar(dcor_values[~mask], y_green, label='VR and SR',
                    color='green', linestyle='none', marker='o')
@@ -531,8 +536,8 @@ def pullsVsDisco_pearson(dcor_values, pulls_QCDPlusSM_SR, err_QCDPlusSM_SR, mask
     
 
     # Chi2
-    chi2_stat = np.sum((pulls_QCDPlusSM_SR - (m_fit * dcor_values_masked + q_fit))**2 / (err_QCDPlusSM_SR**2 + (m_fit * xerr)**2))
-    ndof = len(pulls_QCDPlusSM_SR) - 2
+    chi2_stat = np.sum((pulls_QCDPlusSM_SR_masked - (m_fit * dcor_values_masked + q_fit))**2 / (err_QCDPlusSM_SR_masked**2 + (m_fit * xerr)**2))
+    ndof = len(pulls_QCDPlusSM_SR_masked) - 2
     chi2_pvalue = 1 - chi2.cdf(chi2_stat, ndof)
 
     ax[0].text(0.05, 0.12, f"$\\chi^2$/ndof = {chi2_stat:.1f}/{ndof}, p-value = {chi2_pvalue:.3f}", transform=ax[0].transAxes, ha='left')

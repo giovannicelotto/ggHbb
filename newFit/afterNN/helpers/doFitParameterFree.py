@@ -10,7 +10,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/newFit/afterNN/helpers")
 from allFunctions import *
 hep.style.use("CMS")
 
-def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfMC_Z, dfProcessesMC, MCList_Z, dfMC_H, MCList_H, myBkgSignalFunctions, key, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fitFunction, paramsLimits):
+def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfMC_Z, dfProcessesMC, MCList_Z, dfMC_H, MCList_H, myBkgSignalFunctions, key, myBkgFunctions, lumi_tot, myBkgParams, plotFolder, fitFunction, paramsLimits, lockNorm=True):
     x_fit = x[maskFit]
     y_tofit = c[maskFit]
     yerr = np.sqrt(y_tofit)
@@ -36,23 +36,31 @@ def doFitParameterFree(x,m_tot, c, cZ, maskFit, maskUnblind, bins, dfMC_Z, dfPro
     for par in m_tot.parameters:
         params[par] = m_tot.values[par]
     m_tot_2 = Minuit(least_squares,
-                   **params
-                   )
+                   **params)
+    
+    # Set limits based on config file
     for par in m_tot_2.parameters:
         if par in paramsLimits:
             m_tot_2.limits[par] = paramsLimits[par]  # Assign limits from the dictionary
         else:
             m_tot_2.limits[par] = None  # No limits if not specified
+
     m_tot_2.limits['normSig'] = (m_tot.values["normSig"]/3, 2*m_tot.values["normSig"])
     for par in m_tot_2.parameters:
+        if lockNorm:
+            if ( par in myBkgParams[key]):
+                continue
+            else:
+                m_tot_2.fixed[par]=True
+        else:
+            if ( par in myBkgParams[key]) | (par=="normSig"):
+                continue
+            else:
+                m_tot_2.fixed[par]=True
         #print(par)
         #if ((par=="normSig") | (par in myBkgParams[key])):
-        if ( par in myBkgParams[key]):
-        #if ( par in myBkgParams[key]) | (par=="normSig"):
             #print("Excluding!")
-            continue
-        else:
-            m_tot_2.fixed[par]=True
+        
     
 
 

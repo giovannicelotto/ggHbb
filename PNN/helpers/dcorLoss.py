@@ -11,6 +11,122 @@ import os
 import random
 import numpy as np
 #import torch.optim as optim
+def __check_number_of_events(
+        var1:torch.tensor,
+        var2:torch.tensor,
+        rand_cuts:list,
+        n_events_min:int,
+    )->bool:
+    """
+    Check if the number of events in each region is above the minimum.
+
+    Args:
+        var1 (torch.tensor): The first variable.
+        var2 (torch.tensor): The second variable.
+        rand_cuts (list): The random cuts.
+        n_events_min (int): The minimum number of events in each region.
+
+    Returns:
+        bool: True if the number of events in each region is above the minimum, False otherwise.
+    """
+
+    cut_var1, cut_var2 = rand_cuts
+
+    NA_diff = torch.sum((torch.sigmoid(100*(var1 - cut_var1))*torch.sigmoid(100*(cut_var2 - var2))))
+    NB_diff = torch.sum((torch.sigmoid(100*(var1 - cut_var1))*torch.sigmoid(100*(var2 - cut_var2))))
+    NC_diff = torch.sum((torch.sigmoid(100*(cut_var1 - var1))*torch.sigmoid(100*(cut_var2 - var2))))
+    ND_diff = torch.sum((torch.sigmoid(100*(cut_var1 - var1))*torch.sigmoid(100*(var2 - cut_var2))))
+
+    check = (
+        NA_diff > n_events_min
+        and NB_diff > n_events_min
+        and NC_diff > n_events_min
+        and ND_diff > n_events_min
+    )
+
+    return check
+
+def __get_abcd_random_cuts(
+        var1:torch.tensor,
+        var2:torch.tensor,
+        n_events_min:int,
+        max_tries:int=5_000,
+        )->list:
+    """
+    Get random cuts for the closure term in the ABCD plane.
+
+    Args:
+        var1 (torch.tensor): The first variable.
+        var2 (torch.tensor): The second variable.
+        n_events_min (int): The minimum number of events in each region.
+        max_tries (int): The maximum number of tries to find a suitable set of cuts.
+
+    Returns:
+        list: The random cuts.
+    """
+
+    for _ in range(max_tries):
+        x_min = torch.quantile(var1, 0.1).item()
+        x_max = torch.quantile(var1, 0.9).item()
+        rand_cut_x = np.random.uniform(x_min, x_max)
+        y_min = torch.quantile(var2, 0.1).item()
+        y_max = torch.quantile(var2, 0.9).item()
+
+        rand_cut_y = np.random.uniform(y_min, y_max)
+        rand_cuts = [rand_cut_x, rand_cut_y]
+        
+        check = __check_number_of_events(
+            var1,
+            var2,
+            rand_cuts,
+            n_events_min,
+        )
+        
+        if check:
+            return rand_cuts
+    
+    # If we reach this point, we did not find a suitable set of cuts
+    raise ValueError(f"Could not find a suitable set of cuts after {max_tries} tries, lower the n_events_min parameter or increase the batch size")
+
+
+def closure(
+        var_1,
+        var_2,
+        weights,
+        symmetrize,
+        n_events_min=10,
+        )->torch.tensor:
+    """
+    Compute the closure term in the ABCD plane.
+
+    Args:
+        var_1 (torch.tensor): The first variable.
+        var_2 (torch.tensor): The second variable.
+        symmetrize (bool): Whether to symmetrize the closure term.
+        weights (torch.tensor): The weights.
+        n_events_min (int): The minimum number of events in each region.
+
+    Returns:
+        torch.tensor: The closure term.
+    """
+    
+    cut_var1, cut_var2 = __get_abcd_random_cuts(var_1, var_2, n_events_min)
+
+    # Compute differetiable number of events in each region with sigmoid
+    # in order to retain differentiability
+    NA_diff = torch.sum((torch.sigmoid(100*(cut_var1 - var_1))*torch.sigmoid(100*(var_2 - cut_var2)))*weights)
+    NB_diff = torch.sum((torch.sigmoid(100*(var_1 - cut_var1))*torch.sigmoid(100*(var_2 - cut_var2)))*weights)
+    NC_diff = torch.sum((torch.sigmoid(100*(cut_var1 - var_1))*torch.sigmoid(100*(cut_var2 - var_2)))*weights)
+    ND_diff = torch.sum((torch.sigmoid(100*(var_1 - cut_var1))*torch.sigmoid(100*(cut_var2 - var_2)))*weights)
+    
+    # Compute closure_loss
+    if symmetrize:
+        closure_loss = torch.abs(NA_diff*ND_diff - NB_diff*NC_diff)/(NA_diff*ND_diff + NB_diff*NC_diff)
+    else:
+        closure_loss = torch.abs(NA_diff*ND_diff - NB_diff*NC_diff)/(NC_diff*NB_diff)
+    
+    return closure_loss
+
 def distance_corr(var_1,var_2,normedweight,power=1):
     """var_1: First variable to decorrelate (eg mass)
     var_2: Second variable to decorrelate (eg classifier output)
@@ -93,10 +209,72 @@ def set_seed(seed=42):
     torch.cuda.manual_seed_all(seed)  # For multi-GPU
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+# Neural Network Classifier
+class Classifier_HighPt(nn.Module):
+    def __init__(self, input_dim, nNodes=[128, 64, 32], dropout_prob=0):
+        """
+        Initialize the classifier model.
+        
+        Args:
+            input_dim (int): Number of input features.
+            nNodes (list or tuple): Number of nodes in each hidden layer.
+                                     Example: [128, 64, 32]
+        """
+        super(Classifier_HighPt, self).__init__()
+        
+        layers = []
+        current_dim = input_dim  # Start with input dimension
+        n = nNodes[0]
+        if dropout_prob>0:
+            layers.append(nn.Dropout(dropout_prob))
+        layers.append(nn.Linear(current_dim, n))
+        layers.append(nn.ReLU())
+        if dropout_prob>0:
+            layers.append(nn.Dropout(dropout_prob))
+        layers.append(nn.BatchNorm1d(n))
+        current_dim = n
+        #layers.append(nn.Dropout(dropout_prob))
+        for n in nNodes[1:]:
+            layers.append(nn.Linear(current_dim, n))
+            layers.append(nn.ReLU())
+#            if dropout_prob>0:
+#                layers.append(nn.Dropout(dropout_prob))
+            # Update current dimension to the output of this layer
+            current_dim = n  
+        
+        # Add the final output layer
+        layers.append(nn.Linear(current_dim, 1))
+        layers.append(nn.Sigmoid())
+
+        # Combine all layers into a Sequential module
+        self.fc = nn.Sequential(*layers)
+
+        # Apply weight initialization
+        self.apply(self._initialize_weights)
+
+    def _initialize_weights(self, layer):
+        if isinstance(layer, nn.Linear):
+            #init.xavier_normal_(layer.weight)
+            # Kaiming Initialization for layers with ReLU activations
+            init.kaiming_normal_(layer.weight, mode='fan_in', nonlinearity='relu')
+            # Initialize biases to 0
+            init.constant_(layer.bias, 0)
+
+            # Special treatment for the output layer (Sigmoid output layer)
+            if layer.out_features == 1:
+                init.xavier_normal_(layer.weight)  
+                init.constant_(layer.bias, 0)      
+
+    def forward(self, x):
+        return self.fc(x)
+
+
+        
+    
 
 # Neural Network Classifier
 class Classifier(nn.Module):
-    def __init__(self, input_dim, nNodes=[128, 64, 32]):
+    def __init__(self, input_dim, nNodes=[128, 64, 32], dropout_prob=0):
         """
         Initialize the classifier model.
         
@@ -112,12 +290,16 @@ class Classifier(nn.Module):
         n = nNodes[0]
         layers.append(nn.Linear(current_dim, n))
         layers.append(nn.ReLU())
+        if dropout_prob>0:
+            layers.append(nn.Dropout(dropout_prob))
         layers.append(nn.BatchNorm1d(n))
         current_dim = n
         #layers.append(nn.Dropout(dropout_prob))
         for n in nNodes[1:]:
             layers.append(nn.Linear(current_dim, n))
             layers.append(nn.ReLU())
+#            if dropout_prob>0:
+#                layers.append(nn.Dropout(dropout_prob))
             # Update current dimension to the output of this layer
             current_dim = n  
         

@@ -77,9 +77,9 @@ def ABCD(       dfData: pd.DataFrame, dfMC: pd.DataFrame,
     
     # Subtract the events by filling with opposite weights (variances will be updated consequently)
     # Hist will sum the variances. Variances theorem
-    regions['A'].fill(dfMC[mA][xx], weight=-dfMC[mA].weight)  
-    regions['C'].fill(dfMC[mC][xx], weight=-dfMC[mC].weight)  
-    regions['D'].fill(dfMC[mD][xx], weight=-dfMC[mD].weight)  
+    regions['A'].fill(dfMC[mA][xx], weight=-dfMC[mA].weight_)  
+    regions['C'].fill(dfMC[mC][xx], weight=-dfMC[mC].weight_)  
+    regions['D'].fill(dfMC[mD][xx], weight=-dfMC[mD].weight_)  
     # In B don't do it, we want to see the excess from Data - QCD = MCnonQCD
         
     print("Data counts in ABCD regions after MC subtraction")
@@ -106,17 +106,20 @@ def ABCD(       dfData: pd.DataFrame, dfMC: pd.DataFrame,
     # Plot 4 regions of ABCD
     # The variances are propagated from A, D, C. They give uncertainties on QCD
     hB_ADC = plot4ABCD(regions=regions, bins=bins, x1=x1, x2=x2, t1=t1, t2=t2, suffix=suffix, unblinded_mask=unblinded_mask, sameWidth_flag=sameWidth_flag)
-    
+    print("Corrections before")
+    print(hB_ADC.variances()[:])
+
     if corrections is not None:
         #print("Corrections applied")
         #print(hB_ADC.variances()[:]*corrections**2)
         #print((hB_ADC.values()[:]*err_corrections)**2)
         #print(2*hB_ADC.values()[:]*corrections*covs)
-        
-        hB_ADC.variances()[:] = err_corrections**2
+        print(hB_ADC.variances()[:]*corrections**2/hB_ADC.variances()[:])
+        hB_ADC.variances()[:] = hB_ADC.variances()[:]*corrections**2 + err_corrections**2*hB_ADC.values()[:]
         hB_ADC.values()[:] = hB_ADC.values()[:]*corrections 
 
-    
+    print("Corrections after")
+    print(hB_ADC.variances()[:])
     fig, ax =plt.subplots(1, 1)
     ax.errorbar(x-np.diff(bins)/6, np.zeros(len(x)), yerr=np.sqrt(originalVariances['B']), label='original')
     ax.errorbar(x+0*np.diff(bins)/6, np.zeros(len(x)), yerr=np.sqrt(variancesAfterMCSubtraction['B']), label='After MC subtraction')
@@ -130,10 +133,10 @@ def ABCD(       dfData: pd.DataFrame, dfMC: pd.DataFrame,
 # Second Plot
     countsDict_SR = SM_SR(regions, hB_ADC, bins, dfData, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix=suffix, unblinded_mask=unblinded_mask,  chi2_mask=chi2_mask, sameWidth_flag=sameWidth_flag)
 
-    #SM_CR('A', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
-    #SM_CR('C', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
-    #SM_CR('D', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
-    #SM_CR('B', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
+    SM_CR('A', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
+    SM_CR('C', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
+    SM_CR('D', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
+    SM_CR('B', bins, dfMC, isMCList, dfProcessesMC, x1, t1, x2, t2, lumi, suffix, blindPar, sameWidth_flag=True)
     
 
 

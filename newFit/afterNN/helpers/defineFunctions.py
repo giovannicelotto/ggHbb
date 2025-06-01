@@ -11,6 +11,8 @@ def defineFunctions():
     8:exp_pol2_turnOn3,
     9:exp_gaus_turnOn,
     10:expExp_pol2_turnOnPol3,
+    11:expPol2_expPol2,
+    12:expExp_pol2_turnOnPol1,
 # For RSCB?
     101:exp_pol1,
     102:exp_pol2,
@@ -35,6 +37,8 @@ def defineFunctions():
     8:exp_pol2_turnOn3_DSCB,
     9:exp_gaus_turnOn_DSCB,
     10:expExp_pol2_turnOnPol3_DSCB,
+    11:expPol2_expPol2_DSCB,
+    12:expExp_pol2_turnOnPol1_DSCB,
 
     101:continuum_RSCB1,
     102:continuum_RSCB2,
@@ -55,8 +59,10 @@ def defineFunctions():
     6:["normBkg", "B", "C", "b", "c"],
     7:["normBkg", "B", "C", "b", "c", "aa", "bb", "f"],
     8:["normBkg", "B", "C", "b", "c", "aa", "bb", "cc","f"],
-    9:["normBkg", "B", "C", "b", "c", "mu_to", "sigma_to", "f"],
+    9:["normBkg", "B", "b", "c", "mu_to", "sigma_to", "f"],
     10:["normBkg", "B", "C", "b", "c", "d","aa", "bb", "f"],
+    11:["normBkg", "B", "C", "p1", "p2", "p11","p12", "f"],
+    12:["normBkg", "B", "C", "b", "c", "aa", "f"],
     
     101:["normBkg", "B", "b"],
     102:["normBkg", "B", "b", "c"],

@@ -1,56 +1,60 @@
-Combination of /t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_H_cat2p0.txt  /t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_H_cat2p1.txt
-imax 2 number of bins
+Combination of /t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_H_cat1.txt  /t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_H_cat2p0.txt  /t3home/gcelotto/ggHbb/newFit/afterNN/scripts/datacards/datacard_H_cat2p1.txt
+imax 3 number of bins
 jmax 1 number of processes minus 1
 kmax 30 number of nuisance parameters
 ----------------------------------------------------------------------------------------------------------------------------------
-shapes H         ch1       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root Higgs_nominal Higgs_$SYSTEMATIC
-shapes bkg       ch1       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root Fit_nominal Fit_$SYSTEMATIC
-shapes data_obs  ch1       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root data_obs_nominal
-shapes H         ch2       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/hists/counts_cat2p1.root Higgs_nominal Higgs_$SYSTEMATIC
-shapes bkg       ch2       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/hists/counts_cat2p1.root Fit_nominal Fit_$SYSTEMATIC
-shapes data_obs  ch2       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/hists/counts_cat2p1.root data_obs_nominal
+shapes H         ch1       /t3home/gcelotto/ggHbb/newFit/afterNN/cat1/hists/counts_cat1.root Higgs_nominal Higgs_$SYSTEMATIC
+shapes bkg       ch1       /t3home/gcelotto/ggHbb/newFit/afterNN/cat1/hists/counts_cat1.root Fit_nominal Fit_$SYSTEMATIC
+shapes data_obs  ch1       /t3home/gcelotto/ggHbb/newFit/afterNN/cat1/hists/counts_cat1.root data_obs_nominal
+shapes H         ch2       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root Higgs_nominal Higgs_$SYSTEMATIC
+shapes bkg       ch2       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root Fit_nominal Fit_$SYSTEMATIC
+shapes data_obs  ch2       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/hists/counts_cat2p0.root data_obs_nominal
+shapes H         ch3       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/hists/counts_cat2p1.root Higgs_nominal Higgs_$SYSTEMATIC
+shapes bkg       ch3       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/hists/counts_cat2p1.root Fit_nominal Fit_$SYSTEMATIC
+shapes data_obs  ch3       /t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/hists/counts_cat2p1.root data_obs_nominal
 ----------------------------------------------------------------------------------------------------------------------------------
-bin          ch1    ch2  
-observation  -1     -1   
+bin          ch1    ch2    ch3  
+observation  -1     -1     -1   
 ----------------------------------------------------------------------------------------------------------------------------------
-bin                                      ch1    ch1    ch2    ch2  
-process                                  H      bkg    H      bkg  
-process                                  0      1      0      1    
-rate                                     -1     -1     -1     -1   
+bin                                      ch1    ch1    ch2    ch2    ch3    ch3  
+process                                  H      bkg    H      bkg    H      bkg  
+process                                  0      1      0      1      0      1    
+rate                                     -1     -1     -1     -1     -1     -1   
 ----------------------------------------------------------------------------------------------------------------------------------
-JECAbsoluteMPFBias_     shape            1.0    1.0    1.0    1.0  
-JECAbsoluteScale_       shape            1.0    1.0    1.0    1.0  
-JECAbsoluteStat_        shape            1.0    1.0    1.0    1.0  
-JECFlavorQCD_           shape            1.0    1.0    1.0    1.0  
-JECFragmentation_       shape            1.0    1.0    1.0    1.0  
-JECPileUpDataMC_        shape            1.0    1.0    1.0    1.0  
-JECPileUpPtBB_          shape            1.0    1.0    1.0    1.0  
-JECPileUpPtEC1_         shape            1.0    1.0    1.0    1.0  
-JECPileUpPtEC2_         shape            1.0    1.0    1.0    1.0  
-JECPileUpPtHF_          shape            1.0    1.0    1.0    1.0  
-JECPileUpPtRef_         shape            1.0    1.0    1.0    1.0  
-JECRelativeBal_         shape            1.0    1.0    1.0    1.0  
-JECRelativeFSR_         shape            1.0    1.0    1.0    1.0  
-JECRelativeJEREC1_      shape            1.0    1.0    1.0    1.0  
-JECRelativeJEREC2_      shape            1.0    1.0    1.0    1.0  
-JECRelativeJERHF_       shape            1.0    1.0    1.0    1.0  
-JECRelativePtBB_        shape            1.0    1.0    1.0    1.0  
-JECRelativePtEC1_       shape            1.0    1.0    1.0    1.0  
-JECRelativePtEC2_       shape            1.0    1.0    1.0    1.0  
-JECRelativePtHF_        shape            1.0    1.0    1.0    1.0  
-JECRelativeSample_      shape            1.0    1.0    1.0    1.0  
-JECRelativeStatEC_      shape            1.0    1.0    1.0    1.0  
-JECRelativeStatFSR_     shape            1.0    1.0    1.0    1.0  
-JECRelativeStatHF_      shape            1.0    1.0    1.0    1.0  
-JECSinglePionECAL_      shape            1.0    1.0    1.0    1.0  
-JECSinglePionHCAL_      shape            1.0    1.0    1.0    1.0  
-JECTimePtEta_           shape            1.0    1.0    1.0    1.0  
-JER_                    shape            1.0    1.0    1.0    1.0  
-btag_                   shape            1.0    1.0    1.0    1.0  
-lumi                    lnN              1.025  -      1.025  -    
+JECAbsoluteMPFBias_     shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECAbsoluteScale_       shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECAbsoluteStat_        shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECFlavorQCD_           shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECFragmentation_       shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECPileUpDataMC_        shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECPileUpPtBB_          shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECPileUpPtEC1_         shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECPileUpPtEC2_         shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECPileUpPtHF_          shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECPileUpPtRef_         shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeBal_         shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeFSR_         shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeJEREC1_      shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeJEREC2_      shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeJERHF_       shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativePtBB_        shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativePtEC1_       shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativePtEC2_       shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativePtHF_        shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeSample_      shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeStatEC_      shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeStatFSR_     shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECRelativeStatHF_      shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECSinglePionECAL_      shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECSinglePionHCAL_      shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JECTimePtEta_           shape            1.0    1.0    1.0    1.0    1.0    1.0  
+JER_                    shape            1.0    1.0    1.0    1.0    1.0    1.0  
+btag_                   shape            1.0    1.0    1.0    1.0    1.0    1.0  
+lumi                    lnN              1.025  -      1.025  -      1.025  -    
 lumi group = lumi
 JER group = JER_
 btag group = btag_
-JEC group = JECFlavorQCD_ JECRelativeJEREC2_ JECPileUpPtHF_ JECSinglePionHCAL_ JECRelativeFSR_ JECRelativeStatFSR_ JECRelativeBal_ JECPileUpPtEC2_ JECRelativePtEC2_ JECRelativePtHF_ JECRelativePtEC1_ JECRelativeJERHF_ JECAbsoluteStat_ JECAbsoluteScale_ JECRelativeStatEC_ JECRelativeSample_ JECFragmentation_ JECPileUpDataMC_ JECSinglePionECAL_ JECRelativeJEREC1_ JECAbsoluteMPFBias_ JECRelativePtBB_ JECRelativeStatHF_ JECTimePtEta_ JECPileUpPtBB_ JECPileUpPtEC1_ JECPileUpPtRef_
+JEC group = JECAbsoluteScale_ JECRelativeFSR_ JECPileUpPtHF_ JECRelativeJEREC2_ JECPileUpPtEC2_ JECRelativeJEREC1_ JECRelativePtEC1_ JECRelativeSample_ JECSinglePionECAL_ JECFlavorQCD_ JECTimePtEta_ JECRelativePtEC2_ JECRelativeStatEC_ JECPileUpPtEC1_ JECAbsoluteMPFBias_ JECAbsoluteStat_ JECFragmentation_ JECRelativeStatFSR_ JECRelativePtHF_ JECRelativeBal_ JECPileUpPtRef_ JECSinglePionHCAL_ JECPileUpDataMC_ JECPileUpPtBB_ JECRelativeJERHF_ JECRelativePtBB_ JECRelativeStatHF_
 ch1 autoMCStats 0 0 1
 ch2 autoMCStats 0 0 1
+ch3 autoMCStats 0 0 1

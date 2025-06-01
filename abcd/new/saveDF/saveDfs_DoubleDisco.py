@@ -20,23 +20,20 @@ import argparse
 parser = argparse.ArgumentParser(description="Script.")
 try:
     parser.add_argument("-m", "--modelName", type=str, help="e.g. Dec19_500p9", default=None)
+    parser.add_argument("-MC", "--MC", type=int, help="MC (1) or Data (0)", default=0)
+    parser.add_argument("-pN", "--processNumber", type=int, help="Number of dataTaking or process MC", default=0)
     args = parser.parse_args()
     if args.modelName is not None:
         modelName = args.modelName
 except:
     print("Interactive mode")
-    modelName = "Apr28_600p0"
+    modelName = "Apr01_1000p0"
 # %%
 
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/NN_predictions/DoubleDiscoPred_%s"%modelName
-columns = ['dijet_mass', 
-          'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
-          
-          'muon_dxySig',
-          'muon_pt',
-          'dijet_pt',
-          ]
-dfProcessesMC, dfProcessesData = getDfProcesses_v2()
+columns = ['dijet_mass',    'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
+          'muon_dxySig',    'muon_pt',              'dijet_pt']
+dfProcessesMC, dfProcessesData, dfProcessesMC_JEC = getDfProcesses_v2()
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/doubleDisco/%s"%modelName
 if not os.path.exists(df_folder):
     os.makedirs(df_folder)
@@ -54,14 +51,28 @@ DataTakingList = [
             5,
             6,
             7,
+            8,
+            9,
+            10,   #1A
+            11,   #2A
+            12,   #1D
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
             
             ]
+
 #nReals = [
 #]
-
+nReal = 0
 lumi_tot = 0
 processesData = dfProcessesData.process[DataTakingList].values
 for idx, (dataTakingIdx, dataTakingName) in enumerate(zip(DataTakingList, processesData)):
+    if nReal==0:
+        continue
     print(dataTakingIdx+1,"/",len(DataTakingList))
 
     predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([dataTakingName],[dataTakingIdx], predictionsPath)
@@ -74,9 +85,9 @@ for idx, (dataTakingIdx, dataTakingName) in enumerate(zip(DataTakingList, proces
         paths[dataTakingIdx]=paths[dataTakingIdx]+"/others"
 
 
-    dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=-1, columns=columns,
-                                                          selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True)
-    dfs=cut(dfs, 'dijet_pt', 100, 160)
+    dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=nReal, columns=columns,
+                                                            selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True)
+    dfs=cut(dfs, 'dijet_pt', 0, 100)
     lumi_tot = lumi_tot + lumi
     predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
     df = preprocessMultiClass(dfs=dfs)[0].copy()
@@ -147,42 +158,11 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
         continue
     predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
     
-    dfs, genEventSumwList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=-1, columns=columns+['genWeight', 'PU_SF', 'sf',
-            'jet1_pt', 'jet1_eta', 'jet1_phi', 'jet1_mass',
-            'jet2_pt', 'jet2_eta', 'jet2_phi', 'jet2_mass',
-            'jet1_btag_central', 'jet1_btag_up', 'jet1_btag_down',
-            'jet2_btag_central', 'jet2_btag_up', 'jet2_btag_down',
-            'jet1_sys_JECAbsoluteMPFBias_Up', 'jet2_sys_JECAbsoluteMPFBias_Up',
-            'jet1_sys_JECAbsoluteScale_Up', 'jet2_sys_JECAbsoluteScale_Up',
-            'jet1_sys_JECAbsoluteStat_Up', 'jet2_sys_JECAbsoluteStat_Up',
-            'jet1_sys_JECFlavorQCD_Up', 'jet2_sys_JECFlavorQCD_Up',
-            'jet1_sys_JECFragmentation_Up', 'jet2_sys_JECFragmentation_Up',
-            'jet1_sys_JECPileUpDataMC_Up', 'jet2_sys_JECPileUpDataMC_Up',
-            'jet1_sys_JECPileUpPtBB_Up', 'jet2_sys_JECPileUpPtBB_Up',
-            'jet1_sys_JECPileUpPtEC1_Up', 'jet2_sys_JECPileUpPtEC1_Up',
-            'jet1_sys_JECPileUpPtEC2_Up', 'jet2_sys_JECPileUpPtEC2_Up',
-            'jet1_sys_JECPileUpPtHF_Up', 'jet2_sys_JECPileUpPtHF_Up',
-            'jet1_sys_JECPileUpPtRef_Up', 'jet2_sys_JECPileUpPtRef_Up',
-            'jet1_sys_JECRelativeBal_Up', 'jet2_sys_JECRelativeBal_Up',
-            'jet1_sys_JECRelativeFSR_Up', 'jet2_sys_JECRelativeFSR_Up',
-            'jet1_sys_JECRelativeJEREC1_Up', 'jet2_sys_JECRelativeJEREC1_Up',
-            'jet1_sys_JECRelativeJEREC2_Up', 'jet2_sys_JECRelativeJEREC2_Up',
-            'jet1_sys_JECRelativeJERHF_Up', 'jet2_sys_JECRelativeJERHF_Up',
-            'jet1_sys_JECRelativePtBB_Up', 'jet2_sys_JECRelativePtBB_Up',
-            'jet1_sys_JECRelativePtEC1_Up', 'jet2_sys_JECRelativePtEC1_Up',
-            'jet1_sys_JECRelativePtEC2_Up', 'jet2_sys_JECRelativePtEC2_Up',
-            'jet1_sys_JECRelativePtHF_Up', 'jet2_sys_JECRelativePtHF_Up',
-            'jet1_sys_JECRelativeSample_Up', 'jet2_sys_JECRelativeSample_Up',
-            'jet1_sys_JECRelativeStatEC_Up', 'jet2_sys_JECRelativeStatEC_Up',
-            'jet1_sys_JECRelativeStatFSR_Up', 'jet2_sys_JECRelativeStatFSR_Up',
-            'jet1_sys_JECRelativeStatHF_Up', 'jet2_sys_JECRelativeStatHF_Up',
-            'jet1_sys_JECSinglePionECAL_Up', 'jet2_sys_JECSinglePionECAL_Up',
-            'jet1_sys_JECSinglePionHCAL_Up', 'jet2_sys_JECSinglePionHCAL_Up',
-            'jet1_sys_JECTimePtEta_Up', 'jet2_sys_JECTimePtEta_Up',],
+    dfs, genEventSumwList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=-1, columns=columns+['genWeight', 'PU_SF', 'sf', 'btag_central', 'btag_up', 'btag_down'],
                                                              returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                              returnFileNumberList=True)
 
-    dfs=cut(dfs, 'dijet_pt', 100, 160)
+    dfs=cut(dfs, 'dijet_pt', 0, 100)
     predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
     df = preprocessMultiClass(dfs=dfs)[0].copy()
 

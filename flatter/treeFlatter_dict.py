@@ -56,18 +56,18 @@ def get_efficiency(jet_pt, jet_eta, flav, eff_map_data):
     return eff, flav_key
 
 
-def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose):
+def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose, JECname):
     start_time = time.time()
     maxEntries=int(maxEntries)
     maxJet=int(maxJet)
     isJEC = int(isJEC)
-    if isJEC==1:
-        jec_name = '_'.join(processName.split('_')[-2:])
-        print("isJEC=1. JEC name is", jec_name )
     print("fileName", fileName)
     print("maxEntries", maxEntries)
     print("maxJet", maxJet)
     print("verbose", verbose)
+    # process = complete name GluGluHToBB_JECAbsoluteMPFBias_Down
+    # processName = only physics name GluGluHToBB
+    # JECname = JECAbsoluteMPFBias_Down
 
     '''Require one muon in the dijet. Choose dijets based on their bscore. save all the features of the event append them in a list'''
     f = uproot.open(fileName)
@@ -117,10 +117,14 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     wp_converter = cset["deepJet_wp_values"]
     
     #corrDeepJet_shape           = cset["deepJet_shape"]
-    eff_maps_cache = {}
-    for wp_ in ["L", "M", "T"]:
-        with open(f"/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processName}_{wp_}.json", 'r') as f:
-            eff_maps_cache[wp_] = json.load(f)
+    if "GluGluH_M" in processName:
+        pass
+    else:
+        eff_maps_cache = {}
+        for wp_ in ["L", "M", "T"]:
+            print(f"Opening the map {processName}_{wp_}.json ...")
+            with open(f"/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processName}_{wp_}.json", 'r') as f:
+                eff_maps_cache[wp_] = json.load(f)
     for ev in myrange:
         verbose and print("Event", ev)
         features_ = {}
@@ -222,7 +226,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             GenJet_hadronFlavour    = branches["GenJet_hadronFlavour"][ev]
             genWeight    = branches["genWeight"][ev]
             if isJEC:
-                JEC_branch = branches["Jet_sys_%s"%(jec_name)][ev]
+                JEC_branch = branches["Jet_sys_%s"%(JECname)][ev]
                 Jet_pt = Jet_pt * (1 + JEC_branch)
 
 
@@ -533,18 +537,19 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         # R3
         if leptonClass == 3:
             features_['leptonClass'] = int(leptonClass)
-            features_['muon2_pt'] = np.float32(-999)
-            features_['muon2_eta'] = np.float32(-999)
-            features_['muon2_dxySig'] = np.float32(-999)
-            features_['muon2_dzSig'] = np.float32(-999)
-            features_['muon2_IP3d'] = np.float32(-999)
-            features_['muon2_sIP3d'] = np.float32(-999)
+            features_['muon2_pt'] = np.float32(0)
+            features_['muon2_eta'] = np.float32(0)
+            features_['muon2_dxySig'] = np.float32(0)
+            features_['muon2_dzSig'] = np.float32(0)
+            features_['muon2_IP3d'] = np.float32(0)
+            features_['muon2_sIP3d'] = np.float32(0)
             features_['muon2_tightId'] = bool(False)
-            features_['muon2_pfRelIso03_all'] = np.float32(-999)
-            features_['muon2_pfRelIso04_all'] = np.float32(-999)
-            features_['muon2_tkIsoId'] = int(-999)
-            features_['muon2_charge'] = int(-999)
-            features_['dimuon_mass'] = np.float32(-999)
+            features_['muon2_pfRelIso03_all'] = np.float32(0)
+            features_['muon2_pfRelIso04_all'] = np.float32(0)
+            features_['muon2_tkIsoId'] = int(0)
+            features_['muon2_charge'] = int(0)
+            features_['dimuon_mass'] = np.float32(0.106)
+
 # Trigger
         features_['Muon_fired_HLT_Mu12_IP6'] = int(bool(Muon_fired_HLT_Mu12_IP6[muonIdx1]))
         features_['Muon_fired_HLT_Mu10p5_IP3p5'] = int(bool(Muon_fired_HLT_Mu10p5_IP3p5[muonIdx1]))
@@ -629,58 +634,57 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
 
 # BTag SF and Variations
-            for syst in ["central", "up", "down"]:
-                # Load btag Map
+            if "GluGluH_M" in processName:
+                features_['btag_central'] = 1
+                features_['btag_up'] = 1
+                features_['btag_down'] = 1
+            else:
+                for syst in ["central", "up", "down"]:
+                    # Load btag Map
+                    btagSF_event = 1.0
+                    for j in np.arange(nJet)[maskJets]:
 
 
-                
+                        # Extract the tagged WP of the current jet
+                        if wp_converter.evaluate("L") <= Jet_btagDeepFlavB[j] < wp_converter.evaluate("M"):
+                            wp = "L"
+                        elif wp_converter.evaluate("M") <= Jet_btagDeepFlavB[j] < wp_converter.evaluate("T"):
+                            wp = "M"
+                        elif wp_converter.evaluate("T") <= Jet_btagDeepFlavB[j]:
+                            wp = "T"
+                        else:
+                            wp = None  
 
-                btagSF_event = 1.0
-                for j in np.arange(nJet)[maskJets]:
+                        # Extract the SF for each tagged selection
+                        if (abs(Jet_hadronFlavour[j])==4) | abs(Jet_hadronFlavour[j])==5:
+                            currentJet_btagSF_T = corrDeepJet_FixedWP_comb.evaluate(syst, "T", abs(Jet_hadronFlavour[j]), float(abs(Jet_eta[j])), float(Jet_pt[j]))
+                            currentJet_btagSF_M = corrDeepJet_FixedWP_comb.evaluate(syst, "M", abs(Jet_hadronFlavour[j]), float(abs(Jet_eta[j])), float(Jet_pt[j]))
+                            currentJet_btagSF_L = corrDeepJet_FixedWP_comb.evaluate(syst, "L", abs(Jet_hadronFlavour[j]), float(abs(Jet_eta[j])), float(Jet_pt[j]))
 
+                        elif (abs(Jet_hadronFlavour[j])==0) :
+                            currentJet_btagSF_T = corrDeepJet_FixedWP_light.evaluate(syst, "T", abs(Jet_hadronFlavour[j]), float(abs(Jet_eta[j])), float(Jet_pt[j]))
+                            currentJet_btagSF_M = corrDeepJet_FixedWP_light.evaluate(syst, "M", abs(Jet_hadronFlavour[j]), float(abs(Jet_eta[j])), float(Jet_pt[j]))
+                            currentJet_btagSF_L = corrDeepJet_FixedWP_light.evaluate(syst, "L", abs(Jet_hadronFlavour[j]), float(abs(Jet_eta[j])), float(Jet_pt[j]))
 
-                    # Extract the Scale factor
-                    
-                    # Extract the WP of the current jet
-                    if wp_converter.evaluate("L") <= Jet_btagDeepFlavB[j] < wp_converter.evaluate("M"):
-                        wp = "L"
-                    elif wp_converter.evaluate("M") <= Jet_btagDeepFlavB[j] < wp_converter.evaluate("T"):
-                        wp = "M"
-                    elif wp_converter.evaluate("T") <= Jet_btagDeepFlavB[j]:
-                        wp = "T"
-                    else:
-                        wp = None  
-                    
-
-                    if (abs(Jet_hadronFlavour[j])==4) | abs(Jet_hadronFlavour[j])==5:
-                        currentJet_btagSF_T = corrDeepJet_FixedWP_comb.evaluate(syst, "T", abs(Jet_hadronFlavour[j]), abs(jet1.Eta()), float(Jet_pt[j]))
-                        currentJet_btagSF_M = corrDeepJet_FixedWP_comb.evaluate(syst, "M", abs(Jet_hadronFlavour[j]), abs(jet1.Eta()), float(Jet_pt[j]))
-                        currentJet_btagSF_L = corrDeepJet_FixedWP_comb.evaluate(syst, "L", abs(Jet_hadronFlavour[j]), abs(jet1.Eta()), float(Jet_pt[j]))
-
-                    elif (abs(Jet_hadronFlavour[j])==0) :
-                        currentJet_btagSF_T = corrDeepJet_FixedWP_light.evaluate(syst, "T", abs(Jet_hadronFlavour[j]), abs(jet1.Eta()), float(Jet_pt[j]))
-                        currentJet_btagSF_M = corrDeepJet_FixedWP_light.evaluate(syst, "M", abs(Jet_hadronFlavour[j]), abs(jet1.Eta()), float(Jet_pt[j]))
-                        currentJet_btagSF_L = corrDeepJet_FixedWP_light.evaluate(syst, "L", abs(Jet_hadronFlavour[j]), abs(jet1.Eta()), float(Jet_pt[j]))
-
-                    eff_T, flav_key = get_efficiency(Jet_pt[j], Jet_eta[j], Jet_hadronFlavour[j], eff_maps_cache["T"])
-                    eff_M, _        = get_efficiency(Jet_pt[j], Jet_eta[j], Jet_hadronFlavour[j], eff_maps_cache["M"])
-                    eff_L, _        = get_efficiency(Jet_pt[j], Jet_eta[j], Jet_hadronFlavour[j], eff_maps_cache["L"])
+                        eff_T, flav_key = get_efficiency(Jet_pt[j], Jet_eta[j], Jet_hadronFlavour[j], eff_maps_cache["T"])
+                        eff_M, _        = get_efficiency(Jet_pt[j], Jet_eta[j], Jet_hadronFlavour[j], eff_maps_cache["M"])
+                        eff_L, _        = get_efficiency(Jet_pt[j], Jet_eta[j], Jet_hadronFlavour[j], eff_maps_cache["L"])
 
 
 
-                    if wp=="T":
-                        # Jet number j is Tight. Apply simply SF
-                        weight_factor = currentJet_btagSF_T
-                    elif wp=="M":
-                        weight_factor = (currentJet_btagSF_M * eff_M  - currentJet_btagSF_T * eff_T) / (eff_M - eff_T)
-                    elif wp=="L":
-                        weight_factor = (currentJet_btagSF_L * eff_L  - currentJet_btagSF_M * eff_M) / (eff_L - eff_M)
-                    elif wp==None:
-                        weight_factor = (1  - currentJet_btagSF_L * eff_L) / (1 - eff_L)
-                        # Jet is M not T
-                    btagSF_event *= weight_factor
-            
-                features_[f'btag_{syst}'] = btagSF_event
+                        if wp=="T":
+                            # Jet number j is Tight. Apply simply SF
+                            weight_factor = currentJet_btagSF_T
+                        elif wp=="M":
+                            weight_factor = (currentJet_btagSF_M * eff_M  - currentJet_btagSF_T * eff_T) / (eff_M - eff_T)
+                        elif wp=="L":
+                            weight_factor = (currentJet_btagSF_L * eff_L  - currentJet_btagSF_M * eff_M) / (eff_L - eff_M)
+                        elif wp==None:
+                            weight_factor = (1  - currentJet_btagSF_L * eff_L) / (1 - eff_L)
+                            # Jet is M not T
+                        btagSF_event *= weight_factor
+
+                    features_[f'btag_{syst}'] = btagSF_event
         
         
 
@@ -709,15 +713,35 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     return file_
 
 
-def main(fileName, maxEntries, maxJet, pN, process, method, isJEC, verbose):
+def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbose):
     print("FileName", fileName)
-    print("Process", process, flush=True)
+    print("Process", fullProcessName, flush=True)
+    # If isJEC is True Process contains also the name of the JEC uncertainty e.g. GluGluHToBB_JECAbsoluteMPFBias_Down
+    # fullProcessName = complete name GluGluHToBB_JECAbsoluteMPFBias_Down
+    # processName = only physics name GluGluHToBB
+    # JECname = JECAbsoluteMPFBias_Down
+    if isJEC:
+        JECname = '_'.join(fullProcessName.split('_')[-2:])
+        processName = '_'.join(fullProcessName.split('_')[:-2])
+        print("processName : ", processName)
+        print("JEC : ", JECname)
+    else:
+        JECname = ''
+        if '_smeared' in fullProcessName:
+            # We are in JER smearing case
+            processName = '_smeared'.join(fullProcessName.split('_')[:-1])
+            JERname = '_smeared'.join(fullProcessName.split('_')[-1:])
+            print("JER is : ", JERname)
+            print("processName : ", processName)
+
+        else:
+            processName = fullProcessName
+            print("No JER no JEC")
+            print("processName : ", processName)
     
     
     # Event by event operations:
-    
-    
-    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, pN=pN, processName=process, method=method, isJEC=isJEC, verbose=verbose)
+    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, pN=pN, processName=processName, method=method, isJEC=isJEC, verbose=verbose, JECname=JECname)
     df=pd.DataFrame(fileData)
     
     
@@ -727,7 +751,7 @@ def main(fileName, maxEntries, maxJet, pN, process, method, isJEC, verbose):
     
     
     
-    if process[:4]=="Data":
+    if fullProcessName[:4]=="Data":
         mcLabel=False
     else:
         mcLabel = True
@@ -749,7 +773,7 @@ def main(fileName, maxEntries, maxJet, pN, process, method, isJEC, verbose):
 
     # PU_SF addition
     print("FileNumber ", fileNumber)
-    if process[:4]=='Data':
+    if fullProcessName[:4]=='Data':
         df['PU_SF']=1
         df['btag_central']=1
         df['btag_up']=1
@@ -760,20 +784,20 @@ def main(fileName, maxEntries, maxJet, pN, process, method, isJEC, verbose):
         df['PU_SF'] = df['Pileup_nTrueInt'].apply(int).map(PU_map)
         df.loc[df['Pileup_nTrueInt'] > 98, 'PU_SF'] = 0
 
-    print('/scratch/' +process+"_%s.parquet"%fileNumber)
-    df.to_parquet('/scratch/' +process+"_%s.parquet"%fileNumber )
+    print('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber)
+    df.to_parquet('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber )
     print("Here4")
     print("FileNumber ", fileNumber)
-    print("Saving in " + '/scratch/' +process+"_%s.parquet"%fileNumber )
+    print("Saving in " + '/scratch/' +fullProcessName+"_%s.parquet"%fileNumber )
 
 if __name__ == "__main__":
     fileName    = sys.argv[1]
     maxEntries  = int(sys.argv[2])
     maxJet      = int(sys.argv[3])
     pN        = int(sys.argv[4])
-    process     = sys.argv[5] 
+    fullProcessName     = sys.argv[5] 
     method = int(sys.argv[6])
     isJEC = int(sys.argv[7])
     verbose = int(sys.argv[8])
     print("calling main", flush=True)
-    main(fileName, maxEntries, maxJet, pN, process, method, isJEC, verbose)
+    main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbose)

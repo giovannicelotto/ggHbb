@@ -13,7 +13,6 @@ def loadPredictions(processes, isMCList, predictionsFileNames, fileNumberList):
     predictionsFileNamesNew = []
     for isMC, p in zip(isMCList, processes):
         idx = isMCList.index(isMC)
-        print("Process %s # %d"%(p, isMC))
         l =[]
         for fileName in predictionsFileNames[idx]:
             fn = int(re.search(r'FN(\d+)\.parquet', fileName).group(1))
