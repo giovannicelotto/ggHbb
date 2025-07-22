@@ -1,5 +1,7 @@
 #Activate CMSenvironment
-cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
+cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4
+cmssw-el7
+cd src
 cmsenv
 
 #Define variables
