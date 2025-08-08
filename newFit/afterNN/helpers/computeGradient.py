@@ -1,5 +1,5 @@
 import numpy as np
-def numerical_gradient(func, x, params, eps=1e-5):
+def numerical_gradient(func, x, params, eps=1e-8):
     """
     Compute the gradient of `func(x, *params)` w.r.t. `params` using central finite differences.
     

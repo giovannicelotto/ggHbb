@@ -19,7 +19,7 @@ isDataList : [
               7
               ]
 modelName : "Mar21_2_0p0"
-ptCut_min : 160
+ptCut_min : 100
 ptCut_max : null
 jet1_btagMin : 0.71
 jet2_btagMin : 0.71

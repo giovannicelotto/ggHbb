@@ -12,11 +12,13 @@ hep.style.use("CMS")
 pathToData="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/profileBParking"
 dataFile = pathToData+"/pileup_data_2018.root"
 data= uproot.open(dataFile)
-hist=data['pileup_2018A']
-bin_contents = hist.values()
+hist=data['pileup_2018total']
+bin_contents_data = hist.values()
 bin_edges = hist.axis().edges()
-assert len(bin_contents)==len(bin_edges)-1
+assert len(bin_contents_data)==len(bin_edges)-1
 # %%
+# For MC taken from the campaign
+# /pnfs/psi.ch/cms/trivcat/store/user/gcelotto/profileBParking/mix_2018_25ns_UltraLegacy_PoissonOOTPU_cfi.py
 xMC = (
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
     10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
@@ -55,19 +57,33 @@ yMC = (
 
 assert len(xMC)==len(yMC)
 # %%
-fig, ax = plt.subplots(1, 1)
-integral = sum(bin_contents*np.diff(bin_edges))
-normalized_bin_contents = bin_contents / integral
-hep.histplot((normalized_bin_contents, bin_edges), ax=ax, label='Data')
-ax.plot(xMC, yMC, label='MC UL')
-ax.set_xlim(0, 100)
-ax.legend()
+# Plot
+# yMC is already normalized to have area = 1
+# Data are normalized in the same way by hand
+# Final check is done
+fig, ax = plt.subplots(2, 1, figsize=(10, 10), sharex=True,
+                       gridspec_kw={'height_ratios': [4, 1]})
+integral = sum(bin_contents_data*np.diff(bin_edges))
+normalized_bin_contents_data = bin_contents_data / integral
+hep.histplot((normalized_bin_contents_data, bin_edges), ax=ax[0], label='Data')
+ax[0].step(xMC, yMC, label='MC UL2018')
+ax[0].set_xlim(0, 100)
+ax[0].legend()
 
-print("Integral : %.3f"%sum(bin_contents / integral))
-print("Integral : %.3f"%sum(yMC))
-# %%
-epsilon = 1e-10
-ratio = bin_contents[:99]/integral/(np.array(yMC)+epsilon)
+ax[0].text(x=0.05, y=0.6, s="Integral Data : %.3f"%sum(bin_contents_data / integral), transform=ax[0].transAxes, ha='left')
+ax[0].text(x=0.05, y=0.55, s="Integral MC : %.3f"%sum(yMC), transform=ax[0].transAxes, ha='left')
+ax[1].set_xlabel("Pileup")
+ax[0].set_ylabel("Normalized Units")
+#ax[0].set_yscale('log')
+epsilon = 1e-12
+ratio = np.where(np.array(yMC)!=0,
+                 bin_contents_data[:99]/integral/(np.array(yMC)+epsilon),
+                                                  0)
+#ratio = bin_contents_data[:99]/integral/(np.array(yMC)+epsilon)
+ax[1].plot(ratio, marker='o', color='black', linestyle='none')
+ax[1].set_ylabel("Data/MC")
+ax[1].set_ylim(0, 2)
+fig.savefig("/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData/PU_profile.png")
 
 # %%
 mymap = dict(zip(xMC, ratio))
@@ -76,23 +92,4 @@ with open('/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData/PU_PVtoPUSF.jso
     json.dump(mymap, file, indent=4)
 
 
-
-# %%
-df = pd.read_parquet("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/QCD_Pt20To30/QCD_MuEnriched_Pt-20To30_352.parquet")
-
-
-fig, ax = plt.subplots(1, 1)
-integral = sum(bin_contents*np.diff(bin_edges))
-normalized_bin_contents = bin_contents / integral
-hep.histplot((normalized_bin_contents, bin_edges), ax=ax, label='Pileup 2018A')
-ax.plot(xMC, yMC, label='MC UL')
-#ax.hist(df.PV_npvs, bins=np.linspace(0, 99, 100), weights=np.ones(len(df))/len(df), label='QCD MC example')
-ax.set_xlim(0, 100)
-ax.plot(xMC, yMC*ratio, label='reweighted')
-ax.legend()
-ax.set_xlabel("PV npvs")
-ax.set_ylabel("Normalized Counts")
-hep.cms.label(ax=ax)
-# %%
-print(ratio.sum())
 # %%

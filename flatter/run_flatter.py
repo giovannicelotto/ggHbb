@@ -15,14 +15,15 @@ parser.add_argument("-n", "--nFiles", type=int, help="number of files to flatten
 parser.add_argument("-mE", "--maxEntries", type=int, help="max number of Entries", default=-1)
 parser.add_argument("-mJ", "--maxJet", type=int, help="max number of jet", default=4)
 parser.add_argument("-m", "--method", type=int, help="method of selecting jets", default=-1)
+parser.add_argument("-t", "--test", type=int, help="is a test with a singular root file", default=0)
 parser.add_argument("-d", "--delete", type=int, help="delete all logs file in the folder", default=0)
 parser.add_argument("-v", "--verbose", type=int, help="0 (silent), 1 (print info event by event)", default=0)
 
 args = parser.parse_args()
 
-isMC            = True if args.isMC==1 else False
+isMC            = args.isMC
 pN              = args.processNumber
-isJEC              = args.isJEC
+isJEC           = args.isJEC
 nFiles          = args.nFiles
 maxEntries      = args.maxEntries
 maxJet          = args.maxJet
@@ -74,19 +75,27 @@ if nFiles > len(nanoFileNames) :
     nFiles = len(nanoFileNames)
 #nFiles to be done
 doneFiles = 0
-for nanoFileName in nanoFileNames:
-    if doneFiles==nFiles:
-        break
-    try:
-        #print(nanoFileName)
-        fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1))
-    except:
-        sys.exit("FileNumber not found")
 
-    filePattern = flatPath+"/**/"+process+"_"+str(fileNumber)+".parquet"
-    matching_files = glob.glob(filePattern, recursive=True)
+if args.test:
+    nanoFileName="/work/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test/Data_Aug_Run2_mc_124X.root"
+    fileNumber = 1999
+    flatPath ="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/test_1999.parquet"
+    process = "test"
+    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 1000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC)])
+else:
+    for nanoFileName in nanoFileNames:
+        if doneFiles==nFiles:
+            break
+        try:
+            #print(nanoFileName)
+            fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1))
+        except:
+            sys.exit("FileNumber not found")
 
-    if matching_files:
-        continue
-    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 100), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose)])
-    doneFiles = doneFiles+1
+        filePattern = flatPath+"/**/"+process+"_"+str(fileNumber)+".parquet"
+        matching_files = glob.glob(filePattern, recursive=True)
+
+        if matching_files:
+            continue
+        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 1000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC)])
+        doneFiles = doneFiles+1

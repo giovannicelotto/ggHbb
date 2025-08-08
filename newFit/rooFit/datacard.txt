@@ -1,0 +1,13 @@
+imax 1  number of channels
+jmax 0  number of backgrounds
+kmax *  number of nuisance parameters (automatic)
+
+shapes * * workspace.root w:composite
+
+bin bin1
+observation -1
+
+bin             bin1
+process         signal
+process         0
+rate            1.0

@@ -27,6 +27,9 @@ def plotDfs(dfsData,dfsMC, isMCList, dfProcesses, nbin, lumi, blindPar, log=True
         }
     cTot = np.zeros(len(bins_mass)-1)
     for idx, df in enumerate(dfsMC):
+        print(idx)
+        print(isMCList)
+        print(isMCList[idx])
         isMC = isMCList[idx]
         process = dfProcesses.process[isMC]
         #print(idx, process, isMC)

@@ -52,9 +52,10 @@ def apply_dijet_variation(df, var_name, direction):
     )
 # %%
 class FitWithSystematics:
-    def __init__(self, model_name, path, dfProcesses, x1, x2, out_folder, fitFunction, dfProcesses_sD, dfProcesses_sU):
+    def __init__(self, model_name, path, dfProcesses, x1, x2, out_folder, fitFunction, dfProcesses_sD, dfProcesses_sU, particle='Z'):
         self.model_name = model_name                    # to load data
         self.path = path                                # To load data
+        self.particle = particle                        # H or Z
         self.fitFunction = fitFunction                  # Function to fit Z peak
         self.dfProcesses = dfProcesses          # list of processes to Z
         self.dfProcesses_sD = dfProcesses_sD          # list of processes to Z smearing Down
@@ -183,6 +184,7 @@ class FitWithSystematics:
             
             # Fit the varied model and save parameters
             m = self.fit_model((bins[1:] + bins[:-1]) / 2, cTot, err, fitregion, params, paramsLimits)
+            print(m)
             self.save_parameters(variation_name, m)
 
 
@@ -204,7 +206,7 @@ class FitWithSystematics:
 
     def save_results(self):
         # Save the parameters to a JSON file
-        with open(f"{self.out_folder}/fit_parameters_with_systematics.json", "w") as f:
+        with open(f"{self.out_folder}/fit_parameters_with_systematics_{self.particle}.json", "w") as f:
             json.dump({'fitFunction': self.fitFunction, 'parameters': self.parameters}, f, indent=4)
 
 
@@ -235,7 +237,7 @@ class FitWithSystematics:
         ax.plot(x_draw, y_draw, label=label, color='red', linewidth=1)
         ax.legend()
         ax.set_ylim(0, ax.get_ylim()[1])
-        fig.savefig(f"{out_folder}/plots/zPeakFit_with_systematics.png", bbox_inches='tight')
+        fig.savefig(f"{out_folder}/plots/{self.particle}PeakFit_with_systematics.png", bbox_inches='tight')
     def plot_variations_results(self, x, cTot, err, bins, fitregion, out_folder):
         fig, ax = plt.subplots(1, 1)
 
@@ -257,7 +259,7 @@ class FitWithSystematics:
         ax.set_ylabel('Events')
 
         # Save the plot
-        fig.savefig(f"{out_folder}/plots/zPeakFit_with_systematics_variations.png", bbox_inches='tight')
+        fig.savefig(f"{out_folder}/plots/{self.particle}PeakFit_with_systematics_variations.png", bbox_inches='tight')
 
 
 # %%

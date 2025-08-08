@@ -30,5 +30,5 @@ source_dir="/scratch"
 echo "Moving to "
 echo "yMC"$pN"_fn"$number".parquet"
 
-xrdcp -f -N "$source_dir/yMjj_"$process"_FN"$number".parquet" "root://t3dcachedb.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_"$modelName"/"$process"/yMjj_${process}_FN${number}.parquet"
-xrdfs root://t3dcachedb.psi.ch stat /pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_$modelName/$process/yMjj_${process}_FN${number}.parquet
+xrdcp -f -N "$source_dir/yMjj_"$process"_FN"$number".parquet" "root://t3dcachedb03.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_"$modelName"/"$process"/yMjj_${process}_FN${number}.parquet"
+xrdfs root://t3dcachedb03.psi.ch stat /pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_$modelName/$process/yMjj_${process}_FN${number}.parquet

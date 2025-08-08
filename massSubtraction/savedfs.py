@@ -14,11 +14,12 @@ from plotDfs import plotDfs
 from hist import Hist
 
 # %%
-boosted = 1
-modelName = "Mar21_%d_0p0"%boosted
+boosted = 3
+modelName = "Jul15_%d_20p0"%boosted
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
 columns_ = ['dijet_mass', 'dijet_pt',
-          'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB']
+          'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
+          'nJets']
 columns = columns_.copy()
 dfProcessesMC, dfProcessesData, dfProcessMC_JEC = getDfProcesses_v2()
 
@@ -29,11 +30,10 @@ if not os.path.exists(df_folder):
 # Load data first
 # %%
 DataDict = {
-0 : 0,         
-1 : 0,         2 : 0,         3 : 0,         4 : 0,         5 : 0,
+0 : 0,        1 : 0,         2 : 0,         3 : 0,         4 : 0,         5 : 0,
 6 : 0,         7 : 0,         8 : 0,         9 : 0,         10 : 0,        11 : 0,
-12 : 0,        13 : 0,        14 : 0,        15 : 0,        16 : 0,        17 : 0, 
-18 : 0, 
+12 : 0,        13 : 0,        14 : 0,        15 : 0,        16 : 0,        
+17 : 0,         18 : 0,    19 : -1,         20 : -1,        21 : -1
 }
 
 DataTakingList = list(DataDict.keys())
@@ -52,8 +52,8 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
     # predictionsFileNumbers includes also training if not properly separated in a different folder.
     # I suppose training will be separated when matching the flattuple
     paths = list(dfProcessesData.flatPath[[dataTakingIdx]])
-    if dataTakingName=='Data1A':
-        paths[dataTakingIdx]=paths[dataTakingIdx]+"/training"
+#    if dataTakingName=='Data1A':
+#        paths[dataTakingIdx]=paths[dataTakingIdx]+"/training"
 
 
     dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=nReals[dataTakingIdx], columns=columns,
@@ -62,18 +62,22 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
         dfs=cut(dfs, 'dijet_pt', 100, 160)
     elif boosted==2:
         dfs=cut(dfs, 'dijet_pt', 160, None)
+    elif boosted==3:
+        dfs=cut(dfs, 'dijet_pt', 100, None)
     elif boosted==60:
         dfs=cut(dfs, 'dijet_pt', 60, 100)
+    dfs=cut(dfs, 'dijet_mass', 50, 300)
     lumi_tot = lumi_tot + lumi
     predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
-    df = preprocessMultiClass(dfs=dfs)[0].copy()
+    #df = preprocessMultiClass(dfs=dfs)[0].copy()
+    df = dfs[0].copy()
     print("Length dfs0", len(df))
     del dfs
 
     print(df.columns)
     df.loc[:, 'PNN'] = np.array(predsData.PNN)
-    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.71, max=None)[0].copy()
-    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.71, max=None)[0].copy()
+    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.2783, max=None)[0].copy()
+    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.2783, max=None)[0].copy()
     #print("Process ", dfProcessesData.process[isMC], " NN assigned")
     df.loc[:, 'weight'] = 1
 
@@ -100,12 +104,17 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 columns = columns_.copy()
 MC_dict = {
     #Nominal
-    0:0, 1:0, 3:0, 4:0, 19:0, 20:0, 21:0, 22:0, 35:0,
-    36:0, 37:0,43:0,
+    #15:-1,
+    #16:-1,
+    #17:-1,
+    #18:-1,
+    #0 :-1, 
+    1:-1, 3:-1, 4:-1, 19:-1, 20:-1, 21:-1, 22:-1, 35:0,
+    36:-1, 37:-1,#43:-1,
     #JER Down
-    44:0, 45:0, 46:0, 47:0, 48:0, 49:0, 50:0, 51:0, 52:0, 53:0,54:-1, 55:0,
+    #44:0, 45:0, 46:0, 47:0, 48:0, 49:0, 50:0, 51:0, 52:0, 53:0,54:-1, 55:0,
     #JER Up
-    56:0, 57:0, 58:0, 59:0, 60:0, 61:0, 62:0, 63:0, 64:0, 65:0, 66:-1, 67:0
+    #56:0, 57:0, 58:0, 59:0, 60:0, 61:0, 62:0, 63:0, 64:0, 65:0, 66:-1, 67:0
 }
 isMCList = list(MC_dict.keys())
 nMCs = list(MC_dict.values())
@@ -122,19 +131,27 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     if nMCs[idx]==0:
         continue
     predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
-    
-    dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns,
+    if "ZJets" in processMC:
+        columns_ = columns + ["NLO_kfactor"] 
+    else:
+        columns_ = columns
+    dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns_,
                                                              returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                              returnFileNumberList=True)
+
     print(numEventsList[0])
     if boosted==1:
         dfs=cut(dfs, 'dijet_pt', 100, 160)
     elif boosted==2:
         dfs=cut(dfs, 'dijet_pt', 160, None)
+    elif boosted==3:
+        dfs=cut(dfs, 'dijet_pt', 100, None)
     elif boosted==60:
         dfs=cut(dfs, 'dijet_pt', 60, 100)
+    dfs=cut(dfs, 'dijet_mass', 50, 300)
     predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
-    df = preprocessMultiClass(dfs=dfs)[0].copy()
+    #df = preprocessMultiClass(dfs=dfs)[0].copy()
+    df = dfs[0].copy()
 
 
         
@@ -142,7 +159,10 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     print("Process ", dfProcessesMC.process[isMC], " PNN assigned")
     print("Process ", dfProcessesMC.process[isMC])
     print("Xsection ", dfProcessesMC.xsection[isMC])
-    df['weight'] = df.genWeight * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
+    if "ZJets" in processMC:
+        df['weight'] = df.genWeight * df.NLO_kfactor * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
+    else:
+        df['weight'] = df.genWeight * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
 
 
 # save a copy of the dataframes before applying any cut
@@ -150,8 +170,8 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
 
 #dfs = dfs_precut.copy()
 # 0.2783 WP for medium btagID
-    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.71, max=None)[0].copy()
-    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.71, max=None)[0].copy()
+    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.2783, max=None)[0].copy()
+    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.2783, max=None)[0].copy()
     dataFrameName = df_folder + "/df_%s_%s.parquet"%(processMC, modelName)
     try:
         df.to_parquet(dataFrameName)
@@ -172,7 +192,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
 
 columns = columns_.copy()
 MC_JEC_keys = [_ for _ in range(0, 0)]
-nRealsMC_JEC_values = [int(-1) for _ in range(len(MC_JEC_keys))]
+nRealsMC_JEC_values = [int(0) for _ in range(len(MC_JEC_keys))]
 isMCJECList = list(MC_JEC_keys)
 nMCs = list(nRealsMC_JEC_values)
 

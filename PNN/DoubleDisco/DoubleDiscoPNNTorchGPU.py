@@ -2,7 +2,7 @@
 import numpy as np
 import sys
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
-sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
+sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from datetime import datetime
 import argparse
 import time
@@ -39,8 +39,8 @@ hp = getParams()
 parser = argparse.ArgumentParser(description="Script.")
 
 #### Define arguments
-parser.add_argument("-l", "--lambda_dcor", type=float, help="lambda for penalty term", default=None)
-parser.add_argument("-c", "--lambda_closure", type=float, help="lambda for penalty term", default=500)
+parser.add_argument("-l", "--lambda_dcor", type=float, help="lambda for penalty term", default=300)
+parser.add_argument("-c", "--lambda_closure", type=float, help="lambda for penalty term", default=300)
 parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=None)
 parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=None)
 parser.add_argument("-bs", "--batch_size", type=int, help="Number of eventsper batch size", default=None)
@@ -50,7 +50,11 @@ parser.add_argument("-lr", "--learningRate", type=str, help="learningRate", defa
 parser.add_argument("-b", "--boosted", type=int, help="pt 0-100 100-160 160-Inf", default=0)
 parser.add_argument("-dt", "--datataking", type=str, help="1A or 1D", default='1D')
 parser.add_argument("-save", "--saveResults", type=int, help="saveResults (False in case of HP tuning)", default=True)
-args = parser.parse_args()
+if __name__ == '__main__' and not hasattr(sys, 'ps1'):
+    args = parser.parse_args()
+else:
+    # In interactive mode
+    args = parser.parse_args([]) 
 # %%
 # If arguments are provided change hyperparameters
 try:
@@ -86,7 +90,7 @@ inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp[
 inputSubFolder = 'data' if not sampling else 'data_sampling'
 inputSubFolder = inputSubFolder+"_pt%d_%s"%(args.boosted, args.datataking)
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-featuresForTraining, columnsToRead = getFeatures(outFolder=outFolder, massHypo=False, bin_center=True, boosted=args.boosted, jet3_btagWP=True)
+featuresForTraining, columnsToRead = getFeatures(outFolder=outFolder)
 
 # %%
 
@@ -96,7 +100,7 @@ print("Before loading data")
 # cut the data to have same length in all the samples
 # reweight each sample to have total weight 1, shuffle and split in train and test
 
-Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/%s"%inputSubFolder)
+Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genMassTrain, genMassVal = loadXYWrWSaved(inFolder=inFolder+"/%s"%inputSubFolder)
 
 dijetMassTrain = np.array(Xtrain.dijet_mass.values)
 dijetMassVal = np.array(Xval.dijet_mass.values)
@@ -297,8 +301,8 @@ for epoch in range(hp["epochs"]):
 
         total_trainloss += loss.item()
         total_trainclassifier_loss += classifier_loss1.item() + classifier_loss2.item()
-        total_traindcor_loss += dCorr_total.item()/(len(mass_bins) -1)
-        total_trainclosure_loss += closure_total.item()/(len(mass_bins) -1.)
+        total_traindcor_loss += hp["lambda_dcor"] * dCorr_total.item() / divisor
+        total_trainclosure_loss += hp["lambda_closure"] *closure_total.item() / divisor
 
 
 # ______________________________________________________________________________
@@ -349,13 +353,18 @@ for epoch in range(hp["epochs"]):
                     closure_bin = closure(bin_predictions1, bin_predictions2, bin_weights,symmetrize=True,n_events_min=int(1e2)).squeeze()
                     closure_total += closure_bin
                 # Combined loss
-                loss = classifier_loss1 +classifier_loss2 + hp["lambda_dcor"] * dCorr_total/float(len(mass_bins) -1.)  + hp["lambda_closure"]*closure_total/float(len(mass_bins) -1.)
+                loss = (
+                    classifier_loss1 + 
+                    classifier_loss2 + 
+                    hp["lambda_dcor"] * dCorr_total / divisor + 
+                    hp["lambda_closure"] *closure_total / divisor
+                )
                 total_val_loss += loss.item()
                 total_val_classifier_loss += classifier_loss1.item() + classifier_loss2.item()
-                total_val_dcor_loss += dCorr_total.item()/(len(mass_bins) -1)
-                total_val_closure_loss += closure_total.item()/(len(mass_bins) -1.)
+                total_val_dcor_loss += hp["lambda_dcor"] * dCorr_total.item() / divisor
+                total_val_closure_loss += hp["lambda_closure"] *closure_total.item() / divisor
 
-    if (epoch%100==0):
+    if (epoch%5==0):
         torch.save(nn1, outFolder+"/model/nn1_e%d.pth"%epoch)
         torch.save(nn2, outFolder+"/model/nn2_e%d.pth"%epoch)
 
@@ -381,9 +390,9 @@ for epoch in range(hp["epochs"]):
 
     # Print losses
     print(f"Epoch [{epoch+1}/{hp['epochs']}], "
-        f"Train Loss: {avg_trainloss:.4f}, Classifier Loss: {avg_train_classifier_loss:.4f}, dCor Loss: {avg_traindcor_loss:.8f}, clos Loss: {avg_trainclosure_loss:.8f}, "
-        f"Val Loss: {avg_val_loss:.4f}, Val Classifier Loss: {avg_val_classifier_loss:.4f}, Val dCor Loss: {avg_val_dcor_loss:.8f}, clos Loss: {avg_val_closure_loss:.8f}",
-          flush=(epoch % 20 == 0))
+        f"Train Loss: {avg_trainloss:.2f}, Classifier Loss: {avg_train_classifier_loss:.2f}, dCor Loss: {avg_traindcor_loss:.4f}, clos Loss: {avg_trainclosure_loss:.4f}, "
+        f"Val Loss: {avg_val_loss:.2f}, Val Classifier Loss: {avg_val_classifier_loss:.2f}, Val dCor Loss: {avg_val_dcor_loss:.4f}, clos Loss: {avg_val_closure_loss:.4f}",
+          flush=(epoch % 5 == 0))
 
     # Early Stopping check
     if avg_val_loss < best_val_loss:

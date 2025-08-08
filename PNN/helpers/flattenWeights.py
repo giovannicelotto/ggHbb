@@ -5,19 +5,38 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName, 
 # TRAIN
 # **********
     Wtrain_QCD = Wtrain[Ytrain==0]
-    Wtrain_H = Wtrain[Ytrain==1]
-
+    Wtrain_H = Wtrain[Ytrain==1]    
     dfTrain_QCD = Xtrain[Ytrain==0]
     dfTrain_H = Xtrain[Ytrain==1]
-
+#
     bins = np.linspace(xmin, xmax, nbins)
     countsQCDTrain = np.histogram(Xtrain.dijet_mass[Ytrain==0], bins=bins, weights=Wtrain_QCD)[0]
     countsHTrain = np.histogram(Xtrain.dijet_mass[Ytrain==1], bins=bins, weights=Wtrain_H)[0]
-
+#
     rWtrain_QCD=Wtrain_QCD*(1/countsQCDTrain[np.digitize(np.clip(dfTrain_QCD.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
     rWtrain_H=Wtrain_H*(1/countsHTrain[np.digitize(np.clip(dfTrain_H.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
-
+#
     rWtrain_QCD, rWtrain_H = rWtrain_QCD/np.sum(rWtrain_QCD), rWtrain_H/np.sum(rWtrain_H)
+
+    #from hep_ml.reweight import GBReweighter
+#
+    #reweighter_QCD = GBReweighter(n_estimators=100, max_depth=2)
+    #reweighter_QCD.fit(original=dfTrain_QCD[['dijet_mass']],
+    #               original_weight=Wtrain_QCD,
+    #               target=np.random.uniform(low=dfTrain_QCD['dijet_mass'].min(),
+    #                                                                    high=dfTrain_QCD['dijet_mass'].max(),
+    #                                                                    size=len(dfTrain_QCD)))
+    #reweighter_H = GBReweighter(n_estimators=100, max_depth=3)
+    #reweighter_H.fit(original=dfTrain_H[['dijet_mass']],
+    #               original_weight=Wtrain_H,
+    #               target=np.random.uniform(low=dfTrain_H['dijet_mass'].min(),
+    #                                                                    high=dfTrain_H['dijet_mass'].max(),
+    #                                                                    size=len(dfTrain_H)))
+#
+    #rWtrain_QCD = reweighter_QCD.predict_weights(dfTrain_QCD[['dijet_mass']])
+    #rWtrain_QCD /= np.sum(rWtrain_QCD)
+    #rWtrain_H = reweighter_H.predict_weights(dfTrain_H[['dijet_mass']])
+    #rWtrain_H /= np.sum(rWtrain_H)
 
 # **********
 # TEST
@@ -28,13 +47,18 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName, 
     dfTest_QCD = Xval[Yval==0]
     dfTest_H = Xval[Yval==1]
 
+    #rWval_QCD = reweighter_QCD.predict_weights(dfTest_QCD[['dijet_mass']])
+    #rWval_QCD /= np.sum(rWval_QCD)
+    #rWval_H = reweighter_H.predict_weights(dfTest_H[['dijet_mass']])
+    #rWval_H /= np.sum(rWval_H)
+
     bins = np.linspace(xmin, xmax, nbins)
     countsQCDTrain = np.histogram(Xval.dijet_mass[Yval==0], bins=bins, weights=Wval_QCD)[0]
     countsHTrain = np.histogram(Xval.dijet_mass[Yval==1], bins=bins, weights=Wval_H)[0]
-
+#
     rWval_QCD=Wval_QCD*(1/countsQCDTrain[np.digitize(np.clip(dfTest_QCD.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
     rWval_H=Wval_H*(1/countsHTrain[np.digitize(np.clip(dfTest_H.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
-
+#
     rWval_QCD, rWval_H = rWval_QCD/np.sum(rWval_QCD), rWval_H/np.sum(rWval_H)
 
 
@@ -42,9 +66,9 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName, 
     ax.hist(dfTrain_QCD.dijet_mass, bins=bins, weights=Wtrain_QCD, label='Data', alpha=0.4, color='gray')
     ax.hist(dfTrain_H.dijet_mass, bins=bins, weights=Wtrain_H, alpha=0.4, label='H', linewidth=5, color='red')
     
-    #ax.hist(dfTrain_QCD.dijet_mass, bins=bins, weights=rWtrain_QCD, label='Data reweighted', histtype=u'step', linewidth=3, linestyle='dashed', color='blue')
-    #ax.hist(dfTrain_H.dijet_mass, bins=bins, weights=rWtrain_H, histtype=u'step', label='H reweighted', linewidth=5, linestyle='dotted', color='red')
-    #ax.set_yscale('log')
+    ax.hist(dfTrain_QCD.dijet_mass, bins=bins, weights=rWtrain_QCD, label='Data reweighted', histtype=u'step', linewidth=3, linestyle='dashed', color='blue')
+    ax.hist(dfTrain_H.dijet_mass, bins=bins, weights=rWtrain_H, histtype=u'step', label='H reweighted', linewidth=5, linestyle='dotted', color='red')
+    ax.set_yscale('log')
     ax.set_xlabel("Dijet Mass [GeV]")
     ax.set_ylabel("Normalized Counts")
     ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')

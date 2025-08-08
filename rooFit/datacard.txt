@@ -1,0 +1,15 @@
+imax 1  number of channels
+jmax 2  number of backgrounds (Z and H are signals or treat Higgs as signal)
+kmax *  number of nuisance parameters
+
+shapes * * workspace.root w:$PROCESS
+
+bin 1
+observation -1
+
+bin 1 1 1
+process bkg Z H
+process 0 1 2
+rate 10000 500 100
+
+# Norm factors (yields) treated as floating in fit by default

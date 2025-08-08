@@ -1,0 +1,19 @@
+# Datacard example
+---------------------------------------------
+imax 1 number of bins
+jmax 1 number of processes minus 1
+kmax * number of nuisance parameters (everything else is a nuisance)
+---------------------------------------------
+shapes signal          Cat2 /t3home/gcelotto/ggHbb/newFit/rooFit/workspace_step2.root workspace_step2:model_H_c2
+shapes background   Cat2 /t3home/gcelotto/ggHbb/newFit/rooFit/workspace_step2.root workspace_step2:multipdf
+shapes data_obs   Cat2 /t3home/gcelotto/ggHbb/newFit/rooFit/workspace_step2.root workspace_step2:rooHist_data_cat2
+---------------------------------------------
+bin Cat2
+observation -1
+---------------------------------------------
+bin          Cat2     Cat2
+process      signal background
+process      0  1
+rate         726        1
+---------------------------------------------
+lumi lnN 1.025  1 0

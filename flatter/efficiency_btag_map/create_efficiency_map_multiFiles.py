@@ -15,7 +15,7 @@ from functions import getDfProcesses_v2
 # %%
 
 dfProcess = getDfProcesses_v2()[0]
-MCList = [44, 37, 36, 35]
+MCList = [46]
 
 
 
@@ -26,7 +26,7 @@ for process, nanoPath in zip(dfProcess.process.iloc[MCList], dfProcess.nanoPath.
             
         print(f"WP : {WP_name} : {BTAG_WP:.4f}")
 
-        file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)
+        file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)[:2000]
 
 
         print("List of fileNames found... %d"%len(file_paths))

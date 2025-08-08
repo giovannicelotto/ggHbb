@@ -1,0 +1,21 @@
+DEBUG 2025-06-16 10:08:34.371 UTC: 	 CRAB Client version: v3.250409
+DEBUG 2025-06-16 10:08:34.371 UTC: 	 Running on: Linux t3ui03.psi.ch 3.10.0-1160.119.1.el7.x86_64 #1 SMP Tue May 14 11:55:25 EDT 2024 x86_64 x86_64 x86_64 GNU/Linux
+DEBUG 2025-06-16 10:08:34.372 UTC: 	 Not using Singularity
+DEBUG 2025-06-16 10:08:34.372 UTC: 	 Operating System: Red Hat Enterprise Linux Server 7.9 (Maipo)
+DEBUG 2025-06-16 10:08:34.372 UTC: 	 Executing command: 'status'
+DEBUG 2025-06-16 10:08:34.372 UTC: 	 Found CRAB cache file /t3home/gcelotto/.crab3
+ERROR 2025-06-16 10:08:34.392 UTC: 	 Error: crab_projects_2018_mc_run2/crab_GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia8/ is not a valid CRAB project directory.
+ERROR 2025-06-16 10:08:34.392 UTC: 	 Caught ClientException exception
+Traceback (most recent call last):
+  File "/cvmfs/cms.cern.ch/share/cms/crab-prod/v3.250409.00/bin/crab.py", line 157, in <module>
+    client()
+  File "/cvmfs/cms.cern.ch/share/cms/crab-prod/v3.250409.00/bin/crab.py", line 135, in __call__
+    self.cmd = sub_cmd(self.logger, args[1:])  # the crab command to be executed
+  File "/cvmfs/cms.cern.ch/share/cms/crab-prod/v3.250409.00/lib/CRABClient/Commands/status.py", line 48, in __init__
+    SubCommand.__init__(self, logger, cmdargs)
+  File "/cvmfs/cms.cern.ch/share/cms/crab-prod/v3.250409.00/lib/CRABClient/Commands/SubCommand.py", line 281, in __init__
+    SubCommand.validateOptions(self)
+  File "/cvmfs/cms.cern.ch/share/cms/crab-prod/v3.250409.00/lib/CRABClient/Commands/SubCommand.py", line 691, in validateOptions
+    raise ConfigurationException(msg)
+CRABClient.ClientExceptions.ConfigurationException: [91mError[0m: crab_projects_2018_mc_run2/crab_GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia8/ is not a valid CRAB project directory.
+INFO 2025-06-16 10:08:34.401 UTC: 	 Log file is /t3home/gcelotto/ggHbb/newFit/rooFit/crab.log

@@ -17,25 +17,30 @@ try:
     dd = args.doubleDisco
 except:
     print("Interactive mode")
-    modelName = "Feb17_900p2"
+    modelName = "Jul15_3_20p0"
     dd = False
 df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 outFolder = "/t3home/gcelotto/ggHbb/PNN/results_mjjDisco/%s"%modelName 
 #mass_bins = np.load(outFolder+"/mass_bins.npy")
 # %%
 dfs = []
-dfProcessesMC, dfProcessesData = getDfProcesses_v2()
+dfProcessesMC, dfProcessesData, dfProcessesMC_JEC = getDfProcesses_v2()
 dfsMC = []
 # %%
-isMCList = [0,
+isMCList = [#0,
             1, 
-            #2,3, 4,
+            #2,
+            3, 4,
             #5,6,7,8, 9,10,
             #11,12,13,
-            #14,15,16,17,18,
-            19,20,21, #22,
+            #14,
+    #15,
+    #        16,
+    #        17,18,
+            19,20,21,22,
             #35,
-            36
+            36,
+            37,
             ]
 for idx, p in enumerate(dfProcessesMC.process):
     if idx not in isMCList:
@@ -46,9 +51,16 @@ for idx, p in enumerate(dfProcessesMC.process):
 dfsData = []
 isDataList = [
             #0,
-            #1, 
+            1, 
             2,
-            #3
+            3,4,5,
+            6,7,8,9,
+            10,
+            11,12,13,14,15,
+            16,
+            17,
+            18,
+            19,20,21
             ]
 
 lumis = []
@@ -66,27 +78,44 @@ for idx, df in enumerate(dfsMC):
     dfsMC[idx].weight =dfsMC[idx].weight*lumi
 print("Lumi total is %.2f fb-1"%lumi)
 # %%
-#dfsMC = cut(dfsMC, 'dijet_pt', 140, None)
+dfsMC = cut(dfsMC, 'dijet_pt', 100, None)
+dfsData = cut(dfsData, 'dijet_pt', 100, None)
+#dfsMC = cut(dfsMC, 'PNN', 0.4,None)
+#dfsData = cut(dfsData, 'PNN', 0.4,None)
 #dfsData = cut(dfsData, 'dijet_pt', 140, None)
 # %%
 fig = plotDfs(dfsData=dfsData, dfsMC=dfsMC, isMCList=isMCList, dfProcesses=dfProcessesMC, nbin=101, lumi=lumi, log=True, blindPar=(False, 125, 20))
 # %%
 df=pd.concat(dfsData)
-
+dfZ = pd.concat(dfsMC[0:-1])
+dfH = dfsMC[-1]
+#%%
 import matplotlib.pyplot as plt
 from hist import Hist
-bins = np.linspace(100, 150, 201)
+bins = np.linspace(80, 160, 41)
 h_low = Hist.new.Var(bins, name="mjj").Weight()
 h_high = Hist.new.Var(bins, name="mjj").Weight()
+h_low_Z = Hist.new.Var(bins, name="mjj").Weight()
+h_high_Z = Hist.new.Var(bins, name="mjj").Weight()
+h_low_H = Hist.new.Var(bins, name="mjj").Weight()
+h_high_H = Hist.new.Var(bins, name="mjj").Weight()
 
-t = 0.
+t = 0.6
+t_min = 0.5
+t_max = 0.7
 
-h_low.fill(df.dijet_mass[df.PNN<t])
-h_high.fill(df.dijet_mass[df.PNN>t])
+h_low.fill(df.dijet_mass[(df.PNN<t) & (df.PNN>t_min) & (df.PNN<t_max)])
+h_high.fill(df.dijet_mass[(df.PNN>t) & (df.PNN>t_min) & (df.PNN<t_max)])
 
-for idx, df in enumerate(dfsMC):
-    print(dfProcessesMC.process[isMCList[idx]])
-    m = df.PNN>t
+h_low_Z.fill(dfZ.dijet_mass[(dfZ.PNN<t) & (dfZ.PNN>t_min) & (dfZ.PNN<t_max)])
+h_high_Z.fill(dfZ.dijet_mass[(dfZ.PNN>t) & (dfZ.PNN>t_min) & (dfZ.PNN<t_max)])
+
+h_low_H.fill(dfH.dijet_mass[(dfH.PNN<t) & (dfH.PNN>t_min) & (dfH.PNN<t_max)])
+h_high_H.fill(dfH.dijet_mass[(dfH.PNN>t) & (dfH.PNN>t_min) & (dfH.PNN<t_max)])
+
+#for idx, df_ in enumerate(dfsMC):
+#    print(dfProcessesMC.process[isMCList[idx]])
+#    m = (df_.PNN>t)  & (df_.PNN<0.7)
     #h_low.fill(df.dijet_mass[~m], weight=-df.weight[~m])
     #h_high.fill(df.dijet_mass[m], weight=-df.weight[m])
 
@@ -102,17 +131,31 @@ err_c_low = np.sqrt(h_low.variances())/np.sum(h_low.values())
 err_c_high = np.sqrt(h_high.variances())/np.sum(h_high.values())
 
 #ax[1].errorbar(x, c_high/c_low, yerr = c_high/c_low * np.sqrt((err_c_low/c_low)**2 + (err_c_high/c_high)**2) , color='red', linestyle='none', marker='o')
-ax[1].errorbar(x, h_high.values() - h_low.values()*np.sum(h_high.values())/np.sum(h_low.values()), yerr = np.sqrt(h_high.variances() + h_low.variances()) , color='red', linestyle='none', marker='o')
+ax[1].errorbar(x, h_high.values() - h_low.values()*np.sum(h_high.values())/np.sum(h_low.values()), yerr = np.sqrt(h_high.variances() + h_low.variances()*np.sum(h_high.values())/np.sum(h_low.values())) , color='red', linestyle='none', marker='o')
+ax[1].errorbar(x, h_high_Z.values() - h_low_Z.values()*np.sum(h_high.values())/np.sum(h_low.values()), yerr = np.sqrt(h_high_Z.variances() + h_low_Z.variances()*np.sum(h_high.values())/np.sum(h_low.values())) , color='green', linestyle='none', marker='o')
+ax[1].errorbar(x, h_high_H.values() - h_low_H.values()*np.sum(h_high.values())/np.sum(h_low.values()), yerr = np.sqrt(h_high_H.variances() + h_low_H.variances()*np.sum(h_high.values())/np.sum(h_low.values())) , color='black', linestyle='none', marker='o')
+
 
 #ax[1].hist(bins[:-1], bins=bins, weights=cz1-cz2)
-ax[1].set_ylim(-600, None)
-ax[1].set_ylabel("Ratio")
+#$ax[1].set_ylim(-600, None)
+ax[1].set_ylabel("High - Low")
 ax[0].legend()
 ax[0].set_xlim(bins[0], bins[-1])
 ax[1].hlines(xmin=bins[0], xmax=bins[-1], y=1, color='black')
+
+
+
+
+
 # %%
-dfZ = pd.concat(dfsMC[1:-1])
+dfZ = pd.concat(dfsMC[0:-1])
 dfH = dfsMC[-1]
+fig, ax = plt.subplots(1, 1)
+ax.hist(df.PNN, bins=np.linspace(0, 1, 51), histtype='step', color='black', density=True, label='Data', weights=df.weight)
+ax.hist(dfH.PNN, bins=np.linspace(0, 1, 51), histtype='step', color='red', density=True, label='Higgs', weights=dfH.weight)
+ax.hist(dfZ.PNN, bins=np.linspace(0, 1, 51), histtype='step', color='green', density=True, label='Z', weights=dfZ.weight)
+ax.legend()
+# %%
 cz1 = np.histogram(dfZ.dijet_mass[dfZ.PNN>t], bins=bins, weights=dfZ.weight[dfZ.PNN>t])[0]
 cH = np.histogram(dfH.dijet_mass[dfH.PNN>t], bins=bins, weights=dfH.weight[dfH.PNN>t])[0]
 fig, ax = plt.subplots(1, 1)
@@ -166,6 +209,7 @@ for idx, df in enumerate(dfsMC):
         #print(process, c)
         countsDict['Z+Jets'] = countsDict['Z+Jets'] + c
     elif 'WJets' in process:
+        print("Here")
         countsDict['W+Jets'] = countsDict['W+Jets'] + c
     elif (('WW' in process) | ('ZZ' in process) | ('WZ' in process)):
         countsDict['VV'] = countsDict['VV'] + c
@@ -193,10 +237,10 @@ dfMC = pd.concat(dfsMC)
 dfdata = pd.concat(dfsData)
 
 # %%
-fig, ax  =plt.subplots(1, 1)
-pnn_t = 0.7
-ax.hist(dfMC.dijet_mass[dfMC.PNN>pnn_t], bins=mass_bins, weights=dfMC.weight[dfMC.PNN>pnn_t], histtype='step', color='black', label='MC')
-ax.hist(dfdata.dijet_mass[dfdata.PNN>pnn_t], bins=mass_bins, weights=dfdata.weight[dfdata.PNN>pnn_t], histtype='step', label='Data')
-#ax.set_yscale('log')
-ax.legend()
+#fig, ax  =plt.subplots(1, 1)
+#pnn_t = 0.7
+#ax.hist(dfMC.dijet_mass[dfMC.PNN>pnn_t], bins=mass_bins, weights=dfMC.weight[dfMC.PNN>pnn_t], histtype='step', color='black', label='MC')
+#ax.hist(dfdata.dijet_mass[dfdata.PNN>pnn_t], bins=mass_bins, weights=dfdata.weight[dfdata.PNN>pnn_t], histtype='step', label='Data')
+##ax.set_yscale('log')
+#ax.legend()
 # %%

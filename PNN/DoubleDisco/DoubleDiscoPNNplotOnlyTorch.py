@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 hep.style.use("CMS")
 import sys
-sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
-from checkOrthogonality import checkOrthogonality, checkOrthogonalityInMassBins, plotLocalPvalues
+sys.path.append("/t3home/gcelotto/ggHbb/PNN")
+from checkOrthogonality import checkOrthogonalityInMassBins, plotLocalPvalues
 from helpers.getFeatures import getFeatures
 from helpers.getParams import getParams
 from helpers.getInfolderOutfolder import getInfolderOutfolder
@@ -20,7 +20,7 @@ from datetime import datetime
 from sklearn.feature_selection import mutual_info_regression
 from helpers.doPlots import ggHscoreScan, getShapTorch
 sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
-from checkOrthogonality import checkOrthogonality, checkOrthogonalityInMassBins, plotLocalPvalues
+#from checkOrthogonality import  checkOrthogonalityInMassBins, plotLocalPvalues
 from dcorLoss import Classifier
 
 # Get current month and day
@@ -38,19 +38,23 @@ try:
     if args.date is not None:
         current_date = args.date
 except:
-    current_date = "Feb25"
-    hp["lambda_reg"] = 900.1
+    current_date = "Aug04"
+    hp["lambda_reg"] = 400.0
     print("Interactive mode")
 # %%
 results = {}
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%s"%(current_date, str(hp["lambda_reg"]).replace('.', 'p')), suffixResults='DoubleDisco', createFolder=False)
-modelName1, modelName2 = "nn1.pth", "nn2.pth"
+
+inputSubFolder = 'data' 
+inputSubFolder = inputSubFolder+"_pt%d_%s"%(0, "1D")
+modelName1, modelName2 = "nn1_e5.pth", "nn2_e5.pth"
 
 # %%
-Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/data")
-columnsToRead = getFeatures(outFolder=None,  massHypo=True)[1]
+Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genMassTrain, genMassVal = loadXYWrWSaved(inFolder=inFolder+"/%s"%inputSubFolder, isTest=False)
+columnsToRead = getFeatures(outFolder=None)[1]
 featuresForTraining = np.load(outFolder+"/featuresForTraining.npy")
 print(featuresForTraining)
+# %%
 if 'bin_center' in featuresForTraining:
     mass_bins = np.load(outFolder + "/mass_bins.npy")
     bin_centers = [(mass_bins[i] + mass_bins[i+1]) / 2 for i in range(len(mass_bins) - 1)]
@@ -69,14 +73,14 @@ if 'bin_center' in featuresForTraining:
         np.nan  # Assign NaN for out-of-range dijet_mass
     )
 
-    bin_indices = np.digitize(Xtest['dijet_mass'].values, mass_bins) - 1
-    Xtest['bin_center'] = np.where(
-        (bin_indices >= 0) & (bin_indices < len(bin_centers)),  # Ensure valid indices
-        np.array(bin_centers)[bin_indices],
-        np.nan  # Assign NaN for out-of-range dijet_mass
-    )
-advFeatureTrain = np.load(inFolder+"/data/advFeatureTrain.npy")     
-advFeatureVal   = np.load(inFolder+"/data/advFeatureVal.npy")
+    #bin_indices = np.digitize(Xtest['dijet_mass'].values, mass_bins) - 1
+    #Xtest['bin_center'] = np.where(
+    #    (bin_indices >= 0) & (bin_indices < len(bin_centers)),  # Ensure valid indices
+    #    np.array(bin_centers)[bin_indices],
+    #    np.nan  # Assign NaN for out-of-range dijet_mass
+    #)
+#advFeatureTrain = np.load(inFolder+"/data/advFeatureTrain.npy")     
+#advFeatureVal   = np.load(inFolder+"/data/advFeatureVal.npy")
 
 #nn1 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=hp["nNodes"])
 #nn2 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=hp["nNodes"])
@@ -123,14 +127,14 @@ with open(outFolder+"/model/model_summary.txt", "w") as f:
         f.write("\n")
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
-Xtest  = scale(Xtest, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+#Xtest  = scale(Xtest, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 
 Xtrain_tensor = torch.tensor(np.float32(Xtrain[featuresForTraining].values)).float()
 Xval_tensor = torch.tensor(np.float32(Xval[featuresForTraining].values)).float()
-Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
+#Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
 
 Ytrain_tensor = torch.tensor(Ytrain).unsqueeze(1).float()
-Ytest_tensor = torch.tensor(Ytest).unsqueeze(1).float()
+#Ytest_tensor = torch.tensor(Ytest).unsqueeze(1).float()
 Yval_tensor = torch.tensor(Yval).unsqueeze(1).float()
 # %%
 with torch.no_grad():  # No need to track gradients for inference
@@ -138,11 +142,11 @@ with torch.no_grad():  # No need to track gradients for inference
     YPredTrain2 = nn2(Xtrain_tensor).numpy()
     YPredVal1 = nn1(Xval_tensor).numpy()
     YPredVal2 = nn2(Xval_tensor).numpy()
-    YPredTest1 = nn1(Xtest_tensor).numpy()
-    YPredTest2 = nn2(Xtest_tensor).numpy()
+    #YPredTest1 = nn1(Xtest_tensor).numpy()
+    #YPredTest2 = nn2(Xtest_tensor).numpy()
 Xtrain = unscale(Xtrain, featuresForTraining=featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl")
 Xval = unscale(Xval, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
-Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
+#Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
 # %%
 
 # %%
@@ -165,8 +169,8 @@ plot_lossTorch(train_loss_history, val_loss_history,
 
 Xval['PNN1'] = YPredVal1
 Xval['PNN2'] = YPredVal2
-Xtest['PNN1'] = YPredTest1
-Xtest['PNN2'] = YPredTest2
+#Xtest['PNN1'] = YPredTest1
+#Xtest['PNN2'] = YPredTest2
 fig, ax = plt.subplots(1, 2, figsize=(15, 8))
 bins=np.linspace(0, 1, 101)
 cS = np.histogram(Xval[Yval==0].PNN1,bins=bins)[0]
@@ -505,14 +509,14 @@ for blow, bhigh in zip(mass_bins[:-1], mass_bins[1:]):
     distance_corr = dcor.distance_correlation(np.array(YPredTrain1[mask], dtype=np.float64), np.array(YPredTrain2[mask], dtype=np.float64))
     discos_bin_train.append(distance_corr)
 
-    mask = (Xtest.dijet_mass >=blow) & (Xtest.dijet_mass < bhigh)  & (Ytest==0)
-    distance_corr = dcor.distance_correlation(np.array(YPredTest1[mask], dtype=np.float64), np.array(YPredTest2[mask], dtype=np.float64))
-    discos_bin_test.append(distance_corr)
+    #mask = (Xtest.dijet_mass >=blow) & (Xtest.dijet_mass < bhigh)  & (Ytest==0)
+    #distance_corr = dcor.distance_correlation(np.array(YPredTest1[mask], dtype=np.float64), np.array(YPredTest2[mask], dtype=np.float64))
+    #discos_bin_test.append(distance_corr)
 results['averageBin_sqaured_disco'] = np.mean(discos_bin_val)
 results['error_averageBin_sqaured_disco'] = np.std(discos_bin_val)/np.sqrt(len(discos_bin_val))
 plotLocalPvalues(discos_bin_val, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_val.png")
 plotLocalPvalues(discos_bin_train, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_train.png", color='red')
-plotLocalPvalues(discos_bin_test, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_test.png", color='green')
+#plotLocalPvalues(discos_bin_test, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_test.png", color='green')
 # %%
 print("*"*30)
 print("Pull ABCD Delta/sigmaDelta")

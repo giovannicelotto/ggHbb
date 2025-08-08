@@ -61,12 +61,12 @@ print("Val Lenght after cutting", len(Xval))
 
 XtrainTensor = torch.tensor(Xtrain[featuresForTraining].values, dtype=torch.float32, device=device)
 YtrainTensor = torch.tensor(Ytrain, dtype=torch.float, device=device).unsqueeze(1)
-WtrainTensor = torch.tensor(Wtrain, dtype=torch.float32, device=device).unsqueeze(1)
+WtrainTensor = torch.tensor(rWtrain, dtype=torch.float32, device=device).unsqueeze(1)
 
 
 Xval_tensor = torch.tensor(Xval[featuresForTraining].values, dtype=torch.float32, device=device)
 Yval_tensor = torch.tensor(Yval, dtype=torch.float, device=device).unsqueeze(1)
-Wval_tensor = torch.tensor(Wval, dtype=torch.float32, device=device).unsqueeze(1)
+Wval_tensor = torch.tensor(rWval, dtype=torch.float32, device=device).unsqueeze(1)
 
 
 
@@ -107,6 +107,8 @@ def train_and_evaluate(hp):
     best_model_weights = None
 
     for epoch in range(hp["epochs"]):
+        if epoch%10==0:
+            print(epoch)
         model.train()
         total_trainloss = 0.0
         for batch in train_dataloader:
@@ -190,6 +192,8 @@ def train_and_evaluate_bayes(learning_rate, batch_size_log2, dropout, n1_log2, n
     start_time = time.time()
     batch_size = int(2 ** int(batch_size_log2))
     MIN_LAYER_SIZE_LOG2 = 2  # Equivalent to 4 nodes
+    # thirs layer can have 4 nodes or more.
+    # If less  remove the third layer
     if n3_log2 < MIN_LAYER_SIZE_LOG2:
         nodes = [int(2 ** int(n1_log2)), int(2 ** int(n2_log2))]
     else:
@@ -245,13 +249,17 @@ optimizer = BayesianOptimization(
 )
 
 # Set up logger
+print("Set up logger...")
+print("Check ", np.average(Xtrain.dijet_mass[Ytrain==0], weights=rWtrain[Ytrain==0]))
+print("Check ", np.average(Xtrain.dijet_mass[Ytrain==1], weights=rWtrain[Ytrain==1]))
 log_path = "/t3home/gcelotto/ggHbb/PNN/NN_highPt/bayes_opt/model_b%d/logs_bayes.json"%args.boosted
+## Load previous logs if available
+if os.path.exists(log_path):
+    print("Path was loaded", flush=True)
+    load_logs(optimizer, logs=[log_path])
 logger = JSONLogger(path=log_path)
 optimizer.subscribe(Events.OPTIMIZATION_STEP, logger)
 #
-## Load previous logs if available
-if os.path.exists(log_path):
-    load_logs(optimizer, logs=[log_path])
 
 
 
@@ -265,10 +273,10 @@ known_config = {
     'n2_log2': 8,
     'n3_log2': 0,
 }
-
-# Evaluate and register manually
+#Evaluate and register manually
+print("Evaluate first point...")
 target = train_and_evaluate_bayes(**known_config)
 optimizer.register(params=known_config, target=target)
 
 
-optimizer.maximize(init_points=50, n_iter=25)
+optimizer.maximize(init_points=50, n_iter=15)

@@ -35,6 +35,7 @@ hp = getParams()
 parser = argparse.ArgumentParser(description="Script.")
 #### Define arguments
 parser.add_argument("-v", "--version", type=float, help="version of the model", default=0)
+parser.add_argument("-l", "--lambda_disco", type=float, help="lambda value for disco", default=0)
 parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=1500)
 parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=1000000000)
 parser.add_argument("-b", "--boosted", type=int, help="Boosted Class", default=1)
@@ -109,7 +110,7 @@ print(len(Xval), " events in val dataset")
 # %%
 # %%
 # scale with standard scalers and apply log to any pt and mass distributions
-print(Xtrain.dimuon_mass)
+#print(Xtrain.dimuon_mass)
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=True)
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 print(Xtrain.isna().sum())
@@ -129,13 +130,13 @@ print("Val Lenght after cutting", len(Xval))
 
 XtrainTensor = torch.tensor(Xtrain[featuresForTraining].values, dtype=torch.float32, device=device)
 YtrainTensor = torch.tensor(Ytrain, dtype=torch.float, device=device).unsqueeze(1)
-WtrainTensor = torch.tensor(Wtrain, dtype=torch.float32, device=device).unsqueeze(1)
+WtrainTensor = torch.tensor(rWtrain, dtype=torch.float32, device=device).unsqueeze(1)
 dijetMassTrain_tensor = torch.tensor(dijetMassTrain, dtype=torch.float32, device=device).unsqueeze(1)
 
 
 Xval_tensor = torch.tensor(Xval[featuresForTraining].values, dtype=torch.float32, device=device)
 Yval_tensor = torch.tensor(Yval, dtype=torch.float, device=device).unsqueeze(1)
-Wval_tensor = torch.tensor(Wval, dtype=torch.float32, device=device).unsqueeze(1)
+Wval_tensor = torch.tensor(rWval, dtype=torch.float32, device=device).unsqueeze(1)
 dijetMassVal_tensor = torch.tensor(dijetMassVal, dtype=torch.float32, device=device).unsqueeze(1)
 
 #Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
@@ -208,7 +209,12 @@ for epoch in range(hp["epochs"]):
         # Apply weights manually
         classifier_loss = (raw_loss * W_batch).mean()
         # Combined loss
-        loss = classifier_loss
+        if args.lambda_disco!=0:
+            W_batch = torch.ones([len(W_batch), 1], device=device)
+            dCorr_bin = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
+            loss = classifier_loss + args.lambda_disco*dCorr_bin
+        else:
+            loss = classifier_loss
         loss.backward()
         
         optimizer.step()
@@ -240,7 +246,12 @@ for epoch in range(hp["epochs"]):
                 # Apply weights manually
                 classifier_loss = (raw_loss * W_batch).mean()
                 # Combined loss
-                loss = classifier_loss 
+                if args.lambda_disco!=0:
+                    W_batch = torch.ones([len(W_batch), 1], device=device)
+                    dCorr_bin = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
+                    loss = classifier_loss + args.lambda_disco*dCorr_bin
+                else:
+                    loss = classifier_loss
                 total_val_loss += loss.item()
 
 

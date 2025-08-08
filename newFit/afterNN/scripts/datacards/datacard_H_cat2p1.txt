@@ -19,40 +19,8 @@ rate        -1     -1
 
 ------------
 lumi    lnN    1.025    -
-btag_ shape  1 1
-JER_  shape 1 1
-JECAbsoluteMPFBias_ shape 1 1
-JECAbsoluteScale_ shape 1 1
-JECAbsoluteStat_ shape 1 1
-JECFlavorQCD_ shape 1 1
-JECFragmentation_ shape 1 1
-JECPileUpDataMC_ shape 1 1
-JECPileUpPtBB_ shape 1 1
-JECPileUpPtEC1_ shape 1 1
-JECPileUpPtEC2_ shape 1 1
-JECPileUpPtHF_ shape 1 1
-JECPileUpPtRef_ shape 1 1
-JECRelativeBal_ shape 1 1
-JECRelativeFSR_ shape 1 1
-JECRelativeJEREC1_ shape 1 1
-JECRelativeJEREC2_ shape 1 1
-JECRelativeJERHF_ shape 1 1
-JECRelativePtBB_ shape 1 1
-JECRelativePtEC1_ shape 1 1
-JECRelativePtEC2_ shape 1 1
-JECRelativePtHF_ shape 1 1
-JECRelativeSample_ shape 1 1
-JECRelativeStatEC_ shape 1 1
-JECRelativeStatFSR_ shape 1 1
-JECRelativeStatHF_ shape 1 1
-JECSinglePionECAL_ shape 1 1
-JECSinglePionHCAL_ shape 1 1
-JECTimePtEta_ shape 1 1
 ------------
 lumi group = lumi
-JER group = JER_
-btag group = btag_
-JEC group = JECAbsoluteMPFBias_ JECAbsoluteScale_ JECAbsoluteStat_ JECFlavorQCD_ JECFragmentation_ JECPileUpDataMC_ JECPileUpPtBB_ JECPileUpPtEC1_ JECPileUpPtEC2_ JECPileUpPtHF_ JECPileUpPtRef_ JECRelativeBal_ JECRelativeFSR_ JECRelativeJEREC1_ JECRelativeJEREC2_ JECRelativeJERHF_ JECRelativePtBB_ JECRelativePtEC1_ JECRelativePtEC2_ JECRelativePtHF_ JECRelativeSample_ JECRelativeStatEC_ JECRelativeStatFSR_ JECRelativeStatHF_ JECSinglePionECAL_ JECSinglePionHCAL_ JECTimePtEta_
 
 
-* autoMCStats 0 0 1
+* autoMCStats 0 1 1

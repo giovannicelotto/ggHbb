@@ -21,6 +21,7 @@ flatPath="$7"
 method="$8"
 jec="$9"
 verbose="${10}"
+isMC="${11}"
 echo "Before startin the python"
 echo "Method is "$method
 echo "nanoFileName is "$nanoFileName
@@ -33,15 +34,16 @@ echo "flatPath is "$flatPath
 echo "method is "$method
 echo "jec is "$jec
 echo "verbose is "$verbose
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/flatter/treeFlatter_dict.py $nanoFileName $maxEntries $maxJet $pN $process $method $jec $verbose
+echo "isMC is "$isMC
+/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/flatter/treeFlatter_dict.py $nanoFileName $maxEntries $maxJet $pN $process $method $jec $verbose $isMC
 
 
 echo "Going to copy"
 echo "From "$source_dir"/"$process"_"$fileNumber".parquet"
-echo "To root://t3dcachedb.psi.ch:1094//"$flatPath
+echo "To root://t3dcachedb03.psi.ch:1094//"$flatPath
 
 echo "Analyze scratch"
 cd /scratch
 pwd
 ls
-xrdcp -f -N $source_dir/$process"_"$fileNumber.parquet root://t3dcachedb.psi.ch:1094//$flatPath
+xrdcp -f -N $source_dir/$process"_"$fileNumber.parquet root://t3dcachedb03.psi.ch:1094//$flatPath

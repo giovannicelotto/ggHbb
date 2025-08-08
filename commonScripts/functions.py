@@ -55,8 +55,23 @@ def getDfProcesses_v2 (reset=False):
     dfProcessesMC_JEC = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesMC_JEC.csv")
     return dfProcessesMC, dfProcessesData, dfProcessesMC_JEC
 
-def getCommonFilters(btagTight=False):
+def getCommonFilters(btagTight=False, btagWP=None):
+    '''
+    btagTight True for Tight, False for Medium
+    btagWP overwrites the btagTight argument (L, M, T)
+    '''
     btag = 0.2783 if btagTight is False else 0.71
+    if btagWP=="L":
+        btag = 0.049
+    elif btagWP=="M":
+        btag = 0.2783
+    elif btagWP=="T":
+        btag = 0.71
+    elif btagWP==None:
+        "No WP provided, you are using the btagTight argument"
+    else:
+        assert False
+
     if btagTight:
         print("Setting btag cut to 0.71 for both jets")
     filters = [
@@ -456,9 +471,10 @@ def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=None, selectFi
     for nReal, path, lumi, nFiles, processName, dataTakingIdx in zip(nReals, flatPaths, df_processesData.lumi, df_processesData.nFiles, df_processesData.process, dataTaking): 
 
         print("\n\n", processName, " | ", lumi, " | ", nReal, " requested", " | ", nFiles, " avail. at nano", )
-        if dataTakingIdx == 0:
-            assert processName=='Data1A'
+        if dataTakingIdx == 17:
+            assert processName=='Data1D'
             if training:
+                print("Files used for training are called")
                 flatPaths[flatPaths.index(path)] = path+"/training"    
                 path = path+"/training"
             else:

@@ -208,7 +208,7 @@ def roc(thresholds, signal_predictions, realData_predictions, weights_signal, si
 def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions, outName, log=True, doubleDisco=False, label='NN output'):
     #signal_predictions, realData_predictions, signalTrain_predictions, realDataTrain_predictions = np.arctanh(signal_predictions), np.arctanh(realData_predictions), np.arctanh(signalTrain_predictions), np.arctanh(realDataTrain_predictions)
     fig, ax = plt.subplots(1, 1)
-    bins=np.linspace(0, 1, 31)
+    bins=np.linspace(0, 1, 101)
     
     # Hist the predictions
     sig_test_counts = np.histogram(signal_predictions, bins=bins)[0]
@@ -269,6 +269,7 @@ def getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tens
         nFeatures = len(featuresForTraining)
 
     data = Xtest if tensor is None else tensor
+    print("Explainer starts")
     explainer = GradientExplainer(model=model, data=data)
 
     shap_values = explainer.shap_values(data)

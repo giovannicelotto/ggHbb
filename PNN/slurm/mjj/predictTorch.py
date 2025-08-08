@@ -31,12 +31,14 @@ def predict(file_path, modelName, boosted):
     
     #Xtest['massHypo'] = Xtest['dijet_mass'].apply(lambda x: mass_hypo_list[np.abs(mass_hypo_list - x).argmin()])
     #featuresForTraining = featuresForTraining + ['dijet_mass']
-    
+    print(Xtest.dijet_pt.max(), flush=True)
     data = [Xtest]
     if int(boosted)==1:
         data = cut(data, 'dijet_pt', 100, 160)
     elif int(boosted)==2:
         data = cut(data, 'dijet_pt', 160, None)
+    elif int(boosted)==3:
+        data = cut(data, 'dijet_pt', 100, None)
     elif int(boosted)==60:
         data = cut(data, 'dijet_pt', 60, 100)
     print("File cut")
@@ -47,6 +49,9 @@ def predict(file_path, modelName, boosted):
     # Perform prediction
     # scale
     print("Scaling")
+    print(modelDir)
+    print("data[0]")
+    print(data[0])
     data[0]  = scale(data[0], featuresForTraining=featuresForTraining, scalerName= modelDir + "/myScaler.pkl" ,fit=False)
     for f in data[0].columns:
         print(f,data[0][f].isna().sum())

@@ -13,31 +13,49 @@ import argparse
 try:
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--idx', type=int, default=2, help='Index value (default: 2)')
+    parser.add_argument('-p', '--particle', type=str, default='Z', help='H or Z')
 
     args = parser.parse_args()
+    particle = args.particle
     idx = args.idx
 except:
     idx = 2
+    particle = 'H'
     print("Parser it not working.\n Idx set to %d"%idx)
 
-config_path = ["/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/zPeakFit_config.yml",
-               "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/zPeakFit_config.yml",
-               "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/zPeakFit_config.yml"][idx]
+config_path = ["/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/PeakFit_config.yml",
+               "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/PeakFit_config.yml",
+               "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/PeakFit_config.yml"][idx]
 
 with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
 
-MCList = config['MCList']
-MCList_sD = config['MCList_sD']
-MCList_sU = config['MCList_sU']
-x1, x2 = config['x_bounds']
 modelName = config['modelName']
 outFolder = config['outFolder']
 cuts_dict = config['cuts_dict']
-fitFunction= config['fitFunction']
-nbins = config["nbins"]
-params = config["params"]
-paramsLimits  = config["paramsLimits"]
+
+
+if particle=='H':
+    MCList = config['H_MCList']
+    MCList_sD = config['H_MCList_sD']
+    MCList_sU = config['H_MCList_sU']
+    x1, x2 = config['H_x_bounds']
+    fitFunction= config['H_fitFunction']
+    nbins = config["H_nbins"]
+    params = config["H_params"]
+    paramsLimits  = config["H_paramsLimits"]
+elif particle=='Z':
+    MCList = config['Z_MCList']
+    MCList_sD = config['Z_MCList_sD']
+    MCList_sU = config['Z_MCList_sU']
+    x1, x2 = config['Z_x_bounds']
+    fitFunction= config['Z_fitFunction']
+    nbins = config["Z_nbins"]
+    params = config["Z_params"]
+    paramsLimits  = config["Z_paramsLimits"]
+else:
+    assert False, "args.particle must be either H or Z. Value not valid"
+
 
 path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
 dfProcesses = getDfProcesses_v2()[0].iloc[MCList]
@@ -49,7 +67,7 @@ set_x_bounds(x1, x2)
 
 # %%
 
-fit_systematics = FitWithSystematics(modelName, path, dfProcesses, x1, x2, outFolder, fitFunction, dfProcesses_sD=dfProcesses_sD, dfProcesses_sU=dfProcesses_sU)
+fit_systematics = FitWithSystematics(modelName, path, dfProcesses, x1, x2, outFolder, fitFunction, dfProcesses_sD=dfProcesses_sD, dfProcesses_sU=dfProcesses_sU, particle=particle)
 # %%
 dfsMC = fit_systematics.load_data()
 print("This are all the columns:")

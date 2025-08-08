@@ -36,14 +36,14 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
 
 def get_input_paths(dataTaking, mass_hypos=[50, 70, 100, 200, 300]):
     base = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
-    folder = "training2"
+    folder = "training"
     
     paths = [
         f"{base}/Data{dataTaking}/{folder}",
         f"{base}/MC/MINLOGluGluHToBB/training"
     ]
 
-    paths += [f"{base}/MC/GluGluH_M{m}_ToBB" for m in mass_hypos]
+    paths += [f"{base}/MC/GluGluH_M{m}_ToBB_private" for m in mass_hypos]
     print(mass_hypos)
     masses = [125] + mass_hypos
     return paths, np.array(masses)
@@ -55,6 +55,7 @@ def apply_kinematic_cuts(dfs, boosted):
         0: {'dijet_pt': (None, 100), 'dijet_mass': (50, 300)},
         1: {'dijet_pt': (100, 160), 'dijet_mass': (50, 300)},
         2: {'dijet_pt': (160, None), 'dijet_mass': (50, 300)},
+        3: {'dijet_pt': (100, None), 'dijet_mass': (50, 300)},
 
     }
 
@@ -70,13 +71,19 @@ def apply_kinematic_cuts(dfs, boosted):
     #        dfs[idx] = df[~((df.jet1_btagDeepFlavB > 0.71) & (df.jet2_btagDeepFlavB > 0.71))]
         
     #dfs_bkg = [dfs[0]]
-    dfs_sig = dfs[1:]
-    dfs_sig = cut(dfs_sig,'dR_jet1_genQuark',None, 0.2 )
-    dfs_sig = cut(dfs_sig,'dR_jet2_genQuark',None, 0.2 )
-    dfs_sig = cut(dfs_sig,'dpT_jet1_genQuark',None, 0.5 )
-    dfs_sig = cut(dfs_sig,'dpT_jet2_genQuark',None, 0.5 )
+        
 
-    return [dfs[0]] + dfs_sig
+    genMatched = False
+    if genMatched:
+        dfs_sig = dfs[1:]
+        dfs_sig = cut(dfs_sig,'dR_jet1_genQuark',None, 0.2 )
+        dfs_sig = cut(dfs_sig,'dR_jet2_genQuark',None, 0.2 )
+        dfs_sig = cut(dfs_sig,'dpT_jet1_genQuark',None, 0.5 )
+        dfs_sig = cut(dfs_sig,'dpT_jet2_genQuark',None, 0.5 )
+
+        return [dfs[0]] + dfs_sig
+    else:
+        return dfs
 
 
 def filter_mass_windows(dfs, mass_hypos, mass_limits):
@@ -94,7 +101,8 @@ def filter_mass_windows(dfs, mass_hypos, mass_limits):
     for i, mass in enumerate(mass_hypos):
         if mass in mass_limits:
             idx = i + 1  # offset because dfs[0] is background
-            dfs[idx] = dfs[idx][dfs[idx]['dijet_mass'] < mass_limits[mass]]
+            dfs[idx] = dfs[idx][dfs[idx]['dijet_mass'] < mass_limits[mass][1]]
+            dfs[idx] = dfs[idx][dfs[idx]['dijet_mass'] > mass_limits[mass][0]]
     return dfs
 
 
@@ -106,11 +114,15 @@ def add_mass_hypothesis(dfs, massHypothesis, features):
 
 
 def assign_labels_and_weights(dfs, massHypothesis, boosted, sampling):
-    dfSig = pd.concat(dfs[1:])
-    dfBkg = dfs[0]
+    if boosted!=0:
+        dfSig = pd.concat(dfs[1:])
+        dfBkg = dfs[0]
 
-    dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * massHypothesis[i-1] for i in range(1, len(dfs))])
-    dfBkg['genMass'] = np.zeros(len(dfs[0]))
+        dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * massHypothesis[i-1] for i in range(1, len(dfs))])
+        dfBkg['genMass'] = np.zeros(len(dfs[0]))
+    else:
+        dfSig=dfs[1]
+        dfBkg=dfs[0]
 
     dfSig['Y'] = 1
     dfBkg['Y'] = 0
@@ -119,17 +131,19 @@ def assign_labels_and_weights(dfs, massHypothesis, boosted, sampling):
         dfSig = uniform_sample(dfSig, column='dijet_mass', num_bins=101)
         dfBkg = uniform_sample(dfBkg, column='dijet_mass', num_bins=101)
 
-    dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central / ((dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central).sum())
+    dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight) / ((dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight)).sum())
     dfBkg['W'] = np.ones(len(dfBkg)) / len(dfBkg)
+    dfBkg["btag_central"] = 1
+    dfBkg["genWeight"] = 1
 
     return dfSig, dfBkg
 
 
-def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split, boosted=False, dataTaking='1A', sampling=True):
-    mass_hypos =[50, 70, 100, 200, 300]
+def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split, boosted=False, dataTaking='1A', sampling=True, btagTight=True, mass_hypos =[]):
+    
     paths, massHypothesis = get_input_paths(dataTaking, mass_hypos=mass_hypos)
 
-    btagTight = False#boosted in [1, 2]
+    #boosted in [1, 2]
 
     dfs = []
     for path in paths:
@@ -142,7 +156,8 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
             if nReal !=-1:
                 fileNames = fileNames[:nReal]
             print("Opening %d files for %s"%(len(fileNames), process))
-            columnsToRead_ = [f for f in columnsToRead if ('gen' not in f) & ('btag_central' not in f) ]
+            columnsToRead_ = [f for f in columnsToRead if (('gen' not in f) & ('btag_central' not in f) & ('sf' not in f))]
+
         else:
             if nMC !=-1:
                 fileNames = fileNames[:nMC]
@@ -151,15 +166,52 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
 
         
         df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagTight=btagTight))
+        if process[:4]=='Data':
+            df['sf']=1
+            df['btag_central']=1
+            df['PU_SF']=1
         dfs.append(df)
 
     dfs = apply_kinematic_cuts(dfs, boosted)
-    mass_hypos = [125, 50, 70, 100, 200, 300]
-    mass_limits = {50: 120, 70: 140, 100:150}
+    mass_hypos = [125] + mass_hypos
+    mass_limits = {50: [0, 120], 70: [0,140], 100:[0,150], 300:[150,300]}
 
     dfs = filter_mass_windows(dfs, mass_hypos, mass_limits)
     dfs = add_mass_hypothesis(dfs, massHypothesis, featuresForTraining)
+# Here remove signal events wheter more
+#
+#
+#   
+    if boosted==0:
+        print("WARNING cutting signal in order to have same number of events in every bin of dijet mass")
+        dfSig = pd.concat(dfs[1:])
+        dfBkg = dfs[0]
+        dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * massHypothesis[i-1] for i in range(1, len(dfs))])
+        dfBkg['genMass'] = np.zeros(len(dfs[0]))
 
+        mass_bins = np.quantile(dfBkg.dijet_mass.values, np.linspace(0, 1, 15))
+        mass_bins[0], mass_bins[-1] = 50., 300.
+        print("This the mass_binning for ABCDisco")
+        print(mass_bins)
+
+        train_signal = dfSig.copy()
+        train_signal['mass_bin'] = np.digitize(train_signal.dijet_mass.values, mass_bins) - 1
+
+        # Step 3: Determine minimum count across bins
+        min_count = train_signal['mass_bin'].value_counts().min()
+
+        # Step 4: Downsample signal events in each bin
+        dfSig = (
+            train_signal.groupby('mass_bin')
+            .apply(lambda df: df.sample(min_count, random_state=42))
+            .reset_index(drop=True)
+        )
+
+        dfs = [dfBkg, dfSig]
+
+
+
+# Finished
     dfSig, dfBkg = assign_labels_and_weights(dfs, massHypothesis, boosted, sampling=sampling)
 
     for m in massHypothesis:

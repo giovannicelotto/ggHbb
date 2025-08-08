@@ -6,6 +6,7 @@ __pycache__/
 # Pdf
 *.pdf
 *.png
+.nfs*
 #npy files
 *.npy
 *.parquet

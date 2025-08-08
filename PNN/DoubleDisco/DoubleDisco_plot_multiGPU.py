@@ -4,6 +4,7 @@ import mplhep as hep
 hep.style.use("CMS")
 import sys
 sys.path.append("/t3home/gcelotto/ggHbb/PNN/helpers")
+sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from checkOrthogonality import checkOrthogonality, checkOrthogonalityInMassBins, plotLocalPvalues
 from helpers.getFeatures import getFeatures
 from helpers.getParams import getParams
@@ -105,12 +106,12 @@ val_dcor_loss_history = val_dcor_loss_history/nRanks
 train_closure_loss_history = train_closure_loss_history/nRanks
 val_closure_loss_history = val_closure_loss_history/nRanks
 
-#best_epoch = plot_lossTorch(train_loss_history, val_loss_history, 
-#              train_classifier_loss_history, val_classifier_loss_history,
-#              train_dcor_loss_history, val_dcor_loss_history,
-#              train_closure_loss_history, val_closure_loss_history,
-#              outFolder, gpu=True)
-best_epoch = 20
+best_epoch = plot_lossTorch(train_loss_history, val_loss_history, 
+              train_classifier_loss_history, val_classifier_loss_history,
+              train_dcor_loss_history, val_dcor_loss_history,
+              train_closure_loss_history, val_closure_loss_history,
+              outFolder, gpu=True)
+#best_epoch = 120
 print("Best epoch chosen based on val loss is %d"%best_epoch)
 # %%
 results = {}
@@ -118,8 +119,14 @@ modelName1, modelName2 = "nn1_e%d.pth"%best_epoch, "nn2_e%d.pth"%best_epoch
 
 # %%
 # Load data, neural networks and weights
-Xtrain, Xval, Xtest, Ytrain, Yval, Ytest, Wtrain, Wval, Wtest, rWtrain, rWval, genMassTrain, genMassVal, genMassTest = loadXYWrWSaved(inFolder=inFolder+"/"+inputSubFolder)
-columnsToRead = getFeatures(outFolder=None,  massHypo=True)[1]
+Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genMassTrain, genMassVal = loadXYWrWSaved(inFolder=inFolder+"/"+inputSubFolder, isTest=False)
+Xtrain = Xtrain.iloc[:2_000_000]
+Ytrain = Ytrain[:2_000_000]
+Wtrain = Wtrain[:2_000_000]
+rWtrain = rWtrain[:2_000_000]
+genMassTrain = genMassTrain[:2_000_000]
+
+columnsToRead = getFeatures(outFolder=None)[1]
 featuresForTraining = np.load(outFolder+"/featuresForTraining.npy")
 print(featuresForTraining)
 if 'bin_center' in featuresForTraining:
@@ -140,12 +147,12 @@ if 'bin_center' in featuresForTraining:
         np.nan  # Assign NaN for out-of-range dijet_mass
     )
 
-    bin_indices = np.digitize(Xtest['dijet_mass'].values, mass_bins) - 1
-    Xtest['bin_center'] = np.where(
-        (bin_indices >= 0) & (bin_indices < len(bin_centers)),  # Ensure valid indices
-        np.array(bin_centers)[bin_indices],
-        np.nan  # Assign NaN for out-of-range dijet_mass
-    )
+    #bin_indices = np.digitize(Xtest['dijet_mass'].values, mass_bins) - 1
+    #Xtest['bin_center'] = np.where(
+    #    (bin_indices >= 0) & (bin_indices < len(bin_centers)),  # Ensure valid indices
+    #    np.array(bin_centers)[bin_indices],
+    #    np.nan  # Assign NaN for out-of-range dijet_mass
+    #)
 
 
 
@@ -172,8 +179,8 @@ layer_sizes2 = get_layer_sizes(state_dict2, n_input_features=len(featuresForTrai
 
 
 
-nn1 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=layer_sizes1[:-1])
-nn2 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=layer_sizes2[:-1])
+nn1 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=layer_sizes1[:-1], dropout_prob=0.1)
+nn2 = Classifier(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=layer_sizes2[:-1], dropout_prob=0.1)
 
 ## Now load the state_dict into the model
 nn1.load_state_dict(state_dict1)
@@ -211,14 +218,14 @@ with open(outFolder+"/model/model_summary.txt", "w") as f:
         f.write("\n")
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
-Xtest  = scale(Xtest, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+#Xtest  = scale(Xtest, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 
 Xtrain_tensor = torch.tensor(np.float32(Xtrain[featuresForTraining].values)).float()
 Xval_tensor = torch.tensor(np.float32(Xval[featuresForTraining].values)).float()
-Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
+#Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
 
 Ytrain_tensor = torch.tensor(Ytrain).unsqueeze(1).float()
-Ytest_tensor = torch.tensor(Ytest).unsqueeze(1).float()
+#Ytest_tensor = torch.tensor(Ytest).unsqueeze(1).float()
 Yval_tensor = torch.tensor(Yval).unsqueeze(1).float()
 
 
@@ -234,11 +241,11 @@ with torch.no_grad():  # No need to track gradients for inference
     YPredTrain2 = nn2(Xtrain_tensor).numpy()
     YPredVal1 = nn1(Xval_tensor).numpy()
     YPredVal2 = nn2(Xval_tensor).numpy()
-    YPredTest1 = nn1(Xtest_tensor).numpy()
-    YPredTest2 = nn2(Xtest_tensor).numpy()
+    #YPredTest1 = nn1(Xtest_tensor).numpy()
+    #YPredTest2 = nn2(Xtest_tensor).numpy()
 Xtrain = unscale(Xtrain, featuresForTraining=featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl")
 Xval = unscale(Xval, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
-Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
+#Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
 
 
 # %%
@@ -249,8 +256,8 @@ Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  
 
 Xval['PNN1'] = YPredVal1
 Xval['PNN2'] = YPredVal2
-Xtest['PNN1'] = YPredTest1
-Xtest['PNN2'] = YPredTest2
+#Xtest['PNN1'] = YPredTest1
+#Xtest['PNN2'] = YPredTest2
 
 
 
@@ -447,8 +454,8 @@ plt.close('all')
 
 # %%
 
-ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal1, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN1.png")
-ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal2, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN2.png")
+#ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal1, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN1.png")
+#ggHscoreScan(Xtest=Xval, Ytest=Yval, YPredTest=YPredVal2, genMassTest=genMassVal, Wtest=Wval, outName=outFolder + "/performance/ggHScoreScan_NN2.png")
 plt.close('all')
 # %%
 
@@ -554,14 +561,14 @@ for blow, bhigh in zip(mass_bins[:-1], mass_bins[1:]):
     distance_corr = dcor.distance_correlation(np.array(YPredTrain1[mask], dtype=np.float64), np.array(YPredTrain2[mask], dtype=np.float64))
     discos_bin_train.append(distance_corr)
 
-    mask = (Xtest.dijet_mass >=blow) & (Xtest.dijet_mass < bhigh)  & (Ytest==0)
-    distance_corr = dcor.distance_correlation(np.array(YPredTest1[mask], dtype=np.float64), np.array(YPredTest2[mask], dtype=np.float64))
-    discos_bin_test.append(distance_corr)
+    #mask = (Xtest.dijet_mass >=blow) & (Xtest.dijet_mass < bhigh)  & (Ytest==0)
+    #distance_corr = dcor.distance_correlation(np.array(YPredTest1[mask], dtype=np.float64), np.array(YPredTest2[mask], dtype=np.float64))
+    #discos_bin_test.append(distance_corr)
 results['averageBin_sqaured_disco'] = np.mean(discos_bin_val)
 results['error_averageBin_sqaured_disco'] = np.std(discos_bin_val)/np.sqrt(len(discos_bin_val))
 plotLocalPvalues(discos_bin_val, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_val.png", entries=np.sum(Yval==0))
 plotLocalPvalues(discos_bin_train, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_train.png", color='red', entries=np.sum(Ytrain==0))
-plotLocalPvalues(discos_bin_test, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_test.png", color='green', entries=np.sum(Ytest==0))
+#plotLocalPvalues(discos_bin_test, mass_bins, pvalueLabel="Distance Corr.", type = '', outFolder=outFolder+"/performance/disco_mjjbins_test.png", color='green', entries=np.sum(Ytest==0))
 # %%
 print("*"*30)
 print("Pull ABCD Delta/sigmaDelta")
@@ -614,7 +621,7 @@ regions = {
 
 
 # Fill regions with data
-df = Xval[Yval==0]
+df = Xval[(Yval==0) & (Xval.jet2_btagTight>0.5)]
 
 xx = 'dijet_mass'
 mA      = (df[x1]<nn2_t ) & (df[x2]>nn1_t ) 
@@ -625,7 +632,7 @@ regions['A'].fill(df[mA][xx])
 regions['B'].fill(df[mB][xx])
 regions['C'].fill(df[mC][xx])
 regions['D'].fill(df[mD][xx])
-# %%
+
 
 
 sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
@@ -633,13 +640,22 @@ from plot_v2 import plot4ABCD, QCD_SR
 unblinded_mask = np.full(len(mass_bins)-1, True)
 hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_check4R", sameWidth_flag=False)
 qcd_mc = regions['B']
-QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_checkSR", sameWidth_flag=False, chi2_mask=np.array(np.ones(len(mass_bins)-1), dtype=bool))
+QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_checkSR_Tight", sameWidth_flag=False, chi2_mask=np.array(np.ones(len(mass_bins)-1), dtype=bool))
+
+# %%
 
 
 
 
 
-#%%
+
+
+# Here i do
+
+from hist import Hist
+x1 = 'PNN2'
+x2 = 'PNN1'
+#mass_bins=np.array([40.,60.,70.,80.,90.,110.,130.,150.,200.,300.])
 hA = Hist.new.Var(mass_bins, name="mjj").Weight()
 hB = Hist.new.Var(mass_bins, name="mjj").Weight()
 hC = Hist.new.Var(mass_bins, name="mjj").Weight()
@@ -653,7 +669,7 @@ regions = {
 
 
 # Fill regions with data
-df = Xtest[Ytest==0]
+df = Xval[(Yval==0) & (Xval.jet2_btagTight<0.5)]
 
 xx = 'dijet_mass'
 mA      = (df[x1]<nn2_t ) & (df[x2]>nn1_t ) 
@@ -664,11 +680,50 @@ regions['A'].fill(df[mA][xx])
 regions['B'].fill(df[mB][xx])
 regions['C'].fill(df[mC][xx])
 regions['D'].fill(df[mD][xx])
-hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_check4R_test", sameWidth_flag=False)
+
+
+
+sys.path.append("/t3home/gcelotto/ggHbb/abcd/new/helpersABCD")
+from plot_v2 import plot4ABCD, QCD_SR
+unblinded_mask = np.full(len(mass_bins)-1, True)
+hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_check4R", sameWidth_flag=False)
 qcd_mc = regions['B']
-print(qcd_mc.values())
-print(hB_ADC.values())
-QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_checkSR_test", sameWidth_flag=False, corrected=False, chi2_mask=np.array(np.ones(len(mass_bins)-1), dtype=bool))
+QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_checkSR_nonTight", sameWidth_flag=False, chi2_mask=np.array(np.ones(len(mass_bins)-1), dtype=bool))
+
+
+
+
+
+#%%
+#hA = Hist.new.Var(mass_bins, name="mjj").Weight()
+#hB = Hist.new.Var(mass_bins, name="mjj").Weight()
+#hC = Hist.new.Var(mass_bins, name="mjj").Weight()
+#hD = Hist.new.Var(mass_bins, name="mjj").Weight()
+#regions = {
+#    'A' : hA,
+#    'B' : hB,
+#    'C' : hC,
+#    'D' : hD,
+#}
+
+
+# Fill regions with data
+#df = Xtest[Ytest==0]
+
+#xx = 'dijet_mass'
+#mA      = (df[x1]<nn2_t ) & (df[x2]>nn1_t ) 
+#mB      = (df[x1]>nn2_t ) & (df[x2]>nn1_t ) 
+#mC      = (df[x1]<nn2_t ) & (df[x2]<nn1_t ) 
+#mD      = (df[x1]>nn2_t ) & (df[x2]<nn1_t ) 
+#regions['A'].fill(df[mA][xx])
+#regions['B'].fill(df[mB][xx])
+#regions['C'].fill(df[mC][xx])
+#regions['D'].fill(df[mD][xx])
+#hB_ADC = plot4ABCD(regions, mass_bins, x1, x2, nn2_t, nn1_t, suffix='temp', unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_check4R_test", sameWidth_flag=False)
+#qcd_mc = regions['B']
+#print(qcd_mc.values())
+#print(hB_ADC.values())
+#QCD_SR(mass_bins, hB_ADC, qcd_mc, suffix="temp", unblinded_mask=unblinded_mask, outName=outFolder+"/performance/abcd_checkSR_test", sameWidth_flag=False, corrected=False, chi2_mask=np.array(np.ones(len(mass_bins)-1), dtype=bool))
 
 
 
@@ -683,8 +738,8 @@ print("Shap started")
 XvalScaled  = scale(Xval, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False, featuresForTraining=featuresForTraining)
 nEvents = 500
 X_tensor_test = torch.tensor(np.float32(XvalScaled[featuresForTraining].values[:nEvents])).float()
-nn1_featureImportance = getShapTorch(Xtest=Xtest[featuresForTraining].head(nEvents), model=nn1, outName=outFolder+'/performance/shap1.png', nFeatures=-1, class_names=['NN1 output'], tensor=X_tensor_test)
-nn2_featureImportance = getShapTorch(Xtest=Xtest[featuresForTraining].head(nEvents), model=nn2, outName=outFolder+'/performance/shap2.png', nFeatures=-1, class_names=['NN2 output'], tensor=X_tensor_test)
+#nn1_featureImportance = getShapTorch(Xtest=Xtest[featuresForTraining].head(nEvents), model=nn1, outName=outFolder+'/performance/shap1.png', nFeatures=-1, class_names=['NN1 output'], tensor=X_tensor_test)
+#nn2_featureImportance = getShapTorch(Xtest=Xtest[featuresForTraining].head(nEvents), model=nn2, outName=outFolder+'/performance/shap2.png', nFeatures=-1, class_names=['NN2 output'], tensor=X_tensor_test)
 
 
 # %%

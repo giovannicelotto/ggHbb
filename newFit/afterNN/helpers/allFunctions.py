@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.special import erf
 import scipy.integrate as integrate
-
+import scipy.stats as stats 
 
 # Essential Functions
 
@@ -107,6 +107,7 @@ def zPeak_rscb_pol1(x, normSig, fraction_dscb, mean, sigma, alphaR, nR, sigmaG, 
 
 
 
+
 def expo(x,  B):
     return  np.exp(-B * x)
 
@@ -130,6 +131,82 @@ def exp_pol2(x, norm, B, b, c):
         return (exp) * pol2
     integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
     normalization_factor = norm / integral_value
+    return normalization_factor * unnormalized_function(x)
+
+
+def f0(x, normBkg, xo, k, beta):
+    def unnormalized_function(x):
+        return  (1-np.exp(-(x-xo)/k)) * np.exp(-beta*(x-xo))
+        
+
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = normBkg / integral_value
+    return normalization_factor * unnormalized_function(x)
+
+def f0_mod(x, normBkg, xo, k, delta, beta):
+    def unnormalized_function(x):
+        return  (np.exp((x-xo)/k)/(1+np.exp((x-xo)/(k+delta/100)))) + np.exp(-beta*(x-xo))
+        
+
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = normBkg / integral_value
+    return normalization_factor * unnormalized_function(x)
+
+def sum_exp(x, norm, x0, A1, tau1, A2, tau2, tau3):
+    def unnormalized_function(x):
+        
+        
+        
+        return A1*np.exp(-(x-x0)/tau1) + A2*np.exp(-(x-x0)/tau2) + 1*np.exp(-(x-x0)/tau3)
+    
+    # Compute normalization constant to ensure integral from x1 to x2 is 1
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = norm / integral_value
+    
+    return normalization_factor * unnormalized_function(x)
+
+
+def sigmoidBased(x, norm, p1_fall, p0_rise, p1_rise, p2_rise, x0, k):
+    def shape(x):
+        # Two different polynomials
+        pol1_fall = p1_fall * x + 1
+        pol2_rise = p2_rise * x**2 + p1_rise * x + p0_rise
+
+        # Sigmoids
+        sigmoid_fall = 1 / (1 + np.exp(k * (x - x0)))  # goes from 1 to 0
+        sigmoid_rise = 1 / (1 + np.exp(-k * (x - x0))) # goes from 0 to 1
+        result =  pol2_rise * sigmoid_rise + pol1_fall * sigmoid_fall
+        return result
+    
+    # Compute normalization constant to ensure integral from x1 to x2 is 1
+    integral_value, _ = integrate.quad(shape, x1, x2)
+    normalization_factor = norm / integral_value
+    
+    return normalization_factor * shape(x)
+
+
+def f1_mod(x, norm, B,  b, c, C, f):
+    def unnormalized_function(x):
+        pol2 = c * x**2 + b * x + 1  # Quadratic polynomial
+        exp1 = np.exp(-B * x)
+        tail = np.exp(-C*x)
+        return f*(exp1) * pol2 + (1-f)*tail
+    
+    # Compute normalization constant to ensure integral from x1 to x2 is 1
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = norm / integral_value
+    
+    return normalization_factor * unnormalized_function(x)
+
+
+
+def gamma(x, normBkg, xo, a, scale):
+
+    def unnormalized_function(x):
+        return  stats.gamma.pdf(x-xo, a=a, scale=scale)
+
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = normBkg / integral_value
     return normalization_factor * unnormalized_function(x)
 
 #def exp_pol2(x, norm, B,  b, c):
@@ -177,6 +254,19 @@ def expExp_pol2_turnOn(x, norm, B, C, b, c, aa, bb, f):
         exp2 = np.exp(-C * x)
         turnOn = bb * x**2 + aa * x + 1  # Quadratic polynomial
         return f*(exp1 + exp2) * pol2 + (1-f)*turnOn
+    
+    # Compute normalization constant to ensure integral from x1 to x2 is 1
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = norm / integral_value
+    
+    return normalization_factor * unnormalized_function(x)
+
+def exp_pol2_turnOn(x, norm, B,  b, c, aa, bb, f):
+    def unnormalized_function(x):
+        pol2 = c * x**2 + b * x + 1  # Quadratic polynomial
+        exp1 = np.exp(-B * x)
+        turnOn = bb * x**2 + aa * x + 1  # Quadratic polynomial
+        return f*(exp1) * pol2 + (1-f)*turnOn
     
     # Compute normalization constant to ensure integral from x1 to x2 is 1
     integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
@@ -322,6 +412,15 @@ def expExpPol2_DSCB(x, normBkg, B, C, b, c, normSig, fraction_dscb, mean, sigma,
     return expExp_pol2(x, normBkg, B, C, b, c) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
 
 
+def sum_exp_DSCB(x, normBkg, x0, A1, tau1, A2, tau2,  tau3,  normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG):
+    return sum_exp(x, normBkg, x0, A1, tau1, A2, tau2, tau3) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+
+def sum_exp_DSCB_Z_H(x, normBkg, x0, A1, tau1, A2, tau2, tau3,
+                     normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG,
+                     normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    return sum_exp(x, normBkg, x0, A1, tau1, A2, tau2, tau3) +\
+        zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)+\
+        zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
 
 # Exp Exp
 def expExpExp_DSCB(x, normBkg, B, C, D, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG):
@@ -350,6 +449,97 @@ def kinThreshold_RSCB(x, normBkg, B, m0, p1, p2, normSig, fraction_dscb, mean, s
 
 def expExp_pol2_turnOn_DSCB(x, normBkg, B, C, b, c, aa, bb, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
     return expExp_pol2_turnOn(x, normBkg, B, C, b, c, aa, bb, f) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+
+def gamma_DSCB(x, normBkg, xo, a, scale, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
+    return gamma(x, normBkg, xo, a, scale) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+
+def gamma_DSCB_Z_H(x, normBkg, xo, a, scale,
+                    normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG,
+                    normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    return gamma(x, normBkg, xo, a, scale) + \
+            zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG) +\
+            zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
+
+def f0_DSCB(x, normBkg, xo, k, beta, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
+    return f0(x, normBkg, xo, k, beta) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+
+
+def f0_mod_DSCB(x, normBkg, xo, k, delta, beta, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
+    return f0_mod(x, normBkg, xo, k, delta, beta) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+
+def sigmoidBased_DSCB(x, norm, p1_fall, p0_rise, p1_rise, p2_rise, x0, k,
+                      normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
+    
+    return sigmoidBased(x, norm, p1_fall, p0_rise, p1_rise, p2_rise, x0, k) + \
+    zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+
+def sigmoidBased_DSCB_Z_H(x, normBkg, p1_fall, p0_rise, p1_rise, p2_rise, x0, k,
+                      normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG,
+                      normSig_H, fraction_dscb_H, mean_H, sigma_H,  alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    
+    return sigmoidBased(x, normBkg, p1_fall, p0_rise, p1_rise, p2_rise, x0, k) + \
+    zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG) +\
+    zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
+
+
+def f1_mod_DSCB(x, normBkg, B,  b, c, C, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
+    return f1_mod(x, normBkg, B,  b, c, C, f) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+
+
+def f0_DSCB_Z_H(x, normBkg, xo, k, beta,
+                normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG,
+                normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    return f0(x, normBkg, xo, k, beta) + \
+            zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG) + \
+            zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
+
+def f1_mod_DSCB_Z_H(x, normBkg, B,  b, c, C, f,
+                normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG,
+                normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    return f1_mod(x, normBkg,B,  b, c, C, f) + \
+            zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG) + \
+            zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
+
+def f0_mod_DSCB_Z_H(x, normBkg, xo, k, delta, beta,
+                normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG,
+                normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    return f0_mod(x, normBkg, xo, k, delta, beta) + \
+            zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG) + \
+            zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
+
+
+def expExp_pol2_turnOn_DSCB_Z_H(x,
+                        normBkg, B, C, b, c, aa, bb, f,
+                        normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG,
+                        normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    result = expExp_pol2_turnOn(x, normBkg, B, C, b, c, aa, bb, f) +\
+    zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG) +\
+    zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
+    return result
+
+def exp_pol2_turnOn_DSCB(x, normBkg, B, b, c, aa, bb, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
+    return exp_pol2_turnOn(x, normBkg, B, b, c, aa, bb, f) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
+def exp_pol2_turnOn_DSCB_Z_H(x,
+                        normBkg, B, b, c, aa, bb, f,
+                        normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG,
+                        normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H):
+    result = exp_pol2_turnOn(x, normBkg, B, b, c, aa, bb, f) +\
+    zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG) +\
+    zPeak_dscb(x, normSig_H, fraction_dscb_H, mean_H, sigma_H, alphaL_H, nL_H, alphaR_H, nR_H, sigmaG_H)
+    return result
+
+def expPol2_expPol2_DSCB_Z_H(x,
+                             normBkg, B, C, p1,p2, p11, p12, f,
+                             normSig, fraction_dscb, mean, sigma,  alphaL, nL,alphaR, nR, sigmaG,
+                             normSig_H, fraction_dscb_H, mean_H, sigma_H,  alphaL_H, nL_H,alphaR_H, nR_H, sigmaG_H):
+        result =    expPol2_expPol2(x, normBkg, B, C,p1,p2, p11, p12, f) +\
+                    normSig*(fraction_dscb*dscb(x, mean, sigma,  alphaL, nL,alphaR, nR) +\
+                             (1-fraction_dscb)*gaussianN(x, mean, sigmaG))+\
+                    normSig_H*(fraction_dscb_H*dscb(x, mean_H, sigma_H,  alphaL_H, nL_H,alphaR_H, nR_H) +\
+                             (1-fraction_dscb_H)*gaussianN(x, mean_H, sigmaG_H))
+        return result
+
+
 def expExp_pol2_turnOnPol3_DSCB(x, normBkg, B, C, b, c, d, aa, bb, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
     return expExp_pol2_turnOnPol3(x, normBkg, B, C, b, c, d, aa, bb, f) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)
 def exp_pol2_turnOn3_DSCB(x, normBkg, B, b, c, aa, bb, cc, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL, alphaR, nR, sigmaG):
@@ -364,3 +554,13 @@ def expPol2_expPol2_DSCB(x, normBkg, B, C, p1,p2, p11, p12, f, normSig, fraction
 
 def expExp_pol2_turnOnPol1_DSCB(x, normBkg, B, C, b,c, aa, f, normSig, fraction_dscb, mean, sigma,  alphaL, nL,alphaR, nR, sigmaG):
         return expExp_pol2_turnOnPol1(x, normBkg, B, C,b,c, aa, f) + normSig*(fraction_dscb*dscb(x, mean, sigma,  alphaL, nL,alphaR, nR) + (1-fraction_dscb)*gaussianN(x, mean, sigmaG))
+
+def pol3(x, norm, p1, p2, p3):
+    def unnormalized_function(x):
+        return 1 + p1*x + p2*x**2 + p3*x**3
+    integral_value, _ = integrate.quad(unnormalized_function, x1, x2)
+    normalization_factor = norm / integral_value
+    return normalization_factor * unnormalized_function(x)
+
+def pol3_DSCB(x, normBkg, p1, p2, p3, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG):
+    return pol3(x, normBkg, p1, p2 ,p3) + zPeak_dscb(x, normSig, fraction_dscb, mean, sigma, alphaL, nL, alphaR, nR, sigmaG)

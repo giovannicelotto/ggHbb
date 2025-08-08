@@ -1,8 +1,8 @@
 # %%
 from functions import loadMultiParquet_Data_new, loadMultiParquet_v2, getCommonFilters, getDfProcesses_v2
 # %%
-filter1 = list(getCommonFilters(btagTight=True)[0]) + [('dijet_pt', '<', 100) , ('dijet_mass', '>', 100) , ('dijet_mass', '<', 150)]#, ('nElectrons', '<', 1)]
-filter2 = list(getCommonFilters(btagTight=True)[1]) + [('dijet_pt', '<', 100) , ('dijet_mass', '>', 100) , ('dijet_mass', '<', 150)]#, ('nElectrons', '<', 1)]
+filter1 = list(getCommonFilters(btagTight=True)[0]) + [('dijet_pt', '>', 100) , ('dijet_mass', '>', 100) , ('dijet_mass', '<', 150)]#, ('nElectrons', '<', 1)]
+filter2 = list(getCommonFilters(btagTight=True)[1]) + [('dijet_pt', '>', 100) , ('dijet_mass', '>', 100) , ('dijet_mass', '<', 150)]#, ('nElectrons', '<', 1)]
 newFilters = [filter1,filter2]
 dfProcesses=getDfProcesses_v2()[0]
 # %%
@@ -15,10 +15,11 @@ for i in [0]:
     print("%d at %.2f"%(totalEvents*41.6/lumi_tot, lumi_tot))
 # %%
 sigEvents = 0
-for i in [0]:
-    dfsMC, gensumw =loadMultiParquet_v2(paths=[i], nMCs=-1, columns=['dijet_mass','dijet_pt', 'dijet_dPhi', 'sf', 'PU_SF', 'btag_central', 'genWeight'], returnNumEventsTotal=True, selectFileNumberList=None, returnFileNumberList=False, filters=newFilters, training=False, isJEC=0)
-    dfsMC[0]['weight'] = dfsMC[0].genWeight * dfsMC[0].sf * dfsMC[0].PU_SF * dfsMC[0].btag_central * dfProcesses.xsection[i]/gensumw
-    sigEvents+=dfsMC[0].weight.sum()*1000
+for i in [37]:
+    dfsMC, gensumw =loadMultiParquet_v2(paths=[i], nMCs=-1, columns=['dijet_mass','dijet_pt', 'dijet_dPhi', 'sf', 'PU_SF', 'btag_central', 'genWeight', 'jet_pileupId_SF_nom'], returnNumEventsTotal=True, selectFileNumberList=None, returnFileNumberList=False, filters=newFilters, training=False, isJEC=0)
+    print(dfProcesses.xsection[i], " pb")
+    dfsMC[0]['weight'] = dfsMC[0].genWeight * dfsMC[0].sf * dfsMC[0].PU_SF * dfsMC[0].btag_central * dfsMC[0].jet_pileupId_SF_nom * dfProcesses.xsection[i] * 1000/gensumw
+    sigEvents+=dfsMC[0].weight.sum()
     print(sigEvents * 41.6)
 
 # %%
