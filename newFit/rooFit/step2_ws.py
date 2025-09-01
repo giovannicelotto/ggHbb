@@ -1,3 +1,6 @@
+# Need to run with CMSENV
+# /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
+
 import ROOT
 
 # Open the input file
@@ -56,11 +59,11 @@ getattr(new_workspace, "import")(multipdf_norm)
 getattr(new_workspace, "import")(r)
 
 # Import the observable (assuming dijet_mass_c2)
-#dijet_mass_c2 = workspace.obj("dijet_mass_c2")
+#dijet_mass_c2 = workspace.obj("dijet_mass_c2")x    
 #getattr(new_workspace, "import")(dijet_mass_c2)
 
 # Save the new workspace to a new ROOT file
-output_file = ROOT.TFile("/t3home/gcelotto/ggHbb/newFit/rooFit/workspace_step2.root", "RECREATE")
+output_file = ROOT.TFile("/t3home/gcelotto/ggHbb/newFit/rooFit/workspace_step2_Aug28.root", "RECREATE")
 new_workspace.Write()
 output_file.Close()
 
