@@ -16,6 +16,84 @@ import json
 import os
 from getZ_KFactor import getZ_KFactor
 
+
+def getMuonID_SF(json_data, wp_name, eta, pt):
+    """
+    Extract scale factor (and uncertainties) for given eta, pt.
+    Handles underflow/overflow by taking the first/last bin.
+    """
+    wp_dict = json_data[wp_name]["abseta_pt"]
+    binning = wp_dict["binning"]
+
+    abseta_bins = binning[0]["binning"]
+    pt_bins = binning[1]["binning"]
+
+    abseta = abs(eta)
+
+    # --- find abseta bin (with underflow/overflow handling) ---
+    if abseta < abseta_bins[0]:
+        lo, hi = abseta_bins[0], abseta_bins[1]
+    elif abseta >= abseta_bins[-1]:
+        lo, hi = abseta_bins[-2], abseta_bins[-1]
+    else:
+        for i in range(len(abseta_bins) - 1):
+            if abseta_bins[i] <= abseta < abseta_bins[i + 1]:
+                lo, hi = abseta_bins[i], abseta_bins[i + 1]
+                break
+    ab_key = f"abseta:[{lo},{hi}]"
+
+    # --- find pt bin (with underflow/overflow handling) ---
+    if pt < pt_bins[0]:
+        plo, phi = pt_bins[0], pt_bins[1]
+    elif pt >= pt_bins[-1]:
+        plo, phi = pt_bins[-2], pt_bins[-1]
+    else:
+        for i in range(len(pt_bins) - 1):
+            if pt_bins[i] <= pt < pt_bins[i + 1]:
+                plo, phi = pt_bins[i], pt_bins[i + 1]
+                break
+    pt_key = f"pt:[{plo},{phi}]"
+
+    # --- extract the info ---
+    sf_info = wp_dict[ab_key][pt_key]
+
+    return sf_info
+
+
+
+
+def get_muon_recoSF(data, eta):
+    """
+    Returns (value, stat, syst) for a muon of given eta, using the medium-pT bin for all pT.
+    If extrap_frac is set (e.g. 0.005 for 0.5%), it is added in quadrature to 'syst'.
+    """
+    sf_dict = data["NUM_TrackerMuons_DEN_genTracks"]["abseta_pt"]
+    abseta_bins = sf_dict["binning"][0]["binning"]
+    abseta = abs(eta)
+
+    # find abseta bin (inclusive on lower edge, exclusive on upper)
+    ab_key = None
+    for lo, hi in zip(abseta_bins[:-1], abseta_bins[1:]):
+        if lo <= abseta < hi:
+            ab_key = f"abseta:[{lo},{hi}]"
+            break
+    if ab_key is None:
+        # Out of range: clamp to nearest bin and (optionally) inflate syst
+        if abseta < abseta_bins[0]:
+            lo, hi = abseta_bins[0], abseta_bins[1]
+        else:
+            lo, hi = abseta_bins[-2], abseta_bins[-1]
+        ab_key = f"abseta:[{lo},{hi}]"
+
+    # always use the medium-pT bin key
+    pt_key = "pt:[40,60]"
+
+    info = sf_dict[ab_key][pt_key]
+    val, stat, syst = info["value"], info["stat"], info["syst"]
+
+    return {"value": val, "stat": stat, "syst": syst}
+
+
 def get_btag_map_efficiency(jet_pt, jet_eta, flav, eff_map_data):
     '''
     jet_pt = scalar value of pt of the jet considered
@@ -58,35 +136,6 @@ def get_btag_map_efficiency(jet_pt, jet_eta, flav, eff_map_data):
     return eff, flav_key
 
 
-#def get_puID_efficiency(jet_pt, jet_eta, eff_map_data):
-#    '''
-#    jet_pt = scalar value of pt of the jet considered
-#    jet_eta = scalar value of eta of the jet considered
-#    wp = scalar value of wp of the jet considered (L, M, T)
-#    
-#    '''
-#    pt_bins = np.array(eff_map_data['pt_bins'])
-#    eta_bins = np.array(eff_map_data['eta_bins'])
-#    eff_map = eff_map_data['eff_map']
-#
-#
-#    # Absolute eta
-#    abs_eta = np.abs(jet_eta)
-#    # Digitize bins: returns bin indices
-#    pt_bin_idx = np.digitize(jet_pt, pt_bins) - 1
-#    eta_bin_idx = np.digitize(abs_eta, eta_bins) - 1
-#    
-#    # Clip indices to valid range (handle overflow by clipping to last bin)
-#    pt_bin_idx = np.clip(pt_bin_idx, 0, len(pt_bins) - 2)
-#    eta_bin_idx = np.clip(eta_bin_idx, 0, len(eta_bins) - 2)
-#
-#
-#    eff_array = eff_map
-#    eff = eff_array[pt_bin_idx, eta_bin_idx]
-#
-#    return eff
-#
-#
 def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose, JECname, isMC):
     start_time = time.time()
     maxEntries=int(maxEntries)
@@ -101,7 +150,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     # processName   = only physics name (GluGluHToBB)
     # JECname       = (JECAbsoluteMPFBias_Down)
 
-    '''Require one muon in the dijet. Choose dijets based on their bscore. save all the features of the event append them in a list'''
+
     f = uproot.open(fileName)
     tree = f['Events']
     branches = tree.arrays()
@@ -142,15 +191,25 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
     # Open the map of efficiency for btag SF
     btagMapsExist=False
-    if os.path.exists("/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processName}_{wp_}.json"):
+    processNameForBtag = "GluGluHToBBMINLO" if processName=="GluGluHToBBMINLO_private" else processName
+    if os.path.exists(f"/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processNameForBtag}_T.json"):
         btagMapsExist=True
         eff_maps_cache = {}
         for wp_ in ["L", "M", "T"]:
             print(f"Opening the map {processName}_{wp_}.json ...")
-            with open(f"/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processName}_{wp_}.json", 'r') as f:
+            with open(f"/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processNameForBtag}_{wp_}.json", 'r') as f:
                 eff_maps_cache[wp_] = json.load(f)
 
+    with open("/t3home/gcelotto/ggHbb/LeptonSF/RecoEfficiencies_MediumPtMuons.json") as f:
+        muon_RECO_map = json.load(f)
 
+    with open("/t3home/gcelotto/ggHbb/LeptonSF/IDEfficiencies_MediumPtMuons.json") as f:
+        muon_ID_map = json.load(f)
+
+    with open("/t3home/gcelotto/ggHbb/LeptonSF/ISOEfficiencies_MediumPtMuons.json") as f:
+        muon_ISO_map = json.load(f)
+
+    electrons_SF_map = _core.CorrectionSet.from_file('/t3home/gcelotto/ggHbb/LeptonSF/electron.json.gz')
 
 
     #if (pN==2) | (pN==20) | (pN==21) | (pN==22) | (pN==23) | (pN==36):
@@ -195,19 +254,12 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         Jet_pt                      = branches["Jet_pt"][ev]
         Jet_phi                     = branches["Jet_phi"][ev]
         Jet_mass                    = branches["Jet_mass"][ev]
+        Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
 
         # ID
         Jet_jetId                   = branches["Jet_jetId"][ev]
         Jet_puId                    = branches["Jet_puId"][ev]
 
-        # Taggers
-        Jet_btagDeepFlavB           = branches["Jet_btagDeepFlavB"][ev]
-        Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
-        #Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
-        #Jet_PNetRegPtRawCorr        = branches["Jet_PNetRegPtRawCorr"][ev]
-        #Jet_PNetRegPtRawCorrNeutrino= branches["Jet_PNetRegPtRawCorrNeutrino"][ev]
-        #Jet_PNetRegPtRawRes         = branches["Jet_PNetRegPtRawRes"][ev]
-        
         # Vtx
         Jet_vtx3dL                  = branches["Jet_vtx3dL"][ev]
         Jet_vtx3deL                 = branches["Jet_vtx3deL"][ev]
@@ -221,11 +273,20 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         Jet_qgl                     = branches["Jet_qgl"][ev]
         Jet_nMuons                  = branches["Jet_nMuons"][ev]
         Jet_nConstituents           = branches["Jet_nConstituents"][ev]
+        Jet_leadTrackPt             = branches["Jet_leadTrackPt"][ev]
         Jet_nElectrons              = branches["Jet_nElectrons"][ev]
         Jet_muonIdx1                = branches["Jet_muonIdx1"][ev]
         Jet_muonIdx2                = branches["Jet_muonIdx2"][ev]
         # Regression
         Jet_bReg2018                 = branches["Jet_bReg2018"][ev]
+        
+        # Taggers
+        #Jet_btagDeepFlavC           = branches["Jet_btagDeepFlavC"][ev]
+        #Jet_btagPNetB               = branches["Jet_btagPNetB"][ev]
+        #Jet_PNetRegPtRawCorr        = branches["Jet_PNetRegPtRawCorr"][ev]
+        #Jet_PNetRegPtRawCorrNeutrino= branches["Jet_PNetRegPtRawCorrNeutrino"][ev]
+        #Jet_PNetRegPtRawRes         = branches["Jet_PNetRegPtRawRes"][ev]
+        
 
     # Muons
         nMuon                       = branches["nMuon"][ev]
@@ -244,16 +305,34 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         Muon_sip3d                  = branches["Muon_sip3d"][ev]
         Muon_charge                 = branches["Muon_charge"][ev]
         Muon_tightId                = branches["Muon_tightId"][ev]
+        Muon_mediumId               = branches["Muon_mediumId"][ev]
         Muon_tkIsoId                = branches["Muon_tkIsoId"][ev]
         Muon_pfRelIso04_all         = branches["Muon_pfRelIso04_all"][ev]
 
     # Electrons
+        nElectron                   = branches["nElectron"][ev]
         Electron_pt                 = branches["Electron_pt"][ev]
         Electron_eta                = branches["Electron_eta"][ev]
         Electron_phi                = branches["Electron_phi"][ev]
-    # Electrons Tracks
-        nElectron                   = branches["nElectron"][ev]
-        Electron_pfRelIso           = branches["Electron_pfRelIso"][ev]
+        if not "private" in processName:
+            Muon_genPartIdx = branches["Muon_genPartIdx"][ev]
+            Electron_isPF               = branches["Electron_isPFcand"][ev]
+            Electron_charge             = branches["Electron_charge"][ev]
+            Electron_pfRelIso03_all     = branches["Electron_pfRelIso03_all"][ev]
+            Electron_r9                 = branches["Electron_r9"][ev]
+            Electron_cutBased        = branches["Electron_cutBased"][ev]
+            Electron_dxy                    = branches["Electron_dxy"][ev]
+            Electron_dxyErr                 = branches["Electron_dxyErr"][ev]
+            Electron_mvaIso                 = branches["Electron_mvaIso"][ev]
+            Electron_mvaIso_WP80            = branches["Electron_mvaIso_WP80"][ev]
+            Electron_mvaIso_WP90            = branches["Electron_mvaIso_WP90"][ev]
+            Electron_mvaIso_WPL             = branches["Electron_mvaIso_WPL"][ev]
+            Electron_mvaNoIso_WP80          = branches["Electron_mvaNoIso_WP80"][ev]
+            Electron_mvaNoIso_WP90          = branches["Electron_mvaNoIso_WP90"][ev]
+            Electron_mvaNoIso_WPL           = branches["Electron_mvaNoIso_WPL"][ev]
+            Electron_convVeto               = branches["Electron_convVeto"][ev]
+
+
 
     # Triggers
         Muon_fired_HLT_Mu12_IP6 =       branches["Muon_fired_HLT_Mu12_IP6"][ev]
@@ -272,20 +351,24 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         if isMC==0:
             Pileup_nTrueInt = 0
         else:
-            Jet_hadronFlavour           = branches["Jet_hadronFlavour"][ev]
-            Pileup_nTrueInt         = branches["Pileup_nTrueInt"][ev]
-            Jet_genJetIdx           = branches["Jet_genJetIdx"][ev]
-            GenJetNu_pt           = branches["GenJetNu_pt"][ev]
-            GenJetNu_eta           = branches["GenJetNu_eta"][ev]
-            GenJetNu_phi           = branches["GenJetNu_phi"][ev]
-            GenJetNu_mass           = branches["GenJetNu_mass"][ev]
-            GenJet_pt           = branches["GenJet_pt"][ev]
-            GenJet_eta           = branches["GenJet_eta"][ev]
-            GenJet_phi           = branches["GenJet_phi"][ev]
-            GenJet_mass           = branches["GenJet_mass"][ev]
-            GenJet_hadronFlavour    = branches["GenJet_hadronFlavour"][ev]
+            #Gen Information
+            Jet_hadronFlavour        = branches["Jet_hadronFlavour"][ev]
+            Pileup_nTrueInt          = branches["Pileup_nTrueInt"][ev]
+            Jet_genJetIdx            = branches["Jet_genJetIdx"][ev]
+            GenJetNu_pt              = branches["GenJetNu_pt"][ev]
+            GenJetNu_eta             = branches["GenJetNu_eta"][ev]
+            GenJetNu_phi             = branches["GenJetNu_phi"][ev]
+            GenJetNu_mass            = branches["GenJetNu_mass"][ev]
+            GenJet_pt                = branches["GenJet_pt"][ev]
+            GenJet_eta               = branches["GenJet_eta"][ev]
+            GenJet_phi               = branches["GenJet_phi"][ev]
+            GenJet_mass              = branches["GenJet_mass"][ev]
+            GenJet_hadronFlavour     = branches["GenJet_hadronFlavour"][ev]
+            GenJet_partonMotherPdgId = branches["GenJet_partonMotherPdgId"][ev]
+            GenJet_partonMotherIdx   = branches["GenJet_partonMotherIdx"][ev]
             genWeight    = branches["genWeight"][ev]
             if (('ZJetsToQQ' in processName) | ('EWKZJets' in processName)):
+                # Add NLO K-factor
                 LHEPart_pt       = branches["LHEPart_pt"][ev]
                 LHEPart_pdgId    = branches["LHEPart_pdgId"][ev]
             if isJEC:
@@ -321,11 +404,10 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             continue
         if selected2==999:
             assert False
-
         #This is wrong Jet_breg2018 has to be applied on mass as well : https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsWG/BJetRegression
         # Correct the dataframes later
-        energy1 = np.sqrt(Jet_pt[selected1]**2 + Jet_pt[selected1]**2*np.sinh(Jet_eta[selected1])**2 +  Jet_mass[selected1]*Jet_mass[selected1])
-        energy2 = np.sqrt(Jet_pt[selected1]**2 + Jet_pt[selected1]**2*np.sinh(Jet_eta[selected1])**2 +  Jet_mass[selected1]*Jet_mass[selected1])
+        energy1 = np.sqrt(Jet_pt[selected1]**2 + (Jet_pt[selected1]*np.sinh(Jet_eta[selected1]))**2 +  Jet_mass[selected1]**2)
+        energy2 = np.sqrt(Jet_pt[selected2]**2 + (Jet_pt[selected2]*np.sinh(Jet_eta[selected2]))**2 +  Jet_mass[selected2]**2)
         jet1.SetPtEtaPhiE(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], energy1*Jet_bReg2018[selected1]    )
         jet2.SetPtEtaPhiE(Jet_pt[selected2]*Jet_bReg2018[selected2], Jet_eta[selected2], Jet_phi[selected2], energy2*Jet_bReg2018[selected2]    )
         dijet = jet1 + jet2
@@ -336,6 +418,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         features_['jet1_mass']=jet1.M()
         features_['jet1_nMuons']=Jet_nMuons[selected1]
         features_['jet1_nConstituents']=Jet_nConstituents[selected1]
+        features_['jet1_leadTrackPt']=Jet_leadTrackPt[selected1]
+
         # add jet_nmuons tight
         counterMuTight=0
         for muIdx in range(len(Muon_pt)):
@@ -368,6 +452,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         features_['jet2_mass'] = jet2.M()
         features_['jet2_nMuons'] = Jet_nMuons[selected2]
         features_['jet2_nConstituents'] = Jet_nConstituents[selected2]
+        features_['jet2_leadTrackPt']=Jet_leadTrackPt[selected2]
         counterMuTight=0
         for muIdx in range(len(Muon_pt)):
             if (np.sqrt((Muon_eta[muIdx]-Jet_eta[selected2])**2 + (Muon_phi[muIdx]-Jet_phi[selected2])**2)<0.4) & (Muon_tightId[muIdx]):
@@ -399,6 +484,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     features_['jet3_eta']= np.float32(Jet_eta[selected3])
                     features_['jet3_phi']= np.float32(Jet_phi[selected3])
                     features_['jet3_mass']= np.float32(Jet_mass[selected3])
+                    features_['jet3_leadTrackPt']=Jet_leadTrackPt[selected3]
                     counterMuTight=0
                     for muIdx in range(len(Muon_pt)):
                         if (np.sqrt((Muon_eta[muIdx]-Jet_eta[selected3])**2 + (Muon_phi[muIdx]-Jet_phi[selected3])**2)<0.4) & (Muon_tightId[muIdx]):
@@ -424,6 +510,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             features_['jet3_eta'] = np.float32(0)
             features_['jet3_phi'] = np.float32(0)
             features_['jet3_mass'] = np.float32(0)
+            features_['jet3_leadTrackPt']=np.float32(0)
             features_['jet3_nTightMuons'] = int(0)
             features_['jet3_btagDeepFlavB'] = np.float32(0)
             features_['jet3_btagWP'] = int(0)
@@ -442,6 +529,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     features_['jet4_eta']= np.float32(Jet_eta[selected4])
                     features_['jet4_phi']= np.float32(Jet_phi[selected4])
                     features_['jet4_mass']= np.float32(Jet_mass[selected4])
+                    features_['jet4_leadTrackPt']=Jet_leadTrackPt[selected4]
                     counterMuTight=0
                     for muIdx in range(len(Muon_pt)):
                         if (np.sqrt((Muon_eta[muIdx]-Jet_eta[selected4])**2 + (Muon_phi[muIdx]-Jet_phi[selected4])**2)<0.4) & (Muon_tightId[muIdx]):
@@ -467,6 +555,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             features_['jet4_eta'] = np.float32(0)
             features_['jet4_phi'] = np.float32(0)
             features_['jet4_mass'] = np.float32(0)
+            features_['jet4_leadTrackPt']=np.float32(0)
             features_['jet4_nTightMuons'] = int(0)
             features_['jet4_btagDeepFlavB'] = np.float32(0)
             features_['jet4_btagWP'] = int(0)
@@ -478,9 +567,9 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         if dijet.Pt()<1e-5:
             assert False
         features_['dijet_pt'] = np.float32(dijet.Pt())
-        features_['dijet_eta_nano'] = branches["dijet_eta"][ev]
-        features_['dijet_pt_nano'] = branches["dijet_pt"][ev]
-        features_['dijet_phi_nano'] = branches["dijet_phi"][ev]
+        #features_['dijet_eta_nano'] = branches["dijet_eta"][ev]
+        #features_['dijet_pt_nano'] = branches["dijet_pt"][ev]
+        #features_['dijet_phi_nano'] = branches["dijet_phi"][ev]
         features_['dijet_eta'] = np.float32(dijet.Eta())
         features_['dijet_phi'] = np.float32(dijet.Phi())
         features_['dijet_mass'] = np.float32(dijet.M())
@@ -503,7 +592,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         
         # This was checked.
         # using the same vector for boosting and trasnforming you find E=m, px=0, py=0, pz=0
-        boost_vector = - dijet.BoostVector()  # Boost to the bb system's rest frame
+        boost_vector = -dijet.BoostVector()  # Boost to the bb system's rest frame
 
         jet1_rest = ROOT.TLorentzVector(jet1)  # Make a copy to boost
         jet1_rest.Boost(boost_vector)     # Boost jet1 into the rest frame
@@ -609,6 +698,145 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
 # SV
         features_['nSV'] = int(nSV)
+## ttbar CR
+    #Muon as Leading
+        if not "private" in processName:
+
+            # Select muons
+            muon_mask = (Muon_pt > 25) & (np.abs(Muon_eta) < 2.4) & (Muon_pfIsoId>=4) & (Muon_tightId==1)
+            electron_mask = (Electron_pt > 25) & (np.abs(Electron_eta) < 2.4)  & (Electron_cutBased>=3) #& (Electron_pfRelIso03_all<0.1)
+
+            # At least one muon & one electron passing the cuts
+            selected_muon_idx = None
+            selected_ele_idx = None
+            if np.any(muon_mask) and np.any(electron_mask):
+                # Loop over muons & electrons to find the first opposite-charge pair
+                for mu_idx in np.where(muon_mask)[0]:
+                    for el_idx in np.where(electron_mask)[0]:
+                        if Muon_charge[mu_idx] * Electron_charge[el_idx] < 0:
+                            selected_muon_idx = mu_idx
+                            selected_ele_idx = el_idx
+                            break  # stop at the first matching muon
+                    if selected_muon_idx is not None:
+                        break
+
+                if selected_muon_idx is not None:
+                    features_["Muon_tt_pt"]         = np.float32(Muon_pt[selected_muon_idx])
+                    features_["Muon_tt_eta"]        = np.float32(Muon_eta[selected_muon_idx])
+                    features_["Muon_tt_phi"]        = np.float32(Muon_phi[selected_muon_idx])
+                    
+                    features_["Muon_tt_dxy"]            = np.float32(Muon_dxy[selected_muon_idx])
+                    features_["Muon_tt_dz"]             = np.float32(Muon_dz[selected_muon_idx])
+                    features_["Muon_tt_genMatched"]     = int(Muon_genPartIdx[selected_muon_idx])
+
+                    features_["Muon_tt_charge"]     = int(Muon_charge[selected_muon_idx])
+                    features_["Muon_tt_mediumId"]   = int(Muon_mediumId[selected_muon_idx])
+                    features_["Muon_tt_pfIsoId"]    = int(Muon_pfIsoId[selected_muon_idx])
+                    muon_tt_RECO_SF = get_muon_recoSF(muon_RECO_map, eta=Muon_eta[selected_muon_idx])
+                    features_["Muon_tt_RECO_SF"] = muon_tt_RECO_SF["value"]
+                    features_["Muon_tt_RECO_stat"] = muon_tt_RECO_SF["stat"]
+                    features_["Muon_tt_RECO_syst"] = muon_tt_RECO_SF["syst"]
+                    muon_tt_ID_SF = getMuonID_SF(muon_ID_map, "NUM_TightID_DEN_TrackerMuons", Muon_eta[selected_muon_idx], Muon_pt[selected_muon_idx])
+                    features_["Muon_tt_ID_SF"] = muon_tt_ID_SF["value"]
+                    features_["Muon_tt_ID_stat"] = muon_tt_ID_SF["stat"]
+                    features_["Muon_tt_ID_syst"] = muon_tt_ID_SF["syst"]
+
+                    muon_ISO_SF = getMuonID_SF(muon_ISO_map, "NUM_TightRelIso_DEN_TightIDandIPCut", Muon_eta[selected_muon_idx],  Muon_pt[selected_muon_idx])
+                    features_["Muon_tt_ISO_SF"] = muon_ISO_SF["value"]
+                    features_["Muon_tt_ISO_stat"] = muon_ISO_SF["stat"]
+                    features_["Muon_tt_ISO_syst"] = muon_ISO_SF["syst"]
+
+
+
+                    features_["Electron_tt_pt"]         = np.float32(Electron_pt[selected_ele_idx])
+                    features_["Electron_tt_eta"]        = np.float32(Electron_eta[selected_ele_idx])
+                    features_["Electron_tt_phi"]        = np.float32(Electron_phi[selected_ele_idx])
+                    features_["Electron_tt_charge"]     = int(Electron_charge[selected_ele_idx])
+                    features_["Electron_tt_isPF"]       = int(Electron_isPF[selected_ele_idx])
+                    features_["Electron_tt_pfRelIso03_all"]   = np.float32(Electron_pfRelIso03_all[selected_ele_idx])
+
+                    features_["Electron_tt_r9"]            = np.float32(Electron_r9[selected_ele_idx])
+                    features_["Electron_tt_cutBased"]       = np.float32(Electron_cutBased[selected_ele_idx])
+                    features_["Electron_tt_dxy"]            =np.float32(Electron_dxy[selected_ele_idx])
+                    features_["Electron_tt_dxyErr"]            =np.float32(Electron_dxyErr[selected_ele_idx])
+
+
+                    features_["Electron_tt_mvaIso"] = np.float32(Electron_mvaIso[selected_ele_idx])
+                    features_["Electron_tt_mvaIso_WP80"] = np.float32(Electron_mvaIso_WP80[selected_ele_idx])
+                    features_["Electron_tt_mvaIso_WP90"] = np.float32(Electron_mvaIso_WP90[selected_ele_idx])
+                    features_["Electron_tt_mvaIso_WPL"] = np.float32(Electron_mvaIso_WPL[selected_ele_idx])
+                    features_["Electron_tt_mvaNoIso_WP80"] = np.float32(Electron_mvaNoIso_WP80[selected_ele_idx])
+                    features_["Electron_tt_mvaNoIso_WP90"] = np.float32(Electron_mvaNoIso_WP90[selected_ele_idx])
+                    features_["Electron_tt_mvaNoIso_WPL"] = np.float32(Electron_mvaNoIso_WPL[selected_ele_idx])
+                    features_["Electron_tt_convVeto"] = np.float32(Electron_convVeto[selected_ele_idx])
+
+                    if Electron_pt[selected_ele_idx] >= 20 :
+                        features_["Electron_tt_SF"] = electrons_SF_map["UL-Electron-ID-SF"].evaluate("2018","sf","RecoAbove20",float(Electron_eta[selected_ele_idx]), float(Electron_pt[selected_ele_idx]))
+                        features_["Electron_tt_SF_up"]  = electrons_SF_map["UL-Electron-ID-SF"].evaluate("2018", "sfup",  "RecoAbove20", float(Electron_eta[selected_ele_idx]), float(Electron_pt[selected_ele_idx]))
+                        features_["Electron_tt_SF_down"]= electrons_SF_map["UL-Electron-ID-SF"].evaluate("2018", "sfdown","RecoAbove20", float(Electron_eta[selected_ele_idx]), float(Electron_pt[selected_ele_idx]))
+                    else:
+                        features_["Electron_tt_SF"]         = electrons_SF_map["UL-Electron-ID-SF"].evaluate("2018","sf","RecoBelow20",float(Electron_eta[selected_ele_idx]), float(Electron_pt[selected_ele_idx]))
+                        features_["Electron_tt_SF_up"]      = electrons_SF_map["UL-Electron-ID-SF"].evaluate("2018", "sfup",  "RecoBelow20", float(Electron_eta[selected_ele_idx]), float(Electron_pt[selected_ele_idx]))
+                        features_["Electron_tt_SF_down"]    = electrons_SF_map["UL-Electron-ID-SF"].evaluate("2018", "sfdown","RecoBelow20", float(Electron_eta[selected_ele_idx]), float(Electron_pt[selected_ele_idx]))
+
+
+
+                    mu = ROOT.TLorentzVector(0.,0.,0.,0.)
+                    el = ROOT.TLorentzVector(0.,0.,0.,0.)
+                    mu.SetPtEtaPhiM(Muon_pt[selected_muon_idx], Muon_eta[selected_muon_idx], Muon_phi[selected_muon_idx], 0.106)
+                    el.SetPtEtaPhiM(Electron_pt[selected_ele_idx], Electron_eta[selected_ele_idx], Electron_phi[selected_ele_idx], 0.000511)
+                    features_["dilepton_tt_mass"]   = np.float32((mu+el).M())
+            if selected_muon_idx is  None:
+                    features_["Muon_tt_pt"]         = np.float32(-999.)
+                    features_["Muon_tt_eta"]        = np.float32(-999.)
+                    features_["Muon_tt_phi"]        = np.float32(-999.)
+                    features_["Muon_tt_charge"]     = int(-999)
+                    features_["Muon_tt_mediumId"]   = int(-1)
+                    features_["Muon_tt_pfIsoId"]    = int(-1)
+                    features_["Muon_tt_dxy"]            = np.float32(-999.)
+                    features_["Muon_tt_dz"]             = np.float32(-999.)
+                    features_["Muon_tt_genMatched"]     = int(-1)
+                    
+                    features_["Muon_tt_RECO_SF"]    = np.float32(-1)
+                    features_["Muon_tt_RECO_stat"]  = np.float32(-1)
+                    features_["Muon_tt_RECO_syst"]  = np.float32(-1)
+
+                    features_["Muon_tt_ID_SF"]      = np.float32(-1)
+                    features_["Muon_tt_ID_stat"]    = np.float32(-1)
+                    features_["Muon_tt_ID_syst"]    = np.float32(-1)
+
+                    features_["Muon_tt_ISO_SF"]     = np.float32(-1)
+                    features_["Muon_tt_ISO_stat"]   = np.float32(-1)
+                    features_["Muon_tt_ISO_syst"]   = np.float32(-1)
+
+                    features_["Electron_tt_pt"]         = np.float32(-999.)
+                    features_["Electron_tt_eta"]        = np.float32(-999.)
+                    features_["Electron_tt_phi"]        = np.float32(-999.)
+                    features_["Electron_tt_charge"]     = int(-999)
+                    features_["Electron_tt_isPF"]       = int(-1)
+                    features_["Electron_tt_pfRelIso03_all"]   = np.float32(-999.)
+                    features_["Electron_tt_r9"]            = np.float32(0.)
+                    features_["Electron_tt_cutBased"]       = int(-1)           #  (0:fail, 1:veto, 2:loose, 3:medium, 4:tight)
+                    features_["Electron_tt_dxy"]            =np.float32(-999.)
+                    features_["Electron_tt_dxyErr"]            =np.float32(-999.)
+
+                    features_["Electron_tt_mvaIso"] = np.float32(-999.)
+                    features_["Electron_tt_mvaIso_WP80"] = np.float32(-999.)
+                    features_["Electron_tt_mvaIso_WP90"] = np.float32(-999.)
+                    features_["Electron_tt_mvaIso_WPL"] = np.float32(-999.)
+                    features_["Electron_tt_mvaNoIso_WP80"] = np.float32(-999.)
+                    features_["Electron_tt_mvaNoIso_WP90"] = np.float32(-999.)
+                    features_["Electron_tt_mvaNoIso_WPL"] = np.float32(-999.)
+                    features_["Electron_tt_convVeto"] = np.float32(-999.)
+                    features_["Electron_tt_SF"] = float(-1)
+
+                    features_["Electron_tt_SF"] = float(-1)
+                    features_["Electron_tt_SF_up"] = float(-1)
+                    features_["Electron_tt_SF_down"] = float(-1)
+
+                    features_["dilepton_tt_mass"]       = np.float32(0.)
+
+
 #Muon1 and Muon2 for ZZ
         
         if nMuon>=2:
@@ -656,17 +884,17 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         if nElectron>=2:
             eleZ1= ROOT.TLorentzVector(0., 0., 0., 0.)
             eleZ2= ROOT.TLorentzVector(0., 0., 0., 0.)
-            eleZ1.SetPtEtaPhiM(Electron_pt[0], Electron_eta[0], Electron_phi[0], 0.511)
-            eleZ2.SetPtEtaPhiM(Electron_pt[1], Electron_eta[1], Electron_phi[1], 0.511)
+            eleZ1.SetPtEtaPhiM(Electron_pt[0], Electron_eta[0], Electron_phi[0], 0.000511)
+            eleZ2.SetPtEtaPhiM(Electron_pt[1], Electron_eta[1], Electron_phi[1], 0.000511)
             diele = eleZ1 + eleZ2
             features_['eleZ1_pt'] = eleZ1.Pt()
             features_['eleZ1_eta'] = eleZ1.Eta()
             features_['eleZ1_phi'] = eleZ1.Phi()
-            features_['eleZ1_mass'] = 0.511
+            features_['eleZ1_mass'] = 0.000511
             features_['eleZ2_pt'] = eleZ2.Pt()
             features_['eleZ2_eta'] = eleZ1.Eta()
             features_['eleZ2_phi'] = eleZ1.Phi()
-            features_['eleZ2_mass'] = 0.511
+            features_['eleZ2_mass'] = 0.000511
 
             features_['dieleZZ_pt'] = diele.Pt()
             features_['dieleZZ_eta'] = diele.Eta()
@@ -691,6 +919,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 # Trig Muon
         muon = ROOT.TLorentzVector(0., 0., 0., 0.)
         muon.SetPtEtaPhiM(Muon_pt[muonIdx1], Muon_eta[muonIdx1], Muon_phi[muonIdx1], Muon_mass[muonIdx1])
+        muonTrig_RECO_ID = get_muon_recoSF(muon_RECO_map, eta=muon.Eta())
+        features_["muonTrig_RECO_ID"] = np.float32(muonTrig_RECO_ID["value"])
         features_['muon_pt'] = np.float32(muon.Pt())
         features_['muon_eta'] = np.float32(muon.Eta())
         features_['muon_phi'] = np.float32(muon.Phi())
@@ -711,6 +941,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             leptonClass = 1
             muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
             muon2.SetPtEtaPhiM(Muon_pt[muonIdx2], Muon_eta[muonIdx2], Muon_phi[muonIdx2], Muon_mass[muonIdx2])
+            muon2Trig_RECO_ID = get_muon_recoSF(muon_RECO_map, eta=Muon_eta[muonIdx2])
+            features_["muon2Trig_RECO_ID"] = np.float32(muon2Trig_RECO_ID["value"])
             features_['leptonClass'] = int(leptonClass) 
             features_['muon2_pt'] = np.float32(muon2.Pt())
             features_['muon2_eta'] = np.float32(muon2.Eta())
@@ -740,6 +972,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
                     muon2.SetPtEtaPhiM(Muon_pt[mu], Muon_eta[mu], Muon_phi[mu], Muon_mass[mu])
                     features_['leptonClass'] = int(leptonClass)
+                    muon2Trig_RECO_ID = get_muon_recoSF(muon_RECO_map, eta=Muon_eta[mu])
+                    features_["muon2Trig_RECO_ID"] = np.float32(muon2Trig_RECO_ID["value"])
                     features_['muon2_pt'] = np.float32(muon2.Pt())
                     features_['muon2_eta'] = np.float32(muon2.Eta())
                     features_['muon2_phi'] = np.float32(muon2.Phi())
@@ -757,6 +991,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         # R3
         if leptonClass == 3:
             features_['leptonClass'] = int(leptonClass)
+            features_['leptonClass'] = int(leptonClass)
+            features_["muon2Trig_RECO_ID"] = np.float32(0)
             features_['muon2_pt'] = np.float32(0)
             features_['muon2_eta'] = np.float32(0)
             features_['muon2_phi'] = np.float32(0)
@@ -869,6 +1105,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     features_["GenJet1_eta"] =GenJet_eta[Jet_genJetIdx[selected1]]
                     features_["GenJet1_phi"] =GenJet_phi[Jet_genJetIdx[selected1]]
                     features_["GenJet1_mass"] =GenJet_mass[Jet_genJetIdx[selected1]]                
+                    features_["GenJet1_partonMotherPdgId"] =GenJet_partonMotherPdgId[Jet_genJetIdx[selected1]]                
 
                     
                     genJet = ROOT.TLorentzVector(0.,0.,0.,0.)
@@ -892,6 +1129,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     features_["GenJet1_eta"] =-99
                     features_["GenJet1_phi"] =-99
                     features_["GenJet1_mass"] =-99
+                    features_["GenJet1_partonMotherPdgId"] = -99
 
                     features_["GenJetNu1_pt"] = -99
                     features_["GenJetNu1_eta"] = -99
@@ -904,6 +1142,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     features_["GenJet2_eta"] =GenJet_eta[Jet_genJetIdx[selected2]]
                     features_["GenJet2_phi"] =GenJet_phi[Jet_genJetIdx[selected2]]
                     features_["GenJet2_mass"] =GenJet_mass[Jet_genJetIdx[selected2]]                
+                    features_["GenJet2_partonMotherPdgId"] = GenJet_partonMotherPdgId[Jet_genJetIdx[selected2]]                
 
                     
                     genJet = ROOT.TLorentzVector(0.,0.,0.,0.)
@@ -927,6 +1166,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     features_["GenJet2_eta"] =-99
                     features_["GenJet2_phi"] =-99
                     features_["GenJet2_mass"] =-99
+                    features_["GenJet2_partonMotherPdgId"] =-99
 
                     features_["GenJetNu2_pt"] = -99
                     features_["GenJetNu2_eta"] = -99

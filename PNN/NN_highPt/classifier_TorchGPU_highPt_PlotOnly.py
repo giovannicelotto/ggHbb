@@ -8,7 +8,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.getFeatures import getFeatures
 from helpers.getParams import getParams
 from helpers.getInfolderOutfolder import getInfolderOutfolder
-from helpers.doPlots import runPlotsTorch, doPlotLoss_Torch
+from helpers.doPlots import runPlotsTorch, doPlotLoss_Torch, plot_lossTorch
 from helpers.loadSaved import loadXYWrWSaved
 from helpers.scaleUnscale import scale, unscale
 import torch
@@ -21,36 +21,31 @@ from datetime import datetime
 from sklearn.feature_selection import mutual_info_regression
 import glob
 import dcor
+import os
 # Get current month and day
 current_date = datetime.now().strftime("%b%d")  # This gives the format like 'Dec12'
 # %%
 hp = getParams()
 parser = argparse.ArgumentParser(description="Script.")
 # Define arguments
-try:
-    parser.add_argument("-v", "--version", type=float, help="version of the model", default=0)
-    parser.add_argument("-dt", "--date", type=str, help="MonthDay format e.g. Dec17", default=None)
-    parser.add_argument("-b", "--boosted", type=int, help="boosted class", default=1)
-    parser.add_argument("-s", "--sampling", type=int, help="sampling", default=0)
+
+parser.add_argument("-v", "--version", type=float, help="version of the model", default=20.01)
+parser.add_argument("-dt", "--date", type=str, help="MonthDay format e.g. Dec17", default="Aug28")
+parser.add_argument("-b", "--boosted", type=int, help="boosted class", default=3)
+parser.add_argument("-s", "--sampling", type=int, help="sampling", default=0)
+
+
+
+if hasattr(sys, 'ps1') or not sys.argv[1:]:
+    # Interactive mode (REPL, Jupyter) OR no args provided → use defaults
+    args = parser.parse_args([])
+else:
+    # Normal CLI usage
     args = parser.parse_args()
-    if args.version is not None:
-        hp["version"] = args.version 
-    if args.sampling is not None:
-        sampling = args.sampling 
-    if args.date is not None:
-        current_date = args.date
-    if args.boosted is not None:
-        boosted = args.boosted
-except:
-    hp["version"] = 1.
-    current_date="Jul11"
-    boosted=3
-    sampling=0
-    print("Interactive mode")
 # %%
 results = {}
-inFolder_, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, boosted, str(hp["version"]).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
-inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1D"%boosted if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%boosted
+inFolder_, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(args.date, args.boosted, str(args.version).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
+inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1D"%args.boosted if args.sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%args.boosted
 modelName = "model.pth"
 featuresForTraining = list(np.load(outFolder+"/featuresForTraining.npy"))
 #featuresForTraining +=['dijet_mass']
@@ -299,14 +294,24 @@ Xval.columns = [str(Xval.columns[_]) for _ in range((Xval.shape[1]))]
 from helpers.doPlots import NNoutputs
 
 NNoutputs(signal_predictions=YPredVal[genMassVal==125], realData_predictions=YPredVal[genMassVal==0], signalTrain_predictions=YPredTrain[genMassTrain==125], realDataTrain_predictions=YPredTrain[Ytrain==0], outName=outFolder+"/performance/NNoutput.png", log=False, doubleDisco=False, label='NN output')
+
+NNoutputs(signal_predictions=YPredVal[(genMassVal==125) & (Xval.jet1_btagTight>=0.5)& (Xval.jet2_btagTight>=0.71)], realData_predictions=YPredVal[(genMassVal==0) & (Xval.jet1_btagTight>=0.5)& (Xval.jet2_btagTight>=0.5)], signalTrain_predictions=YPredTrain[(genMassTrain==125) & (Xtrain.jet1_btagTight>=0.5)& (Xtrain.jet2_btagTight>0.5)], realDataTrain_predictions=YPredTrain[(Ytrain==0) & (Xtrain.jet1_btagTight>=0.5) & (Xtrain.jet2_btagTight>0.5)], outName=outFolder+"/performance/NNoutput_tight.png", log=False, doubleDisco=False, label='NN output')
 # %%
 
 # LOSS
 train_loss_history = np.load(outFolder + "/model/train_loss_history.npy")
 val_loss_history = np.load(outFolder + "/model/val_loss_history.npy")
-
+if os.path.exists(outFolder + "/model/train_classifier_loss_history.npy"):
+    train_classifier_loss_history = np.load(outFolder + "/model/train_classifier_loss_history.npy")
+    val_classifier_loss_history = np.load(outFolder + "/model/val_classifier_loss_history.npy")
+    train_dcor_loss_history = np.load(outFolder + "/model/train_disco_loss_history.npy")
+    val_dcor_loss_history = np.load(outFolder + "/model/val_disco_loss_history.npy")
+    plot_lossTorch(train_loss_history, val_loss_history, 
+                train_classifier_loss_history, val_classifier_loss_history,
+                train_dcor_loss_history, val_dcor_loss_history,
+                train_closure_loss_history=None, val_closure_loss_history=None,
+                outFolder=outFolder, gpu=False)
 doPlotLoss_Torch(train_loss_history, val_loss_history, outName=outFolder+"/performance/loss.png", earlyStop=np.argmin(val_loss_history))
-
 
 plt.close('all')
 print(YPredVal.reshape(-1).shape)
@@ -330,23 +335,191 @@ for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
     ax.legend()
 ax.set_xlabel("Dijet mass [GeV]")
 fig.savefig(outFolder+"/performance/scan_train.png", bbox_inches='tight')
+
 # %%
 from helpers.doPlots import getShapTorch
 #getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
 #Xtrain_tensor = torch.tensor(np.float32(Xtrain[featuresForTraining].values[(YPredTrain<1e-4).reshape(-1)])).float()
-getShapTorch(Xtrain[featuresForTraining], model, outName=outFolder+"/performance/shap.png", nFeatures=10, tensor=Xtrain_tensor[:100])
+nEvents = 3000
+subdf_0 =Xtrain[genMassTrain==0][featuresForTraining].iloc[:int(nEvents/2)]
+subdf_1 = Xtrain[genMassTrain==125][featuresForTraining].iloc[:int(nEvents/2)]
+subdf_0_scaled = scale(subdf_0,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+subdf_1_scaled = scale(subdf_1,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+subTensor_0 =  torch.tensor(np.float32(subdf_0_scaled.values)).float()
+subTensor_1 =  torch.tensor(np.float32(subdf_1_scaled.values)).float()
+subTensor = torch.cat([subTensor_0, subTensor_1])
+# %%
+import random
+from math import comb
+
+def monte_carlo_shap(model, x_sample, x_baseline, n_samples=100):
+    """
+    Compute approximate SHAP values for a single sample using Monte Carlo.
+
+    Args:
+        model: function that takes an input vector and returns scalar output.
+        x_sample: 1D array of shape (N_features,) - the sample to explain
+        x_baseline: 1D array of shape (N_features,) - reference input
+        n_samples: number of random subsets per feature
+
+    Returns:
+        phi: 1D array of approximate SHAP values
+    """
+    N = len(x_sample)
+    phi = np.zeros(N)
+
+    for i in range(N):
+        contribs = []
+        for _ in range(n_samples):
+            # Random subset of other features
+            other_features = [j for j in range(N) if j != i]
+            S_size = random.randint(0, N-1)
+            S = random.sample(other_features, S_size)
+
+            # Input with features in S from sample, others from baseline
+            x_S = x_baseline.copy()
+            x_S[S] = x_sample[S]
+
+            # Input with S + i from sample
+            x_Si = x_S.copy()
+            x_Si[i] = x_sample[i]
+
+            # Model outputs
+            y_S = model(x_S)
+            y_Si = model(x_Si)
+
+            # Weight by combinatorial factor (optional, can use uniform for simplicity)
+            # weight = comb(len(S), N-1)
+            # contribs.append(weight * (y_Si - y_S))
+            contribs.append(y_Si - y_S)
+
+        # Average contribution for feature i
+        phi[i] = np.mean(contribs)
+
+    return phi
+
+import torch
+
+def model_forward(x_input):
+    """
+    Wrapper to compute model output for a single sample.
+
+    Args:
+        x_input : 1D numpy array, shape (N_features,)
+
+    Returns:
+        float : model output (scalar)
+    """
+    # Convert to torch tensor and add batch dimension
+    x_tensor = torch.tensor(x_input, dtype=torch.float32).unsqueeze(0)  # shape (1, N_features)
+
+    # Make sure model is in eval mode
+    model.eval()
+
+    with torch.no_grad():
+        y = model(x_tensor)  # output tensor
+    # If output is 1D (binary classification), extract scalar
+    return y.item()
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def plot_shap_bar(phi_all, feature_names, top_n=10, out_file=None):
+    """
+    Produce a bar plot of feature importances from SHAP values.
+
+    Args:
+        phi_all : numpy array
+            SHAP values. Shape = (n_events, n_features) or (n_features,)
+        feature_names : list of str
+            Names of features, same order as columns in phi_all
+        top_n : int
+            Number of top features to display
+        out_file : str or None
+            If given, save plot to this file
+    """
+    # Ensure 2D array
+    phi_all = np.array(phi_all)
+    if phi_all.ndim == 1:
+        phi_all = phi_all.reshape(1, -1)
+    
+    # Global importance: mean absolute SHAP
+    importance = np.mean(np.abs(phi_all), axis=0)
+
+    # Rank features
+    indices = np.argsort(importance)[::-1][:top_n]
+    top_features = np.array(feature_names)[indices]
+    top_values = importance[indices]
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.bar(np.arange(len(top_features)), top_values, color='C0')
+    ax.set_xticks(np.arange(len(top_features)))
+    ax.set_xticklabels(top_features, rotation=90, ha='right')
+    ax.set_ylabel('Mean(|SHAP|)')
+    ax.set_title('Top {} Feature Importances'.format(top_n))
+    plt.tight_layout()
+
+    if out_file is not None:
+        plt.savefig(out_file)
+    plt.show()
+
+    # Return a dictionary of feature -> importance
+    return dict(zip(top_features, top_values))
+
+# -----------------------
+# Example usage:
+
+# phi_all: shape (n_events, n_features) or (n_features,) for single event
+# feature_names: list of feature names
+
+
+# Example with 62 features
+N_features = len(featuresForTraining)
+x_sample = subTensor[0].numpy()           # take one event to explain
+x_baseline = np.mean(subTensor.numpy(), axis=0)  # baseline = average of background
+
+phi = monte_carlo_shap(model_forward, x_sample, x_baseline, n_samples=3000)
+import numpy as np
+
+# phi: 1D array, length = number of features
+# feature_names: list of feature names, same order as phi
+
+# Get absolute values to measure magnitude of impact
+phi_abs = np.abs(phi)
+
+# Sort features by descending importance
+indices = np.argsort(phi_abs)[::-1]
+top_features = np.array(featuresForTraining)[indices]
+top_values = phi_abs[indices]
+
+# Display top 10 features
+for f, v in zip(top_features[:10], top_values[:10]):
+    print(f"{f}: {v:.4f}")
+
+# phi[i] = approximate SHAP value for feature i
+plot_shap_bar(phi_abs, featuresForTraining, top_n=15, out_file=outFolder+"/performance/shapMC.png")
+#getShapTorch(Xtrain[featuresForTraining], model, outName=outFolder+"/performance/shap.png", nFeatures=10, tensor=subTensor_1)
 # %%
 sys.path.append("/t3home/gcelotto/ggHbb/scripts/plotScripts/")
 from plotFeatures import plotNormalizedFeatures
 # %%
 plotNormalizedFeatures(data=[Xtrain[(YPredTrain<0.5).reshape(-1) & (Ytrain==0)],
                              Xtrain[(YPredTrain>0.5).reshape(-1) & (Ytrain==0)]],
-                        outFile=outFolder+"/performance/features.png",
+                        outFile=outFolder+"/performance/features_low_vs_High.png",
                         legendLabels=["Low", "High"],
                         colors=["blue", 'red'],
                         figsize=(30,50),
                         histtypes=["step", "step"],
                         error=False)
 
-
+# %%
+plotNormalizedFeatures(data=[Xtrain[(genMassTrain==125)],
+                             Xtrain[(genMassTrain==0)]],
+                        outFile=outFolder+"/performance/features_SvsB.png",
+                        legendLabels=["S", "B"],
+                        colors=["blue", 'red'],
+                        figsize=(30,50),
+                        histtypes=["step", "step"],
+                        error=False)
 # %%

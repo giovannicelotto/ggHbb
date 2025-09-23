@@ -56,6 +56,8 @@ def plotEfficiencyMaps(pt_bins, eta_bins, eff_map, outFolder=None, process=None,
             aspect='equal',  # make all bins same size visually
             extent=[0, len(pt_bins) - 1, 0, len(eta_bins) - 1],
             interpolation='nearest',
+            vmin=0,
+            vmax=1,
             cmap='viridis'
         )
         fig.colorbar(im, ax=ax, label='Efficiency')

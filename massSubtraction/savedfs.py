@@ -12,10 +12,11 @@ sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.preprocessMultiClass import preprocessMultiClass
 from plotDfs import plotDfs
 from hist import Hist
+import argparse
 
 # %%
 boosted = 3
-modelName = "Jul15_%d_20p0"%boosted
+modelName = "Aug28_%d_20p01"%boosted
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
 columns_ = ['dijet_mass', 'dijet_pt',
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
@@ -29,13 +30,60 @@ if not os.path.exists(df_folder):
     
 # Load data first
 # %%
-DataDict = {
-0 : 0,        1 : 0,         2 : 0,         3 : 0,         4 : 0,         5 : 0,
-6 : 0,         7 : 0,         8 : 0,         9 : 0,         10 : 0,        11 : 0,
-12 : 0,        13 : 0,        14 : 0,        15 : 0,        16 : 0,        
-17 : 0,         18 : 0,    19 : -1,         20 : -1,        21 : -1
+periods = {
+    "A": range(0, 6),     # 0–5
+    "B": range(6, 12),    # 6–11
+    "C": range(12, 17),   # 12–16
+    "D": range(17, 22)    # 17–21
 }
 
+# Base dictionary (default: all 0)
+DataDict = {i: 0 for r in periods.values() for i in r}
+def set_datataking(args):
+    """Parse datataking arguments and update DataDict."""
+    global DataDict
+
+    for arg in args:
+        # Handle ranges like "0-5"
+        if "-" in arg and arg[0].isdigit():
+            start, end = map(int, arg.split("-"))
+            for i in range(start, end + 1):
+                DataDict[i] = -1
+
+        # Handle lettered periods like "A", "B", ...
+        elif arg in periods:
+            for i in periods[arg]:
+                DataDict[i] = -1
+
+        # Handle single indices like "7"
+        elif arg.isdigit():
+            DataDict[int(arg)] = -1
+
+        # Handle "all"
+        elif arg.lower() == "all":
+            for i in DataDict:
+                DataDict[i] = -1
+
+    return DataDict
+
+
+parser = argparse.ArgumentParser(description="Set datataking periods.")
+parser.add_argument(
+    "-dt",
+    "--datataking",
+    nargs="+",
+    help="Specify periods (A B C D), ranges (0-5), single indices (7), or 'all'.",
+    default=[],
+)
+
+args = parser.parse_args()
+
+if args.datataking:
+    result = set_datataking(args.datataking)
+else:
+    result = DataDict  # keep default (all 0)
+
+print(result)
 DataTakingList = list(DataDict.keys())
 nReals = list(DataDict.values())
 
@@ -110,7 +158,8 @@ MC_dict = {
     #18:-1,
     #0 :-1, 
     1:-1, 3:-1, 4:-1, 19:-1, 20:-1, 21:-1, 22:-1, 35:0,
-    36:-1, 37:-1,#43:-1,
+    36:-1, 37:-1,
+    #43:-1,
     #JER Down
     #44:0, 45:0, 46:0, 47:0, 48:0, 49:0, 50:0, 51:0, 52:0, 53:0,54:-1, 55:0,
     #JER Up
@@ -149,6 +198,9 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     elif boosted==60:
         dfs=cut(dfs, 'dijet_pt', 60, 100)
     dfs=cut(dfs, 'dijet_mass', 50, 300)
+    
+    
+    
     predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
     #df = preprocessMultiClass(dfs=dfs)[0].copy()
     df = dfs[0].copy()
@@ -156,13 +208,35 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
 
         
     df['PNN'] = np.array(predsMC.PNN)
+    if df.btag_central.max() == np.inf:
+        print("INFINITES ARE FOUND!!!\n"*400)
+        df = df[df.btag_central < np.inf]
+
     print("Process ", dfProcessesMC.process[isMC], " PNN assigned")
     print("Process ", dfProcessesMC.process[isMC])
     print("Xsection ", dfProcessesMC.xsection[isMC])
+
+
+    print("Filling btag central with 0!!!\n\n\n\n", "*"*40, "\n\n\nFilling btag central with 0!!!\n\n\n\n")
+    df['btag_central'] = df['btag_central'].fillna(0)
+
+
+
     if "ZJets" in processMC:
         df['weight'] = df.genWeight * df.NLO_kfactor * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
     else:
         df['weight'] = df.genWeight * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
+
+
+    nan_values = df.isna().sum().sum()
+    inf_values = np.isinf(df.weight).sum().sum()
+    print("Nan Values", nan_values)
+    print("Inf Values", inf_values)
+    status = 1 if ((nan_values>0)  | (inf_values>0)) else 0
+    print("status", status)
+
+    
+
 
 
 # save a copy of the dataframes before applying any cut
@@ -180,8 +254,9 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
         os.remove(dataFrameName)
         df.to_parquet(dataFrameName)
         print("Saved ", dataFrameName)
-# %%
 
+# %%
+sys.exit()
 
 
 

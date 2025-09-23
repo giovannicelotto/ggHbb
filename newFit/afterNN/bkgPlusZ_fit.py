@@ -412,11 +412,11 @@ for idx, var in enumerate(variations):
     y_data_blind = Hist.new.Var(bins, name="mjj").Weight()
 
     y_data_fit_noZ.values()[:] = np.where((x>t0) & (x<t3), myBkgFunction(x, *p_tot[myBkgParams]), 0)
-    y_data_fit_noZ.variances()[:] = np.where((x>t0) & (x<t3), f_var, 0)
+    y_data_fit_noZ.variances()[:] = np.where((x>t0) & (x<t3), c, 0)
     
 
     y_data_fit.values()[:] = np.where((x>t0) & (x<t3), myBkgSignalFunction(x, *p_tot[myBkgParams+["normSig", "fraction_dscb", "mean", "sigma", "alphaL", "nL", "alphaR", "nR", "sigmaG",]]), 0)
-    y_data_fit.variances()[:] = np.where((x>t0) & (x<t3), f_var, 0)
+    y_data_fit.variances()[:] = np.where((x>t0) & (x<t3), c, 0)
     
     y_Higgs.values()[:] = np.where((x>t0) & (x<t3), cHiggs, 0)
     y_Higgs.variances()[:] = np.where((x>t0) & (x<t3), cHiggs_err**2, 0)

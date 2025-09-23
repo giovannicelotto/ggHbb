@@ -5,6 +5,7 @@ import numpy as np
 import os
 import glob
 import shutil
+import matplotlib.pyplot as plt
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patches as patches
 import sys
@@ -55,7 +56,7 @@ def getDfProcesses_v2 (reset=False):
     dfProcessesMC_JEC = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesMC_JEC.csv")
     return dfProcessesMC, dfProcessesData, dfProcessesMC_JEC
 
-def getCommonFilters(btagTight=False, btagWP=None):
+def getCommonFilters(btagTight=False, btagWP=None, cutDijet=True):
     '''
     btagTight True for Tight, False for Medium
     btagWP overwrites the btagTight argument (L, M, T)
@@ -75,8 +76,8 @@ def getCommonFilters(btagTight=False, btagWP=None):
     if btagTight:
         print("Setting btag cut to 0.71 for both jets")
     filters = [
-            [   ('jet1_pt', '>',  20),
-                ('jet2_pt', '>',  20),
+            [   ('jet1_pt_uncor', '>',  20),
+                ('jet2_pt_uncor', '>',  20),
                 
                 ('jet1_mass', '>', 0),
                 ('jet2_mass', '>', 0),
@@ -96,8 +97,8 @@ def getCommonFilters(btagTight=False, btagWP=None):
                   
                   # OR Condition
 
-            [   ('jet1_pt', '>',  20),
-                ('jet2_pt', '>',  20),
+            [   ('jet1_pt_uncor', '>',  20),
+                ('jet2_pt_uncor', '>',  20),
                 
                 ('jet1_mass', '>', 0),
                 ('jet2_mass', '>', 0),
@@ -116,6 +117,9 @@ def getCommonFilters(btagTight=False, btagWP=None):
                 ]
 
     ]
+    if cutDijet:
+        filters[0] = filters[0] + [('dijet_pt', '>=', 100)]
+        filters[1] = filters[1] + [('dijet_pt', '>=', 100)]
     return filters
 def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False, isJEC=0):
     '''
@@ -478,8 +482,8 @@ def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=None, selectFi
                 flatPaths[flatPaths.index(path)] = path+"/training"    
                 path = path+"/training"
             else:
-                flatPaths[flatPaths.index(path)] = path+"/others"
-                path = path+"/others"
+                flatPaths[flatPaths.index(path)] = path+""
+                path = path+""
         # loop over processes
         print("PATH : ", path)
 
@@ -838,29 +842,25 @@ def cut(data, feature, min, max):
                 newData.append(df)
             return newData
 
-def cut_advanced(data, feature, condition):
+def cut_advanced(data, condition):
     """
-    Filters a list of DataFrames based on a specified condition for a feature.
+    Filters a list of DataFrames based on a specified condition.
 
     Parameters:
         data (list of pd.DataFrame): List of DataFrames to filter.
-        feature (str): The column/feature name to apply the condition on.
-        condition (str): A string representing the condition, e.g., 
-                         '-2.5 < dijet_eta <= 2.5', '|dijet_eta| > 2.5'.
+        condition (str): A string representing the condition using column names, 
+                         e.g., "(-2.5 < dijet_eta) & (dijet_eta <= 2.5)" 
+                         or "~((jet1_btag >= 0.71) & (jet2_btag >= 0.71))".
 
     Returns:
         list of pd.DataFrame: List of filtered DataFrames.
     """
     newData = []
     for df in data:
-        # Replace the feature placeholder in the condition with the actual column
-        condition_with_feature = condition.replace(feature, f"df['{feature}']")
-        
-        # Evaluate the condition safely
-        filtered_df = df[eval(condition_with_feature)]
+        filtered_df = df.query(condition)
         newData.append(filtered_df)
-    
     return newData
+
     
 
 def loadMultiParquet(paths, nReal=1, nMC=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters()):

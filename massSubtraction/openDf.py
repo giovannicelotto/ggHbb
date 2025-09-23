@@ -51,16 +51,16 @@ for idx, p in enumerate(dfProcessesMC.process):
 dfsData = []
 isDataList = [
             #0,
-            1, 
-            2,
-            3,4,5,
-            6,7,8,9,
-            10,
-            11,12,13,14,15,
-            16,
+            #1, 
+            #2,
+            #3,4,5,
+            #6,7,8,9,
+            #10,
+            #11,12,13,14,15,
+            #16,
             17,
-            18,
-            19,20,21
+            #18,
+            #19,20,21
             ]
 
 lumis = []
@@ -154,6 +154,8 @@ fig, ax = plt.subplots(1, 1)
 ax.hist(df.PNN, bins=np.linspace(0, 1, 51), histtype='step', color='black', density=True, label='Data', weights=df.weight)
 ax.hist(dfH.PNN, bins=np.linspace(0, 1, 51), histtype='step', color='red', density=True, label='Higgs', weights=dfH.weight)
 ax.hist(dfZ.PNN, bins=np.linspace(0, 1, 51), histtype='step', color='green', density=True, label='Z', weights=dfZ.weight)
+ax.set_xlabel("NN score")
+ax.set_ylabel("Density")
 ax.legend()
 # %%
 cz1 = np.histogram(dfZ.dijet_mass[dfZ.PNN>t], bins=bins, weights=dfZ.weight[dfZ.PNN>t])[0]
@@ -192,6 +194,7 @@ cTot = np.zeros(len(bins)-1)
 for idx, df in enumerate(dfsMC):
     isMC = isMCList[idx]
     process = dfProcessesMC.process[isMC]
+    
     print(idx, process, isMC)
     c = np.histogram(df.PNN, bins=bins,weights=df.weight)[0]
     if 'Data' in process:
@@ -199,6 +202,7 @@ for idx, df in enumerate(dfsMC):
     elif 'GluGluHToBB' in process:
         print(process, isMC, " for Higgs")
         countsDict['H'] = countsDict['H'] + c
+        dfsMC[idx]['process']="Higgs"
     elif 'ST' in process:
         countsDict['ST'] = countsDict['ST'] + c
     elif 'TTTo' in process:
@@ -208,6 +212,7 @@ for idx, df in enumerate(dfsMC):
     elif 'ZJets' in process:
         #print(process, c)
         countsDict['Z+Jets'] = countsDict['Z+Jets'] + c
+        dfsMC[idx]['process']="Z"
     elif 'WJets' in process:
         print("Here")
         countsDict['W+Jets'] = countsDict['W+Jets'] + c
@@ -243,4 +248,92 @@ dfdata = pd.concat(dfsData)
 #ax.hist(dfdata.dijet_mass[dfdata.PNN>pnn_t], bins=mass_bins, weights=dfdata.weight[dfdata.PNN>pnn_t], histtype='step', label='Data')
 ##ax.set_yscale('log')
 #ax.legend()
+# %%
+
+dfdata = dfdata[(dfdata.jet1_btagDeepFlavB>0.71) & (dfdata.jet2_btagDeepFlavB>0.71)]
+
+import hist
+fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [4, 1]}, figsize=(10, 10), constrained_layout=True)
+fig.align_ylabels([ax[0],ax[1]])
+thresholds = np.array([0, 0.3, 0.5, 0.7, 1])
+bins=np.linspace(50, 300, 51)
+bin1 = bins[np.abs(bins - 105).argmin()]
+bin2 = bins[np.abs(bins - 140).argmin()]
+inclusive_hist = hist.Hist(hist.axis.Variable(bins), storage=hist.storage.Weight())
+inclusive_hist.fill(dfdata.dijet_mass[((dfdata.dijet_mass < bin1) | (dfdata.dijet_mass > bin2)) & (dfdata.dijet_mass>bins[0])])
+inclusive_hist.plot(density=True, ax=ax[0], label="Inclusive", color='black')
+
+
+for t_b, t_a in zip(thresholds[:-1], thresholds[1:]):
+    
+    mask = (dfdata.PNN > t_b) & (dfdata.PNN < t_a) & ((dfdata.dijet_mass < bin1) | (dfdata.dijet_mass > bin2)) & (dfdata.dijet_mass>bins[0])
+    h = hist.Hist(hist.axis.Variable(bins), storage=hist.storage.Weight())
+    h.fill(dfdata.dijet_mass[mask].values)
+    
+    # Plot step hist for the upper plot
+    h.plot(density=True, ax=ax[0], label=f"{t_b:.2f} < NN < {t_a:.2f}")
+
+    normH = (h/h.integrate(0).value)/((inclusive_hist.values()/inclusive_hist.integrate(0).value))
+    normH.plot(ax=ax[1])
+    
+    # Ratio wrt inclusive
+    #ratio = np.divide(h.view(), inclusive_hist.view(), out=np.zeros_like(h.view()), where=inclusive_hist.view()!=0)
+    #ax[1].step(h.axes[0].centers, ratio, where='mid', label=f"{t_b:.2f} < NN < {t_a:.2f}")
+
+# Inclusive in upper plot
+#ax[0].step(inclusive_hist.axes[0].centers, inclusive_hist.view()/inclusive_hist.view().sum(), color='black', label='Inclusive')
+
+# Axes labels and legend
+ax[0].set_xlim(bins[0], bins[-1])
+ax[0].legend()
+ax[0].set_xlabel("")
+ax[0].set_ylabel("Density [a.u.]")
+ax[1].axhline(1, color='black', linestyle='--')
+ax[1].set_ylim(0.8, 1.2)
+ax[1].set_xlabel("Dijet Mass [GeV]")
+ax[1].set_ylabel("Ratio / Inclusive")
+
+
+# %%
+NN_t, factorHiggs, factorZ = 0.7, 300,11
+
+
+fig, ax = plt.subplots(1, 1)
+thresholds = np.array([0, 0.3, 0.5, 0.7, 1])
+bins=np.linspace(50, 300, 101)
+x = (bins[:-1]+bins[1:])/2
+inclusive_hist = hist.Hist(hist.axis.Variable(bins), storage=hist.storage.Weight())
+maskData = ((dfdata.dijet_mass < bin1) | (dfdata.dijet_mass > bin2)) & (dfdata.dijet_mass>bins[0]) & (dfdata.PNN>NN_t)
+inclusive_hist.fill(dfdata.dijet_mass[maskData])
+#inclusive_hist.plot(density=False, ax=ax, label="Inclusive", color='black')
+ax.errorbar(x, inclusive_hist.values(), yerr=np.sqrt(inclusive_hist.values()), marker='o', linestyle='none', color='black', markersize=2, label='Data')
+h_Higgs = hist.Hist(hist.axis.Variable(bins), storage=hist.storage.Weight())
+mask = (dfMC.process=='Higgs') & (dfMC.PNN > NN_t)
+h_Higgs.fill(dfMC.dijet_mass[mask].values, weight=dfMC.weight[mask]*factorHiggs)
+h_Higgs.plot(ax=ax, label='ggF Higgs x %d'%factorHiggs)
+
+h_Z = hist.Hist(hist.axis.Variable(bins), storage=hist.storage.Weight())
+mask = (dfMC.process=='Z') & (dfMC.PNN > NN_t)
+h_Z.fill(dfMC.dijet_mass[mask].values, weight=dfMC.weight[mask]*factorZ)
+h_Z.plot(ax=ax, label='Z x %d'%factorZ)
+ax.legend()
+if NN_t>0:
+    ax.text(x=0.95, y=0.65, s="NN score > %.1f"%NN_t, transform=ax.transAxes, ha='right')
+ax.set_xlim(bins[0], bins[-1])
+ax.set_xlabel("Dijet Mass [GeV]")
+ax.set_ylabel("Density [a.u.]")
+hep.cms.label("Private Work", exp='CMS', data=True,  lumi = np.round(lumi, 2))
+
+# %%
+
+
+
+
+dfdata_mass = dfdata [(dfdata.dijet_mass>105) & (dfdata.dijet_mass<140)]
+dfHiggs_mass = dfMC [(dfMC.dijet_mass>105) & (dfMC.dijet_mass<140) & (dfMC.process=="Higgs")]
+
+
+QCD_gain = len(dfdata_mass[dfdata_mass.PNN>0.7]) / len(dfdata_mass)
+Higgs_gain = ((dfHiggs_mass[dfHiggs_mass.PNN>0.7].weight.sum()) / dfHiggs_mass.weight.sum())
+print(Higgs_gain/QCD_gain)
 # %%

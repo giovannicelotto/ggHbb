@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G
 #SBATCH --partition=short              # Specify your cluster partition
-#SBATCH --time=0-00:10:00
+#SBATCH --time=0-00:3:00
 #SBATCH --dependency=singleton
 #. /t3home/gcelotto/.bashrc
 #conda activate myenv
@@ -32,3 +32,5 @@ echo "yMC"$pN"_fn"$number".parquet"
 
 xrdcp -f -N "$source_dir/yMjj_"$process"_FN"$number".parquet" "root://t3dcachedb03.psi.ch:1094///pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_"$modelName"/"$process"/yMjj_${process}_FN${number}.parquet"
 xrdfs root://t3dcachedb03.psi.ch stat /pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_$modelName/$process/yMjj_${process}_FN${number}.parquet
+rm "$source_dir/yMjj_"$process"_FN"$number".parquet"
+

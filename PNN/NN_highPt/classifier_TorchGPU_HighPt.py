@@ -29,12 +29,10 @@ import argparse
 gpuFlag=True if torch.cuda.is_available() else False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # Define folder of input and output. Create the folders if not existing
-hp = getParams()
 # %%
 
 parser = argparse.ArgumentParser(description="Script.")
 #### Define arguments
-parser.add_argument("-v", "--version", type=float, help="version of the model", default=0)
 parser.add_argument("-l", "--lambda_disco", type=float, help="lambda value for disco", default=0)
 parser.add_argument("-e", "--epochs", type=int, help="number of epochs", default=1500)
 parser.add_argument("-s", "--size", type=int, help="Number of events to crop training dataset", default=1000000000)
@@ -48,47 +46,11 @@ parser.add_argument("-n", "--nodes",type=lambda s: [int(item) for item in s.spli
 )
 args = parser.parse_args()
 
-# %%
-try:
-    if args.version is not None:
-        hp["version"] = args.version 
-        print("version changed to ", hp["version"])
-    if args.epochs is not None:
-        hp["epochs"] = args.epochs 
-        print("N epochs to ", hp["epochs"])
-    if args.batch_size is not None:
-        hp["batch_size"] = int(args.batch_size )
-        print("N batch_size to ", hp["batch_size"])
-    if args.nodes is not None:
-        hp["nNodes"] = args.nodes
-    if args.earlyStopping is not None:
-        hp["patienceES"] = args.earlyStopping
-    if args.learningRate is not None:
-        hp["learning_rate"] = args.learningRate
-    if args.size != int(1e9):
-        hp["size"] = args.size
-    if args.boosted != int(1e9):
-        boosted = args.boosted
-    hp["dropout"]=args.dropout
-    print("After parameters")
-    print(hp)
-except:
-    print("-"*40)
-    print("Error in passing the arguments!")
-    print("version changed to ", hp["version"])
-    hp["version"] = 0. 
-    print(hp)
-    print("interactive mode")
-    print("-"*40)
-    hp["size"] = 20000
-    hp["batch_size"]=1000
-    hp['nodes'] = [4, 2]
-    hp['patienceES'] = 40
+
 # %%
 sampling = False
-boosted =args.boosted
-inFolder, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, boosted, str(hp["version"]).replace('.', 'p')), suffixResults='_mjjDisco')
-inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1D"%(boosted) if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%(boosted)
+inFolder, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, args.boosted, str(args.lambda_disco).replace('.', 'p')), suffixResults='_mjjDisco')
+inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1D"%(args.boosted) if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%(args.boosted)
 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
 featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder)
@@ -115,9 +77,8 @@ Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/mySc
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 print(Xtrain.isna().sum())
 # %%
-size = hp["size"]
-Xtrain, Ytrain, Wtrain, rWtrain, genMassTrain, dijetMassTrain = Xtrain[:size], Ytrain[:size], Wtrain[:size], rWtrain[:size], genMassTrain[:size], dijetMassTrain[:size]
-Xval, Yval, Wval, rWval, genMassVal, dijetMassVal = Xval[:size], Yval[:size], Wval[:size], rWval[:size], genMassVal[:size], dijetMassVal[:size]
+Xtrain, Ytrain, Wtrain, rWtrain, genMassTrain, dijetMassTrain = Xtrain[:args.size], Ytrain[:args.size], Wtrain[:args.size], rWtrain[:args.size], genMassTrain[:args.size], dijetMassTrain[:args.size]
+Xval, Yval, Wval, rWval, genMassVal, dijetMassVal = Xval[:args.size], Yval[:args.size], Wval[:args.size], rWval[:args.size], genMassVal[:args.size], dijetMassVal[:args.size]
 print("Train Lenght after cutting", len(Xtrain))
 print("Val Lenght after cutting", len(Xval))
 
@@ -160,20 +121,17 @@ val_dataset = TensorDataset(
     val_masks.to(device)
 )
 # Drop last to drop the last (if incomplete size) batch
-hp["batch_size"] = hp["batch_size"] if hp["batch_size"]<len(Xtrain) else len(Xtrain)
-train_dataloader = DataLoader(traindataset, batch_size=hp["batch_size"], shuffle=True, drop_last=True)
 
-hp["val_batch_size"] = hp["batch_size"] if hp["batch_size"]<len(Xval) else len(Xval)
-val_dataloader = DataLoader(val_dataset, batch_size=hp["val_batch_size"], shuffle=False, drop_last=True)
+train_dataloader = DataLoader(traindataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
+val_dataloader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True)
 # %%
 # Model, loss, optimizer
-model = Classifier_HighPt(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=hp["nNodes"], dropout_prob=args.dropout)
+model = Classifier_HighPt(input_dim=Xtrain[featuresForTraining].shape[1], nNodes=args.nodes, dropout_prob=args.dropout)
 model.to(device)
-epochs = hp["epochs"]
 criterion = nn.BCELoss(reduction='none')
-optimizer = optim.Adam(model.parameters(), lr=hp["learning_rate"])
+optimizer = optim.Adam(model.parameters(), lr=args.learningRate)
 
-early_stopping_patience = hp["patienceES"]
+early_stopping_patience = args.earlyStopping
 best_val_loss = float('inf')
 patience_counter = 0
 print("Train start")
@@ -187,16 +145,22 @@ print("Train start")
 
 
 train_loss_history = []
+train_classifier_loss_history = []
+train_disco_loss_history = []
 
 val_loss_history = []
+val_classifier_loss_history = []
+val_disco_loss_history = []
 best_model_weights = None # weights saved for RestoreBestWeights
 best_epoch = None
 
 # %%
 
-for epoch in range(hp["epochs"]):
+for epoch in range(args.epochs):
     model.train()
     total_trainloss = 0.0
+    total_train_classifier_loss = 0.0
+    total_train_disco_loss = 0.0
     # Training phase
     for batch in train_dataloader:
         X_batch, Y_batch, W_batch, dijetMass_batch, mask_batch = batch
@@ -211,15 +175,17 @@ for epoch in range(hp["epochs"]):
         # Combined loss
         if args.lambda_disco!=0:
             W_batch = torch.ones([len(W_batch), 1], device=device)
-            dCorr_bin = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
-            loss = classifier_loss + args.lambda_disco*dCorr_bin
+            dCorr = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
+            loss = classifier_loss + args.lambda_disco*dCorr
         else:
             loss = classifier_loss
         loss.backward()
-        
         optimizer.step()
-
+        
+        # Sum over batches
         total_trainloss += loss.item()
+        total_train_classifier_loss += classifier_loss.item()
+        total_train_disco_loss += args.lambda_disco*dCorr.item()
 
 
 # ______________________________________________________________________________
@@ -235,6 +201,7 @@ for epoch in range(hp["epochs"]):
         model.eval()
         total_val_loss = 0.0
         total_val_classifier_loss = 0.0
+        total_val_disco_loss = 0.0
 
 
         with torch.no_grad():
@@ -248,23 +215,36 @@ for epoch in range(hp["epochs"]):
                 # Combined loss
                 if args.lambda_disco!=0:
                     W_batch = torch.ones([len(W_batch), 1], device=device)
-                    dCorr_bin = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
-                    loss = classifier_loss + args.lambda_disco*dCorr_bin
+                    dCorr = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
+                    loss = classifier_loss + args.lambda_disco*dCorr
                 else:
                     loss = classifier_loss
+                        # Sum over batches
                 total_val_loss += loss.item()
+                total_val_classifier_loss += classifier_loss.item()
+                total_val_disco_loss += args.lambda_disco*dCorr.item()
 
 
     # Calculate average losses (average over batches)
-    avg_trainloss = total_trainloss / len(train_dataloader)
-    avg_val_loss = total_val_loss / len(val_dataloader)
+    avg_train_loss = total_trainloss / len(train_dataloader)
+    avg_train_classifier_loss = total_train_classifier_loss / len(train_dataloader)
+    avg_train_disco_loss = total_train_disco_loss / len(train_dataloader)
 
-    train_loss_history.append(avg_trainloss)
+    avg_val_loss = total_val_loss / len(val_dataloader)
+    avg_val_classifier_loss = total_val_classifier_loss / len(val_dataloader)
+    avg_val_disco_loss = total_val_disco_loss / len(val_dataloader)
+
+    train_loss_history.append(avg_train_loss)
+    train_classifier_loss_history.append(avg_train_classifier_loss)
+    train_disco_loss_history.append(avg_train_disco_loss)
+
     val_loss_history.append(avg_val_loss)
+    val_classifier_loss_history.append(avg_val_classifier_loss)
+    val_disco_loss_history.append(avg_val_disco_loss)
 
     # Print losses
-    print(f"Epoch [{epoch+1}/{epochs}], "
-          f"Train Loss: {avg_trainloss:.4f}, "
+    print(f"Epoch [{epoch+1}/{args.epochs}], "
+          f"Train Loss: {avg_train_loss:.4f}, "
           f"Val Loss: {avg_val_loss:.4f}",
           flush=(epoch % 50 == 0))
 
@@ -291,12 +271,16 @@ if best_model_weights is not None:
 # %%
 np.save(outFolder + "/model/train_loss_history.npy", train_loss_history)
 np.save(outFolder + "/model/val_loss_history.npy", val_loss_history)
+np.save(outFolder + "/model/train_classifier_loss_history.npy", train_classifier_loss_history)
+np.save(outFolder + "/model/val_classifier_loss_history.npy", val_classifier_loss_history)
+np.save(outFolder + "/model/train_disco_loss_history.npy", train_disco_loss_history)
+np.save(outFolder + "/model/val_disco_loss_history.npy", val_disco_loss_history)
 
 # %%
 torch.save(model, outFolder+"/model/model.pth")
 print("Model saved")
 with open(outFolder + "/model/training.txt", "w") as file:
-    for key, value in hp.items():
+    for key, value in vars(args).items():  # convert Namespace -> dict
         file.write(f"{key} : {value}\n")
 
 # %%

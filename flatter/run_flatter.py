@@ -16,6 +16,7 @@ parser.add_argument("-mE", "--maxEntries", type=int, help="max number of Entries
 parser.add_argument("-mJ", "--maxJet", type=int, help="max number of jet", default=4)
 parser.add_argument("-m", "--method", type=int, help="method of selecting jets", default=-1)
 parser.add_argument("-t", "--test", type=int, help="is a test with a singular root file", default=0)
+parser.add_argument("-s", "--sleep", type=int, help="Number of files after which sleep for 20 seconds. If -1 disabled", default=-1)
 parser.add_argument("-d", "--delete", type=int, help="delete all logs file in the folder", default=0)
 parser.add_argument("-v", "--verbose", type=int, help="0 (silent), 1 (print info event by event)", default=0)
 
@@ -77,9 +78,9 @@ if nFiles > len(nanoFileNames) :
 doneFiles = 0
 
 if args.test:
-    nanoFileName="/work/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test/Data_Aug_Run2_mc_124X.root"
+    nanoFileName="/work/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test/minlo_10k_filter.root"
     fileNumber = 1999
-    flatPath ="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/test_1999.parquet"
+    flatPath ="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/minlo_10k_filter_1999.parquet"
     process = "test"
     subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 1000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC)])
 else:
@@ -92,10 +93,16 @@ else:
         except:
             sys.exit("FileNumber not found")
 
+
+
         filePattern = flatPath+"/**/"+process+"_"+str(fileNumber)+".parquet"
         matching_files = glob.glob(filePattern, recursive=True)
 
         if matching_files:
             continue
         subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 1000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC)])
+        if (doneFiles % args.sleep ==0) & (doneFiles!=0)& (args.sleep!=-1):
+            print("I am sleeping! Good Night!")
+            time.sleep(40)
+            print("I am back! Good Morning!")
         doneFiles = doneFiles+1

@@ -27,7 +27,11 @@ def plot_lossTorch(train_loss_history, val_loss_history,
         outFolder (str): Output folder path to save the plot.
     """
     # Create 3 vertically stacked subplots with shared x-axis
-    fig, axes = plt.subplots(4, 1, sharex=True, figsize=(10, 25))
+    if (train_closure_loss_history==None) &  (val_closure_loss_history==None):
+        nrows = 3
+    else:
+        nrows =4
+    fig, axes = plt.subplots(nrows, 1, sharex=True, figsize=(10, 25))
 
     # --- Plot 1: Total Loss ---
     inf = 0.8*min([np.min(train_loss_history), np.min(val_loss_history)])
@@ -61,14 +65,15 @@ def plot_lossTorch(train_loss_history, val_loss_history,
 
 
     # --- Plot 3: Closure Loss ---
-    inf = 0.8*min([np.min(train_closure_loss_history), np.min(val_closure_loss_history)])
-    sup = 20.*max([np.min(train_closure_loss_history), np.min(val_closure_loss_history)])
-    axes[3].plot(np.array(train_closure_loss_history), label='Train closure Loss', color='blue')
-    axes[3].plot(np.array(val_closure_loss_history), label='Validation closure Loss', linestyle='dashed', color='red')
-    axes[3].legend()
-    axes[3].set_ylim(inf, sup)
-    #axes[3].set_yscale('log')
-    axes[3].set_title("ABCD closure Loss")
+    if nrows == 4:
+        inf = 0.8*min([np.min(train_closure_loss_history), np.min(val_closure_loss_history)])
+        sup = 20.*max([np.min(train_closure_loss_history), np.min(val_closure_loss_history)])
+        axes[3].plot(np.array(train_closure_loss_history), label='Train closure Loss', color='blue')
+        axes[3].plot(np.array(val_closure_loss_history), label='Validation closure Loss', linestyle='dashed', color='red')
+        axes[3].legend()
+        axes[3].set_ylim(inf, sup)
+        #axes[3].set_yscale('log')
+        axes[3].set_title("ABCD closure Loss")
 
     # Set shared labels and adjust layout
     axes[-1].set_xlabel('Epoch')
@@ -94,12 +99,13 @@ def plot_lossTorch(train_loss_history, val_loss_history,
                 color='black', linestyle='dashed', label='Best Epoch')
     axes[2].vlines(x=x0, ymin=axes[2].get_ylim()[0], ymax=axes[2].get_ylim()[1],
                 color='black', linestyle='dashed', label='Best Epoch')
-    axes[3].vlines(x=x0, ymin=axes[3].get_ylim()[0], ymax=axes[3].get_ylim()[1],
+    if nrows==4:
+        axes[3].vlines(x=x0, ymin=axes[3].get_ylim()[0], ymax=axes[3].get_ylim()[1],
                 color='black', linestyle='dashed', label='Best Epoch')
     # Save the figure
     fig.tight_layout()  # Ensures no overlap between plots
-    fig.savefig(f"{outFolder}/performance/loss.png")
-    print(f"Saved in {outFolder}/performance/loss.png")
+    fig.savefig(f"{outFolder}/performance/loss_nrows.png")
+    print(f"Saved in {outFolder}/performance/loss_nrows.png")
     plt.close(fig)
     if gpu:
         return x0
@@ -260,6 +266,8 @@ def NNoutputs(signal_predictions, realData_predictions, signalTrain_predictions,
         return x[max], x[second_max]
     else:
         return pval_sig, pval_bkg
+
+
 
 def getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
     from shap import GradientExplainer

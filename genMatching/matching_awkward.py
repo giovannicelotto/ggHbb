@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import awkward as ak
 # %%
-path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/MC_fiducial_JESsmearedNominal2025Apr09/GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia8/crab_GluGluHToBBMINLO/250409_155207/0000/others/MC_fiducial_JESsmearedNominal_Run2_mc_2025Apr09_45.root"
+path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/MCSamples2025Aug15/GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia8/crab_GluGluHToBBMINLO/250815_134708/0000/training/MCSamples_Run2_mc_2025Aug15_10.root"
 file = uproot.open(path)
 tree = file['Events']
 branches = tree.arrays()
@@ -50,14 +50,14 @@ Jet_puId = branches["Jet_puId"]
 m = (   (GenPart_genPartIdxMother>-1) &                         # Particles With Mother
         (GenPart_pdgId[GenPart_genPartIdxMother]==25) &         # Particles daughters of Higgs
         (GenPart_statusFlags[GenPart_genPartIdxMother]>=8192))  # Count only Higgs last copy (to avoid H->H)
-m1 = (m) & (abs(GenPart_eta)<2.5)                               # Eta acceptance
-m2 = (m1) & (GenPart_pt>0)                                     # pT acceptance
-mLast = (m2) & (abs(GenPart_pdgId)==5)                             # Flavor (redundant)
+m_eta = (m) #& (abs(GenPart_eta)<2.5)                               # Eta acceptance
+m_pt = (m_eta) & (GenPart_pt>0)                                     # pT acceptance
+mLast = (m_pt) & (abs(GenPart_pdgId)==5)                             # Flavor (redundant)
 
 # %%
 print("Every Event has 2 Higgs daughters : ", ak.sum(ak.sum(m, axis=1)==2)==tree.num_entries)
-print("Eta acceptance : ", ak.sum(ak.sum(m1, axis=1)==2)*100/tree.num_entries)
-print("pT acceptance : ", ak.sum(ak.sum(m2, axis=1)==2)*100/tree.num_entries)
+print("Eta acceptance : ", ak.sum(ak.sum(m_eta, axis=1)==2)*100/tree.num_entries)
+print("pT acceptance : ", ak.sum(ak.sum(m_pt, axis=1)==2)*100/tree.num_entries)
 print("Flavor==5 : ", ak.sum(ak.sum(mLast, axis=1)==2)*100/tree.num_entries)
 
 # Events with 2 GenParticles
@@ -65,10 +65,26 @@ mEvent = ((ak.sum(mLast, axis=1)==2) &
             (nJet>=2) &
             (ak.sum((Jet_jetId==6) & ((Jet_pt>50) | (Jet_puId>=4)), axis=1)>=2) & 
             (nMuon>=1))
+print("Mask per Event ", ak.sum(mEvent)*100/tree.num_entries)
+
+
+#fig, ax = plt.subplots(1, 1)
+#ax.hist(GenPart_eta[mLast][~mEvent][:,0],bins=np.linspace(-5, 5, 31), label='Quark 1', histtype='step')
+#ax.hist(GenPart_eta[mLast][~mEvent][:,1],bins=np.linspace(-5, 5, 31), label='Quark 2', histtype='step')
+#ax.legend()
+
+
+
+
+
+
+
+
 muonIdxs = ak.local_index(ak.Array([range(n) for n in nMuon]))
 triggeringMuonsIdx = muonIdxs[Muon_isTriggering==1]
 nTriggeringMuonPerEvent = ak.Array([len(triggeringMuonsIdx[n]) for n in range(len(triggeringMuonsIdx))])
 mEvent = (mEvent) & (nTriggeringMuonPerEvent>=1)
+print("Mask per Event ", ak.sum(mEvent)*100/tree.num_entries)
 # mEvent cuts 2reco jets one triggering Muon in the event
 # %%
 # Index of GenJetNu that minimize the dR with the first Higgs Daughter
@@ -99,14 +115,14 @@ bins = np.linspace(0, 1, 51)
 ax.hist(np.clip(ak.flatten(deltaR_gen1[gen_true1]), bins[0], bins[-1]- 1e-6  ), bins=bins, weights = np.ones_like(ak.flatten(deltaR_gen1[gen_true1]))/len(deltaR_gen1[gen_true1]), histtype='step', label='Leading Daughter')
 ax.hist(np.clip(ak.flatten(deltaR_gen2[gen_true2]), bins[0], bins[-1]- 1e-6  ), bins=bins, weights = np.ones_like(ak.flatten(deltaR_gen2[gen_true2]))/len(deltaR_gen2[gen_true2]), histtype='step', label='Subleading Daughter')
 
-ax.text(x=0.95, y=0.6, s="%.1f%% leading within dR < 0.4"%(ak.sum(deltaR_gen1[gen_true1]<0.4)/ak.sum(mEvent)*100), transform=ax.transAxes, ha='right')
-ax.text(x=0.95, y=0.55, s="%.1f%% subleading within dR < 0.4"%(ak.sum(deltaR_gen2[gen_true2]<0.4)/ak.sum(mEvent)*100), transform=ax.transAxes, ha='right')
-ax.text(x=0.95, y=0.5, s="%.1f%% both within dR < 0.4"%(ak.sum((deltaR_gen2[gen_true2]<0.4) & (deltaR_gen1[gen_true1]<0.4))/ak.sum(mEvent)*100), transform=ax.transAxes, ha='right')
+ax.text(x=0.95, y=0.6, s="%.1f%% leading within dR < 0.4"%(ak.sum(deltaR_gen1[gen_true1]<0.4)/tree.num_entries*100), transform=ax.transAxes, ha='right')
+ax.text(x=0.95, y=0.55, s="%.1f%% subleading within dR < 0.4"%(ak.sum(deltaR_gen2[gen_true2]<0.4)/tree.num_entries*100), transform=ax.transAxes, ha='right')
+ax.text(x=0.95, y=0.5, s="%.1f%% both within dR < 0.4"%(ak.sum((deltaR_gen2[gen_true2]<0.4) & (deltaR_gen1[gen_true1]<0.4))/tree.num_entries*100), transform=ax.transAxes, ha='right')
 ax.text(x=0.95, y=0.7, s="NJets >= 2\nTrigMuon>=1", transform=ax.transAxes, ha='right')
 ax.set_xlabel("dR(GenPart, GenJetNu)")
 ax.set_ylabel("Probability")
 ax.legend()
-ax.set_yscale('log')
+#ax.set_yscale('log')
 
 # %%
 # gen_true1 is to be applied to GenJet[mEvent] collection
@@ -213,6 +229,7 @@ selected1 = ak.where(ak.sum(Jets_withLeadingTriggering, axis=1)>0, selected1, [[
 effJet1 = ((selected1 == trueJetsOnlyGood[:,0]) | (selected1 == trueJetsOnlyGood[:,1]) ) & (mask_genPart_genJet)
 matched1 = ak.sum(effJet1)
 print("Jet with Leading triggering ", matched1/tree.num_entries)
+print("N(trigJet is genMatched) / N(2 jets from  Higgs) ", matched1/ak.sum(mask_genPart_genJet))
 
 # %%
 tightJets = (Jet_btagDeepFlavB[mEvent]>0.71)
@@ -230,8 +247,10 @@ selected2 = ak.where(ak.sum(Jets_withLeadingTriggering, axis=1)>0, selected2, [[
 effJet2 = ((selected2 == trueJetsOnlyGood[:,0]) | (selected2 == trueJetsOnlyGood[:,1])) & (mask_genPart_genJet)
 matched2 = ak.sum(effJet2)
 print("Jet with B score WP ", matched2/tree.num_entries)
+print("N(selJet is genMatched) / N(2 jets from  Higgs) ", matched2/ak.sum(mask_genPart_genJet))
 eff_tot = ak.sum((effJet1) & (effJet2))
 print("Overall matching Efficiency : ", eff_tot/tree.num_entries )
+print("Overall matching Efficiency/N(2 jets from higgs) : ", eff_tot/ak.sum(mask_genPart_genJet) )
 
 # %%
 # Compare with leading and subleading

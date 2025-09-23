@@ -34,18 +34,27 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
 
 
 
-def get_input_paths(dataTaking, mass_hypos=[50, 70, 100, 200, 300]):
+def get_input_paths(dataTaking, mass_hypos=[50, 70, 100, 200, 300], boosted=3):
     base = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     folder = "training"
+    if boosted==4:
+        input("These are old Paths. Press Any key to continue")
+        paths = [
+        "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB_o/Data1D/training",
+        f"{base}/MC/MINLOGluGluHToBB/training"
+    ]
     
-    paths = [
+    else:
+        paths = [
         f"{base}/Data{dataTaking}/{folder}",
         f"{base}/MC/MINLOGluGluHToBB/training"
     ]
-
-    paths += [f"{base}/MC/GluGluH_M{m}_ToBB_private" for m in mass_hypos]
-    print(mass_hypos)
-    masses = [125] + mass_hypos
+    if boosted==4:
+        masses = [125]
+    else:    
+        paths += [f"{base}/MC/GluGluH_M{m}_ToBB" for m in mass_hypos]
+        print(mass_hypos)
+        masses = [125] + mass_hypos
     return paths, np.array(masses)
 
 
@@ -56,12 +65,14 @@ def apply_kinematic_cuts(dfs, boosted):
         1: {'dijet_pt': (100, 160), 'dijet_mass': (50, 300)},
         2: {'dijet_pt': (160, None), 'dijet_mass': (50, 300)},
         3: {'dijet_pt': (100, None), 'dijet_mass': (50, 300)},
+        4: {'dijet_pt': (50, 80), 'dijet_mass': (80, 170)},
 
     }
 
     if boosted in cut_ranges:
         pt_min, pt_max = cut_ranges[boosted]['dijet_pt']
         mass_min, mass_max = cut_ranges[boosted]['dijet_mass']
+        print("pt min", pt_min)
         dfs = cut(dfs, 'dijet_pt', pt_min, pt_max)
         dfs = cut(dfs, 'dijet_mass', mass_min, mass_max)
 
@@ -141,13 +152,14 @@ def assign_labels_and_weights(dfs, massHypothesis, boosted, sampling):
 
 def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split, boosted=False, dataTaking='1A', sampling=True, btagTight=True, mass_hypos =[]):
     
-    paths, massHypothesis = get_input_paths(dataTaking, mass_hypos=mass_hypos)
+    paths, massHypothesis = get_input_paths(dataTaking, mass_hypos=mass_hypos, boosted=boosted)
 
     #boosted in [1, 2]
 
     dfs = []
     for path in paths:
-        fileNames = glob.glob(path+"/*.parquet")
+        fileNames = glob.glob(path+"/*.parquet", recursive=True)
+        print(path+"/*.parquet")
         eg = os.path.basename(fileNames[0])
         match = re.match(r'(.+)_([0-9]+)\.parquet', eg)
         process = match.group(1)
@@ -155,17 +167,17 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
         if process[:4]=='Data':
             if nReal !=-1:
                 fileNames = fileNames[:nReal]
-            print("Opening %d files for %s"%(len(fileNames), process))
+            print("[Data] Opening %d files for %s"%(len(fileNames), process))
             columnsToRead_ = [f for f in columnsToRead if (('gen' not in f) & ('btag_central' not in f) & ('sf' not in f))]
 
         else:
             if nMC !=-1:
                 fileNames = fileNames[:nMC]
-            print("Opening %d files for %s"%(len(fileNames), process))
+            print("[MC] Opening %d files for %s"%(len(fileNames), process))
             columnsToRead_ = columnsToRead.copy()
 
         
-        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagTight=btagTight))
+        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagTight=btagTight, cutDijet=True))
         if process[:4]=='Data':
             df['sf']=1
             df['btag_central']=1
@@ -176,6 +188,7 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
     mass_hypos = [125] + mass_hypos
     mass_limits = {50: [0, 120], 70: [0,140], 100:[0,150], 300:[150,300]}
 
+    print(mass_hypos)
     dfs = filter_mass_windows(dfs, mass_hypos, mass_limits)
     dfs = add_mass_hypothesis(dfs, massHypothesis, featuresForTraining)
 # Here remove signal events wheter more

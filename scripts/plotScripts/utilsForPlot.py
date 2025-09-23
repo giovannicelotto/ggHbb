@@ -171,19 +171,19 @@ def getBins(dictFormat=False):
     
     if dictFormat:
         binsDict = {
-            'jet1_pt': [20.0, 0.0, 200.0], 'jet1_eta': [20.0, -3, 3], 'jet1_phi': [20.0, -np.pi, np.pi],
+            'jet1_pt': [20.0, 0.0, 400.0], 'jet1_eta': [20.0, -3, 3], 'jet1_phi': [20.0, -np.pi, np.pi],
             'jet1_mass': [20.0, 0.0, 30.0], 'jet1_nMuons': [10.0, -0.5, 9.5],'jet1_nTightMuons': [4.0, -0.5, 3.5], 'jet1_nElectrons': [5.0, -0.5, 2.5],
             'jet1_btagDeepFlavB': [20.0, 0.0, 1.0], 'jet1_area': [20.0, 0.3, 0.7], 'jet1_qgl': [20.0, -0.5, 1.0],
             'jet1_sv_3dSig':[30,0,100],
             'jet1_sv_Ntrk':[6,-0.5,11.5],
 
-            'jet2_pt': [20.0, 0, 150.0], 'jet2_eta': [20.0, -3, 3], 'jet2_phi': [20.0, -np.pi, np.pi],
+            'jet2_pt': [20.0, 0, 300.0], 'jet2_eta': [20.0, -3, 3], 'jet2_phi': [20.0, -np.pi, np.pi],
             'jet2_mass': [20.0, 0, 20], 'jet2_nMuons': [10.0, -0.5, 9.5], 'jet2_nTightMuons': [5.0, -0.5, 2.5],'jet2_nElectrons': [5.0, -0.5, 2.5],
             'jet2_btagDeepFlavB': [20.0, 0.0, 1.0], 'jet2_area': [20.0, 0.3, 0.7], 'jet2_qgl': [20.0, -0.5, 1.0],
             'jet2_sv_3dSig':[30,0,100],
             'jet2_sv_Ntrk':[6,-0.5,11.5],
             
-            'jet3_pt':[30,0,120], 'jet3_eta': [20.0, -3, 3], 'jet3_phi':[30,-np.pi,np.pi],'jet3_mass':[30,0,30],'jet3_nTightMuons':[5.0,-0.5, 2.5],
+            'jet3_pt':[30,0,180], 'jet3_eta': [20.0, -3, 3], 'jet3_phi':[30,-np.pi,np.pi],'jet3_mass':[30,0,30],'jet3_nTightMuons':[5.0,-0.5, 2.5],
             'jet3_btagDeepFlavB':[10,0,1],'jet3_btagDeepFlavC':[10,0,1],'jet3_qgl':[10,0,1],
             
             'dijet_pt': [20.0, 0.0, 300.0], 'dijet_eta': [20.0, -5.0, 5.0], 'dijet_phi': [20.0, -np.pi, np.pi], 
@@ -191,7 +191,7 @@ def getBins(dictFormat=False):
             'dijet_cs': [20, -1, 1],
             'dijet_angVariable': [20.0, 0.0, 10.0], 'dijet_twist': [20.0, 0.0, np.pi/2],'nJets': [16.0, -0.5, 31.5],
             
-            'nJets_20GeV': [12, -0.5, 11.5], 'ht': [20.0, 0.0, 800.0], 'muon_pt': [20.0, 0.0, 40.0], 'muon_eta': [20.0, -2.5, 2.5],
+            'nJets_20GeV': [12, -0.5, 11.5], 'ht': [20.0, 0.0, 1200.0], 'muon_pt': [20.0, 0.0, 40.0], 'muon_eta': [20.0, -2.5, 2.5],
             'lambda1':[21,0,1],
             'lambda2':[21,0,1],
             'lambda3':[21,0,1],

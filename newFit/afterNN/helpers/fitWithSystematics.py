@@ -9,7 +9,7 @@ sys.path.append("/t3home/gcelotto/ggHbb/newFit/afterNN/")
 from helpers.allFunctions import *
 import matplotlib.pyplot as plt
 import mplhep as hep
-from functions import cut
+from functions import cut, cut_advanced
 hep.style.use("CMS")
 from scipy.stats import chi2
 import math
@@ -105,12 +105,11 @@ class FitWithSystematics:
         print(len(dfs_mc[0]))
         return dfs_mc
 
-    def apply_cuts(self, dfs_mc, cuts_dict):
-        # Apply cuts based on the cuts_dict (this dict is specific to a category)
-        print(f"Applying cuts: {cuts_dict}")
-        for feature, (min_val, max_val) in cuts_dict.items():
-            print(f" - Cutting feature {feature}: {min_val} < {feature} < {max_val}")
-            dfs_mc = cut(dfs_mc, feature, min_val, max_val)
+    def apply_cuts(self, dfs_mc, cuts_string):
+        # Apply cuts based on the cuts_string (this dict is specific to a category)
+        print(f"Applying cuts: {cuts_string}")
+        dfs_mc = cut_advanced(dfs_mc, cuts_string)
+        print("New Lenghts : ", [len(i) for i in dfs_mc])
         return dfs_mc
 
     def fit_model(self, x, cTot, err, fitregion, params, paramsLimits):

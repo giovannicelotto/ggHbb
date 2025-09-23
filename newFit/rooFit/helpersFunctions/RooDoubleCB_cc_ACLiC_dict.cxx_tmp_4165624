@@ -1,0 +1,169 @@
+// Do NOT change. Changes will be lost next time file is generated
+
+#define R__DICTIONARY_FILENAME dIt3homedIgcelottodIggHbbdInewFitdIrooFitdIhelpersFunctionsdIRooDoubleCB_cc_ACLiC_dict
+#define R__NO_DEPRECATION
+
+/*******************************************************************/
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#define G__DICTIONARY
+#include "ROOT/RConfig.hxx"
+#include "TClass.h"
+#include "TDictAttributeMap.h"
+#include "TInterpreter.h"
+#include "TROOT.h"
+#include "TBuffer.h"
+#include "TMemberInspector.h"
+#include "TInterpreter.h"
+#include "TVirtualMutex.h"
+#include "TError.h"
+
+#ifndef G__ROOT
+#define G__ROOT
+#endif
+
+#include "RtypesImp.h"
+#include "TIsAProxy.h"
+#include "TFileMergeInfo.h"
+#include <algorithm>
+#include "TCollectionProxyInfo.h"
+/*******************************************************************/
+
+#include "TDataMember.h"
+
+// The generated code does not explicitly qualify STL entities
+namespace std {} using namespace std;
+
+// Header files passed as explicit arguments
+#include "/t3home/gcelotto/ggHbb/newFit/rooFit/helpersFunctions/RooDoubleCB.cc"
+
+// Header files passed via #pragma extra_include
+
+   namespace ROOTDict {
+      inline ::ROOT::TGenericClassInfo *GenerateInitInstance();
+      static TClass *ROOT_Dictionary();
+
+      // Function generating the singleton type initializer
+      inline ::ROOT::TGenericClassInfo *GenerateInitInstance()
+      {
+         static ::ROOT::TGenericClassInfo 
+            instance("ROOT", 0 /*version*/, "Rtypes.h", 105,
+                     ::ROOT::Internal::DefineBehavior((void*)nullptr,(void*)nullptr),
+                     &ROOT_Dictionary, 0);
+         return &instance;
+      }
+      // Insure that the inline function is _not_ optimized away by the compiler
+      ::ROOT::TGenericClassInfo *(*_R__UNIQUE_DICT_(InitFunctionKeeper))() = &GenerateInitInstance;  
+      // Static variable to force the class initialization
+      static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstance(); R__UseDummy(_R__UNIQUE_DICT_(Init));
+
+      // Dictionary for non-ClassDef classes
+      static TClass *ROOT_Dictionary() {
+         return GenerateInitInstance()->GetClass();
+      }
+
+   }
+
+namespace ROOT {
+   static void *new_RooDoubleCB(void *p = nullptr);
+   static void *newArray_RooDoubleCB(Long_t size, void *p);
+   static void delete_RooDoubleCB(void *p);
+   static void deleteArray_RooDoubleCB(void *p);
+   static void destruct_RooDoubleCB(void *p);
+
+   // Function generating the singleton type initializer
+   static TGenericClassInfo *GenerateInitInstanceLocal(const ::RooDoubleCB*)
+   {
+      ::RooDoubleCB *ptr = nullptr;
+      static ::TVirtualIsAProxy* isa_proxy = new ::TInstrumentedIsAProxy< ::RooDoubleCB >(nullptr);
+      static ::ROOT::TGenericClassInfo 
+         instance("RooDoubleCB", ::RooDoubleCB::Class_Version(), "ggHbb/newFit/rooFit/helpersFunctions/RooDoubleCB.h", 22,
+                  typeid(::RooDoubleCB), ::ROOT::Internal::DefineBehavior(ptr, ptr),
+                  &::RooDoubleCB::Dictionary, isa_proxy, 4,
+                  sizeof(::RooDoubleCB) );
+      instance.SetNew(&new_RooDoubleCB);
+      instance.SetNewArray(&newArray_RooDoubleCB);
+      instance.SetDelete(&delete_RooDoubleCB);
+      instance.SetDeleteArray(&deleteArray_RooDoubleCB);
+      instance.SetDestructor(&destruct_RooDoubleCB);
+      return &instance;
+   }
+   TGenericClassInfo *GenerateInitInstance(const ::RooDoubleCB*)
+   {
+      return GenerateInitInstanceLocal(static_cast<::RooDoubleCB*>(nullptr));
+   }
+   // Static variable to force the class initialization
+   static ::ROOT::TGenericClassInfo *_R__UNIQUE_DICT_(Init) = GenerateInitInstanceLocal(static_cast<const ::RooDoubleCB*>(nullptr)); R__UseDummy(_R__UNIQUE_DICT_(Init));
+} // end of namespace ROOT
+
+//______________________________________________________________________________
+atomic_TClass_ptr RooDoubleCB::fgIsA(nullptr);  // static to hold class pointer
+
+//______________________________________________________________________________
+const char *RooDoubleCB::Class_Name()
+{
+   return "RooDoubleCB";
+}
+
+//______________________________________________________________________________
+const char *RooDoubleCB::ImplFileName()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::RooDoubleCB*)nullptr)->GetImplFileName();
+}
+
+//______________________________________________________________________________
+int RooDoubleCB::ImplFileLine()
+{
+   return ::ROOT::GenerateInitInstanceLocal((const ::RooDoubleCB*)nullptr)->GetImplFileLine();
+}
+
+//______________________________________________________________________________
+TClass *RooDoubleCB::Dictionary()
+{
+   fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::RooDoubleCB*)nullptr)->GetClass();
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+TClass *RooDoubleCB::Class()
+{
+   if (!fgIsA.load()) { R__LOCKGUARD(gInterpreterMutex); fgIsA = ::ROOT::GenerateInitInstanceLocal((const ::RooDoubleCB*)nullptr)->GetClass(); }
+   return fgIsA;
+}
+
+//______________________________________________________________________________
+void RooDoubleCB::Streamer(TBuffer &R__b)
+{
+   // Stream an object of class RooDoubleCB.
+
+   if (R__b.IsReading()) {
+      R__b.ReadClassBuffer(RooDoubleCB::Class(),this);
+   } else {
+      R__b.WriteClassBuffer(RooDoubleCB::Class(),this);
+   }
+}
+
+namespace ROOT {
+   // Wrappers around operator new
+   static void *new_RooDoubleCB(void *p) {
+      return  p ? new(p) ::RooDoubleCB : new ::RooDoubleCB;
+   }
+   static void *newArray_RooDoubleCB(Long_t nElements, void *p) {
+      return p ? new(p) ::RooDoubleCB[nElements] : new ::RooDoubleCB[nElements];
+   }
+   // Wrapper around operator delete
+   static void delete_RooDoubleCB(void *p) {
+      delete (static_cast<::RooDoubleCB*>(p));
+   }
+   static void deleteArray_RooDoubleCB(void *p) {
+      delete [] (static_cast<::RooDoubleCB*>(p));
+   }
+   static void destruct_RooDoubleCB(void *p) {
+      typedef ::RooDoubleCB current_t;
+      (static_cast<current_t*>(p))->~current_t();
+   }
+} // end of namespace ROOT for class ::RooDoubleCB
+

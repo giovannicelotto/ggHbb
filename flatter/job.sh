@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=8G                       # 2G for Data needed   
+#SBATCH --mem=2G                       # 2G for Data needed   
 #SBATCH --partition=short              # Specify your cluster partition
-#SBATCH --time=1:00:00  
+#SBATCH --time=0:40:00  
 #SBATCH --output=/t3home/gcelotto/slurm/output/flat/%x.out    # Alternative method using job name and job ID
 #SBATCH --error=/t3home/gcelotto/slurm/output/flat/%x.out 
 #SBATCH --dependency=singleton
@@ -47,3 +47,4 @@ cd /scratch
 pwd
 ls
 xrdcp -f -N $source_dir/$process"_"$fileNumber.parquet root://t3dcachedb03.psi.ch:1094//$flatPath
+rm $source_dir/$process"_"$fileNumber.parquet

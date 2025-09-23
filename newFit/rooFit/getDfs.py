@@ -1,20 +1,17 @@
 import yaml
-from functions import getDfProcesses_v2, cut
+from functions import getDfProcesses_v2,  cut_advanced
 import pandas as pd
 import ROOT
 import numpy as np
 from array import array
+import sys
 def getDfs(idx):
 
     # Open config file and extract values
 # Open config file and extract values
-    config_path = ["/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/bkgPlusZFit_config.yml",
-                "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/bkgPlusZFit_config.yml",
-                "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/bkgPlusZFit_config.yml"][idx]
+    config_path = "/t3home/gcelotto/ggHbb/WSFit/Configs/cat%d_bkg.yml"%(int(idx))
     # Open config file and extract values
-    config_path_cuts = ["/t3home/gcelotto/ggHbb/newFit/afterNN/cat1/PeakFit_config.yml",
-                "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p0/PeakFit_config.yml",
-                "/t3home/gcelotto/ggHbb/newFit/afterNN/cat2/cat2p1/PeakFit_config.yml"][idx]
+    config_path_cuts = "/t3home/gcelotto/ggHbb/WSFit/Configs/cat%d.yml"%(int(idx))
     print("Opening config file ", config_path, "...")
     with open(config_path, 'r') as f:
         config = yaml.safe_load(f)
@@ -44,14 +41,6 @@ def getDfs(idx):
 
     with open(config_path_cuts, 'r') as f2:
         config_cuts = yaml.safe_load(f2)
-    ptCut_min = config_cuts["cuts_dict"]["dijet_pt"][0]
-    ptCut_max = config_cuts["cuts_dict"]["dijet_pt"][1]
-    jet1_btagMin = config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][0]
-    jet2_btagMin = config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][0]
-
-    jet1_btagMax = config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][1]
-    jet2_btagMax = config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][1]
-    PNN_t, PNN_t_max = config_cuts["cuts_dict"]["PNN"]
 
 
     # Call the dataframes with names, xsections, paths of processes
@@ -96,22 +85,11 @@ def getDfs(idx):
 
     # %%
     # Apply cuts
-    dfsData = cut(dfsData, 'PNN', config_cuts["cuts_dict"]["PNN"][0], config_cuts["cuts_dict"]["PNN"][1])
-    dfsMC_Z = cut(dfsMC_Z, 'PNN', config_cuts["cuts_dict"]["PNN"][0], config_cuts["cuts_dict"]["PNN"][1])
-    dfsMC_H = cut(dfsMC_H, 'PNN', config_cuts["cuts_dict"]["PNN"][0], config_cuts["cuts_dict"]["PNN"][1])
-    dfsData = cut(dfsData, 'dijet_pt', config_cuts["cuts_dict"]["dijet_pt"][0], config_cuts["cuts_dict"]["dijet_pt"][1])
-    dfsMC_Z = cut(dfsMC_Z, 'dijet_pt', config_cuts["cuts_dict"]["dijet_pt"][0], config_cuts["cuts_dict"]["dijet_pt"][1])
-    dfsMC_H = cut(dfsMC_H, 'dijet_pt', config_cuts["cuts_dict"]["dijet_pt"][0], config_cuts["cuts_dict"]["dijet_pt"][1])
-    dfsData = cut(dfsData, 'dijet_mass', x1, x2)
-    dfsMC_Z = cut(dfsMC_Z, 'dijet_mass', x1, x2)
-    dfsMC_H = cut(dfsMC_H, 'dijet_mass', x1, x2)
-    dfsData = cut(dfsData, 'jet1_btagDeepFlavB', config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][0], config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][1])
-    dfsMC_Z = cut(dfsMC_Z, 'jet1_btagDeepFlavB', config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][0], config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][1])
-    dfsMC_H = cut(dfsMC_H, 'jet1_btagDeepFlavB', config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][0], config_cuts["cuts_dict"]["jet1_btagDeepFlavB"][1])
-    dfsData = cut(dfsData, 'jet2_btagDeepFlavB', config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][0], config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][1])
-    dfsMC_Z = cut(dfsMC_Z, 'jet2_btagDeepFlavB', config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][0], config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][1])
-    dfsMC_H = cut(dfsMC_H, 'jet2_btagDeepFlavB', config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][0], config_cuts["cuts_dict"]["jet2_btagDeepFlavB"][1])
+    dfsData = cut_advanced(dfsData, config_cuts["cuts_string"])
+    dfsMC_Z = cut_advanced(dfsMC_Z, config_cuts["cuts_string"])
+    dfsMC_H = cut_advanced(dfsMC_H, config_cuts["cuts_string"])
 
+    
     # Add label process in dfsMC to distinguish VBF and ggF contribution
     for idx, df in enumerate(dfsMC_H):
         dfsMC_H[idx]['process'] = dfProcessesMC.iloc[MCList_H].iloc[idx].process

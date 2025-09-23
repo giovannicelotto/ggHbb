@@ -31,6 +31,7 @@ def main(isMC, processNumber, nFiles, modelName, boosted, isJEC):
     flatFiles = glob.glob(flatPath+"/**/*.parquet", recursive=True)
     if nFiles == -1:
         nFiles = len(flatFiles)
+    print(nFiles)
 
 
     doneFiles = 0
@@ -59,6 +60,10 @@ def main(isMC, processNumber, nFiles, modelName, boosted, isJEC):
             print(fileName, str(processNumber))
             subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 200)), '/t3home/gcelotto/ggHbb/PNN/slurm/mjj/predict.sh', fileName, str(processNumber), process, modelName, str(boosted)])
             doneFiles = doneFiles + 1
+            if doneFiles % 100 ==0:
+                print("I am sleeping! Good Night!")
+                time.sleep(30)
+                print("I am back! Good Morning!")
         else:
             print("Waiting" + "." * dots + " " * (3 - dots), end="\r", flush=True)
             dots = (dots + 1) % 4
