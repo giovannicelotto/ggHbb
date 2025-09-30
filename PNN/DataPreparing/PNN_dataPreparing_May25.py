@@ -30,7 +30,7 @@ hp = getParams()
 
 parser = argparse.ArgumentParser(description="Process some arguments.")
 parser.add_argument("-s", "--sampling", type=int, help="Enable sampling (default: False)", default=0)
-parser.add_argument("-b", "--boosted", type=int, default=3, help="Set boosted value (1 100-160) or 2 160-inf)")
+parser.add_argument("-b", "--boosted", type=int, default=0, help="Set boosted value (1 100-160) or 2 160-inf)")
 parser.add_argument("-dt", "--dataTaking", type=str, default='1D', help="1A or 1D")
 
 if hasattr(sys, 'ps1') or not sys.argv[1:]:
@@ -53,7 +53,7 @@ if not os.path.exists(outFolder):
     os.makedirs(outFolder)
 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-if args.boosted==4:
+if args.boosted==0:
     print("Here")
     featuresForTraining, columnsToRead = getFeatures(outFolder)
 elif (args.boosted>=1):

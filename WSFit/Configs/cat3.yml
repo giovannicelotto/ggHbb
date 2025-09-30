@@ -1,7 +1,7 @@
 # config1.yaml
 modelName: "Aug28_3_20p01"
 outFolder: "/t3home/gcelotto/ggHbb/WSFit/output/cat3"
-cuts_string: "(dijet_pt >= 100) & (PNN >= 0.8) & (jet1_btagDeepFlavB >= 0.71) & (jet2_btagDeepFlavB >= 0.71)"
+cuts_string: "(dijet_pt >= 100) & (PNN < 0.65) & (PNN >= 0.4) & (jet1_btagDeepFlavB >= 0.71) & (jet2_btagDeepFlavB >= 0.71)"
 
   
 

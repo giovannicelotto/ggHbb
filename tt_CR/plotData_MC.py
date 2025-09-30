@@ -48,7 +48,7 @@ def plotDataMC(dfMC, dfData, feature, bins, showChi2=False, outName=None):
         hatch='///',
         label='MC stat. unc.'
     )
-    ax[1].set_ylim(0.5, 1.5)
+    ax[1].set_ylim(0., 2.)
     ax[1].set_xlim(ax[1].get_xlim())
     ax[1].set_xlabel(feature)
     hep.cms.label(lumi=np.round(lumi, 2), ax=ax[0])
@@ -61,19 +61,20 @@ def plotDataMC(dfMC, dfData, feature, bins, showChi2=False, outName=None):
     return cData, cMC
 # %%
 isMCList = [11,12,13, 5, 6, 7, 8, 9, 10]
-dfsMC, sumw = loadMultiParquet_v2(paths=isMCList, nMCs=-1,columns=None, returnNumEventsTotal=True, filters=getCommonFilters(btagTight=True))
+dfsMC, sumw = loadMultiParquet_v2(paths=isMCList, nMCs=400,columns=None, returnNumEventsTotal=True, filters=getCommonFilters(btagTight=True))
 # %%
 dfProcesses = getDfProcesses_v2()[0]
 # %%
 dfsData, lumi = loadMultiParquet_Data_new(dataTaking=[
     # Data *A
-    0, 1, 2 ,3, 4, 5,
+    #0, 1, 2 ,3, 4, 5,
     # Data *B
-    6, 7, 8, 9, 10,11,
+    #6, 7, 8, 9, 10,11,
     ## Data *C
-    12, 13, 14, 15, 16,
+    #12, 13, 14, 15, 16,
     ## Data *D
-    17,18,19,20, 21
+    #17,
+    18,19,20, 21
     ], nReals=-1, columns=None, filters=getCommonFilters(btagTight=True))
 # %%
 
@@ -194,9 +195,9 @@ sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.getInfolderOutfolder import getInfolderOutfolder
 import torch
 from helpers.scaleUnscale import scale, unscale
-current_date = "Jul15"  # This gives the format like 'Dec12'
+current_date = "Aug28"  # This gives the format like 'Dec12'
 boosted = 3
-version = 20.
+version = 20.01
 modelName = "model.pth"
 inFolder_, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, boosted, str(version).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
 featuresForTraining = list(np.load(outFolder+"/featuresForTraining.npy"))

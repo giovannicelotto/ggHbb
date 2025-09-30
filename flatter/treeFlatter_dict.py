@@ -160,7 +160,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     
 
     # open the file for the SF
-    histPath = "/t3home/gcelotto/ggHbb/trgMu_scale_factors.root"
+    histPath = "/t3home/gcelotto/trgMu_SF_UL.root"
     triggerScaleFactor_rootFile = ROOT.TFile(histPath, "READ")
     if not triggerScaleFactor_rootFile or triggerScaleFactor_rootFile.IsZombie():
         raise RuntimeError(f"Failed to open ROOT file: {histPath}")
@@ -315,7 +315,6 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         Electron_eta                = branches["Electron_eta"][ev]
         Electron_phi                = branches["Electron_phi"][ev]
         if not "private" in processName:
-            Muon_genPartIdx = branches["Muon_genPartIdx"][ev]
             Electron_isPF               = branches["Electron_isPFcand"][ev]
             Electron_charge             = branches["Electron_charge"][ev]
             Electron_pfRelIso03_all     = branches["Electron_pfRelIso03_all"][ev]
@@ -350,8 +349,10 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     # Data MC dependent
         if isMC==0:
             Pileup_nTrueInt = 0
+            event          = branches["event"][ev]
         else:
             #Gen Information
+            Muon_genPartIdx          = branches["Muon_genPartIdx"][ev]
             Jet_hadronFlavour        = branches["Jet_hadronFlavour"][ev]
             Pileup_nTrueInt          = branches["Pileup_nTrueInt"][ev]
             Jet_genJetIdx            = branches["Jet_genJetIdx"][ev]
@@ -491,14 +492,17 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                             counterMuTight=counterMuTight+1
                     features_['jet3_nTightMuons']= int(counterMuTight)
                     features_['jet3_btagDeepFlavB']= np.float32(Jet_btagDeepFlavB[selected3])
-                    if Jet_btagDeepFlavB[selected3] < 0.049:
-                        jet3_btagWP = 0
-                    elif Jet_btagDeepFlavB[selected3] < 0.2783:
-                        jet3_btagWP = 1
-                    elif Jet_btagDeepFlavB[selected3] < 0.71:
-                        jet3_btagWP = 2
+                    if Jet_pt[selected3]>=20:
+                        if Jet_btagDeepFlavB[selected3] < 0.049:
+                            jet3_btagWP = 0
+                        elif Jet_btagDeepFlavB[selected3] < 0.2783:
+                            jet3_btagWP = 1
+                        elif Jet_btagDeepFlavB[selected3] < 0.71:
+                            jet3_btagWP = 2
+                        else:
+                            jet3_btagWP = 3
                     else:
-                        jet3_btagWP = 3
+                        jet3_btagWP = 0
                     features_['jet3_btagWP'] = int(jet3_btagWP)
                     features_['dR_jet3_dijet']= jet3.DeltaR(dijet)
                     features_['dPhi_jet3_dijet']= jet3.DeltaPhi(dijet)
@@ -536,14 +540,18 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                             counterMuTight=counterMuTight+1
                     features_['jet4_nTightMuons']= int(counterMuTight)
                     features_['jet4_btagDeepFlavB']= np.float32(Jet_btagDeepFlavB[selected4])
-                    if Jet_btagDeepFlavB[selected4] < 0.049:
-                        jet4_btagWP = 0
-                    elif Jet_btagDeepFlavB[selected4] < 0.2783:
-                        jet4_btagWP = 1
-                    elif Jet_btagDeepFlavB[selected4] < 0.71:
-                        jet4_btagWP = 2
+
+                    if Jet_pt[selected4]>=20: 
+                        if Jet_btagDeepFlavB[selected4] < 0.049:
+                            jet4_btagWP = 0
+                        elif Jet_btagDeepFlavB[selected4] < 0.2783:
+                            jet4_btagWP = 1
+                        elif Jet_btagDeepFlavB[selected4] < 0.71:
+                            jet4_btagWP = 2
+                        else:
+                            jet4_btagWP = 3
                     else:
-                        jet4_btagWP = 3
+                        jet4_btagWP = 0
                     features_['jet4_btagWP'] = int(jet4_btagWP)
                     features_['dR_jet4_dijet']= jet4.DeltaR(dijet)
                     features_['dPhi_jet4_dijet']= jet4.DeltaPhi(dijet)
@@ -1023,10 +1031,12 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         features_['Pileup_nTrueInt'] = np.float32(Pileup_nTrueInt)
 # SF
         if processName[:4]=="Data":
+            features_["event_isEven"] = event%2
             features_['PV_npvs'] = 1
             features_['Pileup_nTrueInt'] = 1
         else:
 # Gen Info
+            features_["event_isEven"] = -1
             features_['jet1_genHadronFlavour'] = Jet_hadronFlavour[selected1]
             features_['jet2_genHadronFlavour'] = Jet_hadronFlavour[selected2]
             hadronFlavour3 = Jet_hadronFlavour[selected3] if selected3 is not None else -1

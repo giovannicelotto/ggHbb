@@ -1,6 +1,6 @@
 x1: 65
 x2: 220
-nbins: 250 # These are edges number of bins will be nbins-1
+nbins: 1500 # These are edges number of bins will be nbins-1
 
 
 t0: 50
