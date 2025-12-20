@@ -30,7 +30,7 @@ shapeSig_signal_Cat2__norm
 pdfindex_2_2016_13TeV
 EOF
 )
-  
+
   
   
 freezeParamsPow1=$(
@@ -46,7 +46,8 @@ env_pdf_Exponential_1_cat2_turnon_beta
 env_pdf_Exponential_1_cat2_z_norm
 shapeSig_signal_Cat2__norm
 pdfindex_2_2016_13TeV
-EOF )
+EOF
+)
 
 freezeParamsBern2=$(echo "$freezeParamsBern2" | paste -sd, -)
 freezeParamsExpo1=$(echo "$freezeParamsExpo1" | paste -sd, -)
@@ -115,9 +116,9 @@ combine -M MultiDimFit \
   --setParameters pdfindex_2_2016_13TeV=1 \
   -t -1 \
   -n fixed_pdfCat2_1 \
-  --X-rtd REMOVE_CONSTANT_ZERO_POINT=1\
   --expectSignal 1 \
   --freezeParameters "$freezeParamsPow1"
+  #--X-rtd REMOVE_CONSTANT_ZERO_POINT=1\
   
   
   # ****************************************
@@ -143,13 +144,13 @@ combine -M MultiDimFit \
   -d datacardMulti2.txt \
   --algo grid \
   --points 50 \
-  --setParameterRanges r=-3,5 \
+  --setParameterRanges r=-10,10 \
   --saveNLL \
   -m 125 \
   --toysFile higgsCombineAsimov_pdfCat2_0.GenerateOnly.mH125.123456.root \
   --setParameters pdfindex_2_2016_13TeV=2 \
   -t -1 \
   -n fixed_pdfCat2_2 \
-  --X-rtd REMOVE_CONSTANT_ZERO_POINT=1\
   --expectSignal 1 \
   --freezeParameters "$freezeParamsExpo1"
+  #--X-rtd REMOVE_CONSTANT_ZERO_POINT=1\

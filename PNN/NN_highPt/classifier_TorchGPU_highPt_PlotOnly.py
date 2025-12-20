@@ -17,6 +17,7 @@ from plotFeatures import plotNormalizedFeatures
 import numpy as np
 import pandas as pd
 import argparse
+import yaml
 from datetime import datetime
 from sklearn.feature_selection import mutual_info_regression
 import glob
@@ -47,7 +48,7 @@ results = {}
 inFolder_, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(args.date, args.boosted, str(args.version).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
 inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1D"%args.boosted if args.sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%args.boosted
 modelName = "model.pth"
-featuresForTraining = list(np.load(outFolder+"/featuresForTraining.npy"))
+featuresForTraining = list(np.load(outFolder+"/model/featuresForTraining.npy"))
 #featuresForTraining +=['dijet_mass']
 #featuresForTraining.remove('jet2_btagDeepFlavB')
 # %%
@@ -336,6 +337,15 @@ for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
 ax.set_xlabel("Dijet mass [GeV]")
 fig.savefig(outFolder+"/performance/scan_train.png", bbox_inches='tight')
 
+nn_score_bins = [0.7 ,0.75, 0.8, 0.85 ,0.9]
+fig, ax = plt.subplots(1, 1)
+for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
+    maskTrain = (YPredTrain.reshape(-1)>low) & (Ytrain==0)
+    ax.hist(Xtrain.dijet_mass[maskTrain], bins=np.linspace(70, 300, 81), label=f'{low} < NN . DisCo = %.3f'%dcor.distance_correlation(YPredTrain.reshape(-1)[maskTrain], Xtrain.dijet_mass[maskTrain]), density=True, histtype='step')
+    ax.legend()
+ax.set_xlabel("Dijet mass [GeV]")
+fig.savefig(outFolder+"/performance/scan_train_highNN.png", bbox_inches='tight')
+
 # %%
 from helpers.doPlots import getShapTorch
 #getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
@@ -462,7 +472,7 @@ def plot_shap_bar(phi_all, feature_names, top_n=10, out_file=None):
 
     if out_file is not None:
         plt.savefig(out_file)
-    plt.show()
+    #plt.show()
 
     # Return a dictionary of feature -> importance
     return dict(zip(top_features, top_values))

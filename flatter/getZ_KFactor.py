@@ -20,3 +20,6 @@ def getZ_KFactor(pt, path="/t3home/gcelotto/ggHbb/Z_kfactor/output/kfactor.json"
     assert len(bin_idx)==1
     result = kfactor[bin_idx[0]]
     return result
+#if __name__=="__main__":
+#    getZ_KFactor(np.array([1.]), path="/t3home/gcelotto/ggHbb/Z_kfactor/output/kfactor.json")
+# %%

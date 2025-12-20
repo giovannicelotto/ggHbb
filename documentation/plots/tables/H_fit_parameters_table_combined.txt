@@ -1,0 +1,28 @@
+
+    \begin{table}[htbp]
+    \centering
+    \caption{Fit parameters of the Gaussian + Double-Sided Crystal Ball model for \hbb.}
+    \label{tab:fit_parameters_all}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{l|cc|cc|cc}
+    \hline
+    & \multicolumn{6}{c}{Category} \\
+    Parameter
+    & \multicolumn{2}{c}{LL}
+    & \multicolumn{2}{c}{MM}
+    & \multicolumn{2}{c}{TT} \\
+    & Value & Unc. & Value & Unc. & Value & Unc. \\
+    \hline
+    $f_{\mathrm{G}}$ & 0.4913 & 0.1658 & 0.918 & 0.07033 & 0.4265 & 0.3365 \\
+$\mu$ & 125.4 & 0.6068 & 121.9 & 0.638 & 122.5 & 1.663 \\
+$\sigma_{\mathrm{CB}}$ & 9.495 & 1.01 & 10.21 & 5.806 & 10.85 & 2.692 \\
+$\alpha_L$ & 0.8205 & 0.3055 & 1.148 & 0.5617 & 0.536 & 0.3318 \\
+$n_L$ & 6.316 & 6.755 & 0.02376 & 0.4442 & 99.95 & 85.36 \\
+$\alpha_R$ & 3 & 2.33 & 2.93 & 2.962 & 3 & 2.141 \\
+$n_R$ & 0.05499 & 0.5723 & 95.54 & 81.89 & 78.92 & 86.71 \\
+$\sigma_{\mathrm{G}}$ & 13.26 & 1.282 & 14.54 & 0.5742 & 15.18 & 2.589 \\
+
+    \hline
+    \end{tabular}
+    \end{table}
+    

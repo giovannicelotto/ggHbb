@@ -1,0 +1,18 @@
+\begin{table}
+\caption{Fit parameters of the Gaussian + Double-Sided Crystal Ball model for category TT}
+\label{tab:fit_parameters}
+\begin{tabular}{lcc}
+\hline
+Parameter & Value & Uncertainty \\
+\hline
+$f_{\mathrm{G}}$ & 0.4299 & 0.2211 \\
+$\mu$ & 94.16 & 0.4971 \\
+$\sigma_{\mathrm{CB}}$ & 10.51 & 2.358 \\
+$\alpha_L$ & 0.4709 & 0.3015 \\
+$n_L$ & 10 & 8.75 \\
+$\alpha_R$ & 0.9451 & 0.45 \\
+$n_R$ & 1.1 & 0.1219 \\
+$\sigma_{\mathrm{G}}$ & 10.15 & 0.5111 \\
+\hline
+\end{tabular}
+\end{table}

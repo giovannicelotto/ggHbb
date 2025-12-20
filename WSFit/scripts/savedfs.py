@@ -1,0 +1,324 @@
+# %%
+# Save the dataframes with the PNN scores assigned
+import numpy as np
+import matplotlib.pyplot as plt
+import json, sys, glob, re, os
+import pandas as pd
+import mplhep as hep
+hep.style.use("CMS")
+sys.path.append("/t3home/gcelotto/ggHbb/abcd/new")
+from functions import loadMultiParquet_v2, loadMultiParquet_Data_new, getDfProcesses_v2, sortPredictions, cut, getCommonFilters
+from helpersABCD.loadDataFrames import getPredictionNamesNumbers, loadPredictions
+sys.path.append("/t3home/gcelotto/ggHbb/PNN")
+from helpers.preprocessMultiClass import preprocessMultiClass
+from plotDfs import plotDfs
+from hist import Hist
+import argparse
+parser = argparse.ArgumentParser(description="Set datataking periods.")
+parser.add_argument(    "-dt",      "--datataking", nargs="+",    help="Specify periods (A B C D), ranges (0-5), single indices (7), or 'all'.",    default='all')
+parser.add_argument(    "-MCOnly",  "--MCOnly",     help="Specify if mc only",    default=False)
+parser.add_argument(    "-m",       "--model",      help="Model Name",    default="Aug28_3_20p01")
+parser.add_argument(    "-b",       "--boosted",    help="Boosted Category 3:100<dijet_pt<Inf ",    default=3)
+
+args = parser.parse_args()
+# %%
+boosted = 3
+modelName = "Aug28_%d_20p01"%boosted
+predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
+columns_ = ['dijet_mass', 'dijet_pt',
+          'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
+          'dimuon_mass',
+          'nJets']
+columns = columns_.copy()
+dfProcessesMC, dfProcessesData, dfProcessMC_JEC = getDfProcesses_v2()
+
+df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/dataframes_NN/%s"%modelName
+if not os.path.exists(df_folder):
+    os.makedirs(df_folder)
+    
+# Load data first
+# %%
+if not args.MCOnly:
+    periods = {
+        "A": range(0, 6),     # 0–5
+        "B": range(6, 12),    # 6–11
+        "C": range(12, 17),   # 12–16
+        "D": range(17, 22)    # 17–21
+    }
+
+    # Base dictionary (default: all 0)
+    DataDict = {i: 0 for r in periods.values() for i in r}
+    def set_datataking(args):
+        """Parse datataking arguments and update DataDict."""
+        global DataDict
+
+        for arg in args:
+            # Handle ranges like "0-5"
+            if "-" in arg and arg[0].isdigit():
+                start, end = map(int, arg.split("-"))
+                for i in range(start, end + 1):
+                    DataDict[i] = -1
+
+            # Handle lettered periods like "A", "B", ...
+            elif arg in periods:
+                for i in periods[arg]:
+                    DataDict[i] = -1
+
+            # Handle single indices like "7"
+            elif arg.isdigit():
+                DataDict[int(arg)] = -1
+
+            # Handle "all"
+            elif arg.lower() == "all":
+                for i in DataDict:
+                    DataDict[i] = -1
+
+        return DataDict
+
+
+
+
+    if args.datataking:
+        result = set_datataking(args.datataking)
+    else:
+        result = DataDict  # keep default (all 0)
+
+    print(result)
+    DataTakingList = list(DataDict.keys())
+    nReals = list(DataDict.values())
+
+    lumi_tot = 0
+    processesData = dfProcessesData.process[DataTakingList].values
+    for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
+        print(dataTakingIdx+1,"/",len(DataTakingList))
+        if nReals[dataTakingIdx]==0:
+            continue
+
+        predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([dataTakingName],[dataTakingIdx], predictionsPath)
+        # return ALL the available predictions fileNames and Numbers.
+        # Predictions are ordered in increasing number
+        # predictionsFileNumbers includes also training if not properly separated in a different folder.
+        # I suppose training will be separated when matching the flattuple
+        paths = list(dfProcessesData.flatPath[[dataTakingIdx]])
+    #    if dataTakingName=='Data1A':
+    #        paths[dataTakingIdx]=paths[dataTakingIdx]+"/training"
+
+
+        dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=nReals[dataTakingIdx], columns=columns,
+                                                              selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True, filters=getCommonFilters(btagWP="L"))
+        if boosted==1:
+            dfs=cut(dfs, 'dijet_pt', 100, 160)
+        elif boosted==2:
+            dfs=cut(dfs, 'dijet_pt', 160, None)
+        elif boosted==3:
+            dfs=cut(dfs, 'dijet_pt', 100, None)
+        elif boosted==60:
+            dfs=cut(dfs, 'dijet_pt', 60, 100)
+        dfs=cut(dfs, 'dijet_mass', 50, 300)
+        lumi_tot = lumi_tot + lumi
+        predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
+        #df = preprocessMultiClass(dfs=dfs)[0].copy()
+        df = dfs[0].copy()
+        print("Length dfs0", len(df))
+        del dfs
+
+        print(df.columns)
+        df.loc[:, 'PNN'] = np.array(predsData.PNN)
+        df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.0049, max=None)[0].copy()
+        df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.0049, max=None)[0].copy()
+        #print("Process ", dfProcessesData.process[isMC], " NN assigned")
+        df.loc[:, 'weight'] = 1
+
+        print("Saving ", dataTakingName)
+        dfName = df_folder + "/dataframes_%s_%s.parquet"%(dataTakingName, modelName)
+        lumiName = df_folder + "/lumi_%s_%s.npy"%(dataTakingName, modelName)
+        try:
+            df.to_parquet(dfName)
+            print("Saved ", dfName)
+        except:
+            os.remove(dfName)
+            df.to_parquet(dfName)
+            print("Saved ", dfName)
+        try:
+            np.save(lumiName, lumi)
+        except:
+            os.remove(lumiName)
+            np.save(lumiName, lumi)
+        print("Luminosity Saved is ", lumi)
+
+
+
+# %%
+columns = columns_.copy()
+MC_dict = {
+    #Nominal
+    0:-1,
+    1:-1, 3:-1, 4:-0, 19:-1, 20:-1, 21:-1, 22:-1, 35:0,
+    #11:-1, 12:-1, 13:-1,
+    #23:-1,23:-1,24:-1,25:-1,26:-1,27:-1,28:-1,29:-1,30:-1,31:-1,32:-1,33:-1,34:-1,
+    #36:-1, 37:-1,49:-1, 50:-1,51:-1,52:-1,53:-1,54:-1,55:-1
+}
+isMCList = list(MC_dict.keys())
+nMCs = list(MC_dict.values())
+
+
+columns = columns + ['genWeight', 'PU_SF', 'sf',
+                     'jet1_pt', #'jet1_eta', 'jet1_phi', 'jet1_mass',
+                     'jet2_pt', #'jet2_eta', 'jet2_phi', 'jet2_mass',
+                     'btag_central', 'btag_up', 'btag_down',
+                        ]
+
+processesMC = dfProcessesMC.process[isMCList].values
+for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
+    if nMCs[idx]==0:
+        continue
+    predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
+    if "ZJets" in processMC:
+        columns_ = columns + ["NLO_kfactor"] 
+    else:
+        columns_ = columns
+    dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns_,
+                                                             returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
+                                                             returnFileNumberList=True,
+                                                             filters=getCommonFilters(btagWP="L"))
+
+    print(numEventsList[0])
+    if boosted==1:
+        dfs=cut(dfs, 'dijet_pt', 100, 160)
+    elif boosted==2:
+        dfs=cut(dfs, 'dijet_pt', 160, None)
+    elif boosted==3:
+        dfs=cut(dfs, 'dijet_pt', 100, None)
+    elif boosted==60:
+        dfs=cut(dfs, 'dijet_pt', 60, 100)
+    dfs=cut(dfs, 'dijet_mass', 50, 300)
+    
+    
+    
+    predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
+    #df = preprocessMultiClass(dfs=dfs)[0].copy()
+    df = dfs[0].copy()
+
+
+        
+    df['PNN'] = np.array(predsMC.PNN)
+    if df.btag_central.max() == np.inf:
+        print("INFINITES ARE FOUND!!!\n"*400)
+        df = df[df.btag_central < np.inf]
+
+    print("Process ", dfProcessesMC.process[isMC], " PNN assigned")
+    print("Process ", dfProcessesMC.process[isMC])
+    print("Xsection ", dfProcessesMC.xsection[isMC])
+
+
+    #print("Filling btag central with 0!!!\n\n\n\n", "*"*40, "\n\n\nFilling btag central with 0!!!\n\n\n\n")
+    #df['btag_central'] = df['btag_central'].fillna(0)
+
+
+
+    if "ZJets" in processMC:
+        df['weight'] = df.genWeight * df.NLO_kfactor * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
+    else:
+        df['weight'] = df.genWeight * df.PU_SF * df.sf * df.btag_central * dfProcessesMC.xsection[isMC] * 1000/numEventsList[0]
+
+
+    nan_values = df.isna().sum().sum()
+    inf_values = np.isinf(df.weight).sum().sum()
+    print("Nan Values", nan_values)
+    print("Inf Values", inf_values)
+    status = 1 if ((nan_values>0)  | (inf_values>0)) else 0
+    print("status", status)
+
+    
+
+
+
+# save a copy of the dataframes before applying any cut
+#dfs_precut = dfs.copy()
+
+#dfs = dfs_precut.copy()
+# 0.2783 WP for medium btagID
+    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.0490, max=None)[0].copy()
+    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.0490, max=None)[0].copy()
+    dataFrameName = df_folder + "/df_%s_%s.parquet"%(processMC, modelName)
+    try:
+        df.to_parquet(dataFrameName)
+        print("Saved ", dataFrameName)
+    except:
+        os.remove(dataFrameName)
+        df.to_parquet(dataFrameName)
+        print("Saved ", dataFrameName)
+
+# %%
+sys.exit()
+
+
+
+##
+##      JEC Varied dataset
+##
+
+
+columns = columns_.copy()
+MC_JEC_keys = [_ for _ in range(0, 0)]
+nRealsMC_JEC_values = [int(0) for _ in range(len(MC_JEC_keys))]
+isMCJECList = list(MC_JEC_keys)
+nMCs = list(nRealsMC_JEC_values)
+
+
+
+columns = columns + ['genWeight', 'PU_SF', 'sf',
+                     'jet1_pt', 
+                     'jet2_pt', 
+                     'btag_central', 'btag_up', 'btag_down',
+                        ]
+
+processesMC = dfProcessMC_JEC.process[isMCJECList].values
+for idx, (isMC, processMC) in enumerate(zip(isMCJECList, processesMC)):
+    print("\n\n",idx, "/", len(isMCJECList))
+    #if "Data" not in processMC:
+    #    continue
+    try:
+        if nMCs[idx]==0:
+            continue
+        predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
+        dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns,
+                                                                returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
+                                                                returnFileNumberList=True, isJEC=1)
+        print(numEventsList[0])
+        if boosted==1:
+            dfs=cut(dfs, 'dijet_pt', 100, 160)
+        elif boosted==2:
+            dfs=cut(dfs, 'dijet_pt', 160, None)
+        elif boosted==60:
+            dfs=cut(dfs, 'dijet_pt', 60, 100)
+        predsMC = loadPredictions([processMC], [isMC], predictionsFileNames, fileNumberList)[0]
+        df = preprocessMultiClass(dfs=dfs)[0].copy()
+
+
+
+        df['PNN'] = np.array(predsMC.PNN)
+        print("Process ", dfProcessMC_JEC.process[isMC], " PNN assigned")
+        print("Process ", dfProcessMC_JEC.process[isMC])
+        print("Xsection ", dfProcessMC_JEC.xsection[isMC])
+        df['weight'] = df.genWeight * df.PU_SF * df.sf * df.btag_central * dfProcessMC_JEC.xsection[isMC] * 1000/numEventsList[0]
+
+
+    # save a copy of the dataframes before applying any cut
+    #dfs_precut = dfs.copy()
+
+    #dfs = dfs_precut.copy()
+    # 0.2783 WP for medium btagID
+        df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.71, max=None)[0].copy()
+        df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.71, max=None)[0].copy()
+        dataFrameName = df_folder + "/df_%s_%s.parquet"%(processMC, modelName)
+        try:
+            df.to_parquet(dataFrameName)
+            print("Saved ", dataFrameName, "\n\n\n")
+        except:
+            os.remove(dataFrameName)
+            df.to_parquet(dataFrameName)
+            print("Saved ", dataFrameName, "\n\n\n")
+    except:
+        continue
+# %%

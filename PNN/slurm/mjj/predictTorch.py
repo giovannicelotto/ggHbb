@@ -25,7 +25,7 @@ def predict(file_path, modelName, boosted):
     print("Before opening", flush=True)
     Xtest = pd.read_parquet(file_path,
                                 engine='pyarrow',
-                                 filters= getCommonFilters()        )
+                                 filters= getCommonFilters(btagWP="L")        )
     print("File opened", flush=True)
     #mass_hypo_list = np.array([50, 70, 100, 200, 300, 125])
     

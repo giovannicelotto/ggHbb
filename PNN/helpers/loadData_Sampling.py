@@ -34,7 +34,7 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
 
 
 
-def get_input_paths(dataTaking, mass_hypos=[50, 70, 100, 200, 300], boosted=3):
+def get_input_paths(dataTaking, mass_spin0=[50, 70, 100, 200, 300], boosted=3):
     base = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     folder = "training"
     if boosted==4:
@@ -52,29 +52,29 @@ def get_input_paths(dataTaking, mass_hypos=[50, 70, 100, 200, 300], boosted=3):
     if boosted==4:
         masses = [125]
     else:    
-        paths += [f"{base}/MC/GluGluH_M{m}_ToBB" for m in mass_hypos]
-        print(mass_hypos)
-        masses = [125] + mass_hypos
+        paths += [f"{base}/MC/GluGluH_M{m}_ToBB" for m in mass_spin0]
+        print(mass_spin0)
+        masses = [125] + mass_spin0
     return paths, np.array(masses)
 
 
 
-def apply_kinematic_cuts(dfs, boosted):
-    cut_ranges = {
-        0: {'dijet_pt': (None, 100), 'dijet_mass': (50, 300)},
-        1: {'dijet_pt': (100, 160), 'dijet_mass': (50, 300)},
-        2: {'dijet_pt': (160, None), 'dijet_mass': (50, 300)},
-        3: {'dijet_pt': (100, None), 'dijet_mass': (50, 300)},
-        4: {'dijet_pt': (50, 80), 'dijet_mass': (80, 170)},
-
-    }
-
-    if boosted in cut_ranges:
-        pt_min, pt_max = cut_ranges[boosted]['dijet_pt']
-        mass_min, mass_max = cut_ranges[boosted]['dijet_mass']
-        print("pt min", pt_min)
-        dfs = cut(dfs, 'dijet_pt', pt_min, pt_max)
-        dfs = cut(dfs, 'dijet_mass', mass_min, mass_max)
+#def apply_kinematic_cuts(dfs, boosted):
+#    cut_ranges = {
+#        0: {'dijet_pt': (None, 100), 'dijet_mass': (50, 300)},
+#        1: {'dijet_pt': (100, 160), 'dijet_mass': (50, 300)},
+#        2: {'dijet_pt': (160, None), 'dijet_mass': (50, 300)},
+#        3: {'dijet_pt': (100, None), 'dijet_mass': (50, 300)},
+#        4: {'dijet_pt': (50, 80), 'dijet_mass': (80, 170)},
+#
+#    }
+#
+#    if boosted in cut_ranges:
+#        pt_min, pt_max = cut_ranges[boosted]['dijet_pt']
+#        mass_min, mass_max = cut_ranges[boosted]['dijet_mass']
+#        print("pt min", pt_min)
+#        dfs = cut(dfs, 'dijet_pt', pt_min, pt_max)
+#        dfs = cut(dfs, 'dijet_mass', mass_min, mass_max)
 
     # For conservative training
     #if boosted == 22:
@@ -84,17 +84,17 @@ def apply_kinematic_cuts(dfs, boosted):
     #dfs_bkg = [dfs[0]]
         
 
-    genMatched = False
-    if genMatched:
-        dfs_sig = dfs[1:]
-        dfs_sig = cut(dfs_sig,'dR_jet1_genQuark',None, 0.2 )
-        dfs_sig = cut(dfs_sig,'dR_jet2_genQuark',None, 0.2 )
-        dfs_sig = cut(dfs_sig,'dpT_jet1_genQuark',None, 0.5 )
-        dfs_sig = cut(dfs_sig,'dpT_jet2_genQuark',None, 0.5 )
+#    genMatched = False
+#    if genMatched:
+#        dfs_sig = dfs[1:]
+#        dfs_sig = cut(dfs_sig,'dR_jet1_genQuark',None, 0.2 )
+#        dfs_sig = cut(dfs_sig,'dR_jet2_genQuark',None, 0.2 )
+#        dfs_sig = cut(dfs_sig,'dpT_jet1_genQuark',None, 0.5 )
+#        dfs_sig = cut(dfs_sig,'dpT_jet2_genQuark',None, 0.5 )
 
-        return [dfs[0]] + dfs_sig
-    else:
-        return dfs
+        #return [dfs[0]] + dfs_sig
+#    else:
+    #return dfs
 
 
 def filter_mass_windows(dfs, mass_hypos, mass_limits):
@@ -114,6 +114,9 @@ def filter_mass_windows(dfs, mass_hypos, mass_limits):
             idx = i + 1  # offset because dfs[0] is background
             dfs[idx] = dfs[idx][dfs[idx]['dijet_mass'] < mass_limits[mass][1]]
             dfs[idx] = dfs[idx][dfs[idx]['dijet_mass'] > mass_limits[mass][0]]
+            #dfs[idx] = dfs[idx][dfs[idx]['dR_jet1_genQuark'] < 0.4]
+            #dfs[idx] = dfs[idx][dfs[idx]['dR_jet1_genQuark'] < 0.4]
+            
     return dfs
 
 
@@ -124,12 +127,12 @@ def add_mass_hypothesis(dfs, massHypothesis, features):
     return dfs
 
 
-def assign_labels_and_weights(dfs, massHypothesis, boosted, sampling):
+def assign_labels_and_weights(dfs, signalMasses, boosted, sampling):
     if boosted!=0:
         dfSig = pd.concat(dfs[1:])
         dfBkg = dfs[0]
 
-        dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * massHypothesis[i-1] for i in range(1, len(dfs))])
+        dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * signalMasses[i-1] for i in range(1, len(dfs))])
         dfBkg['genMass'] = np.zeros(len(dfs[0]))
     else:
         dfSig=dfs[1]
@@ -141,7 +144,9 @@ def assign_labels_and_weights(dfs, massHypothesis, boosted, sampling):
     if sampling:
         dfSig = uniform_sample(dfSig, column='dijet_mass', num_bins=101)
         dfBkg = uniform_sample(dfBkg, column='dijet_mass', num_bins=101)
+    
 
+    #dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central  / ((dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central ).sum())
     dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight) / ((dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight)).sum())
     dfBkg['W'] = np.ones(len(dfBkg)) / len(dfBkg)
     dfBkg["btag_central"] = 1
@@ -150,11 +155,11 @@ def assign_labels_and_weights(dfs, massHypothesis, boosted, sampling):
     return dfSig, dfBkg
 
 
-def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split, boosted=False, dataTaking='1A', sampling=True, btagTight=True, mass_hypos =[]):
+def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split, boosted=False, dataTaking='1A', sampling=True, btagTight=True, mass_spin0=[], feature_cfg=None):
     
-    paths, massHypothesis = get_input_paths(dataTaking, mass_hypos=mass_hypos, boosted=boosted)
+    paths, massHypothesis = get_input_paths(dataTaking, mass_spin0=mass_spin0, boosted=boosted)
 
-    #boosted in [1, 2]
+
 
     dfs = []
     for path in paths:
@@ -177,20 +182,32 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
             columnsToRead_ = columnsToRead.copy()
 
         
-        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagTight=btagTight, cutDijet=True))
+        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagWP="M", cutDijet=True))
         if process[:4]=='Data':
             df['sf']=1
             df['btag_central']=1
             df['PU_SF']=1
         dfs.append(df)
+    #for i, df in enumerate(dfs):
+    #    if df.isnull().values.any():
+    #        print(f"Warning: NaN values found in dataframe {i}. Dropping NaNs.")
+    #        # Understand in which columns the NaNs are present
+    #        print(dfs[i].isna().sum()[dfs[i].isna().sum()>0] )
+    #        #dfs[i] = df.dropna()
 
-    dfs = apply_kinematic_cuts(dfs, boosted)
-    mass_hypos = [125] + mass_hypos
-    mass_limits = {50: [0, 120], 70: [0,140], 100:[0,150], 300:[150,300]}
+# Performs cut
+    dfs = cut_advanced(dfs, feature_cfg["cuts"]["default"][0])
+    signalMasses = [125] + mass_spin0
+    for idx, (signalMass, df) in enumerate(zip(signalMasses, dfs[1:])):
+        if f"M{signalMass}" in feature_cfg["cuts"]:
+            dfs[idx+1] = cut_advanced([df], feature_cfg["cuts"][f"M{signalMass}"][0])[0]
 
-    print(mass_hypos)
-    dfs = filter_mass_windows(dfs, mass_hypos, mass_limits)
-    dfs = add_mass_hypothesis(dfs, massHypothesis, featuresForTraining)
+    
+
+
+
+    #dfs = filter_mass_windows(dfs, mass_spin0, mass_limits)
+    #dfs = add_mass_hypothesis(dfs, massHypothesis, featuresForTraining)
 # Here remove signal events wheter more
 #
 #
@@ -225,7 +242,8 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
 
 
 # Finished
-    dfSig, dfBkg = assign_labels_and_weights(dfs, massHypothesis, boosted, sampling=sampling)
+    print("Lenght of dfs after cuts:", [len(df) for df in dfs])
+    dfSig, dfBkg = assign_labels_and_weights(dfs, signalMasses, boosted, sampling=sampling)
 
     for m in massHypothesis:
         print(f"{len(dfSig[dfSig.genMass==m])} elements in df {m}")

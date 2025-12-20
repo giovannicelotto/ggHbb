@@ -31,7 +31,7 @@ def main(isMC, processNumber, nFiles, modelName, boosted, isJEC):
     flatFiles = glob.glob(flatPath+"/**/*.parquet", recursive=True)
     if nFiles == -1:
         nFiles = len(flatFiles)
-    print(nFiles)
+    print(nFiles, " flattuple available")
 
 
     doneFiles = 0
@@ -62,13 +62,13 @@ def main(isMC, processNumber, nFiles, modelName, boosted, isJEC):
             doneFiles = doneFiles + 1
             if doneFiles % 100 ==0:
                 print("I am sleeping! Good Night!")
-                time.sleep(30)
+                time.sleep(15)
                 print("I am back! Good Morning!")
         else:
             print("Waiting" + "." * dots + " " * (3 - dots), end="\r", flush=True)
             dots = (dots + 1) % 4
 
-                     
+    print("\nDone")
         
 
 if __name__ == "__main__":
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # Define arguments
     parser.add_argument("-MC", "--isMC", type=int, help="isMC True or False", default=0)
     parser.add_argument("-pN", "--processNumber", type=int, help="processNumber of MC or datataking", default=0)
-    parser.add_argument("-m", "--modelName", type=str, help="suffix of the model", default="Jan08_1_0p0")
+    parser.add_argument("-m", "--modelName", type=str, help="suffix of the model", default="Aug28_3_20p01")
     parser.add_argument("-b", "--boosted", type=int, help="boosted class", default=1)
     parser.add_argument("-JEC", "--isJEC", type=int, help="using JEC varied dataset", default=0)
     parser.add_argument("-n", "--nFiles", type=int, help="number of files", default=1)

@@ -52,12 +52,12 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName, 
     #rWval_H = reweighter_H.predict_weights(dfTest_H[['dijet_mass']])
     #rWval_H /= np.sum(rWval_H)
 
-    bins = np.linspace(xmin, xmax, nbins)
-    countsQCDTrain = np.histogram(Xval.dijet_mass[Yval==0], bins=bins, weights=Wval_QCD)[0]
-    countsHTrain = np.histogram(Xval.dijet_mass[Yval==1], bins=bins, weights=Wval_H)[0]
+
+    countsQCDVal = np.histogram(Xval.dijet_mass[Yval==0], bins=bins, weights=Wval_QCD)[0]
+    countsHVal = np.histogram(Xval.dijet_mass[Yval==1], bins=bins, weights=Wval_H)[0]
 #
-    rWval_QCD=Wval_QCD*(1/countsQCDTrain[np.digitize(np.clip(dfTest_QCD.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
-    rWval_H=Wval_H*(1/countsHTrain[np.digitize(np.clip(dfTest_H.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
+    rWval_QCD=Wval_QCD*(1/countsQCDVal[np.digitize(np.clip(dfTest_QCD.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
+    rWval_H=Wval_H*(1/countsHVal[np.digitize(np.clip(dfTest_H.dijet_mass, bins[0], bins[-1]-0.0001), bins)-1])
 #
     rWval_QCD, rWval_H = rWval_QCD/np.sum(rWval_QCD), rWval_H/np.sum(rWval_H)
 

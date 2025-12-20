@@ -56,6 +56,7 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
         #         
         if method==0:
             # old method based on btag shape
+            assert False
             for j in range(0, jetsToCheck):
                 if j==jetsWithMuon[0]:
                     continue
@@ -93,7 +94,11 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
                         #hai vinto
                         pass
                     elif np.sum(looseJets)==0:
-                        selected2 = 999
+                        nonLooseJets = ((Jet_btagDeepFlavB>=-1) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>=4)))[maskJets]
+                        if np.sum(nonLooseJets)>=1:
+                            selected2 = np.arange(nJet)[maskJets][nonLooseJets][0]
+                        elif np.sum(nonLooseJets)==0:
+                            selected2=999
                         #haivinto
 
         

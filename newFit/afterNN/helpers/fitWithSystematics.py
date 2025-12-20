@@ -100,9 +100,9 @@ class FitWithSystematics:
 
 
 
-        print("Sum of weights")
-        print(dfs_mc[0].weight.sum())
-        print(len(dfs_mc[0]))
+        #print("Sum of weights")
+        #print(dfs_mc[0].weight.sum())
+        #print(len(dfs_mc[0]))
         return dfs_mc
 
     def apply_cuts(self, dfs_mc, cuts_string):
@@ -209,7 +209,7 @@ class FitWithSystematics:
             json.dump({'fitFunction': self.fitFunction, 'parameters': self.parameters}, f, indent=4)
 
 
-    def plot_results(self, x, cTot, err, m, fitregion, bins, out_folder):
+    def plot_results(self, x, cTot, err, m, fitregion, bins, out_folder, outName):
         fig, ax = plt.subplots(1, 1)
         ax.errorbar(x, cTot, err, marker='o', color='black', linestyle='none')
 
@@ -236,7 +236,8 @@ class FitWithSystematics:
         ax.plot(x_draw, y_draw, label=label, color='red', linewidth=1)
         ax.legend()
         ax.set_ylim(0, ax.get_ylim()[1])
-        fig.savefig(f"{out_folder}/plots/{self.particle}PeakFit_with_systematics.png", bbox_inches='tight')
+        fig.savefig(f"{out_folder}/plots/{outName}", bbox_inches='tight')
+
     def plot_variations_results(self, x, cTot, err, bins, fitregion, out_folder):
         fig, ax = plt.subplots(1, 1)
 

@@ -1,7 +1,7 @@
 # config1.yaml
 modelName: "Aug28_3_20p01"
 outFolder: "/t3home/gcelotto/ggHbb/WSFit/output/cat3"
-cuts_string: "(dijet_pt >= 100) & (PNN < 0.65) & (PNN >= 0.4) & (jet1_btagDeepFlavB >= 0.71) & (jet2_btagDeepFlavB >= 0.71)"
+cuts_string: "(dijet_pt >= 200) & (PNN >= 0.7)  & (PNN < 0.78)& (jet1_btagDeepFlavB >= 0.71) & (jet2_btagDeepFlavB >= 0.71) " 
 
   
 
@@ -32,7 +32,7 @@ Z_paramsLimits:
   sigmaG: [6,15]
 
 #Higgs params
-H_MCList: [36,37]
+H_MCList: [36,37,49,50,51,52,53,54,55]
 H_MCList_sD: [1,3]
 H_MCList_sU: [15,16]
 H_x_bounds: [80, 160]

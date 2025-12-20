@@ -4,8 +4,26 @@ import pandas as pd
 import ROOT
 import numpy as np
 from array import array
-import sys
-def getDfs(idx):
+import sys, re
+
+def extract_pnn_edges(condition: str):
+    pattern = r"PNN\s*([<>]=?)\s*([0-9]*\.?[0-9]+)"
+    matches = re.findall(pattern, condition)
+
+    lower, upper = None, None
+    for op, val in matches:
+        val = float(val)
+        if ">" in op:
+            lower = val
+        elif "<" in op:
+            upper = val
+
+    if upper is None:
+        upper = 1.0  # default upper bound
+
+    return lower, upper
+
+def getDfs(idx, return_nn=False):
 
     # Open config file and extract values
 # Open config file and extract values
@@ -52,7 +70,7 @@ def getDfs(idx):
     # Open Data
     dfsData = []
     lumi_tot = 0.
-    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
+    path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/dataframes_NN/%s"%modelName
     for processName in dfProcessesData.process.values:
         print("Opening ", processName)
         df = pd.read_parquet(path+"/dataframes_%s_%s.parquet"%(processName, modelName))
@@ -89,6 +107,8 @@ def getDfs(idx):
     dfsMC_Z = cut_advanced(dfsMC_Z, config_cuts["cuts_string"])
     dfsMC_H = cut_advanced(dfsMC_H, config_cuts["cuts_string"])
 
+    lower_NN, upper_NN = extract_pnn_edges(config_cuts["cuts_string"])
+
     
     # Add label process in dfsMC to distinguish VBF and ggF contribution
     for idx, df in enumerate(dfsMC_H):
@@ -101,8 +121,7 @@ def getDfs(idx):
     dfMC_H = pd.concat(dfsMC_H)
     df = pd.concat(dfsData)
 
-    # %%
-
-
-
-    return dfMC_Z, dfMC_H, df, nbins, x1, x2
+    if return_nn:
+        return dfMC_Z, dfMC_H, df, nbins, x1, x2, lower_NN, upper_NN
+    else:
+        return dfMC_Z, dfMC_H, df, nbins, x1, x2

@@ -15,7 +15,7 @@ import math
 import json
 import os
 from getZ_KFactor import getZ_KFactor
-
+from functions import getDfProcesses_v2
 
 def getMuonID_SF(json_data, wp_name, eta, pt):
     """
@@ -166,6 +166,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         raise RuntimeError(f"Failed to open ROOT file: {histPath}")
     
     # Open the WorkingPoint correction lib
+    # /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv9/latest/btagging.json.gz
     fname = "/t3home/gcelotto/ggHbb/systematics/wpDeepJet/btv-json-sf/data/UL2018/btagging.json.gz"
     if fname.endswith(".json.gz"):
         import gzip
@@ -310,10 +311,15 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         Muon_pfRelIso04_all         = branches["Muon_pfRelIso04_all"][ev]
 
     # Electrons
+        Jet_electronIdx1            = branches["Jet_electronIdx1"][ev]
         nElectron                   = branches["nElectron"][ev]
         Electron_pt                 = branches["Electron_pt"][ev]
         Electron_eta                = branches["Electron_eta"][ev]
         Electron_phi                = branches["Electron_phi"][ev]
+        Electron_dz                 = branches["Electron_dz"][ev]
+        Electron_dzErr              = branches["Electron_dzErr"][ev]
+        Electron_ip3d               = branches["Electron_ip3d"][ev]
+        Electron_sip3d              = branches["Electron_sip3d"][ev]
         if not "private" in processName:
             Electron_isPF               = branches["Electron_isPFcand"][ev]
             Electron_charge             = branches["Electron_charge"][ev]
@@ -383,8 +389,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 #           Filling the rows
 #
 ##############################
-
-        maskJets = (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>4)) & (Jet_pt>=20) & (abs(Jet_eta)<2.5)
+        features_['flat_weight']  = 1.0
+        maskJets = (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>=4)) & (Jet_pt>=20) & (abs(Jet_eta)<2.5)
         # puId==0 means 000: fail all PU ID;
         # puId==1 means 001: pass loose ID, fail medium, fail tight;
         # puId==3 means 011: pass loose and medium ID, fail tight;
@@ -405,8 +411,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             continue
         if selected2==999:
             assert False
-        #This is wrong Jet_breg2018 has to be applied on mass as well : https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsWG/BJetRegression
-        # Correct the dataframes later
+        #Jet_breg2018 has to be applied on mass as well : https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsWG/BJetRegression
+        #Correct the dataframes later
         energy1 = np.sqrt(Jet_pt[selected1]**2 + (Jet_pt[selected1]*np.sinh(Jet_eta[selected1]))**2 +  Jet_mass[selected1]**2)
         energy2 = np.sqrt(Jet_pt[selected2]**2 + (Jet_pt[selected2]*np.sinh(Jet_eta[selected2]))**2 +  Jet_mass[selected2]**2)
         jet1.SetPtEtaPhiE(Jet_pt[selected1]*Jet_bReg2018[selected1], Jet_eta[selected1], Jet_phi[selected1], energy1*Jet_bReg2018[selected1]    )
@@ -430,6 +436,20 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         features_['jet1_nElectrons'] = Jet_nElectrons[selected1]     
         features_['jet1_btagDeepFlavB'] = Jet_btagDeepFlavB[selected1]
         features_['jet1_btagTight'] = int(Jet_btagDeepFlavB[selected1]>=0.71)
+
+        if Jet_pt[selected1]>=20:
+            if Jet_btagDeepFlavB[selected1] < 0.049:
+                jet1_btagWP = 0
+            elif Jet_btagDeepFlavB[selected1] < 0.2783:
+                jet1_btagWP = 1
+            elif Jet_btagDeepFlavB[selected1] < 0.71:
+                jet1_btagWP = 2
+            else:
+                jet1_btagWP = 3
+        else:
+            jet1_btagWP = 0
+
+        features_['jet1_btagWP'] = int(jet1_btagWP)
         features_['jet1_idx'] = selected1
         features_['jet1_rawFactor'] = Jet_rawFactor[selected1]
         features_['jet1_bReg2018'] = Jet_bReg2018[selected1]
@@ -462,6 +482,19 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         features_['jet2_nElectrons'] = Jet_nElectrons[selected2]
         features_['jet2_btagDeepFlavB'] = Jet_btagDeepFlavB[selected2]
         features_['jet2_btagTight'] = int(Jet_btagDeepFlavB[selected2]>=0.71)
+        if Jet_pt[selected2]>=20:
+            if Jet_btagDeepFlavB[selected2] < 0.049:
+                jet2_btagWP = 0
+            elif Jet_btagDeepFlavB[selected2] < 0.2783:
+                jet2_btagWP = 1
+            elif Jet_btagDeepFlavB[selected2] < 0.71:
+                jet2_btagWP = 2
+            else:
+                jet2_btagWP = 3
+        else:
+            jet2_btagWP = 0
+
+        features_['jet2_btagWP'] = int(jet2_btagWP)
         features_['jet2_idx'] = selected2
         features_['jet2_rawFactor'] = Jet_rawFactor[selected2]
         features_['jet2_bReg2018'] = Jet_bReg2018[selected2]
@@ -575,9 +608,19 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         if dijet.Pt()<1e-5:
             assert False
         features_['dijet_pt'] = np.float32(dijet.Pt())
-        #features_['dijet_eta_nano'] = branches["dijet_eta"][ev]
-        #features_['dijet_pt_nano'] = branches["dijet_pt"][ev]
-        #features_['dijet_phi_nano'] = branches["dijet_phi"][ev]
+        if isMC==0:
+            features_['dijet_eta_nano'] = branches["dijet_eta"][ev]
+            features_['dijet_pt_nano'] = branches["dijet_pt"][ev]
+            if np.abs(branches["dijet_pt"][ev]-dijet.Pt())>1:
+                print("%.3f vs %.3f"%(branches["dijet_pt"][ev], dijet.Pt()))
+
+                print("%.3f vs %.3f"%(branches["dijet_jet1_pt"][ev], jet1.Pt()))
+                print("%.3f vs %.3f"%(branches["dijet_jet2_pt"][ev], jet2.Pt()))
+                print(Jet_pt*Jet_bReg2018)
+                print(Jet_btagDeepFlavB)
+                print(Jet_jetId)
+                print(Jet_puId)
+        features_['dijet_phi_nano'] = branches["dijet_phi"][ev]
         features_['dijet_eta'] = np.float32(dijet.Eta())
         features_['dijet_phi'] = np.float32(dijet.Phi())
         features_['dijet_mass'] = np.float32(dijet.M())
@@ -735,7 +778,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     
                     features_["Muon_tt_dxy"]            = np.float32(Muon_dxy[selected_muon_idx])
                     features_["Muon_tt_dz"]             = np.float32(Muon_dz[selected_muon_idx])
-                    features_["Muon_tt_genMatched"]     = int(Muon_genPartIdx[selected_muon_idx])
+                    if isMC==1:
+                        features_["Muon_tt_genMatched"]     = int(Muon_genPartIdx[selected_muon_idx])
 
                     features_["Muon_tt_charge"]     = int(Muon_charge[selected_muon_idx])
                     features_["Muon_tt_mediumId"]   = int(Muon_mediumId[selected_muon_idx])
@@ -909,19 +953,19 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             features_['dieleZZ_phi'] = diele.Phi()
             features_['dieleZZ_mass'] = diele.M()
         else:
-            features_['eleZ1_pt'] = -1
-            features_['eleZ1_eta'] = -1
-            features_['eleZ1_phi'] = -1
-            features_['eleZ1_mass'] = -1
-            features_['eleZ2_pt'] = -1
-            features_['eleZ2_eta'] = -1
-            features_['eleZ2_phi'] = -1
-            features_['eleZ2_mass'] = -1
+            features_['eleZ1_pt'] = -1.
+            features_['eleZ1_eta'] = -1.
+            features_['eleZ1_phi'] = -1.
+            features_['eleZ1_mass'] = -1.
+            features_['eleZ2_pt'] = -1.
+            features_['eleZ2_eta'] = -1.
+            features_['eleZ2_phi'] = -1.
+            features_['eleZ2_mass'] = -1.
 
-            features_['dieleZZ_pt'] =      -1
-            features_['dieleZZ_eta'] =     -1
-            features_['dieleZZ_phi'] =     -1
-            features_['dieleZZ_mass'] =    -1
+            features_['dieleZZ_pt'] =      -1.
+            features_['dieleZZ_eta'] =     -1.
+            features_['dieleZZ_phi'] =     -1.
+            features_['dieleZZ_mass'] =    -1.
 
 
 # Trig Muon
@@ -946,6 +990,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         leptonClass = 3
         # R1
         if muonIdx2 != 999:
+            # Second muon is triggering
             leptonClass = 1
             muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
             muon2.SetPtEtaPhiM(Muon_pt[muonIdx2], Muon_eta[muonIdx2], Muon_phi[muonIdx2], Muon_mass[muonIdx2])
@@ -976,6 +1021,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     # avoid all muons not inside jet2
                     continue
                 else:
+                    # There is a second muon non triggering
                     leptonClass = 2
                     muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
                     muon2.SetPtEtaPhiM(Muon_pt[mu], Muon_eta[mu], Muon_phi[mu], Muon_mass[mu])
@@ -1072,6 +1118,9 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 features_['higgs_gen_eta'] = h.Eta()
                 features_['higgs_gen_phi'] = h.Phi()
                 features_['higgs_gen_mass'] = h.M()
+                features_['run'] = branches["run"][ev]
+                features_['luminosityBlock'] = branches["luminosityBlock"][ev]
+                features_['event'] = branches["event"][ev]  
 
                 #dR and deltaPt/pt
                 # Compute dR for all pairings
@@ -1189,6 +1238,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 k_factor = getZ_KFactor(pt=LHEPart_pt[LHEPart_pdgId==23])
                 
                 features_['NLO_kfactor'] = k_factor
+                features_['flat_weight'] *= k_factor
 
 
             # PileupID SF computation
@@ -1202,6 +1252,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     else:
                         jet_pileupId_SF = 1
                 features_["jet_pileupId_SF_"+syst]  = jet_pileupId_SF
+                if syst=="nom":
+                    features_['flat_weight'] *= jet_pileupId_SF
 
                     
                     
@@ -1287,25 +1339,46 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                         eff_L, _        = get_btag_map_efficiency(Jet_pt[j], Jet_eta[j], Jet_hadronFlavour[j], eff_maps_cache["L"])
 
 
-
+                        eps = 1e-8
                         if wp=="T":
                             # Jet number j is Tight. Apply simply SF
                             weight_factor = currentJet_btagSF_T
-                        elif wp=="M":
-                            weight_factor = (currentJet_btagSF_M * eff_M  - currentJet_btagSF_T * eff_T) / (eff_M - eff_T)
-                        elif wp=="L":
-                            weight_factor = (currentJet_btagSF_L * eff_L  - currentJet_btagSF_M * eff_M) / (eff_L - eff_M)
-                        elif wp==None:
-                            weight_factor = (1  - currentJet_btagSF_L * eff_L) / (1 - eff_L)
+                        elif wp == "M":
+                            denom = eff_M - eff_T
+                            if abs(denom) < eps:
+                                weight_factor = 1.0
+                            else:
+                                weight_factor = (currentJet_btagSF_M * eff_M - currentJet_btagSF_T * eff_T) / denom
+                        
+                        elif wp == "L":
+                            denom = eff_L - eff_M
+                            if abs(denom) < eps:
+                                weight_factor = 1.0
+                            else:
+                                weight_factor = (currentJet_btagSF_L * eff_L - currentJet_btagSF_M * eff_M) / denom
+                        
+                        elif wp is None:
+                            denom = 1.0 - eff_L
+                            if abs(denom) < eps:
+                                weight_factor = 1.0
+                            else:
+                                weight_factor = (1.0 - currentJet_btagSF_L * eff_L) / denom
                             # Jet is M not T
+                    # Check for nan or infinty
+                        if ((weight_factor==np.nan) | (weight_factor==np.inf)):
+                            weight_factor=1.0
+                            print("Warning: btagSF_event is nan or infinty, setting to 1.0")
                         btagSF_event *= weight_factor
-
                     features_[f'btag_{syst}'] = btagSF_event
+
+                    if syst =="central":
+                        features_['flat_weight'] *= btagSF_event
+
         
         
 
             # End btag syst
-            hist_trigger = triggerScaleFactor_rootFile.Get("hist_scale_factor")
+            hist_trigger = triggerScaleFactor_rootFile.Get("hMap")
             xbin = hist_trigger.GetXaxis().FindBin(Muon_pt[muonIdx1])
             ybin = hist_trigger.GetYaxis().FindBin(abs(Muon_dxy[muonIdx1]/Muon_dxyErr[muonIdx1]))
             # overflow gets the same triggerSF as the last bin
@@ -1320,6 +1393,11 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 ybin=1
             features_['sf'] = np.float32(hist_trigger.GetBinContent(xbin,ybin))
             features_['genWeight'] = genWeight
+            features_['flat_weight']  *= genWeight 
+            features_['flat_weight']  *= np.float32(hist_trigger.GetBinContent(xbin,ybin))
+
+
+
         assert Muon_isTriggering[muonIdx1]
         verbose and print("Features appended")
         file_.append(features_)
@@ -1381,10 +1459,17 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
     # PU_SF. To be applied only on MC
     if fullProcessName[:4]=='Data':
         df['PU_SF']=1
+        df['xsection']=1
+        
     else:
         PU_map = load_mapping_dict('/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData/PU_PVtoPUSF.json')
         df['PU_SF'] = df['Pileup_nTrueInt'].apply(int).map(PU_map)
         df.loc[df['Pileup_nTrueInt'] > 98, 'PU_SF'] = 0
+        df['flat_weight'] = df['flat_weight'] * df['PU_SF']
+
+        dfProcessesMC = getDfProcesses_v2()[0]
+        xsections = dfProcessesMC.iloc[pN].xsection
+        df['xsection']=xsections
 
     print('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber)
     df.to_parquet('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber )

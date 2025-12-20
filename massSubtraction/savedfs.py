@@ -13,138 +13,135 @@ from helpers.preprocessMultiClass import preprocessMultiClass
 from plotDfs import plotDfs
 from hist import Hist
 import argparse
+parser = argparse.ArgumentParser(description="Set datataking periods.")
+parser.add_argument(    "-dt",    "--datataking",    nargs="+",    help="Specify periods (A B C D), ranges (0-5), single indices (7), or 'all'.",    default=[],)
+parser.add_argument(    "-MCOnly",    "--MCOnly",        help="Specify if mc only",    default=False)
 
+args = parser.parse_args()
 # %%
 boosted = 3
 modelName = "Aug28_%d_20p01"%boosted
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
 columns_ = ['dijet_mass', 'dijet_pt',
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
+          'dimuon_mass',
           'nJets']
 columns = columns_.copy()
 dfProcessesMC, dfProcessesData, dfProcessMC_JEC = getDfProcesses_v2()
 
-df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/abcd_df/mjjDisco/%s"%modelName
+df_folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/dataframes_NN/%s"%modelName
 if not os.path.exists(df_folder):
     os.makedirs(df_folder)
     
 # Load data first
 # %%
-periods = {
-    "A": range(0, 6),     # 0–5
-    "B": range(6, 12),    # 6–11
-    "C": range(12, 17),   # 12–16
-    "D": range(17, 22)    # 17–21
-}
+if not args.MCOnly:
+    periods = {
+        "A": range(0, 6),     # 0–5
+        "B": range(6, 12),    # 6–11
+        "C": range(12, 17),   # 12–16
+        "D": range(17, 22)    # 17–21
+    }
 
-# Base dictionary (default: all 0)
-DataDict = {i: 0 for r in periods.values() for i in r}
-def set_datataking(args):
-    """Parse datataking arguments and update DataDict."""
-    global DataDict
+    # Base dictionary (default: all 0)
+    DataDict = {i: 0 for r in periods.values() for i in r}
+    def set_datataking(args):
+        """Parse datataking arguments and update DataDict."""
+        global DataDict
 
-    for arg in args:
-        # Handle ranges like "0-5"
-        if "-" in arg and arg[0].isdigit():
-            start, end = map(int, arg.split("-"))
-            for i in range(start, end + 1):
-                DataDict[i] = -1
+        for arg in args:
+            # Handle ranges like "0-5"
+            if "-" in arg and arg[0].isdigit():
+                start, end = map(int, arg.split("-"))
+                for i in range(start, end + 1):
+                    DataDict[i] = -1
 
-        # Handle lettered periods like "A", "B", ...
-        elif arg in periods:
-            for i in periods[arg]:
-                DataDict[i] = -1
+            # Handle lettered periods like "A", "B", ...
+            elif arg in periods:
+                for i in periods[arg]:
+                    DataDict[i] = -1
 
-        # Handle single indices like "7"
-        elif arg.isdigit():
-            DataDict[int(arg)] = -1
+            # Handle single indices like "7"
+            elif arg.isdigit():
+                DataDict[int(arg)] = -1
 
-        # Handle "all"
-        elif arg.lower() == "all":
-            for i in DataDict:
-                DataDict[i] = -1
+            # Handle "all"
+            elif arg.lower() == "all":
+                for i in DataDict:
+                    DataDict[i] = -1
 
-    return DataDict
-
-
-parser = argparse.ArgumentParser(description="Set datataking periods.")
-parser.add_argument(
-    "-dt",
-    "--datataking",
-    nargs="+",
-    help="Specify periods (A B C D), ranges (0-5), single indices (7), or 'all'.",
-    default=[],
-)
-
-args = parser.parse_args()
-
-if args.datataking:
-    result = set_datataking(args.datataking)
-else:
-    result = DataDict  # keep default (all 0)
-
-print(result)
-DataTakingList = list(DataDict.keys())
-nReals = list(DataDict.values())
-
-lumi_tot = 0
-processesData = dfProcessesData.process[DataTakingList].values
-for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
-    print(dataTakingIdx+1,"/",len(DataTakingList))
-    if nReals[dataTakingIdx]==0:
-        continue
-
-    predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([dataTakingName],[dataTakingIdx], predictionsPath)
-    # return ALL the available predictions fileNames and Numbers.
-    # Predictions are ordered in increasing number
-    # predictionsFileNumbers includes also training if not properly separated in a different folder.
-    # I suppose training will be separated when matching the flattuple
-    paths = list(dfProcessesData.flatPath[[dataTakingIdx]])
-#    if dataTakingName=='Data1A':
-#        paths[dataTakingIdx]=paths[dataTakingIdx]+"/training"
+        return DataDict
 
 
-    dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=nReals[dataTakingIdx], columns=columns,
-                                                          selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True, filters=getCommonFilters(btagTight=False))
-    if boosted==1:
-        dfs=cut(dfs, 'dijet_pt', 100, 160)
-    elif boosted==2:
-        dfs=cut(dfs, 'dijet_pt', 160, None)
-    elif boosted==3:
-        dfs=cut(dfs, 'dijet_pt', 100, None)
-    elif boosted==60:
-        dfs=cut(dfs, 'dijet_pt', 60, 100)
-    dfs=cut(dfs, 'dijet_mass', 50, 300)
-    lumi_tot = lumi_tot + lumi
-    predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
-    #df = preprocessMultiClass(dfs=dfs)[0].copy()
-    df = dfs[0].copy()
-    print("Length dfs0", len(df))
-    del dfs
 
-    print(df.columns)
-    df.loc[:, 'PNN'] = np.array(predsData.PNN)
-    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.2783, max=None)[0].copy()
-    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.2783, max=None)[0].copy()
-    #print("Process ", dfProcessesData.process[isMC], " NN assigned")
-    df.loc[:, 'weight'] = 1
 
-    print("Saving ", dataTakingName)
-    dfName = df_folder + "/dataframes_%s_%s.parquet"%(dataTakingName, modelName)
-    lumiName = df_folder + "/lumi_%s_%s.npy"%(dataTakingName, modelName)
-    try:
-        df.to_parquet(dfName)
-        print("SAved ", dfName)
-    except:
-        os.remove(dfName)
-        df.to_parquet(dfName)
-        print("SAved ", dfName)
-    try:
-        np.save(lumiName, lumi)
-    except:
-        os.remove(lumiName)
-        np.save(lumiName, lumi)
-    print("Luminosity Saved is ", lumi)
+    if args.datataking:
+        result = set_datataking(args.datataking)
+    else:
+        result = DataDict  # keep default (all 0)
+
+    print(result)
+    DataTakingList = list(DataDict.keys())
+    nReals = list(DataDict.values())
+
+    lumi_tot = 0
+    processesData = dfProcessesData.process[DataTakingList].values
+    for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
+        print(dataTakingIdx+1,"/",len(DataTakingList))
+        if nReals[dataTakingIdx]==0:
+            continue
+
+        predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([dataTakingName],[dataTakingIdx], predictionsPath)
+        # return ALL the available predictions fileNames and Numbers.
+        # Predictions are ordered in increasing number
+        # predictionsFileNumbers includes also training if not properly separated in a different folder.
+        # I suppose training will be separated when matching the flattuple
+        paths = list(dfProcessesData.flatPath[[dataTakingIdx]])
+    #    if dataTakingName=='Data1A':
+    #        paths[dataTakingIdx]=paths[dataTakingIdx]+"/training"
+
+
+        dfs, lumi, fileNumberList = loadMultiParquet_Data_new(dataTaking=[dataTakingIdx], nReals=nReals[dataTakingIdx], columns=columns,
+                                                              selectFileNumberList=predictionsFileNumbers, returnFileNumberList=True, filters=getCommonFilters(btagWP="L"))
+        if boosted==1:
+            dfs=cut(dfs, 'dijet_pt', 100, 160)
+        elif boosted==2:
+            dfs=cut(dfs, 'dijet_pt', 160, None)
+        elif boosted==3:
+            dfs=cut(dfs, 'dijet_pt', 100, None)
+        elif boosted==60:
+            dfs=cut(dfs, 'dijet_pt', 60, 100)
+        dfs=cut(dfs, 'dijet_mass', 50, 300)
+        lumi_tot = lumi_tot + lumi
+        predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
+        #df = preprocessMultiClass(dfs=dfs)[0].copy()
+        df = dfs[0].copy()
+        print("Length dfs0", len(df))
+        del dfs
+
+        print(df.columns)
+        df.loc[:, 'PNN'] = np.array(predsData.PNN)
+        df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.049, max=None)[0].copy()
+        df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.049, max=None)[0].copy()
+        #print("Process ", dfProcessesData.process[isMC], " NN assigned")
+        df.loc[:, 'weight'] = 1
+
+        print("Saving ", dataTakingName)
+        dfName = df_folder + "/dataframes_%s_%s.parquet"%(dataTakingName, modelName)
+        lumiName = df_folder + "/lumi_%s_%s.npy"%(dataTakingName, modelName)
+        try:
+            df.to_parquet(dfName)
+            print("SAved ", dfName)
+        except:
+            os.remove(dfName)
+            df.to_parquet(dfName)
+            print("SAved ", dfName)
+        try:
+            np.save(lumiName, lumi)
+        except:
+            os.remove(lumiName)
+            np.save(lumiName, lumi)
+        print("Luminosity Saved is ", lumi)
 
 
 
@@ -152,18 +149,11 @@ for dataTakingIdx, dataTakingName in zip(DataTakingList, processesData):
 columns = columns_.copy()
 MC_dict = {
     #Nominal
-    #15:-1,
-    #16:-1,
-    #17:-1,
-    #18:-1,
-    #0 :-1, 
-    1:-1, 3:-1, 4:-1, 19:-1, 20:-1, 21:-1, 22:-1, 35:0,
-    36:-1, 37:-1,
-    #43:-1,
-    #JER Down
-    #44:0, 45:0, 46:0, 47:0, 48:0, 49:0, 50:0, 51:0, 52:0, 53:0,54:-1, 55:0,
-    #JER Up
-    #56:0, 57:0, 58:0, 59:0, 60:0, 61:0, 62:0, 63:0, 64:0, 65:0, 66:-1, 67:0
+
+    #1:-1, 3:-1, 4:-0, 19:-1, 20:-1, 21:-1, 22:-1, 35:0,
+    #11:-1, 12:-1, 13:-1,
+    23:-1,23:-1,24:-1,25:-1,26:-1,27:-1,28:-1,29:-1,30:-1,31:-1,32:-1,33:-1,34:-1,
+    #36:-1, 37:-1,49:-1, 50:-1,51:-1,52:-1,53:-1,54:-1,55:-1
 }
 isMCList = list(MC_dict.keys())
 nMCs = list(MC_dict.values())
@@ -217,8 +207,8 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     print("Xsection ", dfProcessesMC.xsection[isMC])
 
 
-    print("Filling btag central with 0!!!\n\n\n\n", "*"*40, "\n\n\nFilling btag central with 0!!!\n\n\n\n")
-    df['btag_central'] = df['btag_central'].fillna(0)
+    #print("Filling btag central with 0!!!\n\n\n\n", "*"*40, "\n\n\nFilling btag central with 0!!!\n\n\n\n")
+    #df['btag_central'] = df['btag_central'].fillna(0)
 
 
 
@@ -244,8 +234,8 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
 
 #dfs = dfs_precut.copy()
 # 0.2783 WP for medium btagID
-    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.2783, max=None)[0].copy()
-    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.2783, max=None)[0].copy()
+    df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.0490, max=None)[0].copy()
+    df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.0490, max=None)[0].copy()
     dataFrameName = df_folder + "/df_%s_%s.parquet"%(processMC, modelName)
     try:
         df.to_parquet(dataFrameName)

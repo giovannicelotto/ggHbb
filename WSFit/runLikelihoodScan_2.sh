@@ -66,7 +66,7 @@ combine \
   -m 125 \
   -t -1 \
   --expectSignal 1 \
-  --freezeParameters "$freezeParamsBern2" 
+  --freezeParameters "$freezeParamsBern2" -v3
 
 
 

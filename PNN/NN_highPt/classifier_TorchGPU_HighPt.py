@@ -4,12 +4,12 @@ import sys
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from datetime import datetime
-
+import yaml
 # Get current month and day
 current_date = datetime.now().strftime("%b%d")  # This gives the format like 'Dec12'
 
 # PNN helpers
-from helpers.getFeatures import getFeatures, getFeaturesHighPt
+#from helpers.getFeatures import getFeatures, getFeaturesHighPt
 from helpers.getParams import getParams
 from helpers.loadSaved import loadXYWrWSaved
 from helpers.getInfolderOutfolder import getInfolderOutfolder
@@ -53,8 +53,13 @@ inFolder, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, args
 inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1D"%(args.boosted) if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%(args.boosted)
 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder)
+#featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder)
 
+with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead.yaml") as f:
+    feature_cfg = yaml.safe_load(f)
+featuresForTraining = feature_cfg['featuresForTraining']
+columnsToRead = featuresForTraining+feature_cfg['genFeatures']
+np.save(outFolder + "/model/featuresForTraining.npy", featuresForTraining)
 # %%
 # define the parameters for the nn
 

@@ -1,0 +1,64 @@
+grouped: 0
+processes_all:
+  ggHbb: [37]
+  VBFHbb: [36]
+  ZH_HToBB_ZToLL: [49]
+  ZH_HToBB_ZToNuNu: [50]
+  ZH_HToBB_ZToQQ: [51]
+  WplusH_HToBB_WToQQ: [52]
+  WplusH_HToBB_WToLNu: [53]
+  WminusH_HToBB_WToQQ: [54]
+  WminusH_HToBB_WToLNu: [55]
+  EWKZJets: [1]
+  ZJetsToQQ_200to400: [19]
+  ZJetsToQQ_400to600: [20]
+  ZJetsToQQ_600to800: [21]
+  ZJetsToQQ_800toInf: [22]
+  QCD_MuEnriched_Pt-1000: [23]
+  QCD_MuEnriched_Pt-800To1000: [24]
+  QCD_MuEnriched_Pt-600To800: [25]
+  QCD_MuEnriched_Pt-470To600: [26]
+  QCD_MuEnriched_Pt-300To470: [27]
+  QCD_MuEnriched_Pt-170To300: [28]
+  QCD_MuEnriched_Pt-120To170: [29]
+  QCD_MuEnriched_Pt-80To120: [30]
+  QCD_MuEnriched_Pt-50To80: [31]
+  QCD_MuEnriched_Pt-30To50: [32]
+  QCD_MuEnriched_Pt-20To30: [33]
+  QCD_MuEnriched_Pt-15To20: [34]
+  TTTo2L2Nu: [11]
+  TTToHadronic: [12]
+  TTToSemiLeptonic: [13]
+processes_grouped:
+  ggHbb: [37]
+  VBFHbb: [36]
+  VHbb: [49, 50, 51, 52, 53, 54, 55]
+  Zqq: [1, 19, 20, 21, 22]
+  QCDMuEnriched: [23, 24, 25, 26, 27, 29, 29, 30, 31, 32, 33, 34]
+  ttbar: [11, 12, 13]
+
+featuresForTraining : 
+  - dijet_pt
+  - dijet_eta
+  - jet1_mass
+  - jet2_mass
+  - jet1_eta
+  - jet2_eta
+  - muon_pt
+  - muon_dxySig
+  - jet1_pt
+  - jet2_pt
+  - nJets
+  - jet1_pt_uncor
+  - jet2_pt_uncor
+  - xsection
+  - btag_central
+  - genWeight
+  - flat_weight
+  - sf
+  - PU_SF
+  - jet_pileupId_SF_nom
+  - jet1_btagDeepFlavB
+  - jet2_btagDeepFlavB
+  - muon_eta
+  - dijet_mass

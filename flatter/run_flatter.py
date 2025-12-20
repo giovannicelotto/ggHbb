@@ -103,6 +103,6 @@ else:
         subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 1000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC)])
         if (doneFiles % args.sleep ==0) & (doneFiles!=0)& (args.sleep!=-1):
             print("I am sleeping! Good Night!")
-            time.sleep(40)
+            time.sleep(15)
             print("I am back! Good Morning!")
         doneFiles = doneFiles+1

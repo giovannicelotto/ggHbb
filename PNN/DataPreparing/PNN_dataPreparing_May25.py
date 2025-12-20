@@ -1,32 +1,32 @@
 # %%
+# Basic imports
 import matplotlib.pyplot as plt
 import mplhep as hep
-hep.style.use("CMS")
-import numpy as np
-from sklearn.model_selection import train_test_split
-
 import sys
+import numpy as np
+import pandas as pd
+import argparse
+import yaml
+hep.style.use("CMS")
+# Custom imports
 sys.path.append('/t3home/gcelotto/ggHbb/scripts/plotScripts')
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 from helpers.loadData_Sampling import loadData_sampling
 from plotFeatures import plotNormalizedFeatures
 # PNN helpers
 from helpers.getFeatures import getFeatures, getFeaturesHighPt
-from helpers.getParams import getParams
-from helpers.loadData_adversarial import loadData_adversarial
-from helpers.getInfolderOutfolder import getInfolderOutfolder
-from helpers.scaleUnscale import scale, unscale
+#from helpers.getParams import getParams
+from helpers.scaleUnscale import scale
 from helpers.dcorLoss import *
 from helpers.saveDataAndPredictions import saveXYWrW
 from helpers.flattenWeights import flattenWeights
-import argparse
-import pandas as pd
+
 from helpers.scaleUnscale import test_gaussianity_validation
 
 # %%
 
 # Define folder of input and output. Create the folders if not existing
-hp = getParams()
+#hp = getParams()
 
 parser = argparse.ArgumentParser(description="Process some arguments.")
 parser.add_argument("-s", "--sampling", type=int, help="Enable sampling (default: False)", default=0)
@@ -36,34 +36,44 @@ parser.add_argument("-dt", "--dataTaking", type=str, default='1D', help="1A or 1
 if hasattr(sys, 'ps1') or not sys.argv[1:]:
     # Interactive mode (REPL, Jupyter) OR no args provided → use defaults
     args = parser.parse_args([])
+    boosted = 3
+    sampling = 0
+    dataTaking = '1D'
 else:
     # Normal CLI usage
     args = parser.parse_args()
+    boosted = args.boosted
+    sampling = args.sampling
+    dataTaking = args.dataTaking
+
 # %%
 #if boosted>=1 and sampling==0:
 #    assert False
-if args.boosted==0 and args.sampling==1:
+if boosted==0 and sampling==1:
     assert False
-print("Sampling ", args.sampling)
-print("Boosted ", args.boosted)
+print("[INFO] Sampling ", sampling)
+print("[INFO] Boosted ", boosted)
+print("[INFO] Datataking ", dataTaking)
 
-outFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling" if args.sampling else "/t3home/gcelotto/ggHbb/PNN/input/data"
-outFolder = outFolder+"_pt%d_%s"%(args.boosted, args.dataTaking)
+outFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling" if sampling else "/t3home/gcelotto/ggHbb/PNN/input/data"
+outFolder = outFolder+"_pt%d_%s"%(boosted, dataTaking)
 if not os.path.exists(outFolder):
     os.makedirs(outFolder)
-
+# %%
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-if args.boosted==0:
-    print("Here")
-    featuresForTraining, columnsToRead = getFeatures(outFolder)
-elif (args.boosted>=1):
-    featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder)
 
-if args.boosted==4:
-    mass_hypos = []
+with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead.yaml") as f:
+    feature_cfg = yaml.safe_load(f)
+featuresForTraining = feature_cfg['featuresForTraining']
+columnsToRead = featuresForTraining+feature_cfg['genFeatures']
+print("[INFO] Features for training: ", len(featuresForTraining))
+print("[INFO] Features to Read: ", len(columnsToRead))
+# %%
+if boosted==4:
+    mass_spin0 = []
 else:
-    mass_hypos = [50,70,100,200,300]
-
+    mass_spin0 = feature_cfg['mass_spin0']
+print("[INFO] Mass Hypos: ", mass_spin0)
 # %%
 # load data for the samples and preprocess the data(pT cut)
 # fill the massHypo column
@@ -71,7 +81,8 @@ else:
 #if sampling:
 data = loadData_sampling(nReal=-1, nMC=-1,
                             columnsToRead=columnsToRead, featuresForTraining=featuresForTraining, test_split=0.2,
-                            boosted=args.boosted, dataTaking=args.dataTaking, sampling=args.sampling, btagTight=False, mass_hypos=mass_hypos)
+                            boosted=boosted, dataTaking=dataTaking, sampling=sampling, btagTight=False, mass_spin0=mass_spin0, feature_cfg=feature_cfg)
+# %%
 #else:
 #    data = loadData_adversarial(nReal=-1, nMC=-1, size=5e6, outFolder=outFolder,
 #                            columnsToRead=columnsToRead, featuresForTraining=featuresForTraining, test_split=0.1,
@@ -87,9 +98,10 @@ nan_values_train = Xtrain.isna().sum().sum()
 nan_values_val = Xval.isna().sum().sum()
 print(f"Nan values in train: {nan_values_train}")
 print(f"Nan values in validation: {nan_values_val}")
-print(Xtrain.isna().sum())
-assert nan_values_train==0, "no nan values in train"
-assert nan_values_val==0, "no nan values in val"
+print(Xtrain.isna().sum()[Xtrain.isna().sum()>0])
+print(Xval.isna().sum()[Xval.isna().sum()>0])
+assert nan_values_train==0, " nan values in train"
+assert nan_values_val==0, " nan values in val"
 
 #Xtest['dimuon_mass'] = np.where(Xtest['dimuon_mass']==-999, 0.106, Xtest['dimuon_mass'])
 # Here it holds:
@@ -107,7 +119,7 @@ assert math.isclose(Wval[Yval==0].sum() + Wtrain[Ytrain==0].sum(), 1, rel_tol=1e
 
 # %%
 
-if args.boosted==4:
+if boosted==4:
     rWtrain = Wtrain.copy()
     rWval = Wval.copy()
     for y in [0, 1]:  # loop over class (0=background, 1=signal)
@@ -152,18 +164,24 @@ Wval = Wval/np.mean(Wval)
 
 # %%
 fig, ax = plt.subplots(1, 1)
-bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 401)
+bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 201)
 for m in (np.unique(genMassTrain)[np.unique(genMassTrain)!=0]):
-    ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='step', density=False, linewidth=3)
+    ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='step', density=False, linewidth=1, label="M : %d GeV"%m)
+    #ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='stepfilled', density=False, linewidth=1, label="M%d GeV"%m, alpha=0.4)
 ax.set_xlabel("Dijet Mass [GeV]")
 ax.set_ylabel("Unweighted Counts")
+ax.legend()
 fig.savefig(outFolder+"/dijetMass.png", bbox_inches='tight')
+
+
+
 # %%
 fig, ax = plt.subplots(1, 1)
-bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 401)
+bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
+bins_sum=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
 for m in (np.unique(genMassTrain)[np.unique(genMassTrain)!=0]):
-    ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='step', density=False, linewidth=3, label="M%d"%m)
-ax.hist(Xtrain.dijet_mass[genMassTrain>0], bins=bins, histtype='step', density=False, linewidth=3, weights=rWtrain[genMassTrain>0], label='Sum')
+    ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='step', density=False, linewidth=1, label="M: %d"%m, weights=rWtrain[genMassTrain==m])
+ax.hist(Xtrain.dijet_mass[genMassTrain>0], bins=bins_sum, histtype='step', density=False, linewidth=1, weights=rWtrain[genMassTrain>0], label='Sum', color='black')
 ax.legend()
 ax.set_xlabel("Dijet Mass [GeV]")
 ax.set_ylabel("Reweighted Counts")
@@ -172,10 +190,11 @@ fig.savefig(outFolder+"/dijetMass_reweighted.png", bbox_inches='tight')
 
 
 fig, ax = plt.subplots(1, 1)
-bins=np.linspace(int(Xval.dijet_mass.min()), 300, 101)
+bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
+bins_sum=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
 for m in (np.unique(genMassTrain)[np.unique(genMassTrain)!=0]):
-    ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='step', density=False, linewidth=3, label="M%d"%m)
-ax.hist(Xval.dijet_mass[genMassVal>0], bins=bins, histtype='step', density=False, linewidth=3, weights=rWval[genMassVal>0], label='Sum')
+    ax.hist(Xval.dijet_mass[genMassVal==m], bins=bins, histtype='step', density=False, linewidth=1, label="M%d"%m, weights=rWval[genMassVal==m])
+ax.hist(Xval.dijet_mass[genMassVal>0], bins=bins_sum, histtype='step', density=False, linewidth=1, weights=rWval[genMassVal>0], label='Sum', color='black')
 ax.legend()
 ax.set_xlabel("Dijet Mass [GeV]")
 ax.set_ylabel("Reweighted Counts")
@@ -224,8 +243,8 @@ for m in (np.unique(genMassTrain)):
 # scale with standard scalers and apply log to any pt and mass distributions
 
 # %%
-Xtrain = scale(Xtrain, featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True, boosted=args.boosted, scaler='robust')
-Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False, boosted=args.boosted, scaler='robust')
+Xtrain = scale(Xtrain, featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True, boosted=boosted, scaler='robust')
+Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False, boosted=boosted, scaler='robust')
 
 # %%
 test_gaussianity_validation(Xtrain, Xval, featuresForTraining, outFolder)

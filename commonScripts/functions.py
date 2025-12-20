@@ -56,12 +56,13 @@ def getDfProcesses_v2 (reset=False):
     dfProcessesMC_JEC = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesMC_JEC.csv")
     return dfProcessesMC, dfProcessesData, dfProcessesMC_JEC
 
-def getCommonFilters(btagTight=False, btagWP=None, cutDijet=True):
+def getCommonFilters(btagWP=None, cutDijet=True):
     '''
     btagTight True for Tight, False for Medium
     btagWP overwrites the btagTight argument (L, M, T)
     '''
-    btag = 0.2783 if btagTight is False else 0.71
+    #btag = 0.2783 if btagTight is False else 0.71
+    btag = 0
     if btagWP=="L":
         btag = 0.049
     elif btagWP=="M":
@@ -73,8 +74,8 @@ def getCommonFilters(btagTight=False, btagWP=None, cutDijet=True):
     else:
         assert False
 
-    if btagTight:
-        print("Setting btag cut to 0.71 for both jets")
+    #if btagTight:
+    #    print("Setting btag cut to 0.71 for both jets")
     filters = [
             [   ('jet1_pt_uncor', '>',  20),
                 ('jet2_pt_uncor', '>',  20),
@@ -202,18 +203,20 @@ def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False,
             fileNamesSelected.append(fileNamesSelectedProcess)
             fileNames=fileNamesSelectedProcess
         fileNames = fileNames[:nMC] if nMC!=-1 else fileNames
-        eg = os.path.basename(fileNames[0])
-        match = re.match(r'(.+)_([0-9]+)\.parquet', eg)
-        process = match.group(1)
+        if len(fileNames)!=0:
+            eg = os.path.basename(fileNames[0])
+            match = re.match(r'(.+)_([0-9]+)\.parquet', eg)
+            process = match.group(1)
 
-        print("Found %d flattuple for process %s"%(len(fileNames), process))
-        del match, eg
+            print("Found %d flattuple for process %s"%(len(fileNames), process))
+            del match, eg
 
-        
-        df = pd.read_parquet(fileNames, columns=columns,
-                                 engine='pyarrow',
-                                 filters= filters        )
 
+            df = pd.read_parquet(fileNames, columns=columns,
+                                     engine='pyarrow',
+                                     filters= filters        )
+        else:
+            df = pd.DataFrame()
         dfs.append(df)
         if returnFileNumberList:
             fileNumberListProcess = []

@@ -1,0 +1,21 @@
+# Datacard example for H->gg like bias study
+imax 1
+jmax 2
+kmax *
+---------------------------------------------
+shapes data_obs    * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnrichedShared/ws1.root w:rooHist_data_cat1
+shapes signal      * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnrichedShared/ws1.root w:model_H_c1
+shapes Zbb      * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnrichedShared/ws1.root w:model_Z_c1
+shapes background  * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnrichedShared/ws1.root w:pdf_cat1
+---------------------------------------------
+bin Cat1
+observation -1
+---------------------------------------------
+bin          Cat1     Cat1 Cat1
+process      signal background Zbb
+process      0  1 2
+rate         1        1 1
+---------------------------------------------
+lumi lnN 1.025  - 1.025
+---------------------------------------------
+rateZbb  rateParam Cat1 Zbb 1.0 [0.0,5.0]

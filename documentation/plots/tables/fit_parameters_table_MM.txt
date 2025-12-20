@@ -1,0 +1,18 @@
+\begin{table}
+\caption{Fit parameters of the Gaussian + Double-Sided Crystal Ball model for category MM}
+\label{tab:fit_parameters}
+\begin{tabular}{lcc}
+\hline
+Parameter & Value & Uncertainty \\
+\hline
+$f_{\mathrm{G}}$ & 0.05 & 0.7824 \\
+$\mu$ & 91.89 & 0.2872 \\
+$\sigma_{\mathrm{CB}}$ & 12 & 0.376 \\
+$\alpha_L$ & 1.315 & 0.1233 \\
+$n_L$ & 10 & 8.598 \\
+$\alpha_R$ & 1.823 & 0.07643 \\
+$n_R$ & 1.1 & 1.343 \\
+$\sigma_{\mathrm{G}}$ & 12.35 & 7.686 \\
+\hline
+\end{tabular}
+\end{table}
