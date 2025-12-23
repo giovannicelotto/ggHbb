@@ -130,7 +130,7 @@ def log_bad_btag_sf(
     event,
     weight_factor,
 ):
-    with open(logfile, "a") as f:
+    with open(logfile, "a+") as f:
         f.write(
             f"{process} ev={event} "
             f"weight_factor={weight_factor}\n"

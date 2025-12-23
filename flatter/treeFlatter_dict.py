@@ -24,6 +24,20 @@ from treeFlatter_dict_getSFs import get_btag_map_efficiency, get_muon_recoSF, ge
 # - gen*        : generator-level
 # - *_sf        : multiplicative scale factors
 # 
+def has_non_finite(features):
+    for k, v in features.items():
+        try:
+            if not np.isfinite(v):
+                return True, k, v
+        except TypeError:
+            # non-numeric (should not happen, but be safe)
+            continue
+    return False, None, None
+def log_bad_event(logfile, process, event, key, value):
+    with open(logfile, "a+") as f:
+        f.write(
+            f"{process} ev={event} bad_feature={key} value={value}\n"
+        )
 
 def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose, JECname, isMC, folder_cfg):
     start_time = time.time()
@@ -170,7 +184,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             continue
         if selected2==999:
             assert False
-        #evt["Jet_breg2018"] has to be applied on mass as well : https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsWG/BJetRegression
+        #evt["Jet_breg2018"] has to be applied on energy as well : https://twiki.cern.ch/twiki/bin/viewauth/CMS/HiggsWG/BJetRegression
         #Correct the dataframes later
         energy1 = np.sqrt(evt["Jet_pt"][selected1]**2 + (evt["Jet_pt"][selected1]*np.sinh(evt["Jet_eta"][selected1]))**2 +  evt["Jet_mass"][selected1]**2)
         energy2 = np.sqrt(evt["Jet_pt"][selected2]**2 + (evt["Jet_pt"][selected2]*np.sinh(evt["Jet_eta"][selected2]))**2 +  evt["Jet_mass"][selected2]**2)
@@ -264,7 +278,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             event_weight *= muon2_weight
             
 
-            features_['dimuon_mass'] = np.float32((muon+muon2).M())
+            
         else:
             # R2 or R3
             # find leptonic charge in the second jet
@@ -292,7 +306,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 features_muon2, muon2_weight = fill_trig_muon_features(None,None, jet2, "2",  muon_RECO_map, evt)
                 features_.update(features_muon2)
                 event_weight *= muon2_weight
-
+        features_['dimuon_mass'] = np.float32((muon+muon2).M()) if isMuon2 else -1.
 # Trigger
         features_['jet1_muon_fired_HLT_Mu12_IP6'] = int(bool(evt["Muon_fired_HLT_Mu12_IP6"][muonIdx1]))
         features_['jet1_muon_fired_HLT_Mu10p5_IP3p5'] = int(bool(evt["Muon_fired_HLT_Mu10p5_IP3p5"][muonIdx1]))
@@ -344,6 +358,16 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
         assert evt["Muon_isTriggering"][muonIdx1]
         features_["flat_weight"] = event_weight
+        bad, key, val = has_non_finite(features_)
+        if bad:
+            log_bad_event(
+                logfile=folder_cfg["log_bad_event"],
+                process=processName,
+                event=ev,
+                key=key,
+                value=val,
+            )
+            continue
         file_.append(features_)
     end_time = time.time()
     execution_time = end_time - start_time

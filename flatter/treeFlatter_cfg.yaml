@@ -4,3 +4,6 @@ PU_Ratio_folder : "/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData"
 jet_pu_id_sf_folder : "/t3home/gcelotto/ggHbb/puID_SF"
 btag_SF_folder : "/t3home/gcelotto/ggHbb/systematics/wpDeepJet/btv-json-sf/data/UL2018"
 trig_SF_folder : "/t3home/gcelotto"
+
+
+log_bad_event : "/t3home/gcelotto/ggHbb/flatter/bad_features.log"
