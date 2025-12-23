@@ -2,14 +2,14 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from functions import loadMultiParquet_v2, loadMultiParquet_Data_new, getDfProcesses_v2, getCommonFilters
+from functions import loadMultiParquet_v2, getDfProcesses_v2, getCommonFilters
 import mplhep as hep
 hep.style.use("CMS")
 # %%
 dfProcessMC = getDfProcesses_v2()[0]
 isMCList = [25,26,27,28,
             29,30,31,32,33,34]
-dfsMC, sumw = loadMultiParquet_v2(paths=isMCList, returnNumEventsTotal=True, nMCs=-1, filters=getCommonFilters(btagTight=True))
+dfsMC, sumw = loadMultiParquet_v2(paths=isMCList, returnNumEventsTotal=True, nMCs=-1, filters=getCommonFilters(btagWP="T"))
 # %%
 for idx, df in enumerate(dfsMC):
     dfsMC[idx]['weight']=df.genWeight * df.btag_central * df.PU_SF * df.sf * dfProcessMC.xsection.iloc[isMCList].values[idx]
@@ -67,6 +67,7 @@ for pos in tick_positions:
 ax.set_xticks(tick_positions)
 ax.set_xticklabels(tick_labels, rotation=45)
 ax.tick_params(labelsize=40)
+fig.savefig("/t3home/gcelotto/ggHbb/documentation/plots/QCD_genHadronFlavour_composition.png", bbox_inches='tight')
 # %%
 
 

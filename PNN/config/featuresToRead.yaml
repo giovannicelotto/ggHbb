@@ -5,11 +5,11 @@ featuresForTraining:
   - jet1_phi
   - jet1_btagTight
   
-  #- jet1_sv_Ntrk
-  #- jet1_sv_3dSig
-  #- jet1_nConstituents
-  #- jet1_nTightMuons
-  #- jet1_nElectrons
+  - jet1_sv_Ntrk
+  - jet1_sv_3dSig
+  - jet1_nConstituents
+  - jet1_nTightMuons
+  - jet1_nElectrons
   - jet1_leadTrackPt
 
   - jet2_pt
@@ -17,11 +17,11 @@ featuresForTraining:
   - jet2_mass
   - jet2_phi
   - jet2_btagTight
-  #- jet2_sv_Ntrk
-  #- jet2_sv_3dSig
-  #- jet2_nConstituents
-  #- jet2_nTightMuons
-  #- jet2_nElectrons
+  - jet2_sv_Ntrk
+  - jet2_sv_3dSig
+  - jet2_nConstituents
+  - jet2_nTightMuons
+  - jet2_nElectrons
   - jet2_leadTrackPt
 
   - jet3_pt
@@ -29,7 +29,7 @@ featuresForTraining:
   - jet3_phi
   - jet3_mass
   - jet3_btagWP
-  #- jet3_nTightMuons
+  - jet3_nTightMuons
   - jet3_leadTrackPt
 
   #- jet1_rest_pt
@@ -50,29 +50,29 @@ featuresForTraining:
   - dijet_dEta
   - dijet_dPhi
   - dijet_twist
-  #- dijet_cs
+  - dijet_cs
   #- normalized_dijet_pt  
   #- cos_theta_star
-  #- dijet_pTAsymmetry
-  #- centrality
+  - dijet_pTAsymmetry
+  - centrality
   #- sphericity
   
   - lambda1
-  - lambda2
+  #- lambda2
   - lambda3
 
   - nJets_20
   - nJets_30
   - nJets_50
   - muon_pt
-  - muon_eta
-  - muon_phi
+  #- muon_eta
+  #- muon_phi
   - muon_dxySig
   - muon_pfRelIso03_all
   #- muon_dzSig
 
   #- leptonClass
-  #- dimuon_mass
+  - dimuon_mass
 
 # GEN INFORMATION
 genFeatures:

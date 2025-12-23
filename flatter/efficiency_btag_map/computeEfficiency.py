@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import awkward as ak
 from hist import Hist
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 def compute_efficiency(jet_pt, jet_eta, jet_btag, jet_flav, pt_bins, eta_bins, WP):
     abs_eta = abs(jet_eta)
 
@@ -60,7 +61,10 @@ def plotEfficiencyMaps(pt_bins, eta_bins, eff_map, outFolder=None, process=None,
             vmax=1,
             cmap='viridis'
         )
-        fig.colorbar(im, ax=ax, label='Efficiency')
+        divider = make_axes_locatable(ax)
+        cax = divider.append_axes("right", size="4%", pad=0.1)
+        cbar = fig.colorbar(im, cax=cax)
+        cbar.set_label("Efficiency")
 
         # Set axis ticks and labels
         ax.set_xticks(np.arange(len(pt_bin_labels)) + 0.5)

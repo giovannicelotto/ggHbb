@@ -171,7 +171,7 @@ def apply_2d_poly_correction(pt_toBeCorrected, variable_x, binned_variable, poly
         corrected_pt[mask] = pt_toBeCorrected[mask] * polys[i](variable_x[mask])
     return corrected_pt
 # %%
-dfs, sumw = loadMultiParquet_v2(paths=[37], nMCs=-1, columns=None, returnNumEventsTotal=True, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(btagTight=True), training=False, isJEC=0)
+dfs, sumw = loadMultiParquet_v2(paths=[37], nMCs=-1, columns=None, returnNumEventsTotal=True, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(btagWP="T"), training=False, isJEC=0)
 # %%
 df=dfs[0]
 for f in df.columns:
@@ -209,8 +209,8 @@ features = [
     "jet3_pt", "jet3_eta", "jet3_phi", "jet3_mass", "jet3_leadTrackPt",
     "jet4_pt", "jet4_eta", "jet4_phi", "jet4_mass", "jet4_leadTrackPt",
     "muon_pt", "muon_eta", "muon_phi", 
-    "muon2_pt", "muon2_eta", "muon2_phi", 
-    "nJets", "dijet_pTAsymmetry"
+    #"muon2_pt", "muon2_eta", "muon2_phi", 
+    #"nJets", "dijet_pTAsymmetry"
 ]
 target1 = "jet1_pt_over_genQuark_pt"
 target2 = "jet2_pt_over_genQuark_pt"
@@ -260,7 +260,7 @@ class SimpleNN(nn.Module):
 model = SimpleNN(input_dim=X_train_tensor.shape[1])
 # %%
 # --- Define custom loss: sum of two MSEs ---
-criterion = nn.MSELoss()
+criterion = nn.L1Loss()
 
 def double_mse_loss(pred, y1, y2):
     loss1 = criterion(pred[:, 0], y1.squeeze())
@@ -270,7 +270,7 @@ def double_mse_loss(pred, y1, y2):
 optimizer = optim.Adam(model.parameters(), lr=1e-2)
 
 # --- Training loop ---
-epochs = 100
+epochs = 1000
 for epoch in range(epochs):
     model.train()
     optimizer.zero_grad()

@@ -56,7 +56,7 @@ def getDfProcesses_v2 (reset=False):
     dfProcessesMC_JEC = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesMC_JEC.csv")
     return dfProcessesMC, dfProcessesData, dfProcessesMC_JEC
 
-def getCommonFilters(btagWP=None, cutDijet=True):
+def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False):
     '''
     btagTight True for Tight, False for Medium
     btagWP overwrites the btagTight argument (L, M, T)
@@ -121,6 +121,13 @@ def getCommonFilters(btagWP=None, cutDijet=True):
     if cutDijet:
         filters[0] = filters[0] + [('dijet_pt', '>=', 100)]
         filters[1] = filters[1] + [('dijet_pt', '>=', 100)]
+    
+    if ttbarCR:
+        filters[0] = filters[0] + [('is_ttbar_CR', '==', 1)]
+        filters[1] = filters[1] + [('is_ttbar_CR', '==', 1)]
+    else:
+        filters[0] = filters[0] + [('is_ttbar_CR', '==', 0)]
+        filters[1] = filters[1] + [('is_ttbar_CR', '==', 0)]
     return filters
 def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False, isJEC=0):
     '''

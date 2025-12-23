@@ -21,6 +21,32 @@ parser.add_argument(    "-m",       "--model",      help="Model Name",    defaul
 parser.add_argument(    "-b",       "--boosted",    help="Boosted Category 3:100<dijet_pt<Inf ",    default=3)
 
 args = parser.parse_args()
+def set_datataking(args):
+    """Parse datataking arguments and update DataDict."""
+    global DataDict
+
+    for arg in args:
+        # Handle ranges like "0-5"
+        if "-" in arg and arg[0].isdigit():
+            start, end = map(int, arg.split("-"))
+            for i in range(start, end + 1):
+                DataDict[i] = -1
+
+        # Handle lettered periods like "A", "B", ...
+        elif arg in periods:
+            for i in periods[arg]:
+                DataDict[i] = -1
+
+        # Handle single indices like "7"
+        elif arg.isdigit():
+            DataDict[int(arg)] = -1
+
+        # Handle "all"
+        elif arg.lower() == "all":
+            for i in DataDict:
+                DataDict[i] = -1
+
+    return DataDict
 # %%
 boosted = 3
 modelName = "Aug28_%d_20p01"%boosted
@@ -48,32 +74,7 @@ if not args.MCOnly:
 
     # Base dictionary (default: all 0)
     DataDict = {i: 0 for r in periods.values() for i in r}
-    def set_datataking(args):
-        """Parse datataking arguments and update DataDict."""
-        global DataDict
 
-        for arg in args:
-            # Handle ranges like "0-5"
-            if "-" in arg and arg[0].isdigit():
-                start, end = map(int, arg.split("-"))
-                for i in range(start, end + 1):
-                    DataDict[i] = -1
-
-            # Handle lettered periods like "A", "B", ...
-            elif arg in periods:
-                for i in periods[arg]:
-                    DataDict[i] = -1
-
-            # Handle single indices like "7"
-            elif arg.isdigit():
-                DataDict[int(arg)] = -1
-
-            # Handle "all"
-            elif arg.lower() == "all":
-                for i in DataDict:
-                    DataDict[i] = -1
-
-        return DataDict
 
 
 
@@ -180,7 +181,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
     dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns_,
                                                              returnNumEventsTotal=True, selectFileNumberList=predictionsFileNumbers,
                                                              returnFileNumberList=True,
-                                                             filters=getCommonFilters(btagWP="L"))
+                                                             filters=getCommonFilters(btagWP="L"), ttbarCR=False)
 
     print(numEventsList[0])
     if boosted==1:
@@ -237,7 +238,7 @@ for idx, (isMC, processMC) in enumerate(zip(isMCList, processesMC)):
 #dfs_precut = dfs.copy()
 
 #dfs = dfs_precut.copy()
-# 0.2783 WP for medium btagID
+
     df = cut (data=[df], feature='jet2_btagDeepFlavB', min=0.0490, max=None)[0].copy()
     df = cut (data=[df], feature='jet1_btagDeepFlavB', min=0.0490, max=None)[0].copy()
     dataFrameName = df_folder + "/df_%s_%s.parquet"%(processMC, modelName)

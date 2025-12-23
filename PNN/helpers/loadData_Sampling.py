@@ -147,8 +147,15 @@ def assign_labels_and_weights(dfs, signalMasses, boosted, sampling):
     
 
     #dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central  / ((dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central ).sum())
-    dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight) / ((dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight)).sum())
+    dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight)
     dfBkg['W'] = np.ones(len(dfBkg)) / len(dfBkg)
+    signal_masses = np.unique(dfSig.genMass)
+    n_masses = len(signal_masses)
+
+    for m in signal_masses:
+        mask = dfSig.genMass == m
+        dfSig.loc[mask, 'W'] /= dfSig.loc[mask, 'W'].sum()
+        dfSig.loc[mask, 'W'] *= 1.0 / n_masses
     dfBkg["btag_central"] = 1
     dfBkg["genWeight"] = 1
 
@@ -160,7 +167,7 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
     paths, massHypothesis = get_input_paths(dataTaking, mass_spin0=mass_spin0, boosted=boosted)
 
 
-
+    # Load MC and Data
     dfs = []
     for path in paths:
         fileNames = glob.glob(path+"/*.parquet", recursive=True)
