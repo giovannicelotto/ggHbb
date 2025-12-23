@@ -1,0 +1,6 @@
+LeptonSF_folder : "/t3home/gcelotto/ggHbb/LeptonSF"
+BTagEfficiencyMap_folder : "/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps"
+PU_Ratio_folder : "/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData"
+jet_pu_id_sf_folder : "/t3home/gcelotto/ggHbb/puID_SF"
+btag_SF_folder : "/t3home/gcelotto/ggHbb/systematics/wpDeepJet/btv-json-sf/data/UL2018"
+trig_SF_folder : "/t3home/gcelotto"

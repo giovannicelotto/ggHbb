@@ -1,4 +1,4 @@
-import sys, re
+import sys, re, yaml
 import pandas as pd
 import numpy as np
 import ROOT
@@ -25,7 +25,7 @@ from treeFlatter_dict_getSFs import get_btag_map_efficiency, get_muon_recoSF, ge
 # - *_sf        : multiplicative scale factors
 # 
 
-def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose, JECname, isMC):
+def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose, JECname, isMC, folder_cfg):
     start_time = time.time()
     maxEntries=int(maxEntries)
     maxJet=int(maxJet)
@@ -49,14 +49,14 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     
 
     # open the file for the SF
-    histPath = "/t3home/gcelotto/trgMu_SF_UL.root"
+    histPath = folder_cfg["trig_SF_folder"]+"/trgMu_SF_UL.root"
     triggerScaleFactor_rootFile = ROOT.TFile(histPath, "READ")
     if not triggerScaleFactor_rootFile or triggerScaleFactor_rootFile.IsZombie():
         raise RuntimeError(f"Failed to open ROOT file: {histPath}")
     
     # Open the WorkingPoint correction lib
     # /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv9/latest/btagging.json.gz
-    fname = "/t3home/gcelotto/ggHbb/systematics/wpDeepJet/btv-json-sf/data/UL2018/btagging.json.gz"
+    fname = folder_cfg["btag_SF_folder"]+"/btagging.json.gz"
     if fname.endswith(".json.gz"):
         import gzip
         with gzip.open(fname,'rt') as file:
@@ -70,7 +70,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     wp_converter = cset["deepJet_wp_values"]
 
     # Open the evt["Jet_puId"] Scale Factor Evaluator
-    fname = "/t3home/gcelotto/ggHbb/puID_SF/jmar.json.gz"
+    fname = folder_cfg["jet_pu_id_sf_folder"]+"/jmar.json.gz"
     if fname.endswith(".json.gz"):
         
         with gzip.open(fname,'rt') as file:
@@ -82,24 +82,24 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     # Open the map of efficiency for btag SF
     btagMapsExist=False
     processNameForBtag = "GluGluHToBBMINLO" if processName=="GluGluHToBBMINLO_private" else processName
-    if os.path.exists(f"/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processNameForBtag}_T.json"):
+    if os.path.exists(folder_cfg["BTagEfficiencyMap_folder"]+f"/btag_efficiency_map_{processNameForBtag}_T.json"):
         btagMapsExist=True
         eff_maps_cache_btag = {}
         for wp_ in ["L", "M", "T"]:
             print(f"Opening the map {processName}_{wp_}.json ...")
-            with open(f"/t3home/gcelotto/ggHbb/flatter/efficiency_btag_map/json_maps/btag_efficiency_map_{processNameForBtag}_{wp_}.json", 'r') as f:
+            with open(folder_cfg["BTagEfficiencyMap_folder"]+f"/btag_efficiency_map_{processNameForBtag}_{wp_}.json", 'r') as f:
                 eff_maps_cache_btag[wp_] = json.load(f)
 
-    with open("/t3home/gcelotto/ggHbb/LeptonSF/RecoEfficiencies_MediumPtMuons.json") as f:
+    with open(folder_cfg["LeptonSF_folder"]+"/RecoEfficiencies_MediumPtMuons.json") as f:
         muon_RECO_map = json.load(f)
 
-    with open("/t3home/gcelotto/ggHbb/LeptonSF/IDEfficiencies_MediumPtMuons.json") as f:
+    with open(folder_cfg["LeptonSF_folder"]+"/IDEfficiencies_MediumPtMuons.json") as f:
         muon_ID_map = json.load(f)
 
-    with open("/t3home/gcelotto/ggHbb/LeptonSF/ISOEfficiencies_MediumPtMuons.json") as f:
+    with open(folder_cfg["LeptonSF_folder"]+"/ISOEfficiencies_MediumPtMuons.json") as f:
         muon_ISO_map = json.load(f)
 
-    electrons_SF_map = _core.CorrectionSet.from_file('/t3home/gcelotto/ggHbb/LeptonSF/electron.json.gz')
+    electrons_SF_map = _core.CorrectionSet.from_file(folder_cfg["LeptonSF_folder"]+'/electron.json.gz')
 
 
     #if (pN==2) | (pN==20) | (pN==21) | (pN==22) | (pN==23) | (pN==36):
@@ -281,7 +281,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     isMuon2 = True
                     muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
                     muon2.SetPtEtaPhiM(evt["Muon_pt"][mu], evt["Muon_eta"][mu], evt["Muon_phi"][mu], evt["Muon_mass"][mu])
-                    features_muon2, muon2_weight =fill_trig_muon_features(muon,mu, jet2, "2", muon_RECO_map, evt)
+                    features_muon2, muon2_weight =fill_trig_muon_features(muon2,mu, jet2, "2", muon_RECO_map, evt)
                     features_.update(features_muon2)
                     event_weight *= muon2_weight
                     
@@ -312,8 +312,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             event_weight *= weight_gen
 # Gen Info
             # PileupID SF computation
-            jet_pileupId_SF  =1.
             for syst in ["nom", "up", "down"]:
+                jet_pileupId_SF  =1.
                 for j in np.arange(evt["nJet"])[maskJets]:
                     if (evt["Jet_pt"][j]<50) & (evt["Jet_genJetIdx"][j]>-1):
                         wp = "T"
@@ -378,7 +378,9 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
             print("processName : ", processName)
     
     # Event by event operations:
-    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, pN=pN, processName=processName, method=method, isJEC=isJEC, verbose=verbose, JECname=JECname, isMC=isMC)
+    with open("/t3home/gcelotto/ggHbb/flatter/treeFlatter_cfg.yaml", "r") as f:
+        folder_cfg = yaml.safe_load(f)
+    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, pN=pN, processName=processName, method=method, isJEC=isJEC, verbose=verbose, JECname=JECname, isMC=isMC, folder_cfg=folder_cfg)
     df=pd.DataFrame(fileData)
     try:
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
@@ -400,7 +402,7 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
         df['xsection']=1
         
     else:
-        PU_map = load_mapping_dict('/t3home/gcelotto/ggHbb/PU_reweighting/profileFromData/PU_PVtoPUSF.json')
+        PU_map = load_mapping_dict(folder_cfg["PU_Ratio_folder"]+'/PU_PVtoPUSF.json')
         df['PU_SF'] = df['Pileup_nTrueInt'].apply(int).map(PU_map)
         df.loc[df['Pileup_nTrueInt'] > 98, 'PU_SF'] = 0
         df['flat_weight'] *=   df['PU_SF']
