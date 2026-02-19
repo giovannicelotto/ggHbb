@@ -1,6 +1,6 @@
 import numpy as np
 
-def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, maskJets, method=0, Jet_pt=None):
+def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_dxyErr, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, maskJets, method=0, Jet_pt=None):
     '''
     selected1 and selected 2 are indexes in the full list of jets not just the masked jets
     '''
@@ -57,16 +57,16 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
         if method==0:
             # old method based on btag shape
             assert False
-            for j in range(0, jetsToCheck):
-                if j==jetsWithMuon[0]:
-                    continue
-                if (abs(Jet_eta[j])>2.5) | ((Jet_pt[j]<50) & (Jet_puId[j]<4)) | (Jet_jetId[j]<6):
-                    continue
-                currentScore = Jet_btagDeepFlavB[j]
-                if currentScore>score:
-                    score=currentScore
-                    selected2 = j
-                    muonIdx2 = 999
+            #for j in range(0, jetsToCheck):
+            #    if j==jetsWithMuon[0]:
+            #        continue
+            #    if (abs(Jet_eta[j])>2.5) | ((Jet_pt[j]<50) & (Jet_puId[j]<4)) | (Jet_jetId[j]<6):
+            #        continue
+            #    currentScore = Jet_btagDeepFlavB[j]
+            #    if currentScore>score:
+            #        score=currentScore
+            #        selected2 = j
+            #        muonIdx2 = 999
 
         # 
         # METHOD 1

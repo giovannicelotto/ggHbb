@@ -5,8 +5,7 @@ import pandas as pd
 from matplotlib.ticker import AutoMinorLocator
 import matplotlib.patches as patches
 #from getFeaturesBScoreBased import getFeaturesBScoreBased
-from utilsForPlot import getBins, loadRoot, getFeaturesBScoreBased, loadParquet#,loadDask
-from functions import getXSectionBR, loadMultiParquet, cut
+from utilsForPlot import getBins
 import mplhep as hep
 hep.style.use("CMS")
 import sys
@@ -48,22 +47,20 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
                 bins = np.linspace(xlims[featureName][1], xlims[featureName][2], int(xlims[featureName][0])+1)
             if autobins:
                 try:
-                    xmin, xmax = data[0][featureName].quantile(0.02), data[0][featureName].quantile(0.98)
+                    xmin, xmax = data[0][featureName].quantile(0.005), data[0][featureName].quantile(0.995)
                     for idx in range(len(data)):
-                        if data[idx][featureName].quantile(0.1) < xmin:
-                            xmin =data[idx][featureName].quantile(0.1)
-                        if data[idx][featureName].quantile(0.9) > xmax:
-                            xmax = data[idx][featureName].quantile(0.9)
+                        if data[idx][featureName].quantile(0.005) < xmin:
+                            xmin =data[idx][featureName].quantile(0.005)
+                        if data[idx][featureName].quantile(0.995) > xmax:
+                            xmax = data[idx][featureName].quantile(0.995)
                     bins = np.linspace(xmin, xmax, 20)
-                    if featureName=='sf':
-                        bins=np.linspace(0, 1, 20)
                 except:
                     bins = np.linspace(data[1][featureName].min(), data[1][featureName].max(), 20)
             dataIdx = 0
             for idx, df in enumerate(data):
                 
                 if weights is None:
-                    weightsDf=df.sf*df.PU_SF
+                    weightsDf=df.flat_weight if 'flat_weight' in df.columns else None
                 else:
                     weightsDf = weights[idx]
                 counts = np.zeros(len(bins)-1)
@@ -92,9 +89,9 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
                 ax[i, j].set_ylabel("Probability", fontsize=18)
 
                 # Some subplots in log scale
-                if any(substring in df.columns[i * nCol + j] for substring in ['nMuons', 'nElectrons','nTightMuons' ]):
+                if any(substring in df.columns[i * nCol + j] for substring in ['nMuons', 'nElectrons','nTightMuons','dimuon_mass' ]):
                     ax[i, j].set_yscale('log')
-                if featureName == 'sf':
+                if featureName == 'flat_weight':
                     ax[i, j].legend(fontsize=18)
 
 
@@ -110,33 +107,10 @@ def plotNormalizedFeatures(data, outFile, legendLabels, colors, histtypes=None, 
                         ax[i, j].add_patch(rect)
                 dataIdx = dataIdx + 1
 
-    
-    fig.savefig(outFile, bbox_inches='tight')
-    print("Saving in %s"%outFile)
+    if outFile is None:
+        print("[INFO] No outFile provided")
+        plt.show()
+    else:
+        fig.savefig(outFile, bbox_inches='tight')
+        print("Saving in %s"%outFile)
     plt.close('all')
-def main():
-    paths = [
-            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/Data1A/**",
-            "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/GluGluHToBB/**"
-            #"/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/old/ZJets/ZJetsToQQ_HT-200to400",
-            #"/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/old/ZJets/ZJetsToQQ_HT-400to600",
-            #"/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/old/ZJets/ZJetsToQQ_HT-600to800",
-            #"/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/old/ZJets/ZJetsToQQ_HT-800toInf",
-            ]
-    dfs, numEventsList = loadMultiParquet(paths=paths, nReal=100, nMC=-1, returnNumEventsTotal=True, columns=None)
-
-
-    # add new features based on the existing ones
-    #signal['dijet_RPhi_1'] = signal['dijet_phi'] - signal['jet1_phi'] 
- #   for featureName in dfs[0].columns:
-#        print(dfs[0][featureName][dfs[0].sf.isna()].head(5))
-
-    plotNormalizedFeatures(data=dfs,
-                           outFile = "/t3home/gcelotto/ggHbb/outputs/plots/features/Features.png",
-                           legendLabels = ['Data', 'GluGluHToBB',
-                                           ],
-                                           #'EWKZJets'] ,
-                           colors = ['blue', 'red'],
-                           figsize=(15, 30))
-if __name__=="__main__":
-    main()

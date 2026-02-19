@@ -12,13 +12,24 @@ np.random.seed(1999)
 offset=np.random.uniform(10,100)
 multiplier=np.random.uniform(10,100)
 config = {
-    'categories': [0,10,100, 'Combined'],
-    'categoryLabels':['Tight', 'Medium', 'Loose', 'Combined'],
-    'colors': ['blue', 'green', 'orange', 'red'],
+    'categories': [0,1,2,3,4,5,6,10, 'Combined'],
+    'categoryLabels':[r'NN$_{XXT}$ Btag$_{TT}$',
+                      r'NN$_{XT}$ Btag$_{TT}$', 
+                      r'NN$_{T}$ Btag$_{TT}$',
+                      r'NN$_{M}$ Btag$_{TT}$',
+                      r'NN$_{L}$ Btag$_{TT}$',
+                      r'NN$_{XL}$ Btag$_{TT}$',
+                      r'NN$_{XXL}$ Btag$_{TT}$',
+                      r'NN$_{M}$ Btag$_{TT}$',
+                      r'NN$_{M}$ Btag$_{MM}$',
+                       'Combined'],
+    'colors': ['blue', 'green', 'orange', 'red', 'purple', 'brown', 'cyan', 'lightgreen', 
+               'lightblue',
+               'black'],
     #'nPDFs': 3,
     #'pdfLabels': ['Bern2', 'Expo1', 'PolExpo3'] #0
     #'pdfLabels': ['Bern2', 'Bern3', 'Expo1', 'PolExpo2'] #10
-    #'pdfLabels': ['Bern2', 'Expo1', 'PolExpo2'] #100
+    #'pdfLabels': ['Bern2', 'Expo1', 'PolExpo2'] #li
 }
 
 # %%
@@ -55,7 +66,10 @@ deltaNLL_Discrete_cat_i.append(branches["deltaNLL"])
 fig, ax = plt.subplots(1,1 )
 
 shift_for_visual = 0
+xmin = 8000
+xmax = -8000
 for i,cat in enumerate(config['categories']):
+    print(f"Category {cat}:")
     ax.plot(r_Discrete_cat_i[i][1:],deltaNLL_Discrete_cat_i[i][1:], 'o', markersize=3, linestyle='-', linewidth=1, alpha=0.3, color=config['colors'][i])
     
     
@@ -70,24 +84,34 @@ for i,cat in enumerate(config['categories']):
     ax.errorbar(
         x=rMin, y=shift_for_visual+min(deltaNLL_Discrete_cat_i[i])-0.25,
         xerr=np.array([[rMin - x_intersectionLeft2Sigma],     [x_intersectionRight2Sigma - rMin]     ]),
-        yerr=0,fmt='o',color=config['colors'][i],markersize=10,linewidth=4,alpha=0.4
+        yerr=0,fmt='o',color=config['colors'][i],markersize=10,linewidth=4,alpha=0.2,
     )
     ax.errorbar(
         x=rMin,
         y=shift_for_visual+min(deltaNLL_Discrete_cat_i[i])-0.25,
         xerr=np.array([[rMin - x_intersectionLeft1Sigma],     [x_intersectionRight1Sigma - rMin]     ]),
-        yerr=0,fmt='o',color=config['colors'][i],markersize=10,linewidth=2,label=f'Category {config["categoryLabels"][i]}'
+        yerr=0,fmt='o',color=config['colors'][i],markersize=10,linewidth=2,label=f'Category {config["categoryLabels"][i]}' + " (r = %.2f$_{%.2f}^{+%.2f}$)"%(rMin, x_intersectionLeft1Sigma-rMin, x_intersectionRight1Sigma-rMin)
     )
+    #ax.text(ax.get_xlim()[1]*1.05, shift_for_visual+min(deltaNLL_Discrete_cat_i[i])-0.1,
+    #        "r = %.2f$_{%.2f}^{+%.2f}$ "%(rMin, x_intersectionLeft1Sigma-rMin, x_intersectionRight1Sigma-rMin), fontsize=14, ha='left', va='top')
+
+    if  x_intersectionLeft2Sigma < xmin:
+        xmin =  x_intersectionLeft2Sigma 
+    if  x_intersectionRight2Sigma > xmax:
+        xmax =  x_intersectionRight2Sigma 
+    ax.set_xlim(xmin, xmax)
 
     shift_for_visual-=.25
 
 ax.hlines(1, xmin=min(r_Discrete_cat_i[-2]), xmax=max(r_Discrete_cat_i[-2]), colors='black',alpha=0.5, linestyles='dashed')
 ax.hlines(4, xmin=min(r_Discrete_cat_i[-2]), xmax=max(r_Discrete_cat_i[-2]), colors='black',alpha=0.2, linestyles='dashed')
+ax.text(0.85, 0.95, "r = %.2f$_{%.2f}^{+%.2f}$ "%(rMin, x_intersectionLeft1Sigma-rMin, x_intersectionRight1Sigma-rMin), transform=ax.transAxes, fontsize=18, ha='right', va='top')
 ax.set_xlabel("(r + RND$_1$) x RND$_2$")
 ax.set_ylabel("-2 $\Delta$ ln(L)")
-ax.set_ylim(-1.25, 6)
+ax.set_ylim(-3.5, 6)
+#ax.set_xlim(min(r_Discrete_cat_i[-2]), max(r_Discrete_cat_i[-2]))
 ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-plotName=f"//t3home/gcelotto/ggHbb/WSFit/output/combined/DiscreteNLLScan_AllCategories_RNDShifted.png"
+plotName=f"/t3home/gcelotto/ggHbb/WSFit/output/combined/DiscreteNLLScan_AllCategories_RNDShifted.png"
 fig.savefig(plotName, bbox_inches='tight')
 print("Saved plot to ", plotName)
 # %%

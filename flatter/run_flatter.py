@@ -16,6 +16,7 @@ parser.add_argument("-mE", "--maxEntries", type=int, help="max number of Entries
 parser.add_argument("-mJ", "--maxJet", type=int, help="max number of jet", default=4)
 parser.add_argument("-m", "--method", type=int, help="method of selecting jets", default=-1)
 parser.add_argument("-t", "--test", type=int, help="is a test with a singular root file", default=0)
+parser.add_argument("-r", "--run", type=int, help="Run 2 or Run 3", default=2)
 parser.add_argument("-s", "--sleep", type=int, help="Number of files after which sleep for 20 seconds. If -1 disabled", default=-1)
 parser.add_argument("-d", "--delete", type=int, help="delete all logs file in the folder", default=0)
 parser.add_argument("-v", "--verbose", type=int, help="0 (silent), 1 (print info event by event)", default=0)
@@ -23,6 +24,7 @@ parser.add_argument("-v", "--verbose", type=int, help="0 (silent), 1 (print info
 args = parser.parse_args()
 
 isMC            = args.isMC
+run            = args.run
 pN              = args.processNumber
 isJEC           = args.isJEC
 nFiles          = args.nFiles
@@ -82,7 +84,19 @@ if args.test:
     fileNumber = 1999
     flatPath ="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/minlo_10k_filter_1999.parquet"
     process = "test"
-    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 1000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC)])
+    subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 100), '/t3home/gcelotto/ggHbb/flatter/job.sh', 
+                    nanoFileName, 
+                    str(maxEntries),
+                    str(maxJet),
+                    str(pN),
+                    process,
+                    str(fileNumber),
+                    flatPath,
+                    str(method),
+                    str(isJEC),
+                    str(args.verbose),
+                    str(isMC),
+                    str(run)])
 else:
     for nanoFileName in nanoFileNames:
         if doneFiles==nFiles:
@@ -91,7 +105,7 @@ else:
             #print(nanoFileName)
             fileNumber = int(re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1))
         except:
-            sys.exit("FileNumber not found")
+            sys.exit("[ERROR] FileNumber not found")
 
 
 
@@ -100,7 +114,7 @@ else:
 
         if matching_files:
             continue
-        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 1000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC)])
+        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 5000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC), str(run)])
         if (doneFiles % args.sleep ==0) & (doneFiles!=0)& (args.sleep!=-1):
             print("I am sleeping! Good Night!")
             time.sleep(15)

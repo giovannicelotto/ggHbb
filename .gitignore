@@ -34,3 +34,4 @@ training.txt
 model.pth
 model/*
 performance/*
+RooDoubleCB_cc_ACLiC*

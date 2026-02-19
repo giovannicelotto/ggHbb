@@ -34,27 +34,27 @@ def saveXYWP(Xtrain, Xval, Ytrain, Yval,  Wtrain, Wval, YPredTrain, YPredVal, in
     return 
 
 
-def saveXYWrW(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genmassTrain, genmassVal, inFolder,isTest=False, Xtest=None,Ytest=None,Wtest=None,genmassTest=None):
+def saveXYWrW(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genmassTrain, genmassVal, inFolder,isTest=False, Xtest=None,Ytest=None,Wtest=None,genmassTest=None, suffix=""):
 
     
-    Xtrain.to_parquet(inFolder +"/Xtrain.parquet")
-    Xval.to_parquet(inFolder +"/Xval.parquet")
+    Xtrain.to_parquet(inFolder +f"/Xtrain{suffix}.parquet")
+    Xval.to_parquet(inFolder +f"/Xval{suffix}.parquet")
     
-    np.save(inFolder +"/Wtrain.npy",   Wtrain)
-    np.save(inFolder +"/Wval.npy",     Wval)
+    np.save(inFolder +f"/Wtrain{suffix}.npy",   Wtrain)
+    np.save(inFolder +f"/Wval{suffix}.npy",     Wval)
 
-    np.save(inFolder +"/rWtrain.npy",   rWtrain)
-    np.save(inFolder +"/rWval.npy",     rWval)
+    np.save(inFolder +f"/rWtrain{suffix}.npy",   rWtrain)
+    np.save(inFolder +f"/rWval{suffix}.npy",     rWval)
     
-    np.save(inFolder +"/Ytrain.npy",    Ytrain)
-    np.save(inFolder +"/Yval.npy",      Yval)
+    np.save(inFolder +f"/Ytrain{suffix}.npy",    Ytrain)
+    np.save(inFolder +f"/Yval{suffix}.npy",      Yval)
 
-    np.save(inFolder +"/genMassTrain.npy",  genmassTrain)
-    np.save(inFolder +"/genMassVal.npy",    genmassVal)
+    np.save(inFolder +f"/genMassTrain{suffix}.npy",  genmassTrain)
+    np.save(inFolder +f"/genMassVal{suffix}.npy",    genmassVal)
 
     if isTest:
-        Xtest.to_parquet(inFolder +"/Xtest.parquet")
-        np.save(inFolder +"/Wtest.npy",     Wtest)
-        np.save(inFolder +"/Ytest.npy",     Ytest)
-        np.save(inFolder +"/genMassTest.npy",   genmassTest)
+        Xtest.to_parquet(inFolder +f"/Xtest{suffix}.parquet")
+        np.save(inFolder +f"/Wtest{suffix}.npy",     Wtest)
+        np.save(inFolder +f"/Ytest{suffix}.npy",     Ytest)
+        np.save(inFolder +f"/genMassTest{suffix}.npy",   genmassTest)
     return 

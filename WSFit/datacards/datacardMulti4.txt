@@ -1,22 +1,35 @@
 # Datacard example for H->gg like bias study
 imax 1
-jmax 1
+jmax 2
 kmax *
 ---------------------------------------------
-shapes data_obs    * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws4.root ws3:rooHist_data_cat4
-shapes signal      * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws4.root ws3:model_H_c4
-shapes background  * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws4.root ws3:CMS_hgg_0_2016_13TeV_bkgshape
+shapes data_obs    * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:rooHist_data_cat4
+shapes signal      * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:model_H_c4 ws3:model_H_c4_$SYSTEMATIC
+shapes Z      * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:model_Z_c4 ws3:model_Z_c4_$SYSTEMATIC
+shapes background  * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
 ---------------------------------------------
-bin Cat1
+bin Cat4
 observation -1
 ---------------------------------------------
-bin          Cat1     Cat1
-process      signal background
-process      0  1
-rate         1        1
+bin          Cat4 Cat4 Cat4
+process      signal background Z
+process      0 1 2
+rate         1 1 1
 ---------------------------------------------
-lumi lnN 1.025  -
+lumi lnN 1.025  - 1.025
+alphaS   lnN 1.0368825486783135 - 1.0440013083193354
 
+PS_ISR   lnN 1.0039289533435385 - 1.08120155886884
+
+PS_FSR   lnN 1.0919503011326237 - 1.0920975702616817
+
+Scale   lnN 1.192993624387908 - 1.0753318539005825
+
+---------------------------------------------
+rateZbb  rateParam  Cat4  Z  1.0  [-1.0,3.0]
+---------------------------------------------
 pdfindex_4_2016_13TeV discrete
-
-
+puid   shape 1 - 1
+btag_hf   shape 1 - 1
+btag_lightf   shape 1 - 1
+---------------------------------------------

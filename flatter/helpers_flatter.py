@@ -2,9 +2,9 @@ import numpy as np
 import ROOT
 from treeFlatter_dict_getSFs import getMuonID_SF, get_muon_recoSF, btag_wp
 from getZ_KFactor import getZ_KFactor
-def get_event_branches(branches, ev, isMC):
-    
-    return {
+def get_event_branches(branches, ev, isMC, run=2):
+    if run==2:
+        return {
         "event"          : branches["event"][ev],
         "run"          : branches["run"][ev],
         "luminosityBlock"          : branches["luminosityBlock"][ev],
@@ -16,6 +16,42 @@ def get_event_branches(branches, ev, isMC):
         "Jet_phi"                     : branches["Jet_phi"][ev],
         "Jet_mass"                    : branches["Jet_mass"][ev],
         "Jet_btagDeepFlavB"           : branches["Jet_btagDeepFlavB"][ev],
+        
+        #"Jet_pf1_charge"           : branches["Jet_pf1_charge"][ev],
+        #"Jet_pf1_pt"           : branches["Jet_pf1_pt"][ev],
+        #"Jet_pf1_eta"           : branches["Jet_pf1_eta"][ev],
+        #"Jet_pf1_phi"           : branches["Jet_pf1_phi"][ev],
+        #"Jet_pf1_mass"           : branches["Jet_pf1_mass"][ev],
+#
+        #"Jet_pf2_charge"           : branches["Jet_pf2_charge"][ev],
+        #"Jet_pf2_pt"           : branches["Jet_pf2_pt"][ev],
+        #"Jet_pf2_eta"           : branches["Jet_pf2_eta"][ev],
+        #"Jet_pf2_phi"           : branches["Jet_pf2_phi"][ev],
+        #"Jet_pf2_mass"           : branches["Jet_pf2_mass"][ev],
+#
+#
+        #"Jet_pf3_charge"           : branches["Jet_pf3_charge"][ev],
+        #"Jet_pf3_pt"           : branches["Jet_pf3_pt"][ev],
+        #"Jet_pf3_eta"           : branches["Jet_pf3_eta"][ev],
+        #"Jet_pf3_phi"           : branches["Jet_pf3_phi"][ev],
+        #"Jet_pf3_mass"           : branches["Jet_pf3_mass"][ev],
+#
+#
+        #"Jet_pf4_charge"           : branches["Jet_pf4_charge"][ev],
+        #"Jet_pf4_pt"           : branches["Jet_pf4_pt"][ev],
+        #"Jet_pf4_eta"           : branches["Jet_pf4_eta"][ev],
+        #"Jet_pf4_phi"           : branches["Jet_pf4_phi"][ev],
+        #"Jet_pf4_mass"           : branches["Jet_pf4_mass"][ev],
+#
+#
+        #"Jet_pf5_charge"           : branches["Jet_pf5_charge"][ev],
+        #"Jet_pf5_pt"           : branches["Jet_pf5_pt"][ev],
+        #"Jet_pf5_eta"           : branches["Jet_pf5_eta"][ev],
+        #"Jet_pf5_phi"           : branches["Jet_pf5_phi"][ev],
+        #"Jet_pf5_mass"           : branches["Jet_pf5_mass"][ev],
+
+        
+        
 
         # ID
         "Jet_jetId"                   : branches["Jet_jetId"][ev],
@@ -135,14 +171,107 @@ def get_event_branches(branches, ev, isMC):
         "GenJet_partonMotherPdgId" : branches["GenJet_partonMotherPdgId"][ev] if isMC==1 else None,
         "GenJet_partonMotherIdx"   : branches["GenJet_partonMotherIdx"][ev] if isMC==1 else None,
         "genWeight"    : branches["genWeight"][ev] if isMC==1 else 1,
-        "LHEPart_pt"       : branches["LHEPart_pt"][ev] if isMC==1 else None,
-        "LHEPart_pdgId"    : branches["LHEPart_pdgId"][ev] if isMC==1 else None
+
+
+
+
+    }
+    else:
+        return {
+        "event"          : branches["event"][ev],
+        "run"          : branches["run"][ev],
+        "luminosityBlock"          : branches["luminosityBlock"][ev],
+
+    # Reco Jets 
+        "nJet"                        : branches["nJet"][ev],
+        "Jet_eta"                     : branches["Jet_eta"][ev],
+        "Jet_pt"                      : branches["Jet_pt"][ev],
+        "Jet_phi"                     : branches["Jet_phi"][ev],
+        "Jet_mass"                    : branches["Jet_mass"][ev],
+        "Jet_btagDeepFlavB"           : branches["Jet_btagDeepFlavB"][ev],
+        "HLT_Mu10_Barrel_L1HP11_IP6"  : branches["HLT_Mu10_Barrel_L1HP11_IP6"][ev],
+        # ID
+        #"Jet_jetId"                   : branches["Jet_jetId"][ev],
+        #"Jet_puId"                    : branches["Jet_puId"][ev],
+
+        # Vtx
+        #"Jet_vtx3dL"                  : branches["Jet_vtx3dL"][ev],
+        #"Jet_vtx3deL"                 : branches["Jet_vtx3deL"][ev],
+        #"Jet_vtxPt"                   : branches["Jet_vtxPt"][ev],
+        #"Jet_vtxMass"                 : branches["Jet_vtxMass"][ev],
+        #"Jet_vtxNtrk"                 : branches["Jet_vtxNtrk"][ev],
+
+        # Others
+        "Jet_area"                    : branches["Jet_area"][ev],
+        "Jet_rawFactor"               : branches["Jet_rawFactor"][ev],
+        #"Jet_qgl"                     : branches["Jet_qgl"][ev],
+        "Jet_nMuons"                  : branches["Jet_nMuons"][ev],
+        "Jet_nConstituents"           : branches["Jet_nConstituents"][ev],
+        #"Jet_leadTrackPt"             : branches["Jet_leadTrackPt"][ev],
+        "Jet_nElectrons"              : branches["Jet_nElectrons"][ev],
+        "Jet_muonIdx1"                : branches["Jet_muonIdx1"][ev],
+        "Jet_muonIdx2"                : branches["Jet_muonIdx2"][ev],
+        # Regression
+        #"Jet_bReg2018"                 : branches["Jet_bReg2018"][ev],
+
+
+        #"dijet_eta"                     : branches["dijet_eta"][ev],
+        #"dijet_phi"                     : branches["dijet_phi"][ev],
+        
+        # Taggers
+        #"#Jet_btagDeepFlavC"           : branches["Jet_btagDeepFlavC"][ev],
+        #"#Jet_btagPNetB"               : branches["Jet_btagPNetB"][ev],
+        #"#Jet_PNetRegPtRawCorr"        : branches["Jet_PNetRegPtRawCorr"][ev],
+        #"#Jet_PNetRegPtRawCorrNeutrino": branches["Jet_PNetRegPtRawCorrNeutrino"][ev],
+        #"#Jet_PNetRegPtRawRes"         : branches["Jet_PNetRegPtRawRes"][ev],
+        
+
+    # Muons
+        "nMuon"                       : branches["nMuon"][ev],
+        "Muon_pt"                     : branches["Muon_pt"][ev],
+        "Muon_eta"                    : branches["Muon_eta"][ev],
+        "Muon_phi"                    : branches["Muon_phi"][ev],
+        "Muon_mass"                   : branches["Muon_mass"][ev],
+        #"Muon_isTriggering"           : branches["Muon_isTriggering"][ev],
+        "Muon_dxy"                    : branches["Muon_dxy"][ev],
+        "Muon_dxyErr"                 : branches["Muon_dxyErr"][ev],
+        "Muon_dz"                     : branches["Muon_dz"][ev],
+        "Muon_dzErr"                  : branches["Muon_dzErr"][ev],
+        "Muon_pfIsoId"                : branches["Muon_pfIsoId"][ev],  # 1:PFIsoVeryLoose, 2:PFIsoLoose, 3:PFIsoMedium, 4:PFIsoTight, 5:PFIsoVeryTight, 6:PFIsoVeryVeryTight),
+        "Muon_pfRelIso03_all"         : branches["Muon_pfRelIso03_all"][ev],
+        "Muon_ip3d"                   : branches["Muon_ip3d"][ev],
+        "Muon_sip3d"                  : branches["Muon_sip3d"][ev],
+        "Muon_charge"                 : branches["Muon_charge"][ev],
+        "Muon_tightId"                : branches["Muon_tightId"][ev],
+        "Muon_mediumId"               : branches["Muon_mediumId"][ev],
+        #"Muon_tkIsoId"                : branches["Muon_tkIsoId"][ev],
+        "Muon_pfRelIso04_all"         : branches["Muon_pfRelIso04_all"][ev],
+
+    # Electrons
+        "Jet_electronIdx1"            : branches["Jet_electronIdx1"][ev],
+        "nElectron"                   : branches["nElectron"][ev],
+
+
+
+    # Triggers
+        "nSV"                    :        branches["nSV"][ev],
+        "PV_npvs"                :        branches["PV_npvs"][ev],
+        
+    # Data MC dependent
+    #Gen Information
+        "Muon_genPartIdx"          : branches["Muon_genPartIdx"][ev] if isMC==1 else None,
+        "Jet_hadronFlavour"        : branches["Jet_hadronFlavour"][ev] if isMC==1 else None,
+        "Pileup_nTrueInt"          : branches["Pileup_nTrueInt"][ev] if isMC==1 else None,
+        "genWeight"    : branches["genWeight"][ev] if isMC==1 else 1,
+
+
+
 
     }
 
 
-def get_event_genBranches(branches, ev):
-    return {
+def get_event_genBranches(branches, ev, processName):
+    dict = {
     "GenPart_pt" : branches["GenPart_pt"][ev],
     "GenPart_pdgId" : branches["GenPart_pdgId"][ev],
     "GenPart_genPartIdxMother" : branches["GenPart_genPartIdxMother"][ev],
@@ -150,12 +279,23 @@ def get_event_genBranches(branches, ev):
     "GenPart_phi" : branches["GenPart_phi"][ev],
     "GenPart_mass" : branches["GenPart_mass"][ev],
     "GenPart_statusFlags" : branches["GenPart_statusFlags"][ev],
-    "LHEPart_pt" : branches["LHEPart_pt"][ev],
-    "LHEPart_pdgId" : branches["LHEPart_pdgId"][ev],
 
 
     }
-def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None):
+    dict["PSWeight"] = branches["PSWeight"][ev]
+    if "LHEScaleWeight" in branches.fields:
+        dict["LHEScaleWeight"] = branches["LHEScaleWeight"][ev]
+    else:
+        dict["LHEScaleWeight"] = np.ones(9)
+    if "LHEPdfWeight" in branches.fields:
+        dict["LHEPdfWeight"] = branches["LHEPdfWeight"][ev]
+    else:
+        dict["LHEPdfWeight"] = np.ones(103)
+    if (('ZJetsToQQ' in processName) | ('EWKZJets' in processName)):
+        dict["LHEPart_pt"] = branches["LHEPart_pt"][ev],
+        dict["LHEPart_pdgId"] = branches["LHEPart_pdgId"][ev],
+    return dict
+def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None, jetIsPresent=None):
     features = {}
 
     features[f"{prefix}_pt"]   = jet_vec.Pt() if jet_vec is not None else 0.
@@ -171,9 +311,45 @@ def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None):
     features[f"{prefix}_puId"]          = evt["Jet_puId"][idx] if jet_vec is not None else 0
     features[f"{prefix}_jetId"]         = evt["Jet_jetId"][idx] if jet_vec is not None else 0
     features[f"{prefix}_nElectrons"]   = evt["Jet_nElectrons"][idx]      if jet_vec is not None else 0
-    features[f"{prefix}_btagDeepFlavB"]= evt["Jet_btagDeepFlavB"][idx] if jet_vec is not None else 0.
-
     features[f"{prefix}_btagTight"]    = int(evt["Jet_btagDeepFlavB"][idx]>=0.71) if jet_vec is not None else 0
+    
+    #features[f"{prefix}_pf1_pt"]    = float(evt["Jet_pf1_pt"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf1_eta"]    = float(evt["Jet_pf1_eta"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf1_phi"]    = float(evt["Jet_pf1_phi"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf1_mass"]    = float(evt["Jet_pf1_mass"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf1_charge"]    = int(evt["Jet_pf1_charge"][idx]) if jet_vec is not None else 0
+#
+    #features[f"{prefix}_pf2_pt"]    = float(evt["Jet_pf2_pt"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf2_eta"]    = float(evt["Jet_pf2_eta"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf2_phi"]    = float(evt["Jet_pf2_phi"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf2_mass"]    = float(evt["Jet_pf2_mass"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf2_charge"]    = int(evt["Jet_pf2_charge"][idx]) if jet_vec is not None else 0
+#
+#
+#
+    #features[f"{prefix}_pf3_pt"]    = float(evt["Jet_pf3_pt"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf3_eta"]    = float(evt["Jet_pf3_eta"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf3_phi"]    = float(evt["Jet_pf3_phi"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf3_mass"]    = float(evt["Jet_pf3_mass"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf3_charge"]    = int(evt["Jet_pf3_charge"][idx]) if jet_vec is not None else 0
+#
+#
+#
+    #features[f"{prefix}_pf4_pt"]    = float(evt["Jet_pf4_pt"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf4_eta"]    = float(evt["Jet_pf4_eta"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf4_phi"]    = float(evt["Jet_pf4_phi"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf4_mass"]    = float(evt["Jet_pf4_mass"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf4_charge"]    = int(evt["Jet_pf4_charge"][idx]) if jet_vec is not None else 0
+#
+#
+#
+    #features[f"{prefix}_pf5_pt"]    = float(evt["Jet_pf5_pt"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf5_eta"]    = float(evt["Jet_pf5_eta"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf5_phi"]    = float(evt["Jet_pf5_phi"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf5_mass"]    = float(evt["Jet_pf5_mass"][idx]) if jet_vec is not None else 0
+    #features[f"{prefix}_pf5_charge"]    = int(evt["Jet_pf5_charge"][idx]) if jet_vec is not None else 0
+
+
     counterMuTight=0
     if jet_vec is not None:
         for muIdx in range(len(evt["Muon_pt"])):
@@ -183,16 +359,17 @@ def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None):
 
     jet_btagWP = btag_wp(evt["Jet_btagDeepFlavB"][idx], evt["Jet_pt"][idx]) if jet_vec is not None else -1
     features[f"{prefix}_btagWP"] = int(jet_btagWP) if jet_vec is not None else 0
-    features[f"{prefix}_idx"] = idx if jet_vec is not None else 0
+    features[f"{prefix}_idx"] = idx if jet_vec is not None else -1
     features[f"{prefix}_rawFactor"] = evt["Jet_rawFactor"][idx] if jet_vec is not None else 0.
     features[f"{prefix}_bReg2018"] = evt["Jet_bReg2018"][idx] if jet_vec is not None else 0.
-    features[f"{prefix}_id"] = evt["Jet_jetId"][idx] if jet_vec is not None else 0
-    features[f"{prefix}_puId"] = evt["Jet_puId"][idx] if jet_vec is not None else 0
     features[f"{prefix}_sv_pt"] = evt["Jet_vtxPt"][idx] if jet_vec is not None else 0.
-    features[f"{prefix}_sv_mass"] = evt["Jet_vtxMass"][idx] if jet_vec is not None else 0
+    features[f"{prefix}_sv_mass"] = evt["Jet_vtxMass"][idx] if jet_vec is not None else 0.
     features[f"{prefix}_sv_Ntrk"] = evt["Jet_vtxNtrk"][idx] if jet_vec is not None else 0
-    #jet_sv_3dSig = evt["Jet_vtx3dL"][idx]/evt["Jet_vtx3deL"][idx] if (evt["Jet_vtx3dL"][idx]!=0) & (jet_vec is not None) else 0 
-    #features[f"{prefix}_sv_3dSig"] = jet_sv_3dSig if jet_vec is not None else 0.
+    if jet_vec is not None:
+        jet_sv_3dSig = (evt["Jet_vtx3dL"][idx])/(evt["Jet_vtx3deL"][idx]) if (evt["Jet_vtx3dL"][idx]!=0) else 0
+    else:
+        jet_sv_3dSig = 0.
+    features[f"{prefix}_sv_3dSig"] = jet_sv_3dSig if jet_vec is not None else 0.
 
     if dijet is not None:
         features[f"dR_{prefix}_dijet"]   = jet_vec.DeltaR(dijet) if jet_vec is not None else 0.
@@ -203,42 +380,50 @@ def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None):
         features[f"dPhi_{prefix}_dijet"] = 0.
         features[f"dEta_{prefix}_dijet"] = 0.
         
+    if jetIsPresent:
+        features[f"has_{prefix}"] = 1
+    elif jetIsPresent==False:
+        features[f"has_{prefix}"] = 0
+    else:
+        # if jet is present is None don't do anything
+        pass
 
 
     return features
 
 
-
-def fill_ttbar_CR_features(evt, isMC, processName, muon_RECO_map, muon_ID_map, muon_ISO_map, electrons_SF_map):
+def fill_ttbar_CR_features(evt, isMC, muonIdx1, muonIdx2, processName, muon_RECO_map, muon_ID_map, muon_ISO_map, electrons_SF_map):
     features = {}
     weight_factor = 1.0
-    if not "private" in processName:
 
         # Select muons
-        muon_mask = (evt["Muon_pt"] > 25) & (np.abs(evt["Muon_eta"]) < 2.4) & (evt["Muon_pfIsoId"]>=4) & (evt["Muon_tightId"]==1)
-        electron_mask = (evt["Electron_pt"] > 25) & (np.abs(evt["Electron_eta"]) < 2.5)  & (evt["Electron_cutBased"]>=3) #& (Electron_pfRelIso03_all<0.1)
+    muon_mask = (evt["Muon_pt"] > 25) & (np.abs(evt["Muon_eta"]) < 2.4) & (evt["Muon_pfIsoId"]>=4) & (evt["Muon_tightId"]==1)
+    electron_mask = (evt["Electron_pt"] > 25) & (np.abs(evt["Electron_eta"]) < 2.5)  & (evt["Electron_cutBased"]>=3) #& (Electron_pfRelIso03_all<0.1)
 
-        # At least one muon & one electron passing the cuts
-        selected_muon_idx = None
-        selected_ele_idx = None
-        if np.any(muon_mask) and np.any(electron_mask):
-            # Loop over muons & electrons to find the first opposite-charge pair
-            for mu_idx in np.where(muon_mask)[0]:
-                for el_idx in np.where(electron_mask)[0]:
-                    if evt["Muon_charge"][mu_idx] * evt["Electron_charge"][el_idx] < 0:
-                        selected_muon_idx = mu_idx
-                        selected_ele_idx = el_idx
-                        break  # stop at the first matching muon
-                if selected_muon_idx is not None:
-                    break
+    # At least one muon & one electron passing the cuts
+    selected_muon_idx = None
+    selected_ele_idx = None
+    if np.any(muon_mask) and np.any(electron_mask):
+        # Loop over muons & electrons to find the first opposite-charge pair
+        for mu_idx in np.where(muon_mask)[0]:
+            if (mu_idx==muonIdx1) | (mu_idx==muonIdx2):
 
+                continue 
+            for el_idx in np.where(electron_mask)[0]:
+                if evt["Muon_charge"][mu_idx] * evt["Electron_charge"][el_idx] < 0:
+                    selected_muon_idx = mu_idx
+                    selected_ele_idx = el_idx
+                    break  # stop at the first matching muon
             if selected_muon_idx is not None:
-                features["is_ttbar_CR"] = 1
-            else:
-                features["is_ttbar_CR"] = 0
+                break
+
+        if selected_muon_idx is not None:
+            features["is_ttbar_CR"] = 1
         else:
             features["is_ttbar_CR"] = 0
-        
+    else:
+        features["is_ttbar_CR"] = 0
+    
 
     features["Muon_tt_pt"]         = np.float32(evt["Muon_pt"][selected_muon_idx]) if features["is_ttbar_CR"]==1 else -999.
     features["Muon_tt_eta"]        = np.float32(evt["Muon_eta"][selected_muon_idx]) if features["is_ttbar_CR"]==1 else -999.
@@ -312,20 +497,20 @@ def fill_ttbar_CR_features(evt, isMC, processName, muon_RECO_map, muon_ID_map, m
 
     return features, weight_factor
 
-def fill_dijet_features(dijet_vec, jet1_vec, jet2_vec, evt):
+def fill_dijet_features(dijet_vec, jet1_vec, jet2_vec, evt, run=2):
     features = {}
     if dijet_vec.Pt()<1e-5:
         assert False
     features['dijet_pt'] = np.float32(dijet_vec.Pt())
-    print("[DEBUG]")
     #features['dijet_eta_nano'] = evt["dijet_eta"]
     #features['dijet_pt_nano'] = evt["dijet_pt"]
     #if np.abs(evt["dijet_pt"]-dijet_vec.Pt())>1:
     #    print("%.3f vs %.3f"%(evt["dijet_pt"], dijet_vec.Pt()))
     #    print("%.3f vs %.3f"%(evt["dijet_jet1_pt"], jet1_vec.Pt()))
     #    print("%.3f vs %.3f"%(evt["dijet_jet2_pt"], jet2_vec.Pt()))
-    features['dijet_eta_nano'] = evt["dijet_eta"]
-    features['dijet_phi_nano'] = evt["dijet_phi"]
+    if run==2:
+        features['dijet_eta_nano'] = evt["dijet_eta"]
+        features['dijet_phi_nano'] = evt["dijet_phi"]
     features['dijet_eta'] = np.float32(dijet_vec.Eta())
     features['dijet_phi'] = np.float32(dijet_vec.Phi())
     features['dijet_mass'] = np.float32(dijet_vec.M())
@@ -347,7 +532,7 @@ def fill_dijet_features(dijet_vec, jet1_vec, jet2_vec, evt):
 
     return features
 
-def fill_trig_muon_features(muon,muonIdx, jet_vec, jetIdx, muon_RECO_map, evt):
+def fill_trig_muon_features(muon,muonIdx, jet_vec, jetIdx, muon_RECO_map, evt, has_muon=None):
     features={}
     muonTrig_RECO_ID = get_muon_recoSF(muon_RECO_map, eta=muon.Eta()) if muon is not None else 1.
     features[f"jet{jetIdx}_muon_RECO_SF"] = np.float32(muonTrig_RECO_ID["value"]) if muon is not None else 1.
@@ -369,6 +554,12 @@ def fill_trig_muon_features(muon,muonIdx, jet_vec, jetIdx, muon_RECO_map, evt):
     features[f"jet{jetIdx}_muon_pfRelIso04_all"] = np.float32(evt["Muon_pfRelIso04_all"][muonIdx]) if muon is not None else 0.
     features[f"jet{jetIdx}_muon_charge"] = int(evt["Muon_charge"][muonIdx]) if muon is not None else 0
 
+    if has_muon:
+        features[f"jet{jetIdx}_has_muon"]=1
+    elif has_muon==False:
+        features[f"jet{jetIdx}_has_muon"]=0
+    else:
+        pass
     return features, muon_weight
 
 
@@ -442,8 +633,8 @@ def fill_gen_info(evt, evt_gen, jet1_vec, jet2_vec, selected1, selected2, select
             features['dpT_jet2_genQuark'] = (b_gen.Pt() - jet2_vec.Pt())/b_gen.Pt()  
             features['jet1_genQuark_pt'] = antib_gen.Pt()
             features['jet2_genQuark_pt'] = b_gen.Pt()
-            features['jet1_genQuarkFlavour'] =  5
-            features['jet2_genQuarkFlavour'] =  -5
+            features['jet1_genQuarkFlavour'] =  -5
+            features['jet2_genQuarkFlavour'] =  5
 
         # Match with genJet
         if evt["Jet_genJetIdx"][selected1]!=-1:
@@ -525,7 +716,10 @@ def fill_gen_info(evt, evt_gen, jet1_vec, jet2_vec, selected1, selected2, select
             #features["GenJetNu2_mass"] = -99
             #features["dR_genJet2_genJetNu2"] = -99
     if (('ZJetsToQQ' in processName) | ('EWKZJets' in processName)):
-        k_factor = getZ_KFactor(pt=evt_gen["LHEPart_pt"][evt_gen["LHEPart_pdgId"]==23])
+        pt = np.array(evt_gen["LHEPart_pt"])
+        mask = np.array(evt_gen["LHEPart_pdgId"])==23
+        pt_Z = (pt[mask])
+        k_factor = getZ_KFactor(pt=pt_Z)
 
     else:
         k_factor = 1.
@@ -538,7 +732,7 @@ def fill_event_variables(evt, maskJets):
     features = {}
     
 
-# Event Jet variables
+    # Event Jet variables
     Jet_px_Masked = evt["Jet_pt"][maskJets] * np.cos(evt["Jet_phi"][maskJets])
     Jet_py_Masked = evt["Jet_pt"][maskJets] * np.sin(evt["Jet_phi"][maskJets])
     Jet_pz_Masked = evt["Jet_pt"][maskJets] * np.sinh(evt["Jet_eta"][maskJets])

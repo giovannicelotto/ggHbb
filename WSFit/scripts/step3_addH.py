@@ -5,15 +5,15 @@ import os
 
 def main():
     parser = argparse.ArgumentParser(description="Enrich multipdf workspace with extra PDF.")
-    parser.add_argument("idx", type=int, help="Index of the workspace")
+    parser.add_argument("-c", "--category", type=int, help="Index of the workspace")
     args = parser.parse_args()
 
-    idx = args.idx
+
 
     # Input files
-    ws1_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/step1/ws{idx}.root"
-    multipdf_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_{idx}.root"
-    out_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws{idx}.root"
+    ws1_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/step1/ws{args.category}_nominal.root"
+    multipdf_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_{args.category}.root"
+    out_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws{args.category}.root"
 
     # Open files
     f1 = ROOT.TFile.Open(ws1_path)
@@ -25,16 +25,16 @@ def main():
         raise RuntimeError(f"Cannot open {multipdf_path}")
 
     # Get workspaces
-    ws1 = f1.Get("workspace_sig")
+    ws1 = f1.Get("WS")
     ws2 = f2.Get("multipdf")
 
     if not ws1:
-        raise RuntimeError("Workspace 'workspace_sig' not found in first file")
+        raise RuntimeError("Workspace 'WS' not found in first file")
     if not ws2:
         raise RuntimeError("Workspace 'multipdf' not found in multipdf file")
 
     # Get PDF
-    Higgs_pdf_name = f"model_H_c{idx}"
+    Higgs_pdf_name = f"model_H_c{args.category}"
     Hpdf = ws1.pdf(Higgs_pdf_name)
     if not Hpdf:
         raise RuntimeError(f"PDF {Higgs_pdf_name} not found in first workspace")
@@ -42,26 +42,26 @@ def main():
 
 
 
-    Z_pdf_name = f"model_Z_c{idx}"
+    Z_pdf_name = f"model_Z_c{args.category}"
     Zpdf = ws1.pdf(Z_pdf_name)
 
 
-    nH = ws1.var("nH_cat%d"%idx)
-    nZ = ws1.var("nZ_cat%d"%idx)
+    nH = ws1.var("nH_cat%d"%args.category)
+    nZ = ws1.var("nZ_cat%d"%args.category)
     nBkg = ws2.var("CMS_hgg_0_2016_13TeV_bkgshape_norm")
 
     # Create new variables
-    model_H_c_norm = ROOT.RooRealVar("model_H_c%d_norm"%idx, "model_H_c%d_norm"%idx, nH.getVal()*1, 0, nH.getVal()*5)
+    model_H_c_norm = ROOT.RooRealVar("model_H_c%d_norm"%args.category, "model_H_c%d_norm"%args.category, nH.getVal()*1, 0, nH.getVal()*5)
     model_H_c_norm.setConstant(True)
-    model_Z_c_norm = ROOT.RooRealVar("model_Z_c%d_norm"%idx, "model_Z_c%d_norm"%idx, nZ.getVal()*1, 0, nZ.getVal()*5)
+    model_Z_c_norm = ROOT.RooRealVar("model_Z_c%d_norm"%args.category, "model_Z_c%d_norm"%args.category, nZ.getVal()*1, 0, nZ.getVal()*5)
     model_Z_c_norm.setConstant(True)
     pdfname = f"CMS_hgg_0_2016_13TeV_bkgshape"
     bkg_norm = ROOT.RooRealVar(pdfname+"_noZ_norm", pdfname+"_noZ_norm", nBkg.getVal()-nZ.getVal(), nBkg.getVal()*0.5, nBkg.getVal()*1.5)
 
-    higgs_hist_name = f"rooHist_H_cat{idx}"
+    higgs_hist_name = f"rooHist_H_cat{args.category}"
     higgs_hist = ws1.data(higgs_hist_name)
 
-    Z_hist_name = f"rooHist_Z_cat{idx}"
+    Z_hist_name = f"rooHist_Z_cat{args.category}"
     Z_hist = ws1.data(Z_hist_name)
 
     if not higgs_hist:
@@ -74,9 +74,9 @@ def main():
     if not multipdf:
         raise RuntimeError(f"MultiPdf {pdfname} not found in workspace")
 
-    pdfindex = ws2.cat(f"pdfindex_{idx}_2016_13TeV")
+    pdfindex = ws2.cat(f"pdfindex_{args.category}_2016_13TeV")
     if not pdfindex:
-        raise RuntimeError(f"Index variable not found: pdfindex_{idx}_2016_13TeV")
+        raise RuntimeError(f"Index variable not found: pdfindex_{args.category}_2016_13TeV")
 
     # Extract the PDFs inside the multipdf
     n_pdfs = multipdf.getNumPdfs()

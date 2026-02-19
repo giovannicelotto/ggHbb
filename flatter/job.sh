@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=2G                       # 2G for Data needed   
-#SBATCH --partition=short              # Specify your cluster partition
-#SBATCH --time=0:40:00  
+#SBATCH --mem=16G                       # 2G for Data needed   
+#SBATCH --partition=standard              # Specify your cluster partition
+#SBATCH --time=4:00:00  #keep it standard for ttbar
 #SBATCH --output=/t3home/gcelotto/slurm/output/flat/%x.out    # Alternative method using job name and job ID
 #SBATCH --error=/t3home/gcelotto/slurm/output/flat/%x.out 
 #SBATCH --dependency=singleton
@@ -22,6 +22,7 @@ method="$8"
 jec="$9"
 verbose="${10}"
 isMC="${11}"
+run="${12}"
 echo "Before startin the python"
 echo "Method is "$method
 echo "nanoFileName is "$nanoFileName
@@ -35,7 +36,21 @@ echo "method is "$method
 echo "jec is "$jec
 echo "verbose is "$verbose
 echo "isMC is "$isMC
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/flatter/treeFlatter_dict.py $nanoFileName $maxEntries $maxJet $pN $process $method $jec $verbose $isMC
+echo "run is "$run
+if [ "$run" = "2" ]; then
+    /work/gcelotto/miniconda3/envs/myenv/bin/python \
+        /t3home/gcelotto/ggHbb/flatter/treeFlatter_dict.py \
+        "$nanoFileName" "$maxEntries" "$maxJet" "$pN" \
+        "$process" "$method" "$jec" "$verbose" \
+        "$isMC" "$fileNumber"
+elif [ "$run" = "3" ]; then
+    echo "Running with treeFlatter_dict_Run3.py"
+    /work/gcelotto/miniconda3/envs/myenv/bin/python \
+        /t3home/gcelotto/ggHbb/flatter/treeFlatter_dict_Run3.py \
+        "$nanoFileName" "$maxEntries" "$maxJet" "$pN" \
+        "$process" "$method" "$jec" "$verbose" \
+        "$isMC" "$fileNumber"
+fi
 
 
 echo "Going to copy"

@@ -3,20 +3,33 @@ imax 1
 jmax 2
 kmax *
 ---------------------------------------------
-shapes data_obs    * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws12.root ws3:rooHist_data_cat12
-shapes signal      * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws12.root ws3:model_H_c12
-shapes Zbb         * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws12.root ws3:model_Z_c12
-shapes background  * /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws12.root ws3:CMS_hgg_0_2016_13TeV_bkgshape_noZ
+shapes data_obs    * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:rooHist_data_cat12
+shapes signal      * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:model_H_c12 ws3:model_H_c12_$SYSTEMATIC
+shapes Z      * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:model_Z_c12 ws3:model_Z_c12_$SYSTEMATIC
+shapes background  * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
 ---------------------------------------------
 bin Cat12
 observation -1
 ---------------------------------------------
-bin          Cat12     Cat12     Cat12
-process      signal background Zbb
-process      0  1  2
-rate         1        1     1
+bin          Cat12 Cat12 Cat12
+process      signal background Z
+process      0 1 2
+rate         1 1 1
 ---------------------------------------------
 lumi lnN 1.025  - 1.025
-pdfindex_12_2016_13TeV discrete
+alphaS   lnN 1.0335807836371953 - 1.0428524478032244
+
+PS_ISR   lnN 1.0088503466818672 - 1.0867004871459323
+
+PS_FSR   lnN 1.1198442658892753 - 1.122396589480552
+
+Scale   lnN 1.1607555334601762 - 1.0994510248837606
+
 ---------------------------------------------
-rateZbb  rateParam Cat12 Zbb 1.0
+rateZbb  rateParam  Cat12  Z  1.0  [-1.0,3.0]
+---------------------------------------------
+pdfindex_12_2016_13TeV discrete
+puid   shape 1 - 1
+btag_hf   shape 1 - 1
+btag_lightf   shape 1 - 1
+---------------------------------------------

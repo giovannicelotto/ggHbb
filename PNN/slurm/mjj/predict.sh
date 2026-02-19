@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --output=/t3home/gcelotto/ggHbb/PNN/slurm/outputFiles/%x-%j.out
-#SBATCH --error=/t3home/gcelotto/ggHbb/PNN/slurm/outputFiles/%x-%j.out
+#SBATCH --output=/t3home/gcelotto/ggHbb/PNN/slurm/outputFiles/prediction.out
+#SBATCH --error=/t3home/gcelotto/ggHbb/PNN/slurm/outputFiles/prediction.out
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G
@@ -17,10 +17,11 @@ pN=$2
 process=$3
 modelName=$4
 boosted=$5
+ttbarCR=$6
 
 echo "$file_path"
 echo "Calling"
-python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/predictTorch.py $file_path $process $modelName $boosted
+python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/predictTorch.py $file_path $process $modelName $boosted $ttbarCR
 
 # extract the fileName:
 filename=$(basename "$file_path")

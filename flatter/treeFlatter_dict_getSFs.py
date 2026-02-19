@@ -157,7 +157,7 @@ def get_trig_SF(muon_pt, muon_sIP, triggerScaleFactor_rootFile):
 
 def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeepJet_FixedWP_light, eff_maps_cache_btag, wp_converter, processName):
     
-    btag_sf, btag_sf_hf_up,  btag_sf_hf_down, btag_sf_light_up, btag_sf_light_down = 1.0, 1.0, 1.0, 1.0, 1.0
+    btag_sf_hf_central, btag_sf_hf_up,  btag_sf_hf_down, btag_sf_lightf_central, btag_sf_light_up, btag_sf_light_down = 1.0, 1.0, 1.0, 1.0, 1.0, 1.0
     if not btagMapsExist:
         pass
     else:
@@ -188,7 +188,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_T_central = corrDeepJet_FixedWP_comb.evaluate("central", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_T_up = corrDeepJet_FixedWP_comb.evaluate("up", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_T_down = corrDeepJet_FixedWP_comb.evaluate("down", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
-                    btag_sf *= (currentJet_btagSF_T_central) 
+                    btag_sf_hf_central *= (currentJet_btagSF_T_central) 
                     btag_sf_hf_up *= (currentJet_btagSF_T_up)
                     btag_sf_hf_down *= (currentJet_btagSF_T_down)
 
@@ -196,7 +196,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_T_central = corrDeepJet_FixedWP_light.evaluate("central", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_T_up = corrDeepJet_FixedWP_light.evaluate("up", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_T_down = corrDeepJet_FixedWP_light.evaluate("down", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
-                    btag_sf *= (currentJet_btagSF_T_central) 
+                    btag_sf_lightf_central *= (currentJet_btagSF_T_central) 
                     btag_sf_light_up *= (currentJet_btagSF_T_up) 
                     btag_sf_light_down *= (currentJet_btagSF_T_down) 
 
@@ -210,7 +210,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_T_up = corrDeepJet_FixedWP_comb.evaluate("up", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_T_down = corrDeepJet_FixedWP_comb.evaluate("down", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
 
-                    btag_sf *= (currentJet_btagSF_M_central*eff_M-currentJet_btagSF_T_central*eff_T) / denom
+                    btag_sf_hf_central *= (currentJet_btagSF_M_central*eff_M-currentJet_btagSF_T_central*eff_T) / denom
                     btag_sf_hf_up *= (currentJet_btagSF_M_up*eff_M-currentJet_btagSF_T_up*eff_T) / denom
                     btag_sf_hf_down *= (currentJet_btagSF_M_down*eff_M-currentJet_btagSF_T_down*eff_T) / denom
                 elif is_lf:
@@ -221,7 +221,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_T_up = corrDeepJet_FixedWP_light.evaluate("up", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_T_down = corrDeepJet_FixedWP_light.evaluate("down", "T", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
 
-                    btag_sf *= (currentJet_btagSF_M_central*eff_M-currentJet_btagSF_T_central*eff_T) / denom
+                    btag_sf_lightf_central *= (currentJet_btagSF_M_central*eff_M-currentJet_btagSF_T_central*eff_T) / denom
                     btag_sf_light_up *= (currentJet_btagSF_M_up*eff_M-currentJet_btagSF_T_up*eff_T) / denom
                     btag_sf_light_down *= (currentJet_btagSF_M_down*eff_M-currentJet_btagSF_T_down*eff_T) / denom
 
@@ -235,7 +235,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_M_up = corrDeepJet_FixedWP_comb.evaluate("up", "M", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_M_down = corrDeepJet_FixedWP_comb.evaluate("down", "M", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
 
-                    btag_sf *= (currentJet_btagSF_L_central*eff_L-currentJet_btagSF_M_central*eff_M) / denom
+                    btag_sf_hf_central *= (currentJet_btagSF_L_central*eff_L-currentJet_btagSF_M_central*eff_M) / denom
                     btag_sf_hf_up *= (currentJet_btagSF_L_up*eff_L-currentJet_btagSF_M_up*eff_M) / denom
                     btag_sf_hf_down *= (currentJet_btagSF_L_down*eff_L-currentJet_btagSF_M_down*eff_M) / denom
                 elif is_lf:
@@ -246,7 +246,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_M_up = corrDeepJet_FixedWP_light.evaluate("up", "M", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_M_down = corrDeepJet_FixedWP_light.evaluate("down", "M", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
 
-                    btag_sf *= (currentJet_btagSF_L_central*eff_L-currentJet_btagSF_M_central*eff_M) / denom
+                    btag_sf_lightf_central *= (currentJet_btagSF_L_central*eff_L-currentJet_btagSF_M_central*eff_M) / denom
                     btag_sf_light_up *= (currentJet_btagSF_L_up*eff_L-currentJet_btagSF_M_up*eff_M) / denom
                     btag_sf_light_down *= (currentJet_btagSF_L_down*eff_L-currentJet_btagSF_M_down*eff_M) / denom
             
@@ -256,7 +256,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_L_central = corrDeepJet_FixedWP_comb.evaluate("central", "L", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_L_up = corrDeepJet_FixedWP_comb.evaluate("up", "L", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_L_down = corrDeepJet_FixedWP_comb.evaluate("down", "L", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
-                    btag_sf *= (1.0 - currentJet_btagSF_L_central * eff_L) / denom
+                    btag_sf_hf_central *= (1.0 - currentJet_btagSF_L_central * eff_L) / denom
                     btag_sf_hf_up *= (1.0 - currentJet_btagSF_L_up * eff_L) / denom
                     btag_sf_hf_down *= (1.0 - currentJet_btagSF_L_down * eff_L) / denom
                 elif is_lf:
@@ -264,7 +264,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
                     currentJet_btagSF_L_up = corrDeepJet_FixedWP_light.evaluate("up", "L", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
                     currentJet_btagSF_L_down = corrDeepJet_FixedWP_light.evaluate("down", "L", abs(evt["Jet_hadronFlavour"][j]), float(abs(evt["Jet_eta"][j])), float(evt["Jet_pt"][j]))
 
-                    btag_sf *= (1.0 - currentJet_btagSF_L_central * eff_L) / denom
+                    btag_sf_lightf_central *= (1.0 - currentJet_btagSF_L_central * eff_L) / denom
                     btag_sf_light_up *= (1.0 - currentJet_btagSF_L_up * eff_L) / denom
                     btag_sf_light_down *= (1.0 - currentJet_btagSF_L_down * eff_L) / denom
 
@@ -272,7 +272,7 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
 
         # Jet is M not T
         # Check for nan or infinty
-        for sf in [btag_sf, btag_sf_hf_up, btag_sf_hf_down, btag_sf_light_up, btag_sf_light_down]:
+        for sf in [btag_sf_hf_central, btag_sf_hf_up, btag_sf_hf_down,btag_sf_lightf_central,  btag_sf_light_up, btag_sf_light_down]:
             if not np.isfinite(sf):
                 log_bad_btag_sf(
                     logfile="/t3home/gcelotto/ggHbb/flatter/bad_btagSF.log",
@@ -283,9 +283,10 @@ def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeep
         
 
     return {
-        "btag_sf" : btag_sf,
+        "btag_sf_hf_central" : btag_sf_hf_central,
         "btag_sf_hf_up" : btag_sf_hf_up,
         "btag_sf_hf_down" : btag_sf_hf_down,
+        "btag_sf_lightf_central" : btag_sf_lightf_central,
         "btag_sf_light_up" : btag_sf_light_up,
         "btag_sf_light_down" : btag_sf_light_down,
             }

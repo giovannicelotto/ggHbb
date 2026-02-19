@@ -35,10 +35,10 @@ echo "Higgs Boson MC"
 
 cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
 cmsenv
-python3 /t3home/gcelotto/ggHbb/WSFit/scripts/step2_ws.py -c $CATEGORY
+#python3 /t3home/gcelotto/ggHbb/WSFit/scripts/step2_ws.py -c $CATEGORY
 cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src/flashggFinalFit/Background
 rm /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src/flashggFinalFit/Background/plots/fTest_5families_functionalities_cat$CATEGORY/*.png
-./bin/fTest     --infilename "/t3home/gcelotto/ggHbb/WSFit/ws/step2/ws"$CATEGORY".root"  \
+./bin/fTest     --infilename "/t3home/gcelotto/ggHbb/WSFit/ws/step1/ws"$CATEGORY".root"  \
                 --ncats 1 --singleCat 1 --catNumber $CATEGORY --includeTurnOn $INCLUDE --includeZ $INCLUDEZ   \
                 --outDir plots/fTest_5families_functionalities_cat$CATEGORY \
                 --iterativeFit 0 --blindSignalRegion 1 \

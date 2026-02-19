@@ -1,0 +1,213 @@
+modelName: Jan21_3_50p0
+include_nn: true
+ttbar_CR: both
+boosted: 3
+columns:
+  - jet1_pt
+  - jet1_eta
+  - jet1_phi
+  - jet1_btagWP
+  - jet1_btagDeepFlavB
+  - jet1_nMuons
+  - jet1_nConstituents
+  - jet1_pt_uncor
+  - dR_jet1_dijet
+  - dPhi_jet1_dijet
+  - dEta_jet1_dijet
+  
+  - jet2_pt
+  - jet2_muon_pt
+  - jet2_eta
+  - jet2_phi
+  - jet2_btagWP
+  - jet2_btagDeepFlavB
+  - jet2_nConstituents
+  - dR_jet2_dijet
+  - dPhi_jet2_dijet
+  - dEta_jet2_dijet
+  - jet2_pt_uncor
+  
+  #- has_jet3
+  - jet3_pt
+  - jet3_eta
+  - jet3_phi
+  - jet3_btagWP
+  - jet3_btagDeepFlavB
+  #- jet3_nMuons
+  #- jet3_nConstituents
+  #- jet3_leadTrackPt
+  #- jet3_nElectrons
+  #- jet3_btagTight
+  #- jet3_sv_pt
+  #- jet3_sv_mass
+  #- jet3_sv_Ntrk
+  - dR_jet3_dijet
+  - dPhi_jet3_dijet
+  - dEta_jet3_dijet
+  - dijet_mass
+  - dijet_pt
+  - jet1_muon_pt
+  - jet1_muon_eta
+  - jet1_muon_dxySig
+  #- has_jet4
+  #- jet4_pt
+  #- jet4_eta
+  #- jet4_phi
+  #- jet4_btagWP
+  #- jet4_btagDeepFlavB
+  #- jet4_nMuons
+  #- jet4_nConstituents
+  #- jet4_leadTrackPt
+  #- jet4_nElectrons
+  #- jet4_btagTight
+  #- jet4_sv_pt
+  #- jet4_sv_mass
+  #- jet4_sv_Ntrk
+  #- dR_jet4_dijet
+  #- dPhi_jet4_dijet
+  #- dEta_jet4_dijet
+
+
+
+
+  #- sphericity
+  #- lambda1
+  #- lambda2
+  #- lambda3
+  #- nJets
+
+  #- ht
+  #- nMuons
+  #- nIsoMuons
+  #- nElectrons
+  #- nSV
+  #- cos_theta_star
+
+  - is_ttbar_CR
+  - flat_weight
+MConlyFeatures:
+  - btag_sf_hf_central
+  - btag_sf_hf_up
+  - btag_sf_hf_down
+  - btag_sf_lightf_central
+  - btag_sf_light_up
+  - btag_sf_light_down
+  - xsection
+  #- LHEScaleWeight_MuFdown_MuRdown
+  #- LHEScaleWeight_MuFdown_MuRnom
+  #- LHEScaleWeight_MuFdown_MuRup
+  #- LHEScaleWeight_MuFnom_MuRdown
+  #- LHEScaleWeight_MuFnom_MuRup
+  #- LHEScaleWeight_MuFup_MuRdown
+  #- LHEScaleWeight_MuFup_MuRnom
+  #- LHEScaleWeight_MuFup_MuRup
+  #- PSWeight_ISRdown_FSRnom
+  #- PSWeight_ISRup_FSRnom
+  #- PSWeight_ISRnom_FSRup
+  #- PSWeight_ISRnom_FSRdown
+  #- LHEAlphasWeight_down
+  #- LHEAlphasWeight_up
+  - jet_pileupId_SF_up
+  - jet_pileupId_SF_down
+  - jet_pileupId_SF_nom
+  - jet1_pt_prime
+  - jet1_eta_prime
+  - jet1_mass_prime
+  - jet2_pt_prime
+  - jet2_eta_prime
+  - jet2_phi_prime
+  - jet2_mass_prime
+  - jet3_pt_prime
+  - jet3_eta_prime
+  - jet3_phi_prime
+  - jet3_mass_prime
+  - jet1_muon_pt_prime
+  - jet1_muon_eta_prime
+  - jet1_muon_phi_prime
+  - dijet_pt_prime
+  - dijet_eta_prime
+  - dijet_phi_prime
+  - dijet_dR
+  - dijet_dEta
+  - dijet_twist
+  - dijet_cs
+  - ht_prime
+  - nJets_20
+  - nJets_30
+  - nJets_50
+
+dataPeriods:
+  1A: -1
+  2A: -1
+  3A: -1
+  4A: -1
+  5A: -1
+  6A: -1
+  1B: -1
+  2B: -1
+  3B: -1
+  4B: -1
+  5B: -1
+  6B: -1
+  1C: -1
+  2C: -1
+  3C: -1
+  4C: -1
+  5C: -1
+  1D: -1
+  2D: -1
+  3D: -1
+  4D: -1
+  5D: -1
+
+MC:
+  0 : 0
+  1 : -1 # EWKZJets
+  2 : -1 # Diboson
+  3 : -1 # Diboson
+  4 : -1 # Diboson
+
+  5 : -1    # Top
+  6 : -1    # Top
+  7 : -1    # Top
+  8 : -1    # Top
+  9 : -1    # Top
+  10 : -1   # Top
+
+  11 : -1 # ttbar
+  12 : -1 # ttbar
+  13 : -1 # ttbar
+
+  14 : -1 # WJets
+  15 : -1 #WJets
+  16 : -1 #WJets
+  17 : -1 #WJets
+  18 : -1  #WJets
+  19 : -1 #ZJets
+  20 : -1 #ZJets
+  21 : -1 #ZJets
+  22 : -1 #ZJets
+  
+  23 : 0 #QCD
+  24 : 0 #QCD
+  25 : 0 #QCD
+  26 : 0 #QCD
+  27 : 0 #QCD
+  28 : 0 #QCD
+  29 : 0 #QCD
+  30 : 0 #QCD
+  31 : 0 #QCD
+  32 : 0 #QCD
+  33 : 0 #QCD
+  34 : 0 #QCD
+
+  35 : -1 #Zjets
+  36 : -1 # VBF
+  37 : -1 # ggHbb MINLO
+  48 : -1 #Hbb other prod. mechanisms
+  49 : -1 #Hbb other prod. mechanisms
+  50 : -1 #Hbb other prod. mechanisms
+  51 : -1 #Hbb other prod. mechanisms
+  52 : -1 #Hbb other prod. mechanisms
+  53 : -1 #Hbb other prod. mechanisms
+  54 : -1 #Hbb other prod. mechanisms

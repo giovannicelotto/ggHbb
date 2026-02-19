@@ -117,7 +117,7 @@ fit_systematics.plot_results(x, cTot, err, m, fitregion, bins, outFolder, outNam
 variations = [
     'btag_up', 'btag_down',
     ]
-fit_systematics.apply_variations(variations, dfsMC, bins, fitregion, params, paramsLimits, cuts_string)
-fit_systematics.plot_variations_results(x, cTot, err, bins, fitregion, outFolder)
+#fit_systematics.apply_variations(variations, dfsMC, bins, fitregion, params, paramsLimits, cuts_string)
+#fit_systematics.plot_variations_results(x, cTot, err, bins, fitregion, outFolder)
 fit_systematics.save_results()
 # %%

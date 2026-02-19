@@ -1,0 +1,17 @@
+path : "/t3home/gcelotto/ggHbb/PNN/results_mjjDisco"
+inFolder : "/t3home/gcelotto/ggHbb/PNN/input/data_pt3_1D/"
+models : [
+            [
+              "Jan13_3_50p0",
+              "Jan13_3_50p001",
+              "Jan13_3_50p002",
+
+              "Jan13_3_20p0",
+              "Jan13_3_20p001",
+              "Jan13_3_20p002",
+
+              "Jan13_3_5p0",
+              "Jan13_3_5p001",
+              "Jan13_3_5p002",
+            ],
+            ]

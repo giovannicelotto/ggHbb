@@ -2,9 +2,58 @@ from sklearn import preprocessing
 import pickle
 import pandas as pd
 import numpy as np
+log_features = ["jet1_pt_prime", "jet2_pt_prime", "jet3_pt_prime", "jet1_muon_pt_prime",
+                "jet1_mass_prime", "jet2_mass_prime", "jet3_mass_prime",
+                "ht_prime",
+                "ptj1j2", "ptj1j3", "ptj2j3", 
+                "mj1j2", "mj1j3", "mj2j3"]
+def scale_gnn(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False, log=True, scaler='standard'):
+    """
+    Apply log transformation to features containing 'pt', 'mass', or named 'ht'.
+    
+    Parameters:
+    - data (pd.DataFrame): The dataset.
+    - featuresForTraining (list of str): List of feature names to be scaled.
+    - scalerName (str): Path to save/load the scaler.
+    - fit (bool): If True, fit the scaler; otherwise, load and apply it.
+    - weights (array-like, optional): Weights for mean computation (if used in fitting).
+    
+    Returns:
+    - pd.DataFrame: The transformed and scaled dataset.
+    """
+    
+    data = data.astype(np.float32).copy()
+    if log:
+        # Apply log transformation to selected features
+
+        
+        #Dijet Mass not used as feature
+        #if boosted:
+        #    print("Removing Dijet Mass from features")
+        #    log_features.remove('dijet_mass')
+
+        for col in log_features:
+            print(f"Feature: {col} | Min: {data[col].min():.1f}, Max: {data[col].max():.1f}")
+            data.loc[:, col] = np.log1p(data[col])  # np.log1p(x) is equivalent to np.log(1+x)
+
+    return data
 
 
-def scale(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False, log=True, scaler='standard'):
+def unscale_gnn(data, featuresForTraining, scalerName, log=True):
+
+    if log:
+        for colName in log_features:
+            print(colName, " inverted trasnform")
+            data[colName] = np.exp(data[colName]) - 1
+            print(f"Feature: {colName} | Min: {data[colName].min():.1f}, Max: {data[colName].max():.1f}")
+    
+    return data
+
+
+
+
+
+def scale(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False, log=True, scaler='standard', verbose=False):
     """
     Apply log transformation to features containing 'pt', 'mass', or named 'ht'.
     
@@ -23,15 +72,18 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None, booste
     if log:
         # Apply log transformation to selected features
         log_features = [col for col in featuresForTraining 
-                        if ("_pt" in col or "_mass" in col or col == "ht") 
+                        if ("_pt" in col or "_mass" in col or col == "ht_prime") 
                         and "normalized" not in col]
+        
         #Dijet Mass not used as feature
         #if boosted:
         #    print("Removing Dijet Mass from features")
-        #    log_features.remove('dijet_mass')
+        if 'dijet_mass' in log_features:
+            log_features.remove('dijet_mass')
 
         for col in log_features:
-            print(f"Feature: {col} | Min: {data[col].min():.1f}, Max: {data[col].max():.1f}")
+            if verbose:
+                print(f"Feature: {col} | Min: {data[col].min():.1f}, Max: {data[col].max():.1f}") 
             data.loc[:, col] = np.log1p(data[col])  # np.log1p(x) is equivalent to np.log(1+x)
 
     # Select features for scaling (excluding 'sf')
@@ -67,11 +119,17 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None, booste
     data.update(scaled_data)
 
     return data
-def unscale(data, featuresForTraining, scalerName, log=True):
+def unscale(data, featuresForTraining, scalerName, log=True, verbose=False):
     if log:
         log_features = [col for col in featuresForTraining 
-                        if ("_pt" in col or "_mass" in col or col == "ht") 
+                        if ("_pt" in col or "_mass" in col or col == "ht_prime") 
                         and "normalized" not in col]
+        
+        #Dijet Mass not used as feature
+        #if boosted:
+        #    print("Removing Dijet Mass from features")
+        if 'dijet_mass' in log_features:
+            log_features.remove('dijet_mass')
     with open(scalerName, 'rb') as file:
         scalers = pickle.load(file)
         scaler = scalers['scaler']
@@ -83,7 +141,8 @@ def unscale(data, featuresForTraining, scalerName, log=True):
         for colName in log_features:
             print(colName, " inverted trasnform")
             dataUnscaled[colName] = np.exp(dataUnscaled[colName]) - 1
-            print(f"Feature: {colName} | Min: {dataUnscaled[colName].min():.1f}, Max: {dataUnscaled[colName].max():.1f}")
+            if verbose:
+                print(f"Feature: {colName} | Min: {dataUnscaled[colName].min():.1f}, Max: {dataUnscaled[colName].max():.1f}")
     
     for feature in data.columns:
         if feature not in featuresForTraining:

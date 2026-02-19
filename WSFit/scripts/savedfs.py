@@ -53,7 +53,7 @@ modelName = "Aug28_%d_20p01"%boosted
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
 columns_ = ['dijet_mass', 'dijet_pt',
           'jet1_btagDeepFlavB',   'jet2_btagDeepFlavB',
-          'dimuon_mass',
+          'dimuon_mass', 'jet1_muon_pfRelIso03', 'jet1_muon_pt'
           'nJets']
 columns = columns_.copy()
 dfProcessesMC, dfProcessesData, dfProcessMC_JEC = getDfProcesses_v2()

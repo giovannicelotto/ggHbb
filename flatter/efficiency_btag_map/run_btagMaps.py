@@ -35,8 +35,8 @@ for process, nanoPath in zip(dfProcess.process.iloc[MCList], dfProcess.nanoPath.
     print(process, "... started")
 
 
-    file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)[:2000]
-    print("List of fileNames found... %d"%len(file_paths))
+    file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)[:1500]
+    print("List of fileNames found... %d"%len(file_paths), flush=True)
 
     # Step 2: Define the list of branches to read
     branches_to_load = [

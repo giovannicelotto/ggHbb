@@ -27,19 +27,23 @@ def loadXYWSaved(inFolder):
 
     return Xtrain, Xtest, Ytrain, Ytest, Wtrain, Wtest
 
-def loadXYWrWSaved(inFolder, isTest=False):
-    Xtrain      = pd.read_parquet(inFolder + "/Xtrain.parquet")
-    Xval        = pd.read_parquet(inFolder + "/Xval.parquet")
-    Ytrain      = np.load(inFolder + "/Ytrain.npy")
-    Yval        = np.load(inFolder + "/Yval.npy")
-    Wtrain      = np.load(inFolder + "/Wtrain.npy")
-    Wval        = np.load(inFolder + "/Wval.npy")
+def loadXYWrWSaved(inFolder, isTest=False, btagWP="M"):
+    if btagWP:
+        suffix = "_"+btagWP
+    else:
+        suffix=""
+    Xtrain      = pd.read_parquet(inFolder + f"/Xtrain{suffix}.parquet")
+    Xval        = pd.read_parquet(inFolder + f"/Xval{suffix}.parquet")
+    Ytrain      = np.load(inFolder + f"/Ytrain{suffix}.npy")
+    Yval        = np.load(inFolder + f"/Yval{suffix}.npy")
+    Wtrain      = np.load(inFolder + f"/Wtrain{suffix}.npy")
+    Wval        = np.load(inFolder + f"/Wval{suffix}.npy")
 
-    rWtrain      = np.load(inFolder + "/rWtrain.npy")
-    rWval        = np.load(inFolder + "/rWval.npy")
+    rWtrain      = np.load(inFolder + f"/rWtrain{suffix}.npy")
+    rWval        = np.load(inFolder + f"/rWval{suffix}.npy")
 
-    genMassTrain      = np.load(inFolder + "/genMassTrain.npy")
-    genMassVal        = np.load(inFolder + "/genMassVal.npy")
+    genMassTrain      = np.load(inFolder + f"/genMassTrain{suffix}.npy")
+    genMassVal        = np.load(inFolder + f"/genMassVal{suffix}.npy")
 
     if isTest:
         Xtest       = pd.read_parquet(inFolder + "/Xtest.parquet")

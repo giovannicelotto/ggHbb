@@ -56,24 +56,32 @@ def getDfsFromConfig(idx, return_nn=False, return_lumi=False):
     dfsData = []
     lumi_tot = 0.
     path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/dataframes_NN/%s"%modelName
+    process_names = list(dfProcessesData.process.values)
+
+    print("\n\nOpening Data:", ", ".join(process_names))
     for processName in dfProcessesData.process.values:
-        print("Opening ", processName)
-        df = pd.read_parquet(path+"/dataframes_%s_%s.parquet"%(processName, modelName))
+        #print("Opening ", processName)
+        df = pd.read_parquet(path+"/dataframes_%s_%s.parquet"%(processName, modelName), columns=[  "dijet_mass", "weight", "PNN","jet1_pt_uncor", "jet2_pt_uncor",
+                                                                                                 "jet2_pt", "jet1_eta", "jet2_eta", "jet1_muon_pt", "jet1_muon_eta", "dijet_pt", "jet1_btagDeepFlavB", "jet2_btagDeepFlavB"]) 
         dfsData.append(df)
         lumi_tot = lumi_tot + np.load(path+"/lumi_%s_%s.npy"%(processName, modelName))
 
     # Open the MC
 
     dfsMC_Z = []
+    process_names = list(dfProcessesMC.iloc[MCList_Z].process.values)
+    print("Opening Zbb:", ", ".join(process_names))
     for processName in dfProcessesMC.iloc[MCList_Z].process.values:
-        print("Opening ", processName)
+        #print("Opening ", processName)
         df = pd.read_parquet(path+"/df_%s_%s.parquet"%(processName, modelName))
         dfsMC_Z.append(df)
 
 
     dfsMC_H = []
+    process_names = list(dfProcessesMC.iloc[MCList_H].process.values)
+    print("Opening Hbb:", ", ".join(process_names), "\n\n")
     for processName in dfProcessesMC.iloc[MCList_H].process.values:
-        print("Opening ", processName)
+        #print("Opening ", processName)
         df = pd.read_parquet(path+"/df_%s_%s.parquet"%(processName, modelName))
         dfsMC_H.append(df)
 
@@ -81,12 +89,12 @@ def getDfsFromConfig(idx, return_nn=False, return_lumi=False):
     # Normalize the MC to the luminosity
     for idx, df in enumerate(dfsMC_H):
         dfsMC_H[idx].weight=dfsMC_H[idx].weight*lumi_tot
-        if (0 in MCList_H) & (37 in MCList_H):
-            print("GluGluPowheg and GluGLuMINLO both present, dividing their weights by 2 to avoid double counting")
-            if ((MCList_H[idx]==0) | (MCList_H[idx]==37)):
-                print("Weight sum before weight division for idx ", idx, " is ", dfsMC_H[idx].weight.sum())
-                dfsMC_H[idx].weight=dfsMC_H[idx].weight/2
-                print("Weight sum after weight division for idx ", idx, " is ", dfsMC_H[idx].weight.sum())
+        #if (0 in MCList_H) & (37 in MCList_H):
+        #    print("GluGluPowheg and GluGLuMINLO both present, dividing their weights by 2 to avoid double counting")
+        #    if ((MCList_H[idx]==0) | (MCList_H[idx]==37)):
+        #        print("Weight sum before weight division for idx ", idx, " is ", dfsMC_H[idx].weight.sum())
+        #        dfsMC_H[idx].weight=dfsMC_H[idx].weight/2
+        #        print("Weight sum after weight division for idx ", idx, " is ", dfsMC_H[idx].weight.sum())
      # 13.7        
 
     for idx, df in enumerate(dfsMC_Z):
@@ -115,13 +123,11 @@ def getDfsFromConfig(idx, return_nn=False, return_lumi=False):
     # Concatenate all the subprocesses
     dfMC_Z = pd.concat(dfsMC_Z)
     dfMC_H = pd.concat(dfsMC_H)
-    print(dfMC_H.weight.sum(), len(dfMC_H), " events in Higgs dataset")
     df = pd.concat(dfsData)
 
     if return_nn:
         return dfMC_Z, dfMC_H, df, nbins, x1, x2, lower_NN, upper_NN
     if return_lumi:
-        print("I AM RETURNING THE LUMIIIIII")
         return dfMC_Z, dfMC_H, df, nbins, x1, x2, lumi_tot
     else:
         return dfMC_Z, dfMC_H, df, nbins, x1, x2

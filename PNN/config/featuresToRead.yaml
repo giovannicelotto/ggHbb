@@ -1,88 +1,52 @@
 featuresForTraining:
-  - jet1_pt
-  - jet1_eta
-  - jet1_mass
-  - jet1_phi
-  - jet1_btagTight
+  - jet1_pt_prime
+  - jet1_eta_prime
+  - jet1_btagWP
+  - jet1_mass_prime
+
+  - jet2_pt_prime
+  - jet2_eta_prime
+  - jet2_phi_prime
+  - jet2_btagWP
+  - jet2_mass_prime
   
-  - jet1_sv_Ntrk
-  - jet1_sv_3dSig
-  - jet1_nConstituents
-  - jet1_nTightMuons
-  - jet1_nElectrons
-  - jet1_leadTrackPt
-
-  - jet2_pt
-  - jet2_eta
-  - jet2_mass
-  - jet2_phi
-  - jet2_btagTight
-  - jet2_sv_Ntrk
-  - jet2_sv_3dSig
-  - jet2_nConstituents
-  - jet2_nTightMuons
-  - jet2_nElectrons
-  - jet2_leadTrackPt
-
-  - jet3_pt
-  - jet3_eta
-  - jet3_phi
-  - jet3_mass
+  - jet3_pt_prime
+  - jet3_eta_prime
+  - jet3_phi_prime
   - jet3_btagWP
-  - jet3_nTightMuons
-  - jet3_leadTrackPt
+  - jet3_mass_prime
 
-  #- jet1_rest_pt
-  #- jet1_rest_eta
-  #- jet1_rest_phi
-  #- jet2_rest_pt
-  #- jet2_rest_eta
-  #- jet2_rest_phi
-   
-  - dR_jet3_dijet
-  - dPhi_jet3_dijet
-   
-  - dijet_pt
-  - dijet_eta
-  - dijet_phi
+  - jet1_muon_pt_prime
+  - jet1_muon_eta_prime
+  - jet1_muon_phi_prime
+  - jet1_muon_dxySig
+
+  
+  - dijet_pt_prime
+  - dijet_eta_prime
+  - dijet_phi_prime
   - dijet_mass
   - dijet_dR
   - dijet_dEta
-  - dijet_dPhi
   - dijet_twist
   - dijet_cs
-  #- normalized_dijet_pt  
-  #- cos_theta_star
-  - dijet_pTAsymmetry
-  - centrality
-  #- sphericity
-  
-  - lambda1
-  #- lambda2
-  - lambda3
 
+  #- dimuon_mass
+  #- cos_theta_star
+  - dR_jet3_dijet
+  - dPhi_jet3_dijet
+  
+  
   - nJets_20
   - nJets_30
   - nJets_50
-  - muon_pt
-  #- muon_eta
-  #- muon_phi
-  - muon_dxySig
-  - muon_pfRelIso03_all
+  - ht_prime
   #- muon_dzSig
-
   #- leptonClass
-  - dimuon_mass
 
 # GEN INFORMATION
 genFeatures:
-  - jet3_btagDeepFlavB
-  - jet2_btagDeepFlavB
-  - jet1_btagDeepFlavB
-  - PU_SF
-  - sf
-  - genWeight
-  - btag_central 
+  - jet1_muon_charge
   - b_gen_pt
   - b_gen_eta
   - b_gen_phi
@@ -99,6 +63,64 @@ genFeatures:
   - dR_jet2_genQuark
   - dpT_jet1_genQuark
   - dpT_jet2_genQuark
+  #- jet1_rest_pt
+  #- jet2_rest_pt
+  #- dimuon_mass
+  - lambda2 
+  #- jet1_sv_3dSig
+  #- jet2_sv_3dSig
+  - jet1_pt
+  - jet1_eta
+  - jet1_phi
+  - jet1_leadTrackPt
+  - jet1_mass
+  - jet2_pt
+  - jet2_eta
+  - jet2_phi
+  - jet2_leadTrackPt
+  - jet2_mass
+  - jet3_pt
+  - jet3_eta
+  - jet3_phi
+  - jet3_leadTrackPt
+  - jet3_mass
+  - jet1_muon_pt
+  - jet1_muon_eta
+  - jet1_muon_phi
+  - dijet_pt
+  - dijet_eta
+  - ht
+  - normalized_dijet_pt
+
+
+  - jet3_btagDeepFlavB
+  - jet2_btagDeepFlavB
+  - jet1_btagDeepFlavB
+  - jet1_rest_eta
+  - jet1_rest_phi
+  - jet2_rest_eta
+  - jet2_rest_phi
+
+  #- dijet_pTAsymmetry
+  #- centrality
+  #- sphericity
+  - jet1_phi_prime
+  - jet1_sv_Ntrk
+  - jet1_nConstituents
+  - jet1_nTightMuons
+  - jet1_nElectrons
+  - jet2_sv_Ntrk
+  - jet2_nConstituents
+  - jet2_nTightMuons
+  - jet2_nElectrons
+  - jet3_nTightMuons
+  - jet1_leadTrackPt_prime
+  - jet2_leadTrackPt_prime
+  - jet3_leadTrackPt_prime
+
+  - dijet_phi
+  - jet1_muon_pfRelIso03_all
+  - flat_weight
 
 mass_spin0:
   - 50
@@ -123,3 +145,5 @@ cuts:
     - "dR_jet1_genQuark < 0.4 & dR_jet2_genQuark < 0.4"
   M300:
     - "dR_jet1_genQuark < 0.4 & dR_jet2_genQuark < 0.4"
+
+# & dR_jet1_genQuark < 0.4 & dR_jet2_genQuark < 0.4"

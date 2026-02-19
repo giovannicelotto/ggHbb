@@ -1,0 +1,16 @@
+config_path_Z : "/t3home/gcelotto/ggHbb/WSFit/output/catCONFIG/fit_parameters_with_systematics_Z.json"
+config_path_H : "/t3home/gcelotto/ggHbb/WSFit/output/catCONFIG/fit_parameters_with_systematics_H.json"
+output_chi2_Z : "/t3home/gcelotto/ggHbb/WSFit/output/catCONFIG/Z_fit_catCONFIG_SYST.png"
+output_chi2_H : "/t3home/gcelotto/ggHbb/WSFit/output/catCONFIG/H_fit_catCONFIG_SYST.png"
+output_ws : "/t3home/gcelotto/ggHbb/WSFit/ws/step1/wsCONFIG_SYST.root"
+systematics :
+ - puid_up
+ - puid_down
+ - btag_hf_up
+ - btag_hf_down
+ - btag_lightf_up
+ - btag_lightf_down
+ - scale
+ - PS_ISR
+ - PS_FSR
+ - alphaS

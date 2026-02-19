@@ -65,6 +65,17 @@ values = top_corr["abs_correlation"]
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 
 ax.barh(labels, values)
+for bar in ax.patches:
+    width = bar.get_width()
+    y = bar.get_y() + bar.get_height() / 2
+    ax.text(
+        width,
+        y,
+        f"{width:.3f}",
+        va="center",
+        ha="left",
+        fontsize=10
+    )
 ax.invert_yaxis()  # la più alta in cima
 
 ax.set_xlabel("Absolute correlation")

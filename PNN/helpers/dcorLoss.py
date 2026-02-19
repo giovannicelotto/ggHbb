@@ -228,17 +228,16 @@ class Classifier_HighPt(nn.Module):
         if dropout_prob>0:
             layers.append(nn.Dropout(dropout_prob))
         layers.append(nn.Linear(current_dim, n))
+        layers.append(nn.BatchNorm1d(n))
         layers.append(nn.ReLU())
         if dropout_prob>0:
             layers.append(nn.Dropout(dropout_prob))
-        layers.append(nn.BatchNorm1d(n))
         current_dim = n
         #layers.append(nn.Dropout(dropout_prob))
         for n in nNodes[1:]:
             layers.append(nn.Linear(current_dim, n))
+            layers.append(nn.BatchNorm1d(n))
             layers.append(nn.ReLU())
-#            if dropout_prob>0:
-#                layers.append(nn.Dropout(dropout_prob))
             # Update current dimension to the output of this layer
             current_dim = n  
         

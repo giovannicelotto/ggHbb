@@ -90,10 +90,10 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False):
                 ('jet2_eta', '<',  2.5),
                 ('jet1_btagDeepFlavB', '>',  btag),
                 ('jet2_btagDeepFlavB', '>',  btag),
-                ('muon_pt', '>=',  9.0),
-                ('muon_eta', '>=',  -1.5),
-                ('muon_eta', '<=',  1.5),
-                ('muon_dxySig', '>=', 6.0)
+                ('jet1_muon_pt', '>=',  9.0),
+                ('jet1_muon_eta', '>=',  -1.5),
+                ('jet1_muon_eta', '<=',  1.5),
+                ('jet1_muon_dxySig', '>=', 6.0)
                 ],
                   
                   # OR Condition
@@ -111,10 +111,10 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False):
                 ('jet2_eta', '<',  2.5),
                 ('jet1_btagDeepFlavB', '>',  btag),
                 ('jet2_btagDeepFlavB', '>',  btag),
-                ('muon_pt', '>=',  9.0),
-                ('muon_eta', '>=',  -1.5),
-                ('muon_eta', '<=',  1.5),
-                ('muon_dxySig', '<=', -6.0)
+                ('jet1_muon_pt', '>=',  9.0),
+                ('jet1_muon_eta', '>=',  -1.5),
+                ('jet1_muon_eta', '<=',  1.5),
+                ('jet1_muon_dxySig', '<=', -6.0)
                 ]
 
     ]
@@ -122,12 +122,17 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False):
         filters[0] = filters[0] + [('dijet_pt', '>=', 100)]
         filters[1] = filters[1] + [('dijet_pt', '>=', 100)]
     
-    if ttbarCR:
+    if (ttbarCR=="both"):
+        pass
+    elif (ttbarCR==True) | (ttbarCR==1):
         filters[0] = filters[0] + [('is_ttbar_CR', '==', 1)]
         filters[1] = filters[1] + [('is_ttbar_CR', '==', 1)]
-    else:
+    elif (ttbarCR==False) | (ttbarCR==0):
+        #print("Exlcuding ttbar CR")
         filters[0] = filters[0] + [('is_ttbar_CR', '==', 0)]
         filters[1] = filters[1] + [('is_ttbar_CR', '==', 0)]
+        #filters[0] = filters[0] + [('is_ttbar_CR', '==', 0)]
+        #filters[1] = filters[1] + [('is_ttbar_CR', '==', 0)]
     return filters
 def loadMultiParquet_v2(paths, nMCs=1, columns=None, returnNumEventsTotal=False, selectFileNumberList=None, returnFileNumberList=False, filters=getCommonFilters(), training=False, isJEC=0):
     '''
@@ -544,12 +549,13 @@ def loadMultiParquet_Data_new(dataTaking=[0], nReals=[1], columns=None, selectFi
         lumi_tot = lumi_tot + currentLumi
 
         print("%d files for process %s" %(len(fileNames), processName))
-
+        print("Filters used: ", filters)
         df = pd.read_parquet(fileNames, columns=columns,
                                     engine='pyarrow',
-                                    filters= filters        )
+                                    filters= filters)
 
         dfs.append(df)
+        print("Appended")
     #return dfs
         if returnFileNumberList:
             fileNumberListProcess = []

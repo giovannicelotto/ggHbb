@@ -147,7 +147,7 @@ def assign_labels_and_weights(dfs, signalMasses, boosted, sampling):
     
 
     #dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central  / ((dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central ).sum())
-    dfSig['W'] = dfSig.sf *  dfSig.PU_SF *  dfSig.btag_central * abs(dfSig.genWeight)
+    dfSig['W'] = abs(dfSig.flat_weight)
     dfBkg['W'] = np.ones(len(dfBkg)) / len(dfBkg)
     signal_masses = np.unique(dfSig.genMass)
     n_masses = len(signal_masses)
@@ -162,7 +162,7 @@ def assign_labels_and_weights(dfs, signalMasses, boosted, sampling):
     return dfSig, dfBkg
 
 
-def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split, boosted=False, dataTaking='1A', sampling=True, btagTight=True, mass_spin0=[], feature_cfg=None):
+def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split, boosted=False, dataTaking='1A', sampling=True, btagWP="M", mass_spin0=[], feature_cfg=None):
     
     paths, massHypothesis = get_input_paths(dataTaking, mass_spin0=mass_spin0, boosted=boosted)
 
@@ -172,6 +172,9 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
     for path in paths:
         fileNames = glob.glob(path+"/*.parquet", recursive=True)
         print(path+"/*.parquet")
+        if len(fileNames)==0:
+            print("No files found in ", path)
+            sys.exit(1)
         eg = os.path.basename(fileNames[0])
         match = re.match(r'(.+)_([0-9]+)\.parquet', eg)
         process = match.group(1)
@@ -189,7 +192,7 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
             columnsToRead_ = columnsToRead.copy()
 
         
-        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagWP="M", cutDijet=True))
+        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagWP=btagWP, cutDijet=True, ttbarCR=False))
         if process[:4]=='Data':
             df['sf']=1
             df['btag_central']=1

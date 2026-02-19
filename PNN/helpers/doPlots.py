@@ -104,8 +104,8 @@ def plot_lossTorch(train_loss_history, val_loss_history,
                 color='black', linestyle='dashed', label='Best Epoch')
     # Save the figure
     fig.tight_layout()  # Ensures no overlap between plots
-    fig.savefig(f"{outFolder}/performance/loss_nrows.png")
-    print(f"Saved in {outFolder}/performance/loss_nrows.png")
+    fig.savefig(f"{outFolder}/loss_nrows.png")
+    print(f"Saved in {outFolder}/loss_nrows.png")
     plt.close(fig)
     if gpu:
         return x0

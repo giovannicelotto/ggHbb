@@ -20,16 +20,16 @@ def loadPredictions(processes, isMCList, predictionsFileNames, fileNumberList):
                 l.append(fileName)
         predictionsFileNamesNew.append(l)
 
-        print(len(predictionsFileNamesNew[idx]), " files for process")
+        print("[loadPredictions] ", len(predictionsFileNamesNew[idx]), " files for process")
         try:
             df = pd.read_parquet(predictionsFileNamesNew[idx])
         except:
-            print("Error opening a file")
+            print("[loadPredictions] Error opening a file")
             for f in predictionsFileNamesNew[idx]:
                 try:
                     df = pd.read_parquet(f)
                 except:
-                    print("Removing %s"%f)
+                    print("[loadPredictions] Removing %s"%f)
                     os.remove(f)
             df = pd.read_parquet(predictionsFileNamesNew[idx])
         preds.append(df)

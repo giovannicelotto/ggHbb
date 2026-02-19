@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 hep.style.use("CMS")
 import sys
+import os
 sys.path.append("/t3home/gcelotto/ggHbb/PNN")
 #from checkOrthogonality import checkOrthogonality, checkOrthogonalityInMassBins, plotLocalPvalues
 from helpers.getFeatures import getFeatures
@@ -23,6 +24,7 @@ from sklearn.feature_selection import mutual_info_regression
 import glob
 import dcor
 import os
+from datetime import datetime
 # Get current month and day
 current_date = datetime.now().strftime("%b%d")  # This gives the format like 'Dec12'
 # %%
@@ -30,33 +32,39 @@ hp = getParams()
 parser = argparse.ArgumentParser(description="Script.")
 # Define arguments
 
-parser.add_argument("-v", "--version", type=float, help="version of the model", default=20.01)
-parser.add_argument("-dt", "--date", type=str, help="MonthDay format e.g. Dec17", default="Aug28")
+parser.add_argument("-v", "--version", type=float, help="version of the model", default=50.)
+parser.add_argument("-dt", "--date", type=str, help="MonthDay format e.g. Dec17", default=current_date)
 parser.add_argument("-b", "--boosted", type=int, help="boosted class", default=3)
 parser.add_argument("-s", "--sampling", type=int, help="sampling", default=0)
+parser.add_argument("-e", "--epoch", type=int, help="epoch", default=-1)
 
 
 
 if hasattr(sys, 'ps1') or not sys.argv[1:]:
     # Interactive mode (REPL, Jupyter) OR no args provided → use defaults
     args = parser.parse_args([])
+    print("[INFO] Interactive mode")
 else:
     # Normal CLI usage
     args = parser.parse_args()
 # %%
 results = {}
 inFolder_, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(args.date, args.boosted, str(args.version).replace('.', 'p')), suffixResults='_mjjDisco', createFolder=False)
-inFolder = "/t3home/gcelotto/ggHbb/PNN/input/data_sampling_pt%d_1D"%args.boosted if args.sampling else "/t3home/gcelotto/ggHbb/PNN/input/data_pt%d_1D"%args.boosted
-modelName = "model.pth"
+inFolder = f"/work/gcelotto/ggHbb_work/input_NN/data_pt{args.boosted}_1D"
+modelName = "model.pth" if args.epoch==-1 else "model_e%d.pth"%args.epoch
 featuresForTraining = list(np.load(outFolder+"/model/featuresForTraining.npy"))
 #featuresForTraining +=['dijet_mass']
 #featuresForTraining.remove('jet2_btagDeepFlavB')
 # %%
-Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genMassTrain, genMassVal = loadXYWrWSaved(inFolder=inFolder, isTest=False)
+print("Loading dataset...")
+Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, rWtrain, rWval, genMassTrain, genMassVal = loadXYWrWSaved(inFolder=inFolder, isTest=False, btagWP="M")
+print("Loading dataset... Done")
 # %%
-
+print("Loading model... ")
 model = torch.load(outFolder+"/model/%s"%modelName, map_location=torch.device('cpu'), weights_only=False)
+print("Loading model... Done ")
 model.eval()
+
 with open(outFolder+"/model/model_summary.txt", "w") as f:
     f.write("Model Architecture:\n")
     f.write(str(model))  # Prints the architecture
@@ -73,7 +81,7 @@ with open(outFolder+"/model/model_summary.txt", "w") as f:
 
 
 
-
+print("Scaling datasets... ")
 Xtrain = scale(Xtrain,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
 #Xtest  = scale(Xtest, featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
@@ -83,17 +91,13 @@ Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/model/myScale
 
 Xtrain_tensor = torch.tensor(np.float32(Xtrain[featuresForTraining].values)).float()
 Xval_tensor = torch.tensor(np.float32(Xval[featuresForTraining].values)).float()
-#Xtest_tensor = torch.tensor(np.float32(Xtest[featuresForTraining].values)).float()
-#rawFiles_tensor = torch.tensor(np.float32(rawFiles_bkg[featuresForTraining].values)).float()
-#rawFiles_sig_tensor = torch.tensor(np.float32(rawFiles_sig[featuresForTraining].values)).float()
 # %%
+print("Computing predictions...")
 with torch.no_grad():  # No need to track gradients for inference
     YPredTrain = model(Xtrain_tensor).numpy()
     YPredVal = model(Xval_tensor).numpy()
-    #YPredTest = model(Xtest_tensor).numpy()
-    #YPredRawFiles = model(rawFiles_tensor).numpy()
-    #YPredRawFiles_sig = model(rawFiles_sig_tensor).numpy()
 # %%
+print("Unscaling predictions...")
 Xtrain = unscale(Xtrain, featuresForTraining=featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl")
 Xval = unscale(Xval, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
 #Xtest = unscale(Xtest, featuresForTraining=featuresForTraining,   scalerName =  outFolder + "/model/myScaler.pkl")
@@ -105,18 +109,30 @@ Xval = unscale(Xval, featuresForTraining=featuresForTraining,   scalerName =  ou
 ####
 ####            PLOTS START HERE
 ####
-
+print("Plotting")
 from sklearn.metrics import roc_curve, auc
 maskHiggsData_train = (genMassTrain==0) | (genMassTrain==125)
 maskHiggsData_val = (genMassVal==0) | (genMassVal==125)
-Xtrain['weights']=Xtrain.PU_SF * Xtrain.sf
-Xval['weights']=Xval.PU_SF * Xval.sf
+Xtrain['weights']=Xtrain.flat_weight
+Xval['weights']=Xval.flat_weight
 
-def plot_roc_curve(y_true, y_scores, weights, label, ax):
+
+
+
+
+
+
+
+
+
+
+# %%
+def plot_roc_curve(y_true, y_scores, weights, label, ax, color=None, linestyle='solid'):
     fpr, tpr, _ = roc_curve(y_true, y_scores, sample_weight=weights)
     roc_auc = auc(fpr, tpr)
-    ax.plot(fpr, tpr, label=f"{label} (Weighted AUC = {roc_auc:.3f})")
-
+    ax.plot(fpr, tpr, label=f"{label} (Weighted AUC = {roc_auc:.3f})", color=color, linestyle=linestyle)
+    return roc_auc
+# %%
 fig, ax = plt.subplots()
 
 plot_roc_curve(Ytrain[maskHiggsData_train], YPredTrain[maskHiggsData_train].ravel(), weights=Wtrain[maskHiggsData_train], label="Train", ax=ax)
@@ -128,13 +144,64 @@ ax.set_xlabel('False Positive Rate')
 ax.set_ylabel('True Positive Rate')
 ax.legend()
 fig.savefig(outFolder + "/performance/roc125_weighted.png", bbox_inches='tight')
-print("Saved", outFolder + "/performance/roc.png")
+print("Saved", outFolder + "/performance/roc125_weighted.png")
+ax.set_xlim(0, 0.02)
+ax.set_ylim(0,0.1)
+fig.savefig(outFolder + "/performance/roc125_weighted_zoomed.png", bbox_inches='tight')
+print("Saved", outFolder + "/performance/roc125_weighted_zoomed.png")
 
 
+# -----------------
+fig, ax = plt.subplots(1,1)
+maskHiggsData_train = ((genMassTrain==0) | (genMassTrain==125) ) & (Xtrain['dijet_mass']>100) & (Xtrain['dijet_mass']<150)
+maskHiggsData_val = ((genMassVal==0) | (genMassVal==125) ) & (Xval['dijet_mass']>100) & (Xval['dijet_mass']<150)
+plot_roc_curve(Ytrain[maskHiggsData_train], YPredTrain[maskHiggsData_train].ravel(), weights=Wtrain[maskHiggsData_train], label="Train", ax=ax)
+plot_roc_curve(Yval[maskHiggsData_val], YPredVal[maskHiggsData_val].ravel(),weights=Wval[maskHiggsData_val], label="Validation", ax=ax)
+ax.set_xlim(0, 0.02)
+ax.set_ylim(0,0.1)
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+ax.legend()
+ax.grid(True)
+fig.savefig(outFolder + "/performance/roc125_weighted_zoomed_mjjWindow.png", bbox_inches='tight')
+print("Saved", outFolder + "/performance/roc125_weighted_zoomed_mjjWindow.png")
 
+# -----------------
+# %%
+fig, ax = plt.subplots(1,1)
+masses = {
+    50 :    {"color": "C0"},
+    70 :    {"color": "C1"},
+    100 :   {"color": "C2"},
+    125 :   {"color": "C3"},
+    200 :   {"color": "C4"},
+    300 :   {"color": "C5"},
+}
+for mass in [50,70,100,125,200,300]:
+    masses[mass]["AUC_train"] = plot_roc_curve(Ytrain[(genMassTrain==0) | (genMassTrain==mass)], YPredTrain[(genMassTrain==0) | (genMassTrain==mass)].ravel(), weights=Wtrain[(genMassTrain==0) | (genMassTrain==mass)], label="Train m=%d"%mass, ax=ax, color=f"{masses[mass]['color']}", linestyle='solid')
+    masses[mass]["AUC_val"] = plot_roc_curve(Yval[(genMassVal==0) | (genMassVal==mass)], YPredVal[(genMassVal==0) | (genMassVal==mass)].ravel(),weights=Wval[(genMassVal==0) | (genMassVal==mass)], label="Validation m=%d"%mass, ax=ax, color=f"{masses[mass]['color']}", linestyle='dashed')
+ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+ax.grid(True)
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+fig.savefig(outFolder + "/performance/rocSpin0_weighted.png", bbox_inches='tight')
+print("Saved", outFolder + "/performance/rocSpin0_weighted.png")
+# %%
+fig, ax = plt.subplots(1, 1)
+x_ = np.array(list(masses.keys()))
+y_train = np.array([masses[mass]["AUC_train"] for mass in masses.keys()])
+y_val = np.array([masses[mass]["AUC_val"] for mass in masses.keys()])
+ax.plot(x_, y_train, marker='o', label='Train')
+ax.plot(x_, y_val, marker='o', label='Val')
+ax.set_xlabel('Mass (GeV)')
+ax.set_ylabel('AUC per Mass Point')
+ax.legend()
+ax.set_ylim(0, 1)
+fig.savefig(outFolder + "/performance/AUC_vs_Mass.png", bbox_inches='tight')
+print("Saved", outFolder + "/performance/AUC_vs_Mass.png")
 # %%
 # Sig Bkg Efficiency and SIG
-ts = np.linspace(0, 1, 21)
+ts = np.linspace(0, 1, 41)
 efficiencies = {
     'sigTrain':[],
     'bkgTrain':[],
@@ -150,10 +217,10 @@ efficiencies = {
 
 }
 for t in ts:
-    num = np.sum(Wtrain[(genMassTrain==125) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150) & (YPredTrain.reshape(-1)>t)])
-    den = np.sum(Wtrain[(genMassTrain==125) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150)])
+    num = np.sum(Xtrain.flat_weight[(genMassTrain==125) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150) & (YPredTrain.reshape(-1)>t)])
+    den = np.sum(Xtrain.flat_weight[(genMassTrain==125) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150)])
     sigEff = num/den
-    bkgEff = np.sum(Wtrain[(genMassTrain==0) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150) & (YPredTrain.reshape(-1)>t)])/np.sum(Wtrain[(genMassTrain==0) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150)])
+    bkgEff = np.sum((genMassTrain==0) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150) & (YPredTrain.reshape(-1)>t))/np.sum((genMassTrain==0) & (Xtrain.dijet_mass > 100) & (Xtrain.dijet_mass < 150))
     efficiencies["sigTrain"].append(sigEff)
     efficiencies["bkgTrain"].append(bkgEff)
     significanceTrain = sigEff/np.sqrt(bkgEff) if bkgEff!=0 else 0
@@ -206,81 +273,81 @@ import numpy as np
 from itertools import combinations
 
 # Only for events in mass window
-sig_mask_val = (genMassVal == 125) & (Xval.dijet_mass > 100) & (Xval.dijet_mass < 150)
-bkg_mask_val = (genMassVal == 0) & (Xval.dijet_mass > 100) & (Xval.dijet_mass < 150)
+#sig_mask_val = (genMassVal == 125) & (Xval.dijet_mass > 100) & (Xval.dijet_mass < 150)
+#bkg_mask_val = (genMassVal == 0) & (Xval.dijet_mass > 100) & (Xval.dijet_mass < 150)
 
-sig_scores = YPredVal[sig_mask_val]
-bkg_scores = YPredVal[bkg_mask_val]
+#sig_scores = YPredVal[sig_mask_val]
+#bkg_scores = YPredVal[bkg_mask_val]
 
-ts = np.linspace(0, 1, 50)  # Finer granularity than 21 for better scan
+#ts = np.linspace(0, 1, 50)  # Finer granularity than 21 for better scan
 
-best_sig = 0
-best_cuts = None
-best_n_cats = None
+#best_sig = 0
+#best_cuts = None
+#best_n_cats = None
 
 # Try 2-category combinations
-for t1 in ts[1:-1]:
-    # Define 2 bins: [0, t1], [t1, 1]
-    bins = [t1, 1]
-
-    total_sig = 0
-    for i in range(len(bins)-1):
-        low, high = bins[i], bins[i+1]
-        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
-        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
-        if bkg_eff > 0:
-            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
-    total_sig = np.sqrt(total_sig)
-    print(t1, total_sig)
-    if total_sig > best_sig:
-        best_sig = total_sig
-        best_cuts = bins
-        best_n_cats = 2
-
-# Try 3-category combinations
-for t1, t2 in combinations(ts[1:-1], 2):
-    if t1 >= t2:
-        continue
-    # Define 3 bins: [0, t1], [t1, t2], [t2, 1]
-    bins = [t1, t2, 1]
-
-    total_sig = 0
-    for i in range(len(bins)-1):
-        low, high = bins[i], bins[i+1]
-        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
-        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
-        if bkg_eff > 0:
-            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
-    total_sig = np.sqrt(total_sig)
-    if total_sig > best_sig:
-        best_sig = total_sig
-        best_cuts = bins
-        best_n_cats = 3
-# %%
-# Try 4-category combinations
-for t1, t2, t3 in combinations(ts[1:-1], 3):
-    if (t1 >= t2) | (t2 >=t3) | (t1>=t3):
-        continue
-    # Define 4 bins: [0, t1], [t1, t2], [t2, 1]
-    bins = [0,t1, t2, t3, 1]
-
-    total_sig = 0
-    for i in range(len(bins)-1):
-        low, high = bins[i], bins[i+1]
-        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
-        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
-        if bkg_eff > 0:
-            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
-    total_sig = np.sqrt(total_sig)
-    if total_sig > best_sig:
-        best_sig = total_sig
-        best_cuts = bins
-        best_n_cats = 4
-
-# %%
-print(f"Best total significance: {best_sig:.3f}")
-print(f"Best number of categories: {best_n_cats}")
-print(f"Best NN score cuts: {best_cuts}")
+#for t1 in ts[1:-1]:
+#    # Define 2 bins: [0, t1], [t1, 1]
+#    bins = [t1, 1]
+#
+#    total_sig = 0
+#    for i in range(len(bins)-1):
+#        low, high = bins[i], bins[i+1]
+#        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
+#        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
+#        if bkg_eff > 0:
+#            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
+#    total_sig = np.sqrt(total_sig)
+#    print(t1, total_sig)
+#    if total_sig > best_sig:
+#        best_sig = total_sig
+#        best_cuts = bins
+#        best_n_cats = 2
+#
+## Try 3-category combinations
+#for t1, t2 in combinations(ts[1:-1], 2):
+#    if t1 >= t2:
+#        continue
+#    # Define 3 bins: [0, t1], [t1, t2], [t2, 1]
+#    bins = [t1, t2, 1]
+#
+#    total_sig = 0
+#    for i in range(len(bins)-1):
+#        low, high = bins[i], bins[i+1]
+#        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
+#        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
+#        if bkg_eff > 0:
+#            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
+#    total_sig = np.sqrt(total_sig)
+#    if total_sig > best_sig:
+#        best_sig = total_sig
+#        best_cuts = bins
+#        best_n_cats = 3
+## %%
+## Try 4-category combinations
+#for t1, t2, t3 in combinations(ts[1:-1], 3):
+#    if (t1 >= t2) | (t2 >=t3) | (t1>=t3):
+#        continue
+#    # Define 4 bins: [0, t1], [t1, t2], [t2, 1]
+#    bins = [0,t1, t2, t3, 1]
+#
+#    total_sig = 0
+#    for i in range(len(bins)-1):
+#        low, high = bins[i], bins[i+1]
+#        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
+#        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
+#        if bkg_eff > 0:
+#            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
+#    total_sig = np.sqrt(total_sig)
+#    if total_sig > best_sig:
+#        best_sig = total_sig
+#        best_cuts = bins
+#        best_n_cats = 4
+#
+## %%
+#print(f"Best total significance: {best_sig:.3f}")
+#print(f"Best number of categories: {best_n_cats}")
+#print(f"Best NN score cuts: {best_cuts}")
 
 
 
@@ -296,24 +363,30 @@ from helpers.doPlots import NNoutputs
 
 NNoutputs(signal_predictions=YPredVal[genMassVal==125], realData_predictions=YPredVal[genMassVal==0], signalTrain_predictions=YPredTrain[genMassTrain==125], realDataTrain_predictions=YPredTrain[Ytrain==0], outName=outFolder+"/performance/NNoutput.png", log=False, doubleDisco=False, label='NN output')
 
-NNoutputs(signal_predictions=YPredVal[(genMassVal==125) & (Xval.jet1_btagTight>=0.5)& (Xval.jet2_btagTight>=0.71)], realData_predictions=YPredVal[(genMassVal==0) & (Xval.jet1_btagTight>=0.5)& (Xval.jet2_btagTight>=0.5)], signalTrain_predictions=YPredTrain[(genMassTrain==125) & (Xtrain.jet1_btagTight>=0.5)& (Xtrain.jet2_btagTight>0.5)], realDataTrain_predictions=YPredTrain[(Ytrain==0) & (Xtrain.jet1_btagTight>=0.5) & (Xtrain.jet2_btagTight>0.5)], outName=outFolder+"/performance/NNoutput_tight.png", log=False, doubleDisco=False, label='NN output')
+NNoutputs(signal_predictions=YPredVal[(genMassVal==125) & (Xval.jet1_btagWP>=3)& (Xval.jet2_btagWP>=3)], realData_predictions=YPredVal[(genMassVal==0) & (Xval.jet1_btagWP>=3)& (Xval.jet2_btagWP>=3)], signalTrain_predictions=YPredTrain[(genMassTrain==125) & (Xtrain.jet1_btagWP>=3)& (Xtrain.jet2_btagWP>=3)], realDataTrain_predictions=YPredTrain[(Ytrain==0) & (Xtrain.jet1_btagWP>=3) & (Xtrain.jet2_btagWP>=3)], outName=outFolder+"/performance/NNoutput_tight.png", log=False, doubleDisco=False, label='NN output')
 # %%
 
 # LOSS
-train_loss_history = np.load(outFolder + "/model/train_loss_history.npy")
-val_loss_history = np.load(outFolder + "/model/val_loss_history.npy")
-if os.path.exists(outFolder + "/model/train_classifier_loss_history.npy"):
-    train_classifier_loss_history = np.load(outFolder + "/model/train_classifier_loss_history.npy")
-    val_classifier_loss_history = np.load(outFolder + "/model/val_classifier_loss_history.npy")
-    train_dcor_loss_history = np.load(outFolder + "/model/train_disco_loss_history.npy")
-    val_dcor_loss_history = np.load(outFolder + "/model/val_disco_loss_history.npy")
-    plot_lossTorch(train_loss_history, val_loss_history, 
-                train_classifier_loss_history, val_classifier_loss_history,
-                train_dcor_loss_history, val_dcor_loss_history,
-                train_closure_loss_history=None, val_closure_loss_history=None,
-                outFolder=outFolder, gpu=False)
-doPlotLoss_Torch(train_loss_history, val_loss_history, outName=outFolder+"/performance/loss.png", earlyStop=np.argmin(val_loss_history))
-
+if os.path.exists(outFolder + "/model/train_loss_history.npy"):
+    train_loss_history = np.load(outFolder + "/model/train_loss_history.npy")
+    val_loss_history = np.load(outFolder + "/model/val_loss_history.npy")
+    if os.path.exists(outFolder + "/model/train_classifier_loss_history.npy"):
+        train_classifier_loss_history = np.load(outFolder + "/model/train_classifier_loss_history.npy")
+        val_classifier_loss_history = np.load(outFolder + "/model/val_classifier_loss_history.npy")
+        if os.path.exists(outFolder + "/model/train_shape_loss_history.npy"):
+            train_dcor_loss_history = np.load(outFolder + "/model/train_shape_loss_history.npy")
+            val_dcor_loss_history = np.load(outFolder + "/model/val_shape_loss_history.npy")
+        else:
+            train_dcor_loss_history = np.load(outFolder + "/model/train_disco_loss_history.npy")
+            val_dcor_loss_history = np.load(outFolder + "/model/val_disco_loss_history.npy")
+        plot_lossTorch(train_loss_history, val_loss_history, 
+                    train_classifier_loss_history, val_classifier_loss_history,
+                    train_dcor_loss_history, val_dcor_loss_history,
+                    train_closure_loss_history=None, val_closure_loss_history=None,
+                    outFolder=outFolder, gpu=False)
+    doPlotLoss_Torch(train_loss_history, val_loss_history, outName=outFolder+"/performance/loss.png", earlyStop=np.argmin(val_loss_history))
+else:
+    print("No loss history found.")
 plt.close('all')
 print(YPredVal.reshape(-1).shape)
 print(Yval.shape)
@@ -328,6 +401,8 @@ for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
 ax.set_xlabel("Dijet mass [GeV]")
 ax.legend()
 fig.savefig(outFolder+"/performance/scan_val.png", bbox_inches='tight')
+
+
 nn_score_bins = [0 ,0.3, 0.6, 0.7 ,1]
 fig, ax = plt.subplots(1, 1)
 for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
@@ -337,20 +412,134 @@ for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
 ax.set_xlabel("Dijet mass [GeV]")
 fig.savefig(outFolder+"/performance/scan_train.png", bbox_inches='tight')
 
-nn_score_bins = [0.7 ,0.75, 0.8, 0.85 ,0.9]
+
+
+
+nn_score_bins = [0.7 ,0.75, 0.8, 0.85 ,0.9, 1]
 fig, ax = plt.subplots(1, 1)
 for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
     maskTrain = (YPredTrain.reshape(-1)>low) & (Ytrain==0)
-    ax.hist(Xtrain.dijet_mass[maskTrain], bins=np.linspace(70, 300, 81), label=f'{low} < NN . DisCo = %.3f'%dcor.distance_correlation(YPredTrain.reshape(-1)[maskTrain], Xtrain.dijet_mass[maskTrain]), density=True, histtype='step')
+    ax.hist(Xtrain.dijet_mass[maskTrain], bins=np.linspace(50, 300, 81), label=f'{low} < NN . DisCo = %.3f'%dcor.distance_correlation(YPredTrain.reshape(-1)[maskTrain], Xtrain.dijet_mass[maskTrain]), density=True, histtype='step')
     ax.legend()
 ax.set_xlabel("Dijet mass [GeV]")
 fig.savefig(outFolder+"/performance/scan_train_highNN.png", bbox_inches='tight')
 
+
+
+
+
+
+
+
+# target background efficiencies
+bkg_effs = [0.1, 0.05, 0.01, 0.005, 0.0025, 0.001]
+y_pred = YPredTrain.reshape(-1)
+bkg_mask = (Ytrain == 0)
+sig_mask = (genMassTrain == 125)
+nn_thresholds = {
+    eff: np.quantile(y_pred[bkg_mask], 1 - eff)
+    for eff in bkg_effs
+}
+
+fig, ax = plt.subplots(1, 2, figsize=(15, 8), sharey=True)
+for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
+
+    # background passing the cut
+    mask_bkg = (y_pred > thr) & (bkg_mask) 
+
+    # signal efficiency
+    sig_eff = np.sum(Xtrain['flat_weight'][(sig_mask) & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)& (y_pred>thr)])/np.sum(Xtrain['flat_weight'][(sig_mask)  & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)])
+
+    disco = dcor.distance_correlation(
+        y_pred[mask_bkg],
+        Xtrain.dijet_mass[mask_bkg]
+    )
+    if idx< len(bkg_effs)//2:
+        ax[0].hist(
+            Xtrain.dijet_mass[mask_bkg],
+            bins=np.linspace(50, 300, 81),
+            density=True,
+            histtype='step',
+            label=(
+                f"Bkg eff = {100*bkg_eff:.2f}%  "
+                f"Sig eff = {100*sig_eff:.2f}%  "
+                #f"NN thr = {thr:.3f} | "
+                f"DisCo = {disco:.3f}"
+            )
+        )
+        ax[0].set_xlabel("Dijet mass [GeV]")
+        ax[0].legend(fontsize=14)
+    else:
+
+        ax[1].hist(
+            Xtrain.dijet_mass[mask_bkg],
+            bins=np.linspace(50, 300, 81),
+            density=True,
+            histtype='step',
+            label=(
+                f"Bkg eff = {100*bkg_eff:.2f}%  "
+                f"Sig eff = {100*sig_eff:.2f}%  "
+                #f"NN thr = {thr:.3f} | "
+                f"DisCo = {disco:.3f}"
+            )
+        )
+        ax[1].set_xlabel("Dijet mass [GeV]")
+        ax[1].legend(fontsize=14)
+
+
+fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection.png", bbox_inches='tight')
+
+# %%
+
+
+bkg_effs = [0.01, 0.005, 0.0025, 0.001]
+from functions import loadMultiParquet_Data_new, getCommonFilters
+data_5d = loadMultiParquet_Data_new(dataTaking=[21], nReals=-1, columns=featuresForTraining, filters=getCommonFilters(btagWP='T', cutDijet=True, ttbarCR=False))[0]
+# %%
+data_5d = scale(data_5d[0], featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+data_5d_tensor = torch.tensor(np.float32(data_5d[featuresForTraining].values)).float()
+# %%
+with torch.no_grad():  # No need to track gradients for inference
+    YPred_data_5d = model(data_5d_tensor).numpy()
+fig, ax = plt.subplots(1, 1)
+
+for bkg_eff, thr in nn_thresholds.items():
+    if bkg_eff < 0.0003:
+        continue
+
+    # background passing the cut
+    mask_bkg = (y_pred > thr) & bkg_mask
+
+    # signal efficiency
+    sig_eff = np.sum(Xtrain['flat_weight'][(sig_mask) & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)& (y_pred>thr)])/np.sum(Xtrain['flat_weight'][(sig_mask)  & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)])
+
+    disco = dcor.distance_correlation(
+        y_pred[mask_bkg],
+        Xtrain.dijet_mass[mask_bkg]
+    )
+
+    ax.hist(
+        Xtrain.dijet_mass[mask_bkg],
+        bins=np.linspace(60, 240, 51),
+        density=True,
+        histtype='step',
+        label=(
+            f"Bkg eff = {100*bkg_eff:.3g}% | "
+            f"Sig eff = {100*sig_eff:.2f}% | "
+            f"NN thr = {thr:.3f} | "
+            f"DisCo = {disco:.3f}"
+        )
+    )
+ax.set_xlabel("Dijet mass [GeV]")
+ax.legend()
+fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection_5d_T.png", bbox_inches='tight')
+
 # %%
 from helpers.doPlots import getShapTorch
+
 #getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
 #Xtrain_tensor = torch.tensor(np.float32(Xtrain[featuresForTraining].values[(YPredTrain<1e-4).reshape(-1)])).float()
-nEvents = 3000
+nEvents = 500
 subdf_0 =Xtrain[genMassTrain==0][featuresForTraining].iloc[:int(nEvents/2)]
 subdf_1 = Xtrain[genMassTrain==125][featuresForTraining].iloc[:int(nEvents/2)]
 subdf_0_scaled = scale(subdf_0,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
@@ -358,6 +547,24 @@ subdf_1_scaled = scale(subdf_1,featuresForTraining,  scalerName= outFolder + "/m
 subTensor_0 =  torch.tensor(np.float32(subdf_0_scaled.values)).float()
 subTensor_1 =  torch.tensor(np.float32(subdf_1_scaled.values)).float()
 subTensor = torch.cat([subTensor_0, subTensor_1])
+# %%
+import shap
+
+X = subTensor.numpy()
+
+background = subTensor
+explainer = shap.DeepExplainer(
+    model,
+    background
+)
+# explain a subset (recommended for speed)
+
+shap_values = explainer.shap_values(
+    subTensor
+)
+# %%
+phi_all = abs(shap_values).mean(axis=0).reshape(-1)
+
 # %%
 import random
 from math import comb
@@ -485,30 +692,79 @@ def plot_shap_bar(phi_all, feature_names, top_n=10, out_file=None):
 
 
 # Example with 62 features
-N_features = len(featuresForTraining)
-x_sample = subTensor[0].numpy()           # take one event to explain
-x_baseline = np.mean(subTensor.numpy(), axis=0)  # baseline = average of background
+#N_features = len(featuresForTraining)
+#x_sample = subTensor[0].numpy()           # take one event to explain
+#x_baseline = np.mean(subTensor.numpy(), axis=0)  # baseline = average of background
+#
+#phi = monte_carlo_shap(model_forward, x_sample, x_baseline, n_samples=100)
+def monte_carlo_shap_dataset(
+    model,
+    X,
+    x_baseline,
+    n_samples=100,
+    agg="mean_abs",
+):
+    """
+    Compute global SHAP importance by averaging per-event SHAP values.
 
-phi = monte_carlo_shap(model_forward, x_sample, x_baseline, n_samples=3000)
-import numpy as np
+    Args:
+        model: callable model
+        X: array of shape (N_events, N_features)
+        x_baseline: 1D baseline vector
+        n_samples: MC samples per feature
+        agg: "mean_abs" or "mean"
+
+    Returns:
+        global_importance: 1D array (N_features,)
+        shap_values: 2D array (N_events, N_features)
+    """
+    n_events, n_features = X.shape
+    shap_values = np.zeros((n_events, n_features))
+
+    for k in range(n_events):
+        shap_values[k] = monte_carlo_shap(
+            model,
+            X[k],
+            x_baseline,
+            n_samples=n_samples,
+        )
+
+    if agg == "mean_abs":
+        global_importance = np.mean(np.abs(shap_values), axis=0)
+    elif agg == "mean":
+        global_importance = np.mean(shap_values, axis=0)
+    else:
+        raise ValueError("Unknown aggregation")
+
+    return global_importance, shap_values
+#X = subTensor.numpy()          # (N_events, N_features)
+#x_baseline = X.mean(axis=0)
+#
+#global_imp, shap_vals = monte_carlo_shap_dataset(
+#    model_forward,
+#    X,
+#    x_baseline,
+#    n_samples=5,
+#)
+#
+#import numpy as np
 
 # phi: 1D array, length = number of features
 # feature_names: list of feature names, same order as phi
+# %%
 
-# Get absolute values to measure magnitude of impact
-phi_abs = np.abs(phi)
 
 # Sort features by descending importance
-indices = np.argsort(phi_abs)[::-1]
+indices = np.argsort(phi_all)[::-1]
 top_features = np.array(featuresForTraining)[indices]
-top_values = phi_abs[indices]
+top_values = phi_all[indices]
 
 # Display top 10 features
 for f, v in zip(top_features[:10], top_values[:10]):
     print(f"{f}: {v:.4f}")
 
 # phi[i] = approximate SHAP value for feature i
-plot_shap_bar(phi_abs, featuresForTraining, top_n=15, out_file=outFolder+"/performance/shapMC.png")
+plot_shap_bar(phi_all, featuresForTraining, top_n=15, out_file=outFolder+"/performance/shapMC.png")
 #getShapTorch(Xtrain[featuresForTraining], model, outName=outFolder+"/performance/shap.png", nFeatures=10, tensor=subTensor_1)
 # %%
 sys.path.append("/t3home/gcelotto/ggHbb/scripts/plotScripts/")
@@ -530,6 +786,8 @@ plotNormalizedFeatures(data=[Xtrain[(genMassTrain==125)],
                         legendLabels=["S", "B"],
                         colors=["blue", 'red'],
                         figsize=(30,50),
+                        weights=[Xtrain[(genMassTrain==125)].flat_weight,
+                                 Xtrain[(genMassTrain==0)].flat_weight],
                         histtypes=["step", "step"],
                         error=False)
 # %%

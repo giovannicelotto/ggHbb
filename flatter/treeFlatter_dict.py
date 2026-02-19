@@ -8,10 +8,11 @@ import awkward as ak
 from correctionlib import _core
 import gzip
 from jetsSelector import jetsSelector
-from getJetSysJEC import getJetSysJEC
+#from getJetSysJEC import getJetSysJEC
 import time
 import math
 import json
+from addFeatures import addFeatureToFile
 import os
 
 from functions import getDfProcesses_v2
@@ -33,13 +34,13 @@ def has_non_finite(features):
             # non-numeric (should not happen, but be safe)
             continue
     return False, None, None
-def log_bad_event(logfile, process, event, key, value):
+def log_bad_event(logfile, process, fileNumber, event, key, value):
     with open(logfile, "a+") as f:
         f.write(
-            f"{process} ev={event} bad_feature={key} value={value}\n"
+            f"{process} {fileNumber} ev={event} bad_feature={key} value={value}\n"
         )
 
-def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose, JECname, isMC, folder_cfg):
+def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, verbose, JECname, isMC, folder_cfg, fileNumber):
     start_time = time.time()
     maxEntries=int(maxEntries)
     maxJet=int(maxJet)
@@ -63,10 +64,14 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     
 
     # open the file for the SF
-    histPath = folder_cfg["trig_SF_folder"]+"/trgMu_SF_UL.root"
-    triggerScaleFactor_rootFile = ROOT.TFile(histPath, "READ")
-    if not triggerScaleFactor_rootFile or triggerScaleFactor_rootFile.IsZombie():
-        raise RuntimeError(f"Failed to open ROOT file: {histPath}")
+    if isMC:
+        histPath = folder_cfg["trig_SF_folder"]+"/trgMu_SF_UL.root"
+        triggerScaleFactor_rootFile = ROOT.TFile(histPath, "READ")
+        if not triggerScaleFactor_rootFile or triggerScaleFactor_rootFile.IsZombie():
+            raise RuntimeError(f"Failed to open ROOT file: {histPath}")
+    else:
+        pass
+
     
     # Open the WorkingPoint correction lib
     # /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv9/latest/btagging.json.gz
@@ -95,7 +100,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
     # Open the map of efficiency for btag SF
     btagMapsExist=False
-    processNameForBtag = "GluGluHToBBMINLO" if processName=="GluGluHToBBMINLO_private" else processName
+    processNameForBtag = "GluGluHToBBMINLO" if "GluGluHToBBMINLO_" in processName else processName #tr and private get the same maps
     if os.path.exists(folder_cfg["BTagEfficiencyMap_folder"]+f"/btag_efficiency_map_{processNameForBtag}_T.json"):
         btagMapsExist=True
         eff_maps_cache_btag = {}
@@ -177,7 +182,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         jet2_uncor  = ROOT.TLorentzVector(0.,0.,0.,0.)
         
         # to be checked
-        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(evt["nJet"], evt["Jet_eta"], evt["Jet_muonIdx1"],  evt["Jet_muonIdx2"], evt["Muon_isTriggering"], jetsToCheck, evt["Jet_btagDeepFlavB"], evt["Jet_puId"], evt["Jet_jetId"], method=method, Jet_pt=evt["Jet_pt"], maskJets=maskJets)
+        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(evt["nJet"], evt["Jet_eta"], evt["Jet_muonIdx1"],  evt["Jet_muonIdx2"], evt["Muon_isTriggering"],  evt["Muon_pt"], evt["Muon_dxy"], evt["Muon_dxyErr"], jetsToCheck, evt["Jet_btagDeepFlavB"], evt["Jet_puId"], evt["Jet_jetId"], method=method, Jet_pt=evt["Jet_pt"], maskJets=maskJets)
         verbose and print("Ev : %d | %d %d %d %d"%(ev, selected1, selected2, muonIdx1, muonIdx2))
 
         if selected1==999:
@@ -196,6 +201,10 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         features_.update(fill_jet_features("jet1", selected1, evt, jet1, dijet=dijet))
         # Jet2
         features_.update(fill_jet_features("jet2", selected2, evt, jet2, dijet=dijet))
+        if muonIdx2!=999:
+            features_["jet2_has_trigMuon"] = 1
+        else:
+            features_["jet2_has_trigMuon"] = 0
 
         # 3rd Jets
         if np.sum(maskJets)>2:
@@ -205,11 +214,11 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 else:
                     selected3 = i
                     jet3.SetPtEtaPhiM(evt["Jet_pt"][selected3],evt["Jet_eta"][selected3],evt["Jet_phi"][selected3],evt["Jet_mass"][selected3])
-                    features_.update(fill_jet_features("jet3", selected3, evt, jet3, dijet=dijet))
+                    features_.update(fill_jet_features("jet3", selected3, evt, jet3, dijet=dijet, jetIsPresent=True))
                     break
         else:
             selected3 = None
-            features_.update(fill_jet_features("jet3", idx=None, evt=evt, jet_vec=None, dijet=None))
+            features_.update(fill_jet_features("jet3", idx=None, evt=evt, jet_vec=None, dijet=None, jetIsPresent=False))
         
         # 4th Jets
         if np.sum(maskJets)>3:
@@ -219,11 +228,11 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 else:
                     selected4 = i
                     jet4.SetPtEtaPhiM(evt["Jet_pt"][selected4],evt["Jet_eta"][selected4],evt["Jet_phi"][selected4],evt["Jet_mass"][selected4])
-                    features_.update(fill_jet_features("jet4", idx=selected4, evt=evt, jet_vec=jet4, dijet=dijet))
+                    features_.update(fill_jet_features("jet4", idx=selected4, evt=evt, jet_vec=jet4, dijet=dijet, jetIsPresent=True))
                     break
         else:
             selected4 = None
-            features_.update(fill_jet_features("jet4", idx=None, evt=evt, jet_vec=None, dijet=None))
+            features_.update(fill_jet_features("jet4", idx=None, evt=evt, jet_vec=None, dijet=None, jetIsPresent=False))
             
         # Dijet
         dijet_features = fill_dijet_features(dijet, jet1, jet2, evt)
@@ -250,8 +259,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
 
 ## ttbar CR
-    #Muon as Leading
-        tt_features, tt_weight = fill_ttbar_CR_features(evt, isMC, processName, muon_RECO_map, muon_ID_map, muon_ISO_map, electrons_SF_map)
+
+        tt_features, tt_weight = fill_ttbar_CR_features(evt, isMC, muonIdx1, muonIdx2,processName, muon_RECO_map, muon_ID_map, muon_ISO_map, electrons_SF_map)
         
         features_.update(tt_features)
         event_weight *= tt_weight
@@ -273,7 +282,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             isMuon2 = True
             muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
             muon2.SetPtEtaPhiM(evt["Muon_pt"][muonIdx2], evt["Muon_eta"][muonIdx2], evt["Muon_phi"][muonIdx2], evt["Muon_mass"][muonIdx2])
-            features_muon2, muon2_weight =fill_trig_muon_features(muon2,muonIdx2, jet2, "2", muon_RECO_map, evt)
+            features_muon2, muon2_weight =fill_trig_muon_features(muon2,muonIdx2, jet2, "2", muon_RECO_map, evt, has_muon=isMuon2)
             features_.update(features_muon2)
             event_weight *= muon2_weight
             
@@ -289,13 +298,15 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 if (mu != evt["Jet_muonIdx1"][selected2]) & (mu != evt["Jet_muonIdx2"][selected2]):
                     # avoid all muons not inside jet2
                     continue
+                #if (evt["Muon_pt"][mu]<9) | (abs(evt["Muon_dxy"][mu]/evt["Muon_dxyErr"][mu])<6):
+                #    continue
                 else:
                     # There is a second muon non triggering
                     isTrigMuon2 = False
                     isMuon2 = True
                     muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
                     muon2.SetPtEtaPhiM(evt["Muon_pt"][mu], evt["Muon_eta"][mu], evt["Muon_phi"][mu], evt["Muon_mass"][mu])
-                    features_muon2, muon2_weight =fill_trig_muon_features(muon2,mu, jet2, "2", muon_RECO_map, evt)
+                    features_muon2, muon2_weight =fill_trig_muon_features(muon2,mu, jet2, "2", muon_RECO_map, evt, has_muon=isMuon2)
                     features_.update(features_muon2)
                     event_weight *= muon2_weight
                     
@@ -303,10 +314,10 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                     break
             # R3: no second muon found
             if isMuon2 == False:
-                features_muon2, muon2_weight = fill_trig_muon_features(None,None, jet2, "2",  muon_RECO_map, evt)
+                features_muon2, muon2_weight = fill_trig_muon_features(None,None, jet2, "2",  muon_RECO_map, evt, has_muon=isMuon2)
                 features_.update(features_muon2)
                 event_weight *= muon2_weight
-        features_['dimuon_mass'] = np.float32((muon+muon2).M()) if isMuon2 else -1.
+        features_['dimuon_mass'] = np.float32((muon+muon2).M()) if isMuon2 else 0.106
 # Trigger
         features_['jet1_muon_fired_HLT_Mu12_IP6'] = int(bool(evt["Muon_fired_HLT_Mu12_IP6"][muonIdx1]))
         features_['jet1_muon_fired_HLT_Mu10p5_IP3p5'] = int(bool(evt["Muon_fired_HLT_Mu10p5_IP3p5"][muonIdx1]))
@@ -320,10 +331,54 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         features_['jet1_muon_fired_HLT_Mu9_IP6'] = int(bool(evt["Muon_fired_HLT_Mu9_IP6"][muonIdx1]))
 
         if isMC:
-            evt_gen = get_event_genBranches(branches, ev)
+            evt_gen = get_event_genBranches(branches, ev, processName=processName)
             features_gen, weight_gen  = fill_gen_info(evt, evt_gen, jet1, jet2, selected1, selected2, selected3, isMC, processName)
             features_.update(features_gen)
             event_weight *= weight_gen
+            # https://indico.ihep.ac.cn/event/16093/contributions/43970/attachments/21148/24086/SF.pdf
+            # PDF
+            for k in range(1,101):
+                features_[f"LHEPdfWeight_{k}"] = evt_gen["LHEPdfWeight"][k]
+            # Alpha_S
+            features_[f"LHEAlphasWeight_down"] = evt_gen["LHEPdfWeight"][101]
+            features_[f"LHEAlphasWeight_up"] = evt_gen["LHEPdfWeight"][102]
+            # MuR and MuF
+            scale_order = [
+                    (0.5, 0.5),(1.0, 0.5),(2.0, 0.5),
+                    (0.5, 1.0),(1.0, 1.0),(2.0, 1.0),
+                    (0.5, 2.0),(1.0, 2.0),(2.0, 2.0)
+                ]
+            if len(evt_gen["LHEScaleWeight"])==8:
+                scale_order.remove((1.0,1.0))
+            for idx, (muf, mur) in enumerate(scale_order):
+                muf_str = "down" if muf==0.5 else ("up" if muf==2.0 else "nom")
+                mur_str = "down" if mur==0.5 else ("up" if mur==2.0 else "nom")
+                features_[f"LHEScaleWeight_MuF{muf_str}_MuR{mur_str}"] = evt_gen["LHEScaleWeight"][idx]
+            # ISR and FR
+            ISR_FSR_order = [
+                (2.0,1.0), (1.0,2.0),
+                (0.5,1.0), (1.0,0.5)
+            ]
+            if len(evt_gen["PSWeight"])==1:
+                for idx, (isr, fsr) in enumerate(ISR_FSR_order):
+                    isr_str = "down" if isr==0.5 else ("up" if isr==2.0 else "nom")
+                    fsr_str = "down" if fsr==0.5 else ("up" if fsr==2.0 else "nom")
+                    features_[f"PSWeight_ISR{isr_str}_FSR{fsr_str}"] = 1
+            else:
+                for idx, (isr, fsr) in enumerate(ISR_FSR_order):
+                    isr_str = "down" if isr==0.5 else ("up" if isr==2.0 else "nom")
+                    fsr_str = "down" if fsr==0.5 else ("up" if fsr==2.0 else "nom")
+                    features_[f"PSWeight_ISR{isr_str}_FSR{fsr_str}"] = evt_gen["PSWeight"][idx]
+            
+            #deltaPDF = [evt_gen["LHEPdfWeight"][k] - 1 for k in range(1, 101)]
+            #deltaPDF = np.array(deltaPDF, dtype=np.float32)
+            #deltaPDF = np.sqrt(np.sum(deltaPDF**2))
+            #features_["deltaPDF"] = deltaPDF
+
+            deltaAlphaS = [evt_gen["LHEPdfWeight"][k] - 1 for k in range(101, 103)]
+            deltaAlphaS = np.array(deltaAlphaS, dtype=np.float32)
+            deltaAlphaS = np.sqrt(np.sum(deltaAlphaS**2))
+            features_["deltaAlphaS"] = deltaAlphaS
 # Gen Info
             # PileupID SF computation
             for syst in ["nom", "up", "down"]:
@@ -341,12 +396,14 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
 # BTag SF and Variations
             btag_dictionary = get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeepJet_FixedWP_light, eff_maps_cache_btag, wp_converter, processName)
-            features_["btag_sf"] = btag_dictionary["btag_sf"]
+            features_["btag_sf_hf_central"] = btag_dictionary["btag_sf_hf_central"]
             features_["btag_sf_hf_up"] = btag_dictionary["btag_sf_hf_up"]
             features_["btag_sf_hf_down"] = btag_dictionary["btag_sf_hf_down"]
+            features_["btag_sf_lightf_central"] = btag_dictionary["btag_sf_lightf_central"]
             features_["btag_sf_light_up"] = btag_dictionary["btag_sf_light_up"]
             features_["btag_sf_light_down"] = btag_dictionary["btag_sf_light_down"]
-            event_weight *= btag_dictionary["btag_sf"]
+
+            event_weight *= btag_dictionary["btag_sf_hf_central"] * btag_dictionary["btag_sf_lightf_central"]
 
         
 
@@ -355,6 +412,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                                   triggerScaleFactor_rootFile=triggerScaleFactor_rootFile)
             features_['trig_sf'] = trig_sf
             event_weight  *= np.float32(trig_sf)
+# LHEScaleWeight
+        # Code here
 
         assert evt["Muon_isTriggering"][muonIdx1]
         features_["flat_weight"] = event_weight
@@ -363,6 +422,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             log_bad_event(
                 logfile=folder_cfg["log_bad_event"],
                 process=processName,
+                fileNumber=fileNumber,
                 event=ev,
                 key=key,
                 value=val,
@@ -375,7 +435,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     return file_
 
 
-def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbose, isMC):
+def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbose, isMC, fileNumber):
     print("FileName", fileName)
     print("Process", fullProcessName, flush=True)
     # If isJEC is True Process contains also the name of the JEC uncertainty e.g. GluGluHToBB_JECAbsoluteMPFBias_Down
@@ -404,7 +464,7 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
     # Event by event operations:
     with open("/t3home/gcelotto/ggHbb/flatter/treeFlatter_cfg.yaml", "r") as f:
         folder_cfg = yaml.safe_load(f)
-    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, pN=pN, processName=processName, method=method, isJEC=isJEC, verbose=verbose, JECname=JECname, isMC=isMC, folder_cfg=folder_cfg)
+    fileData = treeFlatten(fileName=fileName, maxEntries=maxEntries, maxJet=maxJet, pN=pN, processName=processName, method=method, isJEC=isJEC, verbose=verbose, JECname=JECname, isMC=isMC, folder_cfg=folder_cfg, fileNumber=fileNumber)
     df=pd.DataFrame(fileData)
     try:
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', fileName).group(1)
@@ -435,6 +495,7 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
         xsections = dfProcessesMC.iloc[pN].xsection
         df['xsection']=xsections
 
+    df = addFeatureToFile(df)
     print('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber)
     df.to_parquet('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber )
     print("Saving in " + '/scratch/' +fullProcessName+"_%s.parquet"%fileNumber )
@@ -450,5 +511,6 @@ if __name__ == "__main__":
     isJEC = int(sys.argv[7])
     verbose = int(sys.argv[8])
     isMC = int(sys.argv[9])
+    fileNumber = int(sys.argv[10])
     print("calling main", flush=True)
-    main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbose, isMC)
+    main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbose, isMC, fileNumber)

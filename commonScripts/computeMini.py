@@ -31,7 +31,7 @@ nanoFileNames = glob.glob(nanoPath + "/**/*.root", recursive=True)
 print("Searching for", nanoPath+"/**/*.root ... %d files found"%len(nanoFileNames))
 # %%
 for idx, nanoFileName in enumerate(nanoFileNames):
-    print(idx+1, " / ", len(nanoFileNames))
+    print(idx+1, " / ", len(nanoFileNames), end="\r")
     try:
         fileNumber = re.search(r'\D(\d{1,4})\.\w+$', nanoFileName).group(1)
     except:
