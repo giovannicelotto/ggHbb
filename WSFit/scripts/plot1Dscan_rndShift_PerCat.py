@@ -15,7 +15,7 @@ parser.add_argument("--idx", type=int, help="Index of the workspace", default=0)
 args = parser.parse_args()
 
 idx = args.idx
-np.random.seed(1999)
+np.random.seed(728)
 offset=np.random.uniform(10,100)
 multiplier=np.random.uniform(10,100)
 yaml_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws{idx}_pdfnames.yaml"

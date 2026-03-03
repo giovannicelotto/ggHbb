@@ -5,8 +5,9 @@ import awkward as ak
 import numpy as np
 import matplotlib.pyplot as plt
 from functions import *
-
-
+import mplhep as hep
+hep.style.use("CMS")
+# %%
 dfProcesses = getDfProcesses_v2()[0]
 MCList = [35,19,20,21,22]
 
@@ -14,10 +15,10 @@ commonNano = '/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_gg
 dict_processes = {
     'nanoPaths' : [
         commonNano+'/ZJetsToQQ_HT-100to200',
-                   commonNano+'/ZJetsToQQ_HT-200to400_TuneCP5_13TeV-madgraphMLM-pythia8',
-                   commonNano+'/ZJetsToQQ_HT-400to600_TuneCP5_13TeV-madgraphMLM-pythia8',
-                   commonNano+'/ZJetsToQQ_HT-600to800_TuneCP5_13TeV-madgraphMLM-pythia8',
-                   commonNano+'/ZJetsToQQ_HT-800toInf_TuneCP5_13TeV-madgraphMLM-pythia8'
+        commonNano+'/ZJetsToQQ_HT-200to400_TuneCP5_13TeV-madgraphMLM-pythia8',
+        commonNano+'/ZJetsToQQ_HT-400to600_TuneCP5_13TeV-madgraphMLM-pythia8',
+        commonNano+'/ZJetsToQQ_HT-600to800_TuneCP5_13TeV-madgraphMLM-pythia8',
+        commonNano+'/ZJetsToQQ_HT-800toInf_TuneCP5_13TeV-madgraphMLM-pythia8'
                    ],
     'xsections': dfProcesses.xsection[MCList].values,
     'process' : dfProcesses.process[MCList].values
@@ -108,11 +109,11 @@ bins = config['bins']
 bin_widths = np.diff(bins)
 
 # Create histogram
-hist_pt = Hist.new.Variable(bins, name="pt", label="LHE Z pT [GeV]").Weight()
-hist_LHE_HT = Hist.new.Reg(35, 0, 800, name="LHE_HT", label="LHE HT").Weight()
-hist_LHE_ET = Hist.new.Reg(35, 0, 800, name="LHE_ET", label="LHE ET").Weight()
+hist_pt = Hist.new.Variable(bins, name="pt", label="Z $p^{LHE}_T$ [GeV]").Weight()
+hist_LHE_HT = Hist.new.Reg(35, 0, 800, name="LHE_HT", label="LHE $H_T$ [GeV]").Weight()
+hist_LHE_ET = Hist.new.Reg(35, 0, 800, name="LHE_ET", label="LHE $E_T$ [GeV]").Weight()
 hist_LHE_ET_addPartons = Hist.new.Reg(35, 0, 800, name="LHE_ET_addPartons", label="LHE_ET - Z pT").Weight()
-h_Partons = Hist.new.Reg(7, 0, 7, name="nOutgoingPartons", label="LHE n Outgoing Partons").Weight()
+h_Partons = Hist.new.Reg(7, 0, 7, name="nOutgoingPartons", label="LHE n Partons").Weight()
 
 
 
@@ -170,36 +171,31 @@ errors = np.sqrt(hist_pt.variances()) / bin_widths
 bin_centers = (np.array(bins[:-1]) + np.array(bins[1:])) / 2
 
 # Plot
-fig, ax = plt.subplots(1, 5, figsize=(19, 5))
+fig, ax = plt.subplots(1, 4, figsize=(23, 5))
 bin_centers = (np.array(bins[:-1]) + np.array(bins[1:])) / 2
-ax[0].stairs(values=counts, edges=bins, label="Z to QQ", linewidth=1.5)
+ax[0].stairs(values=counts, edges=bins, linewidth=1.5)
 ax[0].errorbar(bin_centers, counts, yerr=errors, fmt='.', color='black', capsize=2)
-ax[0].set_xlabel("LHE Z pT [GeV]")
+ax[0].set_xlabel("LHE Z $p_T$ [GeV]", fontsize=24)
 ax[0].set_ylabel("Entries / GeV")
-ax[0].text(x=0.9, y=0.9, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[0].transAxes, ha='right')
-ax[0].legend()
+ax[0].text(x=0.9, y=0.9-0.05, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[0].transAxes, ha='right', fontsize=14)
+#ax[0].legend()
 ax[0].set_yscale('log')
-ax[0].text(x=0.9, y=0.8, s=f"Min Z pT = {ak.min(pt_all):.0f} GeV", transform=ax[0].transAxes, ha='right')
+ax[0].text(x=0.9, y=0.8-0.05, s=f"Min Z pT = {ak.min(pt_all):.0f} GeV", transform=ax[0].transAxes, ha='right', fontsize=14)
 
 
 h_Partons.plot1d(ax=ax[1])
 ax[1].set_ylim(-1000, ax[1].get_ylim()[1])
-ax[1].text(x=0.9, y=0.9, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[1].transAxes, ha='right')
+ax[1].text(x=0.9, y=0.9-0.05, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[1].transAxes, ha='right', fontsize=14)
 
 
-
-
-ax[2].text(x=0.9, y=0.9, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[2].transAxes, ha='right')
+ax[2].text(x=0.9, y=0.9-0.05, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[2].transAxes, ha='right', fontsize=14)
 hist_LHE_HT.plot1d(ax=ax[2])
-ax[2].text(x=0.9, y=0.8, s=f"Min LHE HT = {ak.min(LHE_HT_all):.0f} GeV", transform=ax[2].transAxes, ha='right')
+ax[2].text(x=0.9, y=0.8-0.05, s=f"Min LHE HT = {ak.min(LHE_HT_all):.0f} GeV", transform=ax[2].transAxes, ha='right', fontsize=14)
 
-ax[3].text(x=0.9, y=0.9, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[3].transAxes, ha='right')
+ax[3].text(x=0.9, y=0.9-0.05, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[3].transAxes, ha='right', fontsize=14)
 hist_LHE_ET.plot1d(ax=ax[3])
-ax[3].text(x=0.9, y=0.8, s=f"Min LHE ET = {ak.min(LHE_ET_all):.0f} GeV", transform=ax[3].transAxes, ha='right')
+ax[3].text(x=0.9, y=0.8-0.05, s=f"Min LHE ET = {ak.min(LHE_ET_all):.0f} GeV", transform=ax[3].transAxes, ha='right', fontsize=14)
 
-ax[4].text(x=0.9, y=0.9, s=f"Entries : {len(pt)}\n Weighted Entries : {total_weights:.0f}", transform=ax[4].transAxes, ha='right')
-hist_LHE_ET_addPartons.plot1d(ax=ax[4])
-ax[4].text(x=0.9, y=0.8, s=f"Min = {ak.min(LHE_ET_addPartons_all):.0f} GeV", transform=ax[4].transAxes, ha='right')
 
 
 fig.savefig("/t3home/gcelotto/ggHbb/Z_kfactor/output/ZtoQQ.png", bbox_inches='tight')

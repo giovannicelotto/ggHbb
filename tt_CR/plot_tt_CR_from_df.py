@@ -319,9 +319,9 @@ import numpy as np
 fout = ROOT.TFile("histograms.root", "RECREATE")
 
 # histogram settings (adjust if needed)
-n_bins = 20
-x_min = 0.
-x_max = 1
+n_bins = 5
+x_min = 0.7
+x_max = 0.8
 
 processes = dfMC["process"].unique()
 

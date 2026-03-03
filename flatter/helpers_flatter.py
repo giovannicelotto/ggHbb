@@ -2,6 +2,7 @@ import numpy as np
 import ROOT
 from treeFlatter_dict_getSFs import getMuonID_SF, get_muon_recoSF, btag_wp
 from getZ_KFactor import getZ_KFactor
+PF_INSIDE_JETS = False
 def get_event_branches(branches, ev, isMC, run=2):
     if run==2:
         return {
@@ -22,28 +23,28 @@ def get_event_branches(branches, ev, isMC, run=2):
         #"Jet_pf1_eta"           : branches["Jet_pf1_eta"][ev],
         #"Jet_pf1_phi"           : branches["Jet_pf1_phi"][ev],
         #"Jet_pf1_mass"           : branches["Jet_pf1_mass"][ev],
-#
+##
         #"Jet_pf2_charge"           : branches["Jet_pf2_charge"][ev],
         #"Jet_pf2_pt"           : branches["Jet_pf2_pt"][ev],
         #"Jet_pf2_eta"           : branches["Jet_pf2_eta"][ev],
         #"Jet_pf2_phi"           : branches["Jet_pf2_phi"][ev],
         #"Jet_pf2_mass"           : branches["Jet_pf2_mass"][ev],
-#
-#
+##
+##
         #"Jet_pf3_charge"           : branches["Jet_pf3_charge"][ev],
         #"Jet_pf3_pt"           : branches["Jet_pf3_pt"][ev],
         #"Jet_pf3_eta"           : branches["Jet_pf3_eta"][ev],
         #"Jet_pf3_phi"           : branches["Jet_pf3_phi"][ev],
         #"Jet_pf3_mass"           : branches["Jet_pf3_mass"][ev],
-#
-#
+##
+##
         #"Jet_pf4_charge"           : branches["Jet_pf4_charge"][ev],
         #"Jet_pf4_pt"           : branches["Jet_pf4_pt"][ev],
         #"Jet_pf4_eta"           : branches["Jet_pf4_eta"][ev],
         #"Jet_pf4_phi"           : branches["Jet_pf4_phi"][ev],
         #"Jet_pf4_mass"           : branches["Jet_pf4_mass"][ev],
-#
-#
+##
+##
         #"Jet_pf5_charge"           : branches["Jet_pf5_charge"][ev],
         #"Jet_pf5_pt"           : branches["Jet_pf5_pt"][ev],
         #"Jet_pf5_eta"           : branches["Jet_pf5_eta"][ev],
@@ -312,42 +313,43 @@ def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None, jetIsPresent=None):
     features[f"{prefix}_jetId"]         = evt["Jet_jetId"][idx] if jet_vec is not None else 0
     features[f"{prefix}_nElectrons"]   = evt["Jet_nElectrons"][idx]      if jet_vec is not None else 0
     features[f"{prefix}_btagTight"]    = int(evt["Jet_btagDeepFlavB"][idx]>=0.71) if jet_vec is not None else 0
-    
-    #features[f"{prefix}_pf1_pt"]    = float(evt["Jet_pf1_pt"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf1_eta"]    = float(evt["Jet_pf1_eta"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf1_phi"]    = float(evt["Jet_pf1_phi"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf1_mass"]    = float(evt["Jet_pf1_mass"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf1_charge"]    = int(evt["Jet_pf1_charge"][idx]) if jet_vec is not None else 0
-#
-    #features[f"{prefix}_pf2_pt"]    = float(evt["Jet_pf2_pt"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf2_eta"]    = float(evt["Jet_pf2_eta"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf2_phi"]    = float(evt["Jet_pf2_phi"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf2_mass"]    = float(evt["Jet_pf2_mass"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf2_charge"]    = int(evt["Jet_pf2_charge"][idx]) if jet_vec is not None else 0
-#
-#
-#
-    #features[f"{prefix}_pf3_pt"]    = float(evt["Jet_pf3_pt"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf3_eta"]    = float(evt["Jet_pf3_eta"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf3_phi"]    = float(evt["Jet_pf3_phi"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf3_mass"]    = float(evt["Jet_pf3_mass"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf3_charge"]    = int(evt["Jet_pf3_charge"][idx]) if jet_vec is not None else 0
-#
-#
-#
-    #features[f"{prefix}_pf4_pt"]    = float(evt["Jet_pf4_pt"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf4_eta"]    = float(evt["Jet_pf4_eta"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf4_phi"]    = float(evt["Jet_pf4_phi"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf4_mass"]    = float(evt["Jet_pf4_mass"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf4_charge"]    = int(evt["Jet_pf4_charge"][idx]) if jet_vec is not None else 0
-#
-#
-#
-    #features[f"{prefix}_pf5_pt"]    = float(evt["Jet_pf5_pt"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf5_eta"]    = float(evt["Jet_pf5_eta"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf5_phi"]    = float(evt["Jet_pf5_phi"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf5_mass"]    = float(evt["Jet_pf5_mass"][idx]) if jet_vec is not None else 0
-    #features[f"{prefix}_pf5_charge"]    = int(evt["Jet_pf5_charge"][idx]) if jet_vec is not None else 0
+
+    if PF_INSIDE_JETS:
+        features[f"{prefix}_pf1_pt"]    = float(evt["Jet_pf1_pt"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf1_eta"]    = float(evt["Jet_pf1_eta"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf1_phi"]    = float(evt["Jet_pf1_phi"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf1_mass"]    = float(evt["Jet_pf1_mass"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf1_charge"]    = int(evt["Jet_pf1_charge"][idx]) if jet_vec is not None else 0
+    #
+        features[f"{prefix}_pf2_pt"]    = float(evt["Jet_pf2_pt"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf2_eta"]    = float(evt["Jet_pf2_eta"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf2_phi"]    = float(evt["Jet_pf2_phi"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf2_mass"]    = float(evt["Jet_pf2_mass"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf2_charge"]    = int(evt["Jet_pf2_charge"][idx]) if jet_vec is not None else 0
+    #
+    #
+    #
+        features[f"{prefix}_pf3_pt"]    = float(evt["Jet_pf3_pt"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf3_eta"]    = float(evt["Jet_pf3_eta"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf3_phi"]    = float(evt["Jet_pf3_phi"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf3_mass"]    = float(evt["Jet_pf3_mass"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf3_charge"]    = int(evt["Jet_pf3_charge"][idx]) if jet_vec is not None else 0
+    #
+    #
+    #
+        features[f"{prefix}_pf4_pt"]    = float(evt["Jet_pf4_pt"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf4_eta"]    = float(evt["Jet_pf4_eta"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf4_phi"]    = float(evt["Jet_pf4_phi"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf4_mass"]    = float(evt["Jet_pf4_mass"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf4_charge"]    = int(evt["Jet_pf4_charge"][idx]) if jet_vec is not None else 0
+    #
+    #
+    #
+        features[f"{prefix}_pf5_pt"]    = float(evt["Jet_pf5_pt"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf5_eta"]    = float(evt["Jet_pf5_eta"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf5_phi"]    = float(evt["Jet_pf5_phi"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf5_mass"]    = float(evt["Jet_pf5_mass"][idx]) if jet_vec is not None else 0
+        features[f"{prefix}_pf5_charge"]    = int(evt["Jet_pf5_charge"][idx]) if jet_vec is not None else 0
 
 
     counterMuTight=0

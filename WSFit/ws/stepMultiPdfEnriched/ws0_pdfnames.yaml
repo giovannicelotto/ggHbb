@@ -1,4 +1,5 @@
 pdf_names:
-- env_pdf_Bernstein_1_cat0
+- env_pdf_Bernstein_3_cat0
 - env_pdf_PolExpo_2_cat0
-- env_pdf_Exponential_1_cat0
+- env_pdf_Exponential_3_cat0
+- env_pdf_PowerLaw_1_cat0

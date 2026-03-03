@@ -8,11 +8,11 @@ import time
 # %%
 # To be run after
 # 
-np.random.seed(1999)
+np.random.seed(728)
 offset=np.random.uniform(10,100)
 multiplier=np.random.uniform(10,100)
 config = {
-    'categories': [0,1,2,3,4,5,6,10, 'Combined'],
+    'categories': [0,1,2,3,4,5,6,10,11, 'Combined'],
     'categoryLabels':[r'NN$_{XXT}$ Btag$_{TT}$',
                       r'NN$_{XT}$ Btag$_{TT}$', 
                       r'NN$_{T}$ Btag$_{TT}$',

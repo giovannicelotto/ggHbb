@@ -27,9 +27,9 @@ Scale   lnN 1.1613811130069132 - 1.0955646911712786
 
 ---------------------------------------------
 rateZbb  rateParam  Cat2  Z  1.0  [-1.0,3.0]
+scaleSZ   rateParam  Cat2  signal  0.91
+scaleSZ   rateParam  Cat2  Z       0.91
+scaleSZ   param      0.86  0.06
 ---------------------------------------------
 pdfindex_2_2016_13TeV discrete
-puid   shape 1 - 1
-btag_hf   shape 1 - 1
-btag_lightf   shape 1 - 1
 ---------------------------------------------

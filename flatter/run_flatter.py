@@ -114,9 +114,12 @@ else:
 
         if matching_files:
             continue
+        #input("removing "+ nanoFileName+ " and sleeping for 5 seconds. Press Enter to continue...")
+        #os.remove(nanoFileName)
+        #print("removed")
         subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 5000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC), str(run)])
         if (doneFiles % args.sleep ==0) & (doneFiles!=0)& (args.sleep!=-1):
             print("I am sleeping! Good Night!")
-            time.sleep(15)
+            time.sleep(10)
             print("I am back! Good Morning!")
         doneFiles = doneFiles+1

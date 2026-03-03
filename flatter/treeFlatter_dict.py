@@ -65,10 +65,15 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
     # open the file for the SF
     if isMC:
-        histPath = folder_cfg["trig_SF_folder"]+"/trgMu_SF_UL.root"
-        triggerScaleFactor_rootFile = ROOT.TFile(histPath, "READ")
-        if not triggerScaleFactor_rootFile or triggerScaleFactor_rootFile.IsZombie():
-            raise RuntimeError(f"Failed to open ROOT file: {histPath}")
+        effMC_path = folder_cfg["trig_SF_folder"]+"/trgMu_effMC_UL.root"
+        effData_path = folder_cfg["trig_SF_folder"]+"/trgMu_effData_UL.root"
+        effMC_rootFile = ROOT.TFile(effMC_path, "READ")
+        effData_rootFile = ROOT.TFile(effData_path, "READ")
+
+        if not effMC_rootFile or effMC_rootFile.IsZombie():
+            raise RuntimeError(f"Failed to open ROOT file: {effMC_path}")
+        if not effData_rootFile or effData_rootFile.IsZombie():
+            raise RuntimeError(f"Failed to open ROOT file: {effData_path}")
     else:
         pass
 
@@ -182,7 +187,10 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         jet2_uncor  = ROOT.TLorentzVector(0.,0.,0.,0.)
         
         # to be checked
-        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(evt["nJet"], evt["Jet_eta"], evt["Jet_muonIdx1"],  evt["Jet_muonIdx2"], evt["Muon_isTriggering"],  evt["Muon_pt"], evt["Muon_dxy"], evt["Muon_dxyErr"], jetsToCheck, evt["Jet_btagDeepFlavB"], evt["Jet_puId"], evt["Jet_jetId"], method=method, Jet_pt=evt["Jet_pt"], maskJets=maskJets)
+        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(    nJet = evt["nJet"], Jet_eta = evt["Jet_eta"], Jet_muonIdx1 = evt["Jet_muonIdx1"], Jet_muonIdx2 = evt["Jet_muonIdx2"],
+                                                                    Muon_isTriggering = evt["Muon_isTriggering"], Muon_pt = evt["Muon_pt"], Muon_eta = evt["Muon_eta"], Muon_dxy = evt["Muon_dxy"], Muon_dxyErr=evt["Muon_dxyErr"],
+                                                                    jetsToCheck = jetsToCheck, Jet_btagDeepFlavB = evt["Jet_btagDeepFlavB"], Jet_puId = evt["Jet_puId"], Jet_jetId = evt["Jet_jetId"],
+                                                                    maskJets = maskJets, method = method, Jet_pt = evt["Jet_pt"])
         verbose and print("Ev : %d | %d %d %d %d"%(ev, selected1, selected2, muonIdx1, muonIdx2))
 
         if selected1==999:
@@ -273,12 +281,13 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         event_weight *= muon_weight
 
 
-        isTrigMuon2 = False
+        jet2_muon_isTriggering = False
         isMuon2 = False
         # R1
         if (muonIdx2 != 999):# & (evt["Muon_pt"][muonIdx2]>9) & (np.abs(evt["Muon_eta"][muonIdx2])<1.5) & (abs(evt["Muon_dxy"][muonIdx2]/evt["Muon_dxyErr"][muonIdx2])>6):
             # Second muon is triggering as Mu9IP6
-            isTrigMuon2 = True
+            assert evt["Muon_isTriggering"][muonIdx2] == True
+            jet2_muon_isTriggering = True
             isMuon2 = True
             muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
             muon2.SetPtEtaPhiM(evt["Muon_pt"][muonIdx2], evt["Muon_eta"][muonIdx2], evt["Muon_phi"][muonIdx2], evt["Muon_mass"][muonIdx2])
@@ -302,7 +311,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 #    continue
                 else:
                     # There is a second muon non triggering
-                    isTrigMuon2 = False
+                    jet2_muon_isTriggering = False
                     isMuon2 = True
                     muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
                     muon2.SetPtEtaPhiM(evt["Muon_pt"][mu], evt["Muon_eta"][mu], evt["Muon_phi"][mu], evt["Muon_mass"][mu])
@@ -317,6 +326,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 features_muon2, muon2_weight = fill_trig_muon_features(None,None, jet2, "2",  muon_RECO_map, evt, has_muon=isMuon2)
                 features_.update(features_muon2)
                 event_weight *= muon2_weight
+        features_["jet2_muon_isTriggering"] = jet2_muon_isTriggering
         features_['dimuon_mass'] = np.float32((muon+muon2).M()) if isMuon2 else 0.106
 # Trigger
         features_['jet1_muon_fired_HLT_Mu12_IP6'] = int(bool(evt["Muon_fired_HLT_Mu12_IP6"][muonIdx1]))
@@ -407,9 +417,13 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
         
 
-            trig_sf = get_trig_SF(muon_pt=evt["Muon_pt"][muonIdx1],
-                                  muon_sIP=abs(evt["Muon_dxy"][muonIdx1]/evt["Muon_dxyErr"][muonIdx1]),
-                                  triggerScaleFactor_rootFile=triggerScaleFactor_rootFile)
+            trig_sf = get_trig_SF(muon_pt1=features_["jet1_muon_pt"],
+                                  muon_sIP1=abs(features_["jet1_muon_dxySig"]),
+                                  muon_pt2=features_["jet2_muon_pt"],
+                                  muon_sIP2=abs(features_["jet2_muon_dxySig"]),
+                                  muon_2_isTriggering=features_["jet2_muon_isTriggering"],
+                                  effData_rootfile=effMC_rootFile,
+                                  effMC_rootfile=effData_rootFile)
             features_['trig_sf'] = trig_sf
             event_weight  *= np.float32(trig_sf)
 # LHEScaleWeight

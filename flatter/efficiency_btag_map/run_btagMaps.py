@@ -35,8 +35,9 @@ for process, nanoPath in zip(dfProcess.process.iloc[MCList], dfProcess.nanoPath.
     print(process, "... started")
 
 
-    file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)[:1500]
+    file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)[:1]
     print("List of fileNames found... %d"%len(file_paths), flush=True)
+    print(file_paths)
 
     # Step 2: Define the list of branches to read
     branches_to_load = [
@@ -106,14 +107,14 @@ for process, nanoPath in zip(dfProcess.process.iloc[MCList], dfProcess.nanoPath.
     triggering_jet_indices = ak.mask(goodJets_idx, has_trig_muon != 0)
 
     # Step 7: Events with exactly one such jet
-    has_exactly_one_triggering_jet = (ak.sum(triggering_jet_indices>=0, axis=1)>=1)
+    has_at_least_one_triggering_jet = (ak.sum(triggering_jet_indices>=0, axis=1)>=1)
 
 
     # Count how many good jets per event
     nGoodJets = ak.count(goodJets_idx, axis=1)
 
 
-    final_mask = (has_exactly_one_triggering_jet) & (nGoodJets>=2)
+    final_mask = (has_at_least_one_triggering_jet) & (nGoodJets>=2)
     n_events = ak.sum(final_mask)
 
     print(f"{n_events} Events with at least one triggering jet and at least one more good jet: ")

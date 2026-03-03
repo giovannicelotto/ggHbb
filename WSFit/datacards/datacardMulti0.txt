@@ -25,11 +25,12 @@ PS_FSR   lnN 1.1029446573862889 - 1.1430752868142964
 
 Scale   lnN 1.123895207156036 - 1.113980016481165
 
+
 ---------------------------------------------
 rateZbb  rateParam  Cat0  Z  1.0  [-1.0,3.0]
+scaleSZ   rateParam  Cat0  signal  0.91
+scaleSZ   rateParam  Cat0  Z       0.91
+scaleSZ   param      0.69  0.09
 ---------------------------------------------
 pdfindex_0_2016_13TeV discrete
-puid   shape 1 - 1
-btag_hf   shape 1 - 1
-btag_lightf   shape 1 - 1
 ---------------------------------------------

@@ -137,22 +137,65 @@ def log_bad_btag_sf(
         )
 
 
-def get_trig_SF(muon_pt, muon_sIP, triggerScaleFactor_rootFile):
-    hist_trigger = triggerScaleFactor_rootFile.Get("hMap")
-    xbin = hist_trigger.GetXaxis().FindBin(muon_pt)
-    ybin = hist_trigger.GetYaxis().FindBin(muon_sIP)
-    # overflow gets the same triggerSF as the last bin
-    if xbin == hist_trigger.GetNbinsX()+1:
-        xbin=xbin-1
-    if ybin == hist_trigger.GetNbinsY()+1:
-        ybin=ybin-1
-    # if underflow gets the same triggerSF as the first bin
-    if xbin == 0:
-        xbin=1
-    if ybin == 0:
-        ybin=1
-    sf = np.float32(hist_trigger.GetBinContent(xbin,ybin)) 
-    return sf
+def get_trig_SF(muon_pt1, muon_sIP1, muon_pt2, muon_sIP2, muon_2_isTriggering, effData_rootfile, effMC_rootfile):
+    def remove_underflow_overflow(xbin, ybin, hist):
+        if xbin == hist.GetNbinsX()+1:
+            xbin=xbin-1
+        if ybin == hist.GetNbinsY()+1:
+            ybin=ybin-1
+        # if underflow gets the same triggerSF as the first bin
+        if xbin == 0:
+            xbin=1
+        if ybin == 0:
+            ybin=1
+        return xbin, ybin
+
+
+    if muon_pt2>0:
+        #print("[DEBUG] Two triggering muons")
+        hist_MC = effMC_rootfile.Get("hMap")
+        hist_Data = effData_rootfile.Get("hMap")
+        xbin1_MC = hist_MC.GetXaxis().FindBin(muon_pt1)
+        ybin1_MC = hist_MC.GetYaxis().FindBin(muon_sIP1)
+        xbin2_MC = hist_MC.GetXaxis().FindBin(muon_pt2)
+        ybin2_MC = hist_MC.GetYaxis().FindBin(muon_sIP2)
+        xbin1_Data = hist_Data.GetXaxis().FindBin(muon_pt1)
+        ybin1_Data = hist_Data.GetYaxis().FindBin(muon_sIP1)
+        xbin2_Data = hist_Data.GetXaxis().FindBin(muon_pt2)
+        ybin2_Data = hist_Data.GetYaxis().FindBin(muon_sIP2)
+
+        xbin1_MC, ybin1_MC = remove_underflow_overflow(xbin1_MC, ybin1_MC, hist_MC)
+        xbin2_MC, ybin2_MC = remove_underflow_overflow(xbin2_MC, ybin2_MC, hist_MC)
+        xbin1_Data, ybin1_Data = remove_underflow_overflow(xbin1_Data, ybin1_Data, hist_Data)
+        xbin2_Data, ybin2_Data = remove_underflow_overflow(xbin2_Data, ybin2_Data, hist_Data)
+
+        if muon_2_isTriggering:
+            efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data) * hist_Data.GetBinContent(xbin2_Data, ybin2_Data)
+            efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC) * hist_MC.GetBinContent(xbin2_MC, ybin2_MC)
+            sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
+        else:
+            efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data) * (1-hist_Data.GetBinContent(xbin2_Data, ybin2_Data))
+            efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC) * (1-hist_MC.GetBinContent(xbin2_MC, ybin2_MC))
+            sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
+
+
+
+    else:
+        #print("[DEBUG] Only one triggering muon")
+        hist_MC = effMC_rootfile.Get("hMap")
+        hist_Data = effData_rootfile.Get("hMap")
+        xbin1_MC = hist_MC.GetXaxis().FindBin(muon_pt1)
+        ybin1_MC = hist_MC.GetYaxis().FindBin(muon_sIP1)
+        xbin1_Data = hist_Data.GetXaxis().FindBin(muon_pt1)
+        ybin1_Data = hist_Data.GetYaxis().FindBin(muon_sIP1)
+        xbin1_MC, ybin1_MC = remove_underflow_overflow(xbin1_MC, ybin1_MC, hist_MC)
+        xbin1_Data, ybin1_Data = remove_underflow_overflow(xbin1_Data, ybin1_Data, hist_Data)
+        efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data)
+        efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC)
+        sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
+
+
+    return np.float32(sf)
 
 
 def get_btag_SF(btagMapsExist, evt, maskJets, corrDeepJet_FixedWP_comb, corrDeepJet_FixedWP_light, eff_maps_cache_btag, wp_converter, processName):

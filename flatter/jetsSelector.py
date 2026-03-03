@@ -1,6 +1,6 @@
 import numpy as np
 
-def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_dxyErr, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, maskJets, method=0, Jet_pt=None):
+def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, Muon_pt, Muon_eta, Muon_dxy, Muon_dxyErr, jetsToCheck, Jet_btagDeepFlavB, Jet_puId, Jet_jetId, maskJets, method=0, Jet_pt=None):
     '''
     selected1 and selected 2 are indexes in the full list of jets not just the masked jets
     '''
@@ -37,10 +37,10 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
 # Now loop over these jets as first element of the pair
     # 2+ Jets With Trig
     if len(muonIdxs)>=2:
-        selected1=jetsWithMuon[0]
-        selected2=jetsWithMuon[1]
-        muonIdx=muonIdxs[0]
-        muonIdx2=muonIdxs[1]
+        selected1=jetsWithMuon[0] if Muon_pt[muonIdxs[0]]>Muon_pt[muonIdxs[1]] else jetsWithMuon[1]
+        selected2=jetsWithMuon[1] if Muon_pt[muonIdxs[0]]>Muon_pt[muonIdxs[1]] else jetsWithMuon[0]
+        muonIdx=muonIdxs[0] if Muon_pt[muonIdxs[0]]>Muon_pt[muonIdxs[1]] else muonIdxs[1]
+        muonIdx2=muonIdxs[1] if Muon_pt[muonIdxs[0]]>Muon_pt[muonIdxs[1]] else muonIdxs[0]
     # No Jets With Trig Muon -> idxs are set to 999 (events to be rejected)
     elif len(muonIdxs)==0:
         selected1=999
@@ -85,7 +85,6 @@ def jetsSelector(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggering, 
                 mediumJets = ((Jet_btagDeepFlavB>=0.2783) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>=4)))[maskJets]
                 if np.sum(mediumJets)>=1:
                     selected2 = np.arange(nJet)[maskJets][mediumJets][0]
-                    #haivinto
                     pass
                 elif np.sum(mediumJets)==0:
                     looseJets = ((Jet_btagDeepFlavB>=0.0490) & (np.arange(nJet)!=selected1) & (Jet_jetId==6) & ((Jet_pt>=50) | (Jet_puId>=4)))[maskJets]

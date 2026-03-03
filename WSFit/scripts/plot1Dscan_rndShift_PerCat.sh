@@ -1,7 +1,7 @@
 category=$1
 rMin=-40
 rMax=40
-points=30
+points=20
 cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
 cmsenv
 cd /t3home/gcelotto/ggHbb/WSFit/datacards

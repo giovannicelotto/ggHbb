@@ -30,16 +30,16 @@ done
 conda activate myenv
 rm /t3home/gcelotto/ggHbb/WSFit/ws/step1/ws"$CATEGORY"*.root
 /work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY # produces step1/ws$CAT_syst.root
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst puid_up
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst puid_down
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst scale
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst PS_ISR
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst PS_FSR
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst alphaS
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_hf_up
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_hf_down
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_lightf_up
-/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_lightf_down
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst puid_up
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst puid_down
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst scale
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst PS_ISR
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst PS_FSR
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst alphaS
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_hf_up
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_hf_down
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_lightf_up
+#/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_lightf_down
 
 #
 cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
@@ -54,6 +54,7 @@ rm /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_$CATEGORY.root
                 --outDir plots/fTest_5families_functionalities_cat$CATEGORY \
                 --iterativeFit 0 --blindSignalRegion 1 \
                 --saveMultiPdf /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_$CATEGORY.root 
+
 echo "Step 2 done, now adding H and systematics"
 rm /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/multipdf_$CATEGORY".root"
 /cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre4/external/el9_amd64_gcc12/bin/python3 /t3home/gcelotto/ggHbb/WSFit/allSteps/step3_addH.py -c $CATEGORY

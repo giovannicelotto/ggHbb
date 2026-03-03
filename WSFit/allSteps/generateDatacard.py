@@ -65,9 +65,9 @@ rateZbb  rateParam  Cat{cat_name}  Z  1.0  [-1.0,3.0]
     
     # Optional: you can add rateParam or other discrete lines as needed
     datacard += f"pdfindex_{cat_name}_2016_13TeV discrete\n"
-    datacard += f"puid   shape 1 - 1\n"
-    datacard += f"btag_hf   shape 1 - 1\n"
-    datacard += f"btag_lightf   shape 1 - 1\n"
+    #datacard += f"puid   shape 1 - 1\n"
+    #datacard += f"btag_hf   shape 1 - 1\n"
+    #datacard += f"btag_lightf   shape 1 - 1\n"
     datacard += f"---------------------------------------------\n"
     
     

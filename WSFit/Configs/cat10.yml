@@ -2,7 +2,7 @@
 modelName: "Jan21_3_50p0"
 outFolder: "/t3home/gcelotto/ggHbb/WSFit/output/cat10"
 cuts_string: "(dijet_pt >= 100) & 
-            (PNN > 0.95) &
+            (PNN > 0.9) &
             (jet1_btagDeepFlavB >= 0.2783) & (jet2_btagDeepFlavB >= 0.2783)&
             ~((jet1_btagDeepFlavB >= 0.71) & (jet2_btagDeepFlavB >= 0.71))"
 

@@ -1,35 +1,34 @@
 featuresForTraining:
-  - jet1_pt_prime
+  - jet1_pt
   - jet1_eta_prime
   - jet1_btagWP
-  - jet1_mass_prime
+  - jet1_mass
 
-  - jet2_pt_prime
+  - jet2_pt
   - jet2_eta_prime
   - jet2_phi_prime
   - jet2_btagWP
-  - jet2_mass_prime
+  - jet2_mass
   
-  - jet3_pt_prime
+  - jet3_pt
   - jet3_eta_prime
   - jet3_phi_prime
   - jet3_btagWP
-  - jet3_mass_prime
+  - jet3_mass
 
-  - jet1_muon_pt_prime
+  - jet1_muon_pt
   - jet1_muon_eta_prime
   - jet1_muon_phi_prime
   - jet1_muon_dxySig
 
   
-  - dijet_pt_prime
+  - dijet_pt
   - dijet_eta_prime
   - dijet_phi_prime
   - dijet_mass
   - dijet_dR
   - dijet_dEta
   - dijet_twist
-  - dijet_cs
 
   #- dimuon_mass
   #- cos_theta_star

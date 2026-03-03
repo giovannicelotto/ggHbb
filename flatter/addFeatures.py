@@ -51,7 +51,7 @@ def addFeatureToFile(df):
         df[f'{col}_prime'] = df[col]/scale_of_reference_jet1
 
     scale_of_reference_jet2 = df['jet2_pt']
-    for col in ['jet2_leadTrackPt']:
+    for col in ['jet2_muon_pt', 'jet2_leadTrackPt']:
         df[f'{col}_prime'] = df[col]/scale_of_reference_jet2
     
     scale_of_reference_jet3 = df['jet3_pt'].replace(0, np.nan)

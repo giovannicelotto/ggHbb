@@ -85,7 +85,7 @@ for cat in [0,1,2,3,10]:
         df_=df_VBF.copy().query(cfg["cuts_string"])
         print("Appended")
         dfs_VBF.append(df_)
-bins_dijet_pt = np.linspace(80, 800, 101)
+bins_dijet_pt = np.linspace(80, 500, 101)
 fig, ax  = plt.subplots(3, 2)
 for i, cat in enumerate([0,1,2,3,10]):
     ax[i//2][i%2].hist(np.clip(dfs[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1]), bins=bins_dijet_pt, weights=dfs[i].weight, label="ggF")
