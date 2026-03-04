@@ -56,7 +56,7 @@ def getDfProcesses_v2 (reset=False):
     dfProcessesMC_JEC = pd.read_csv("/t3home/gcelotto/ggHbb/commonScripts/processesMC_JEC.csv")
     return dfProcessesMC, dfProcessesData, dfProcessesMC_JEC
 
-def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False):
+def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
     '''
     btagTight True for Tight, False for Medium
     btagWP overwrites the btagTight argument (L, M, T)
@@ -121,6 +121,9 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False):
     if cutDijet:
         filters[0] = filters[0] + [('dijet_pt', '>=', 100)]
         filters[1] = filters[1] + [('dijet_pt', '>=', 100)]
+    if boosted==2:
+        filters[0] = filters[0] + [('dijet_pt', '<', 300)]
+        filters[1] = filters[1] + [('dijet_pt', '<', 300)]
     
     if (ttbarCR=="both"):
         pass

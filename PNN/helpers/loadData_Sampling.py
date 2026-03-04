@@ -37,24 +37,24 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
 def get_input_paths(dataTaking, mass_spin0=[50, 70, 100, 200, 300], boosted=3):
     base = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     folder = "training"
-    if boosted==4:
-        input("These are old Paths. Press Any key to continue")
-        paths = [
-        "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB_o/Data1D/training",
-        f"{base}/MC/MINLOGluGluHToBB/training"
+    #if boosted==4:
+    #    input("These are old Paths. Press Any key to continue")
+    #    paths = [
+    #    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB_o/Data1D/training",
+    #    f"{base}/MC/MINLOGluGluHToBB/training"
+    #]
+    #
+    #else:
+    paths = [
+    f"{base}/Data{dataTaking}/{folder}",
+    f"{base}/MC/MINLOGluGluHToBB/training"
     ]
-    
-    else:
-        paths = [
-        f"{base}/Data{dataTaking}/{folder}",
-        f"{base}/MC/MINLOGluGluHToBB/training"
-    ]
-    if boosted==4:
-        masses = [125]
-    else:    
-        paths += [f"{base}/MC/GluGluH_M{m}_ToBB" for m in mass_spin0]
-        print(mass_spin0)
-        masses = [125] + mass_spin0
+    #if boosted==4:
+    #    masses = [125]
+    #else:    
+    paths += [f"{base}/MC/GluGluH_M{m}_ToBB" for m in mass_spin0]
+    print(mass_spin0)
+    masses = [125] + mass_spin0
     return paths, np.array(masses)
 
 
@@ -128,15 +128,15 @@ def add_mass_hypothesis(dfs, massHypothesis, features):
 
 
 def assign_labels_and_weights(dfs, signalMasses, boosted, sampling):
-    if boosted!=0:
-        dfSig = pd.concat(dfs[1:])
-        dfBkg = dfs[0]
+    #if boosted!=0:
+    dfSig = pd.concat(dfs[1:])
+    dfBkg = dfs[0]
 
-        dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * signalMasses[i-1] for i in range(1, len(dfs))])
-        dfBkg['genMass'] = np.zeros(len(dfs[0]))
-    else:
-        dfSig=dfs[1]
-        dfBkg=dfs[0]
+    dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * signalMasses[i-1] for i in range(1, len(dfs))])
+    dfBkg['genMass'] = np.zeros(len(dfs[0]))
+    #else:
+    #    dfSig=dfs[1]
+    #    dfBkg=dfs[0]
 
     dfSig['Y'] = 1
     dfBkg['Y'] = 0
@@ -192,7 +192,7 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
             columnsToRead_ = columnsToRead.copy()
 
         
-        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagWP=btagWP, cutDijet=True, ttbarCR=False))
+        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagWP=btagWP, cutDijet=True, ttbarCR=False, boosted=boosted))
         if process[:4]=='Data':
             df['sf']=1
             df['btag_central']=1
@@ -222,33 +222,33 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
 #
 #
 #   
-    if boosted==0:
-        print("WARNING cutting signal in order to have same number of events in every bin of dijet mass")
-        dfSig = pd.concat(dfs[1:])
-        dfBkg = dfs[0]
-        dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * massHypothesis[i-1] for i in range(1, len(dfs))])
-        dfBkg['genMass'] = np.zeros(len(dfs[0]))
-
-        mass_bins = np.quantile(dfBkg.dijet_mass.values, np.linspace(0, 1, 15))
-        mass_bins[0], mass_bins[-1] = 50., 300.
-        print("This the mass_binning for ABCDisco")
-        print(mass_bins)
-
-        train_signal = dfSig.copy()
-        train_signal['mass_bin'] = np.digitize(train_signal.dijet_mass.values, mass_bins) - 1
-
-        # Step 3: Determine minimum count across bins
-        min_count = train_signal['mass_bin'].value_counts().min()
-
-        # Step 4: Downsample signal events in each bin
-        dfSig = (
-            train_signal.groupby('mass_bin')
-            .apply(lambda df: df.sample(min_count, random_state=42))
-            .reset_index(drop=True)
-        )
-
-        dfs = [dfBkg, dfSig]
-
+    #if boosted==0:
+    #    print("WARNING cutting signal in order to have same number of events in every bin of dijet mass")
+    #    dfSig = pd.concat(dfs[1:])
+    #    dfBkg = dfs[0]
+    #    dfSig['genMass'] = np.concatenate([np.ones(len(dfs[i])) * massHypothesis[i-1] for i in range(1, len(dfs))])
+    #    dfBkg['genMass'] = np.zeros(len(dfs[0]))
+#
+    #    mass_bins = np.quantile(dfBkg.dijet_mass.values, np.linspace(0, 1, 15))
+    #    mass_bins[0], mass_bins[-1] = 50., 300.
+    #    print("This the mass_binning for ABCDisco")
+    #    print(mass_bins)
+#
+    #    train_signal = dfSig.copy()
+    #    train_signal['mass_bin'] = np.digitize(train_signal.dijet_mass.values, mass_bins) - 1
+#
+    #    # Step 3: Determine minimum count across bins
+    #    min_count = train_signal['mass_bin'].value_counts().min()
+#
+    #    # Step 4: Downsample signal events in each bin
+    #    dfSig = (
+    #        train_signal.groupby('mass_bin')
+    #        .apply(lambda df: df.sample(min_count, random_state=42))
+    #        .reset_index(drop=True)
+    #    )
+#
+    #    dfs = [dfBkg, dfSig]
+#
 
 
 # Finished

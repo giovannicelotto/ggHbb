@@ -1,0 +1,24 @@
+imax 1  # one channel (one NN bin)
+jmax *  # number of MC processes minus 1 (auto)
+kmax *  # number of systematics (auto)
+
+------------
+
+bin           bin1
+observation   -1  
+
+shapes * * histograms_3.root h_$PROCESS
+shapes data_obs * histograms_3.root data_obs
+------------
+bin           bin1      bin1            bin1      bin1           
+process       tt(ll)    tt(others)    ST     diboson   
+process       3         1             2         0        
+rate          -1 -1 -1 -1 
+------------
+SF_NN rateParam bin1 * 1.0 [0.01,10.0]
+lumi lnN  1.025 1.025 1.025 1.025
+r_ttdilep lnN  1.025 - - -
+r_tt_others lnN  - 1.025 - -
+r_tt_st lnN  - - 1.025 - 
+r_tt_diboson lnN  - - - 1.025
+* autoMCStats 1

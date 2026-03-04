@@ -1,2 +1,0 @@
-combine -M GenerateOnly datacardMulti0.txt --expectSignal 0 -t 300 --saveToys -n NoSignal --setParameters pdfindex_0_2016_13TeV=0
-combine -M FitDiagnostics datacardMulti0.txt -t 300 --toysFile higgsCombineNoSignal.mH120.123456.root  --X-rtd MINIMIZER_freezeDisassociatedParams    --robustFit 1 --cminDefaultMinimizerStrategy 0 --cminFallbackAlgo "Minuit2,Migrad,0:0.1" --setParameterRange r=-7,7 -n NoSignal --setParameters pdfindex_0_2016_13TeV=1 --freezeParameters pdfindex_0_2016_13TeV

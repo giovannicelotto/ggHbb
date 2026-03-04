@@ -1,4 +1,11 @@
 # %%
+# Opens the step1_cfg.yaml
+# Checks if the systematic called is present in the yaml
+# Takes the path of Z and H config files for the initial parameters of the fit
+# Opens the dataframes
+# apply systematic variation
+# Build roodatahist
+# Build models
 import ROOT
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.FATAL)
 ROOT.gErrorIgnoreLevel = ROOT.kError
@@ -13,8 +20,7 @@ import mplhep as hep
 import os
 import json
 # Custom modules
-sys.path.append("/t3home/gcelotto/ggHbb/WSFit/framework_scripts")
-from getDfsFromConfig import getDfsFromConfig
+from helpers.getDfsFromConfig import getDfsFromConfig
 from functions import cut, getDfProcesses_v2
 from step1_ws_helpers import apply_syst, make_hist, make_roodatahist, build_dscb_gaus_model, plot_model
 # Style
@@ -87,7 +93,7 @@ plot_model(
     x_cat, rooHist_Z_cat, model_Z_c,
     components=[{'name': f'dscb_Z_c{args.config}{ext}', 'color': ROOT.kBlue, 'style': ROOT.kDashed, 'label': "DSCB"},
                 {'name': f'gauss_Z_c{args.config}{ext}', 'color': ROOT.kGreen+2, 'style': ROOT.kDotted, 'label': "Gauss"}],
-    filename=cfg["output_chi2_Z"].replace("CONFIG", args.config).replace("SYST", args.syst if args.syst else "nominal"),
+    filename=cfg["output_Z"].replace("CONFIG", args.config).replace("SYST", args.syst if args.syst else "nominal"),
     title=" "
 )
 
@@ -133,7 +139,7 @@ plot_model(
     x_cat, rooHist_H_cat, model_H_c,
     components=[{'name': f'dscb_H_c{args.config}{ext}', 'color': ROOT.kBlue, 'style': ROOT.kDashed, 'label': "DSCB"},
                 {'name': f'gauss_H_c{args.config}{ext}', 'color': ROOT.kGreen+2, 'style': ROOT.kDotted, 'label': "Gauss"}],
-    filename=cfg["output_chi2_H"].replace("CONFIG", args.config).replace("SYST", args.syst if args.syst else "nominal"),
+    filename=cfg["output_H"].replace("CONFIG", args.config).replace("SYST", args.syst if args.syst else "nominal"),
     title=" ")
 
 # Freeze H parameters

@@ -30,7 +30,7 @@ from helpers.scaleUnscale import test_gaussianity_validation
 
 parser = argparse.ArgumentParser(description="Process some arguments.")
 parser.add_argument("-s", "--sampling", type=int, help="Enable sampling (default: False)", default=0)
-parser.add_argument("-b", "--boosted", type=int, default=0, help="Set boosted value (1 100-160) or 2 160-inf)")
+parser.add_argument("-b", "--boosted", type=int, default=2, help="Set boosted value (1 100-160) or 2 160-inf)")
 parser.add_argument("-dt", "--dataTaking", type=str, default='1D', help="1A or 1D")
 parser.add_argument("-btagWP", "--btagWP", type=str, default='M', help="M or L")
 

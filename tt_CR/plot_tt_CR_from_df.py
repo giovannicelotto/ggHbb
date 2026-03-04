@@ -101,9 +101,9 @@ for proc, ids in process_dict.items():
 for idx, (mc_id, df) in enumerate(
     zip(np.array(isMCList)[np.array(nMCs) != 0], dfsMC)
 ):
-    print(idx, mc_id)
+    #print(idx, mc_id)
     dfsMC[idx]["process"] = id_to_process.get(mc_id, "other")
-    print(id_to_process.get(mc_id, "other"))
+    #print(id_to_process.get(mc_id, "other"))
 
 dfData = pd.concat(dfsData, ignore_index=True)
 dfMC   = pd.concat(dfsMC, ignore_index=True)
@@ -259,102 +259,3 @@ for var, cfg in plot_vars.items():
     plt.close('all')
     del fig, ax, rax
 
-
-# %%
-
-
-# %%
-df_sorted = dfMC[dfMC.is_ttbar_CR==1].sort_values(by="PNN")
-df_sorted["cumulative_weight_PNN"] = df_sorted["weight"].cumsum()
-df_sorted["cumulative_weight_PNN"] = df_sorted["cumulative_weight_PNN"] / df_sorted["weight"].sum()
-
-dfData_sorted = dfData[dfData.is_ttbar_CR == 1].sort_values(by="PNN")
-dfData_sorted["cumulative_weight_PNN"] = np.arange(1, len(dfData_sorted) + 1)
-dfData_sorted["cumulative_weight_PNN"] = dfData_sorted["cumulative_weight_PNN"] / len(dfData_sorted)
-
-x_mc = df_sorted["PNN"].values
-cdf_mc = df_sorted["cumulative_weight_PNN"].values
-x_data = dfData_sorted["PNN"].values
-cdf_data = dfData_sorted["cumulative_weight_PNN"].values
-cdf_mc_interp = np.interp(x_data, x_mc, cdf_mc)
-D_qm = np.max(np.abs(cdf_data - cdf_mc_interp))
-fig, ax  = plt.subplots(1, 2, figsize=(12, 6))
-ax[0].plot(x_mc, cdf_mc, label="MC", color="blue")
-ax[0].plot(dfData_sorted["PNN"], dfData_sorted["cumulative_weight_PNN"], label="Data", color="red")
-ax[0].text(0.05, 0.95, s="KS statistic: %.3f"%D_qm, transform=ax[0].transAxes, fontsize=12, verticalalignment='top')
-ax[0].set_xlabel("PNN original")
-ax[0].legend()
-
-
-
-df_sorted = dfMC[dfMC.is_ttbar_CR==1].sort_values(by="PNN_qm")
-# cumulative sum of weights
-df_sorted["cumulative_weight_PNN_qm"] = df_sorted["weight"].cumsum()
-df_sorted["cumulative_weight_PNN_qm"] = df_sorted["cumulative_weight_PNN_qm"] / df_sorted["weight"].sum()
-
-dfData_sorted = dfData[dfData.is_ttbar_CR == 1].sort_values(by="PNN_qm")
-dfData_sorted["cumulative_weight_PNN_qm"] = np.arange(1, len(dfData_sorted) + 1)
-dfData_sorted["cumulative_weight_PNN_qm"] = dfData_sorted["cumulative_weight_PNN_qm"] / len(dfData_sorted)
-
-
-
-
-x_mc = df_sorted["PNN_qm"].values
-cdf_mc = df_sorted["cumulative_weight_PNN_qm"].values
-x_data = dfData_sorted["PNN_qm"].values
-cdf_data = dfData_sorted["cumulative_weight_PNN_qm"].values
-cdf_mc_interp = np.interp(x_data, x_mc, cdf_mc)
-D_qm = np.max(np.abs(cdf_data - cdf_mc_interp))
-ax[1].plot(x_mc, cdf_mc, label="MC", color="blue")
-ax[1].plot(x_data, cdf_data, label="Data", color="red")
-ax[1].text(0.05, 0.95, s="KS statistic: %.3f"%D_qm, transform=ax[1].transAxes, fontsize=12, verticalalignment='top')
-ax[1].set_xlabel("PNN_qm")
-ax[1].legend()
-
-# %%
-import ROOT
-import numpy as np
-
-# output file
-fout = ROOT.TFile("histograms.root", "RECREATE")
-
-# histogram settings (adjust if needed)
-n_bins = 5
-x_min = 0.7
-x_max = 0.8
-
-processes = dfMC["process"].unique()
-
-hists = {}
-
-for proc in processes:
-    if (proc == "ggH(bb)") | (proc == "other") | (proc == "V+Jets"):
-        continue
-
-    hist_name = f"h_{proc}"
-    hist = ROOT.TH1F(hist_name, hist_name, n_bins, x_min, x_max)
-    hist.Sumw2()  # VERY important for weighted histograms
-
-    df_proc = dfMC[(dfMC["process"] == proc) & (dfMC.is_ttbar_CR == 1) & (dfMC.PNN_qm>=x_min) & (dfMC.PNN_qm<x_max)]
-
-    values = df_proc["PNN_qm"].values
-    weights = df_proc["weight"].values
-
-    for x, w in zip(values, weights):
-        hist.Fill(float(x), float(w))
-
-    hists[proc] = hist
-
-    hist.Write()
-# --- Fill observed data histogram ---
-hist_data = ROOT.TH1F("data_obs", "data_obs", n_bins, x_min, x_max)
-# data is unweighted → just count events
-values_data = dfData[(dfData.is_ttbar_CR==1) & (dfData.PNN_qm>=x_min) & (dfData.PNN_qm<x_max)]["PNN_qm"].values
-
-for x in values_data:
-    hist_data.Fill(float(x))
-
-hist_data.Write()
-fout.Close()
-
-# %%

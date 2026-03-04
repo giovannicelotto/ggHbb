@@ -492,47 +492,47 @@ fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection.png", bbox_
 # %%
 
 
-bkg_effs = [0.01, 0.005, 0.0025, 0.001]
-from functions import loadMultiParquet_Data_new, getCommonFilters
-data_5d = loadMultiParquet_Data_new(dataTaking=[21], nReals=-1, columns=featuresForTraining, filters=getCommonFilters(btagWP='T', cutDijet=True, ttbarCR=False))[0]
-# %%
-data_5d = scale(data_5d[0], featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
-data_5d_tensor = torch.tensor(np.float32(data_5d[featuresForTraining].values)).float()
-# %%
-with torch.no_grad():  # No need to track gradients for inference
-    YPred_data_5d = model(data_5d_tensor).numpy()
-fig, ax = plt.subplots(1, 1)
-
-for bkg_eff, thr in nn_thresholds.items():
-    if bkg_eff < 0.0003:
-        continue
-
-    # background passing the cut
-    mask_bkg = (y_pred > thr) & bkg_mask
-
-    # signal efficiency
-    sig_eff = np.sum(Xtrain['flat_weight'][(sig_mask) & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)& (y_pred>thr)])/np.sum(Xtrain['flat_weight'][(sig_mask)  & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)])
-
-    disco = dcor.distance_correlation(
-        y_pred[mask_bkg],
-        Xtrain.dijet_mass[mask_bkg]
-    )
-
-    ax.hist(
-        Xtrain.dijet_mass[mask_bkg],
-        bins=np.linspace(60, 240, 51),
-        density=True,
-        histtype='step',
-        label=(
-            f"Bkg eff = {100*bkg_eff:.3g}% | "
-            f"Sig eff = {100*sig_eff:.2f}% | "
-            f"NN thr = {thr:.3f} | "
-            f"DisCo = {disco:.3f}"
-        )
-    )
-ax.set_xlabel("Dijet mass [GeV]")
-ax.legend()
-fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection_5d_T.png", bbox_inches='tight')
+#bkg_effs = [0.01, 0.005, 0.0025, 0.001]
+#from functions import loadMultiParquet_Data_new, getCommonFilters
+#data_5d = loadMultiParquet_Data_new(dataTaking=[21], nReals=-1, columns=featuresForTraining, filters=getCommonFilters(btagWP='T', cutDijet=True, ttbarCR=False))[0]
+## %%
+#data_5d = scale(data_5d[0], featuresForTraining, scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+#data_5d_tensor = torch.tensor(np.float32(data_5d[featuresForTraining].values)).float()
+## %%
+#with torch.no_grad():  # No need to track gradients for inference
+#    YPred_data_5d = model(data_5d_tensor).numpy()
+#fig, ax = plt.subplots(1, 1)
+#
+#for bkg_eff, thr in nn_thresholds.items():
+#    if bkg_eff < 0.0003:
+#        continue
+#
+#    # background passing the cut
+#    mask_bkg = (y_pred > thr) & bkg_mask
+#
+#    # signal efficiency
+#    sig_eff = np.sum(Xtrain['flat_weight'][(sig_mask) & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)& (y_pred>thr)])/np.sum(Xtrain['flat_weight'][(sig_mask)  & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)])
+#
+#    disco = dcor.distance_correlation(
+#        y_pred[mask_bkg],
+#        Xtrain.dijet_mass[mask_bkg]
+#    )
+#
+#    ax.hist(
+#        Xtrain.dijet_mass[mask_bkg],
+#        bins=np.linspace(60, 240, 51),
+#        density=True,
+#        histtype='step',
+#        label=(
+#            f"Bkg eff = {100*bkg_eff:.3g}% | "
+#            f"Sig eff = {100*sig_eff:.2f}% | "
+#            f"NN thr = {thr:.3f} | "
+#            f"DisCo = {disco:.3f}"
+#        )
+#    )
+#ax.set_xlabel("Dijet mass [GeV]")
+#ax.legend()
+#fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection_5d_T.png", bbox_inches='tight')
 
 # %%
 from helpers.doPlots import getShapTorch

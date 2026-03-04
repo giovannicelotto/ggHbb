@@ -1,12 +1,15 @@
 import argparse
 from pathlib import Path
 import yaml
+import uproot
 def generate_datacard(
     output_path,
     ws_file,
     ws_name,
     cat_name,
     processes,
+    SF_NN,
+    SF_err,
     signal_name="signal",
     background_name="background",
     lumi=1.025,
@@ -60,6 +63,9 @@ PS_FSR   lnN {Hsyst['PS_FSR']} - {Zsyst['PS_FSR']}\n
 Scale   lnN {Hsyst['Scale']} - {Zsyst['Scale']}\n
 ---------------------------------------------
 rateZbb  rateParam  Cat{cat_name}  Z  1.0  [-1.0,3.0]
+scaleSZ   rateParam  Cat{cat_name}  signal  0.91
+scaleSZ   rateParam  Cat{cat_name}  Z       0.91
+scaleSZ   param      {SF_NN}  {SF_err}
 ---------------------------------------------
 """
     
@@ -86,8 +92,20 @@ if __name__ == "__main__":
     parser.add_argument("--cat", default="Cat1", help="Category name")
     parser.add_argument("--processes", nargs="+", default=["Z"], help="List of processes")
     parser.add_argument("--lumi", type=float, default=1.025, help="Luminosity uncertainty")
+
+
+
+
+
     
     args = parser.parse_args()
+    location_of_fit = "/t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm"
+    f = uproot.open("%s/fitDiagnosticscat%s.root"%(location_of_fit, args.cat))
+    SF_NN = f["tree_fit_sb"].arrays()["SF_NN"][0]
+    SF_NNLoErr = f["tree_fit_sb"].arrays()["SF_NNLoErr"][0]
+    SF_NNHiErr = f["tree_fit_sb"].arrays()["SF_NNHiErr"][0]
+    print(SF_NNLoErr, SF_NNHiErr)
+    SF_err_symm = max(abs(SF_NNLoErr), abs(SF_NNHiErr))
     
     generate_datacard(
         output_path=args.output,
@@ -95,5 +113,7 @@ if __name__ == "__main__":
         ws_name=args.ws_name,
         cat_name=args.cat,
         processes=args.processes,
-        lumi=args.lumi
+        SF_NN=SF_NN,
+        SF_err=SF_err_symm,
+        lumi=args.lumi,
     )
