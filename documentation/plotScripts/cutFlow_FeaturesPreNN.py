@@ -33,12 +33,12 @@ isZList = [1,19,20,21,22]
 #isQCDList = [23,24,25,26,27,29,29,30,31,32,33,34]
 #xsectionsZ = dfProcessesMC.iloc[isZList].xsection
 
-featuresForTraining = ['dijet_pt', 'dijet_eta', 'jet1_mass', 'jet2_mass', 'jet1_eta', 'jet2_eta', 'muon_pt','muon_dxySig', 'jet1_pt', 'jet2_pt', 'nJets', 'jet1_pt_uncor', 'jet2_pt_uncor']
+featuresForTraining = ['dijet_pt', 'dijet_eta', 'jet1_mass', 'jet2_mass', 'jet1_eta', 'jet2_eta', 'jet1_muon_pt','jet1_muon_dxySig', 'jet1_pt', 'jet2_pt', 'nJets', 'jet1_pt_uncor', 'jet2_pt_uncor']
 # %%
-dfsData_, lumi, fileNumberListData = loadMultiParquet_Data_new(dataTaking=[0,6,12,17], nReals=[-1, 100,100,100], columns=featuresForTraining+['jet1_btagDeepFlavB','jet2_btagDeepFlavB','muon_eta', 'dijet_mass'], filters=[('dijet_pt', '>=', 100)], returnFileNumberList=True)
-dfsMC_, sumw, fileNumberListMC = loadMultiParquet_v2(paths=isHiggsList, nMCs=-1, columns=featuresForTraining+['xsection', 'btag_central', 'flat_weight', 'jet1_btagDeepFlavB','jet2_btagDeepFlavB','muon_eta', 'dijet_mass'], returnNumEventsTotal=True, filters=[('dijet_pt', '>=', 100)], returnFileNumberList=True)
-#dfsMC_Check, sumw_Check, fileNumberListMC_Check= loadMultiParquet_v2(paths=isHiggsList, nMCs=-1, columns=featuresForTraining+['xsection', 'flat_weight', 'jet1_btagDeepFlavB','jet2_btagDeepFlavB','muon_eta', 'dijet_mass'], returnNumEventsTotal=True, filters=getCommonFilters(btagWP="L"), returnFileNumberList=True)
-dfsZ, sumwZ, fileNumberListZ = loadMultiParquet_v2(paths=isZList, nMCs=-1, columns=featuresForTraining+['xsection', 'flat_weight', 'jet1_btagDeepFlavB','jet2_btagDeepFlavB','muon_eta', 'dijet_mass'], returnNumEventsTotal=True, filters=[('dijet_pt', '>=', 100)], returnFileNumberList=True)
+dfsData_, lumi, fileNumberListData = loadMultiParquet_Data_new(dataTaking=[0,6,12,17], nReals=[-1, 100,100,100], columns=featuresForTraining+['jet1_btagDeepFlavB','jet2_btagDeepFlavB','jet1_muon_eta', 'dijet_mass'], filters=[('dijet_pt', '>=', 100)], returnFileNumberList=True)
+dfsMC_, sumw, fileNumberListMC = loadMultiParquet_v2(paths=isHiggsList, nMCs=-1, columns=featuresForTraining+['xsection', 'btag_central', 'flat_weight', 'jet1_btagDeepFlavB','jet2_btagDeepFlavB','jet1_muon_eta', 'dijet_mass'], returnNumEventsTotal=True, filters=[('dijet_pt', '>=', 100)], returnFileNumberList=True)
+#dfsMC_Check, sumw_Check, fileNumberListMC_Check= loadMultiParquet_v2(paths=isHiggsList, nMCs=-1, columns=featuresForTraining+['xsection', 'flat_weight', 'jet1_btagDeepFlavB','jet2_btagDeepFlavB','jet1_muon_eta', 'dijet_mass'], returnNumEventsTotal=True, filters=getCommonFilters(btagWP="L"), returnFileNumberList=True)
+dfsZ, sumwZ, fileNumberListZ = loadMultiParquet_v2(paths=isZList, nMCs=-1, columns=featuresForTraining+['xsection', 'flat_weight', 'jet1_btagDeepFlavB','jet2_btagDeepFlavB','jet1_muon_eta', 'dijet_mass'], returnNumEventsTotal=True, filters=[('dijet_pt', '>=', 100)], returnFileNumberList=True)
 #dfs_qcd, sumw_qcd, fileNumberListZ = loadMultiParquet_v2(paths=isQCDList, nMCs=-1, columns=featuresForTraining+['xsection', 'flat_weight', 'jet1_btagDeepFlavB','jet2_btagDeepFlavB','muon_eta', 'dijet_mass'], returnNumEventsTotal=True, filters=[('dijet_pt', '>=', 100)], returnFileNumberList=True)
 
 # %%

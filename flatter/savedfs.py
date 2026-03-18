@@ -111,8 +111,9 @@ if args.runData:
 
         #print(df.columns)
         df.loc[:, 'PNN'] = np.array(predsData.PNN)
-        df.loc[:, 'PNN_pca'] = np.array(predsData.PNN_pca)
-        df.loc[:,'PNN_qm'] = np.array(predsData.PNN_qm)
+        if "PNN_qm" in predsData.columns:
+            df.loc[:, 'PNN_pca'] = np.array(predsData.PNN_qm)
+        #df.loc[:,'PNN_qm'] = np.array(predsData.PNN_qm)
         #print("Process ", dfProcessesData.process[isMC], " NN assigned")
         df.loc[:, 'weight'] = 1
 
@@ -174,8 +175,9 @@ if args.runMC:
             print("[ERROR] Length df ", len(df), " Length predsMC ", len(predsMC))
             continue
         df.loc[:,'PNN'] = np.array(predsMC.PNN)
-        df.loc[:,'PNN_pca'] = np.array(predsMC.PNN_pca)
-        df.loc[:,'PNN_qm'] = np.array(predsMC.PNN_qm)
+        if "PNN_qm" in predsMC.columns:
+        #df.loc[:,'PNN_pca'] = np.array(predsMC.PNN_pca)
+            df.loc[:,'PNN_qm'] = np.array(predsMC.PNN_qm)
 
         print("Process ", dfProcessesMC.process[isMC], " isMC :", isMC)
         #print("Xsection ", dfProcessesMC.xsection[isMC])

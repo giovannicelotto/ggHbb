@@ -1,5 +1,5 @@
 import numpy as np
-def getMuonID_SF(json_data, wp_name, eta, pt):
+def getMuon_SF(json_data, wp_name, eta, pt):
     """
     Extract scale factor (and uncertainties) for given eta, pt.
     Handles underflow/overflow by taking the first/last bin.
@@ -137,7 +137,7 @@ def log_bad_btag_sf(
         )
 
 
-def get_trig_SF(muon_pt1, muon_sIP1, muon_pt2, muon_sIP2, muon_2_isTriggering, effData_rootfile, effMC_rootfile):
+def get_trig_SF(LeadingMuons_inJets, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_dxyErr, muon_2_isTriggering, effData_rootfile, effMC_rootfile,):
     def remove_underflow_overflow(xbin, ybin, hist):
         if xbin == hist.GetNbinsX()+1:
             xbin=xbin-1
@@ -150,49 +150,50 @@ def get_trig_SF(muon_pt1, muon_sIP1, muon_pt2, muon_sIP2, muon_2_isTriggering, e
             ybin=1
         return xbin, ybin
 
-
-    if muon_pt2>0:
-        #print("[DEBUG] Two triggering muons")
+    if len(LeadingMuons_inJets)==1:
         hist_MC = effMC_rootfile.Get("hMap")
         hist_Data = effData_rootfile.Get("hMap")
-        xbin1_MC = hist_MC.GetXaxis().FindBin(muon_pt1)
-        ybin1_MC = hist_MC.GetYaxis().FindBin(muon_sIP1)
-        xbin2_MC = hist_MC.GetXaxis().FindBin(muon_pt2)
-        ybin2_MC = hist_MC.GetYaxis().FindBin(muon_sIP2)
-        xbin1_Data = hist_Data.GetXaxis().FindBin(muon_pt1)
-        ybin1_Data = hist_Data.GetYaxis().FindBin(muon_sIP1)
-        xbin2_Data = hist_Data.GetXaxis().FindBin(muon_pt2)
-        ybin2_Data = hist_Data.GetYaxis().FindBin(muon_sIP2)
+        xbin1_MC = hist_MC.GetXaxis().FindBin(Muon_pt[LeadingMuons_inJets[0]])
+        ybin1_MC = hist_MC.GetYaxis().FindBin(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]])
+        xbin1_Data = hist_Data.GetXaxis().FindBin(Muon_pt[LeadingMuons_inJets[0]])
+        ybin1_Data = hist_Data.GetYaxis().FindBin(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]])
+        xbin1_MC, ybin1_MC = remove_underflow_overflow(xbin1_MC, ybin1_MC, hist_MC)
+        xbin1_Data, ybin1_Data = remove_underflow_overflow(xbin1_Data, ybin1_Data, hist_Data)
+        efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data)
+        efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC)
+        sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
+    if len(LeadingMuons_inJets)>1:
+        #Two muons need to be checked
+        hist_MC = effMC_rootfile.Get("hMap")
+        hist_Data = effData_rootfile.Get("hMap")
+        xbin1_MC = hist_MC.GetXaxis().FindBin(Muon_pt[LeadingMuons_inJets[0]])
+        ybin1_MC = hist_MC.GetYaxis().FindBin(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]])
+        xbin2_MC = hist_MC.GetXaxis().FindBin(Muon_pt[LeadingMuons_inJets[1]])
+        ybin2_MC = hist_MC.GetYaxis().FindBin(Muon_dxy[LeadingMuons_inJets[1]]/Muon_dxyErr[LeadingMuons_inJets[1]])
+        xbin1_Data = hist_Data.GetXaxis().FindBin(Muon_pt[LeadingMuons_inJets[0]])
+        ybin1_Data = hist_Data.GetYaxis().FindBin(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]])
+        xbin2_Data = hist_Data.GetXaxis().FindBin(Muon_pt[LeadingMuons_inJets[1]])
+        ybin2_Data = hist_Data.GetYaxis().FindBin(Muon_dxy[LeadingMuons_inJets[1]]/Muon_dxyErr[LeadingMuons_inJets[1]])
 
         xbin1_MC, ybin1_MC = remove_underflow_overflow(xbin1_MC, ybin1_MC, hist_MC)
         xbin2_MC, ybin2_MC = remove_underflow_overflow(xbin2_MC, ybin2_MC, hist_MC)
         xbin1_Data, ybin1_Data = remove_underflow_overflow(xbin1_Data, ybin1_Data, hist_Data)
         xbin2_Data, ybin2_Data = remove_underflow_overflow(xbin2_Data, ybin2_Data, hist_Data)
 
-        if muon_2_isTriggering:
+        if ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
             efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data) * hist_Data.GetBinContent(xbin2_Data, ybin2_Data)
             efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC) * hist_MC.GetBinContent(xbin2_MC, ybin2_MC)
             sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
-        else:
+        elif ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (not Muon_isTriggering[LeadingMuons_inJets[1]])):
             efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data) * (1-hist_Data.GetBinContent(xbin2_Data, ybin2_Data))
             efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC) * (1-hist_MC.GetBinContent(xbin2_MC, ybin2_MC))
             sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
-
-
-
-    else:
-        #print("[DEBUG] Only one triggering muon")
-        hist_MC = effMC_rootfile.Get("hMap")
-        hist_Data = effData_rootfile.Get("hMap")
-        xbin1_MC = hist_MC.GetXaxis().FindBin(muon_pt1)
-        ybin1_MC = hist_MC.GetYaxis().FindBin(muon_sIP1)
-        xbin1_Data = hist_Data.GetXaxis().FindBin(muon_pt1)
-        ybin1_Data = hist_Data.GetYaxis().FindBin(muon_sIP1)
-        xbin1_MC, ybin1_MC = remove_underflow_overflow(xbin1_MC, ybin1_MC, hist_MC)
-        xbin1_Data, ybin1_Data = remove_underflow_overflow(xbin1_Data, ybin1_Data, hist_Data)
-        efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data)
-        efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC)
-        sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
+        elif ((not Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
+            efficiency_data = (1-hist_Data.GetBinContent(xbin1_Data, ybin1_Data)) * (hist_Data.GetBinContent(xbin2_Data, ybin2_Data))
+            efficiency_MC = (1-hist_MC.GetBinContent(xbin1_MC, ybin1_MC)) * (hist_MC.GetBinContent(xbin2_MC, ybin2_MC))
+            sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
+        else:
+            assert False, "This assert was called"
 
 
     return np.float32(sf)

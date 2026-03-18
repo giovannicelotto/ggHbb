@@ -8,16 +8,31 @@ import time
 import argparse
 import os
 import yaml
+import sys
 import numpy as np
 # %%
+
+def get_nPdfs_in_multipdf(idx):
+    yaml_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws{idx}_pdfnames.yaml"
+    with open(yaml_path, "r") as f:
+        pdfLabels = yaml.safe_load(f)['pdf_names']
+    return len(pdfLabels)
+
 parser = argparse.ArgumentParser(description="Enrich multipdf workspace with extra PDF.")
 parser.add_argument("--idx", type=int, help="Index of the workspace", default=0)
+parser.add_argument("--onlyNumber", type=bool, help="Decide whether running only number", default=0)
 args = parser.parse_args()
 
 idx = args.idx
+
+if args.onlyNumber:
+        result = get_nPdfs_in_multipdf(idx)
+        print(result)   # important: bash reads stdout
+        sys.exit(0)
+
 np.random.seed(728)
-offset=np.random.uniform(10,100)
-multiplier=np.random.uniform(10,100)
+offset=0#np.random.uniform(10,100)
+multiplier=1#np.random.uniform(10,100)
 yaml_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/ws{idx}_pdfnames.yaml"
 with open(yaml_path, "r") as f:
     pdfLabels = yaml.safe_load(f)['pdf_names']
@@ -67,10 +82,10 @@ for pdfIdx in range(nPDFs):
 
 # %%
 fig, ax = plt.subplots(1,1 )
-y_Discrete=nll0_Discrete+nll_Discrete+ deltaNLL_Discrete
+y_Discrete=2*(nll0_Discrete+nll_Discrete+ deltaNLL_Discrete)
 ax.plot(r_Discrete[1:],y_Discrete[1:], 'o', markersize=3, label="Discrete Profiling", linestyle='-', linewidth=6, color='black', alpha=0.3)
 for pdfIdx in range(nPDFs):
-    y_pdf_i = nll0_pdf_i[pdfIdx]+nll_pdf_i[pdfIdx]+ deltaNLL_pdf_i[pdfIdx]
+    y_pdf_i = 2*(nll0_pdf_i[pdfIdx]+nll_pdf_i[pdfIdx]+ deltaNLL_pdf_i[pdfIdx])
     ax.plot(r_pdf_i[pdfIdx][1:],y_pdf_i[1:], 'o', markersize=5, label=pdfLabels[pdfIdx], linestyle='-', linewidth=1)
 
 
@@ -86,38 +101,41 @@ r_Discrete_right = r_Discrete[np.argmin(y_Discrete[1:]):]
 x_intersectionLeft2Sigma, x_intersectionRight2Sigma = r_Discrete_left[np.argmin(np.abs(y_Discrete_left - (min(y_Discrete_left)+4)))], r_Discrete_right[np.argmin(np.abs(y_Discrete_right - (min(y_Discrete_right)+4)))]
 x_intersectionLeft1Sigma, x_intersectionRight1Sigma = r_Discrete_left[np.argmin(np.abs(y_Discrete_left - (min(y_Discrete_left)+1)))], r_Discrete_right[np.argmin(np.abs(y_Discrete_right - (min(y_Discrete_right)+1)))]
 rMin = r_Discrete[np.argmin(y_Discrete)]
-#ax.set_xlim(x_intersectionLeft2Sigma - 100, x_intersectionRight2Sigma + 100)
-#ax.set_ylim(min(y_Discrete)-1, min(y_Discrete)+6)
+ax.set_xlim(x_intersectionLeft2Sigma, x_intersectionRight2Sigma )
+ax.set_ylim(min(y_Discrete)-1, min(y_Discrete)+6)
 ax.set_xlabel("(r + RND$_1$) x RND$_2$")
 ax.set_ylabel("-2 log(L) + c")
-ax.errorbar(
-    x=rMin,
-    y=min(y_Discrete)-0.5,
-    xerr=np.array([
-    [rMin - x_intersectionLeft2Sigma],     # negative error
-    [x_intersectionRight2Sigma - rMin]     # positive error
-]),
-    yerr=0,
-    fmt='o',
-    color='orange',
-    markersize=10,
-    linewidth=4,
-    label=f'2 $\sigma$'
-)
-ax.errorbar(
-    x=rMin,
-    y=min(y_Discrete)-0.5,
-    xerr=np.array([
-    [rMin - x_intersectionLeft1Sigma],     # negative error
-    [x_intersectionRight1Sigma - rMin]     # positive error
-]),
-    yerr=0,
-    fmt='o',
-    color='green',
-    markersize=10,
-    linewidth=4,
-    label=f'1 $\sigma$'
-)
+#ax.errorbar(
+#    x=rMin,
+#    y=min(y_Discrete)-0.5,
+#    xerr=np.array([
+#    [rMin - x_intersectionLeft2Sigma],     # negative error
+#    [x_intersectionRight2Sigma - rMin]     # positive error
+#]),
+#    yerr=0,
+#    fmt='o',
+#    color='orange',
+#    markersize=10,
+#    linewidth=4,
+#    label=f'2 $\sigma$'
+#)
+print("rMin = ", rMin)
+print("x_intersectionLeft1Sigma ", x_intersectionLeft1Sigma)
+print("x_intersectionRight1Sigma ", x_intersectionRight1Sigma)
+#ax.errorbar(
+#    x=rMin,
+#    y=min(y_Discrete)-0.5,
+#    xerr=np.array([
+#    [rMin - x_intersectionLeft1Sigma],     # negative error
+#    [x_intersectionRight1Sigma - rMin]     # positive error
+#]),
+#    yerr=0,
+#    fmt='o',
+#    color='green',
+#    markersize=10,
+#    linewidth=4,
+#    label=f'1 $\sigma$'
+#)
 
 
 

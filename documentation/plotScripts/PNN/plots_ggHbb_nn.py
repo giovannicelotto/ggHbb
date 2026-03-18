@@ -64,7 +64,7 @@ ax_top.set_yticks([])
 
 # %%
 dfs = []
-categories = [0,1,2,3,10,11]
+categories = [0,1,2,10,11,12]
 import yaml
 for cat in categories:
     yaml_file=f"/t3home/gcelotto/ggHbb/WSFit/Configs/cat{cat}.yml"
@@ -86,18 +86,65 @@ for cat in categories:
         df_=df_VBF.copy().query(cfg["cuts_string"])
         print("Appended")
         dfs_VBF.append(df_)
-bins_dijet_pt = np.linspace(80, 500, 31)
-fig, ax  = plt.subplots(3, 2, figsize=(18, 10))
+bins_dijet_pt = np.linspace(80, 900, 31)
+
+# %%
+fig, ax  = plt.subplots(2, 3, figsize=(15, 10))
+fig.subplots_adjust( hspace=0.35,  wspace=0.25,  top=0.95,bottom=0.08,left=0.07,right=0.98)
+#for i, cat in enumerate(categories):
+#    ax[i//2][i%2].hist(np.clip(dfs[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1]), bins=bins_dijet_pt, weights=dfs[i].weight*41.6, label="ggF")
+#    ax[i//2][i%2].set_xlabel("dijet pt")
+#    ax[i//2][i%2].set_ylabel("Events")
+#    ax[i//2][i%2].text(x=0.95, y=0.9, s=f"cat {cat}", transform=ax[i//2][i%2].transAxes, ha="right", va="center")
+#    ax[i//2][i%2].set_xlim(bins_dijet_pt[0],bins_dijet_pt[-1])
+#
+#    ax[i//2][i%2].hist(np.clip(dfs_VBF[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1]), bins=bins_dijet_pt, weights=dfs_VBF[i].weight*41.6, label='VBF', histtype='step', linewidth=2)
+#    ax[i//2][i%2].legend()
 for i, cat in enumerate(categories):
-    ax[i//2][i%2].hist(np.clip(dfs[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1]), bins=bins_dijet_pt, weights=dfs[i].weight, label="ggF")
-    ax[i//2][i%2].set_xlabel("dijet pt")
-    ax[i//2][i%2].set_ylabel("Events")
-    ax[i//2][i%2].text(x=0.95, y=0.9, s=f"cat {cat}", transform=ax[i//2][i%2].transAxes, ha="right", va="center")
-    ax[i//2][i%2].set_xlim(bins_dijet_pt[0],bins_dijet_pt[-1])
 
-    ax[i//2][i%2].hist(np.clip(dfs_VBF[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1]), bins=bins_dijet_pt, weights=dfs_VBF[i].weight, label='VBF', histtype='step')
-    ax[i//2][i%2].legend()
+    a = ax[i//3][i%3]
 
+    # --- ggF ---
+    x = np.clip(dfs[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1])
+    w = dfs[i].weight * 41.6
+
+    counts, _ = np.histogram(x, bins=bins_dijet_pt, weights=w)
+    sumw2, _ = np.histogram(x, bins=bins_dijet_pt, weights=w**2)
+    err = np.sqrt(sumw2)
+
+    centers = 0.5 * (bins_dijet_pt[1:] + bins_dijet_pt[:-1])
+    widths = np.diff(bins_dijet_pt)
+
+    a.bar(centers, counts, width=widths, align="center", alpha=0.5, label="ggF")
+    a.errorbar(centers, counts, yerr=err, fmt="none", capsize=2)
+
+    # --- VBF ---
+    x = np.clip(dfs_VBF[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1])
+    w = dfs_VBF[i].weight * 41.6
+
+    counts, _ = np.histogram(x, bins=bins_dijet_pt, weights=w)
+    sumw2, _ = np.histogram(x, bins=bins_dijet_pt, weights=w**2)
+    err = np.sqrt(sumw2)
+
+    a.step(bins_dijet_pt[:-1], counts, where="post", linewidth=2, label="VBF", color='red')
+    a.errorbar(centers, counts, yerr=err, fmt="none", capsize=2, color='red')
+
+    # --- styling ---
+    a.set_xlabel("dijet pt")
+    a.set_ylabel("Events")
+    if cat%10==0:
+        title="NN tight"
+    elif cat%10==1:
+        title="NN medium"
+    elif cat%10==2:
+        title="NN loose"
+    if cat<10:
+        title += " btagTT"
+    elif cat>10:
+        title += " btagMM"
+    a.set_title(title, fontsize=14)
+    a.set_xlim(bins_dijet_pt[0], bins_dijet_pt[-1])
+    a.legend()
 # %%
 dfs[0][['jet1_eta', 'jet2_eta', 'jet1_phi', 'jet2_phi']]
 dfs[0]['dPhi'] = np.abs(dfs[0]['jet1_phi'] - dfs[0]['jet2_phi'])

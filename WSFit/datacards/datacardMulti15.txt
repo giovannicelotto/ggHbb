@@ -1,0 +1,27 @@
+# Datacard example for H->gg like bias study
+imax 1
+jmax 2
+kmax *
+---------------------------------------------
+shapes data_obs    * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:rooHist_data_cat15
+shapes signal      * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:model_H_c15 ws3:model_H_c15_$SYSTEMATIC
+shapes Z      * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:model_Z_c15 ws3:model_Z_c15_$SYSTEMATIC
+shapes background  * /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+---------------------------------------------
+bin Cat15
+observation -1
+---------------------------------------------
+bin          Cat15 Cat15 Cat15
+process      signal background Z
+process      0 1 2
+rate         1 1 1
+---------------------------------------------
+lumi lnN 1.025  - 1.025
+---------------------------------------------
+rateZbb  rateParam  Cat15  Z  1.0  [-1.0,3.0]
+SF_NN_15   rateParam  Cat15  signal  0.8121420965559429
+SF_NN_15   rateParam  Cat15  Z       0.8121420965559429
+SF_NN_15   param      0.8121420965559429  0.10769887752748186
+---------------------------------------------
+pdfindex_15_2016_13TeV discrete
+---------------------------------------------

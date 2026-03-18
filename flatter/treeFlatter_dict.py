@@ -7,7 +7,7 @@ from functions import load_mapping_dict
 import awkward as ak
 from correctionlib import _core
 import gzip
-from jetsSelector import jetsSelector
+from jetsSelector import jetsSelector_new
 #from getJetSysJEC import getJetSysJEC
 import time
 import math
@@ -15,6 +15,8 @@ import json
 from addFeatures import addFeatureToFile
 import os
 
+sys.path.append("/t3home/gcelotto/ggHbb/PNN/slurm/mjj/")
+from predictTorch import predict
 from functions import getDfProcesses_v2
 from helpers_flatter import get_event_branches, fill_ttbar_CR_features, fill_jet_features, fill_dijet_features, fill_trig_muon_features, get_event_genBranches, fill_gen_info, fill_event_variables, fill_rest_features, fill_uncorrected_features
 from treeFlatter_dict_getSFs import get_btag_map_efficiency, get_muon_recoSF, get_trig_SF, log_bad_btag_sf, get_btag_SF
@@ -186,13 +188,14 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         jet1_uncor  = ROOT.TLorentzVector(0.,0.,0.,0.)
         jet2_uncor  = ROOT.TLorentzVector(0.,0.,0.,0.)
         
+        features_["HEM_issue"] = int(np.sum((evt["Jet_pt"]>20) & (evt["Jet_jetId"]==6) & ((evt["Jet_pt"]>50) | (evt["Jet_puId"]>=4)) & (evt["Jet_eta"]>-2.5) & (evt["Jet_eta"]<-1.3) & (evt["Jet_phi"]>-1.57) & (evt["Jet_phi"]<-0.87))>=1)
         # to be checked
-        selected1, selected2, muonIdx1, muonIdx2 = jetsSelector(    nJet = evt["nJet"], Jet_eta = evt["Jet_eta"], Jet_muonIdx1 = evt["Jet_muonIdx1"], Jet_muonIdx2 = evt["Jet_muonIdx2"],
+        selected1, selected2, muonIdx1, muonIdx2, LeadingMuons_inJets = jetsSelector_new(    nJet = evt["nJet"], Jet_eta = evt["Jet_eta"], Jet_muonIdx1 = evt["Jet_muonIdx1"], Jet_muonIdx2 = evt["Jet_muonIdx2"],
                                                                     Muon_isTriggering = evt["Muon_isTriggering"], Muon_pt = evt["Muon_pt"], Muon_eta = evt["Muon_eta"], Muon_dxy = evt["Muon_dxy"], Muon_dxyErr=evt["Muon_dxyErr"],
                                                                     jetsToCheck = jetsToCheck, Jet_btagDeepFlavB = evt["Jet_btagDeepFlavB"], Jet_puId = evt["Jet_puId"], Jet_jetId = evt["Jet_jetId"],
                                                                     maskJets = maskJets, method = method, Jet_pt = evt["Jet_pt"])
         verbose and print("Ev : %d | %d %d %d %d"%(ev, selected1, selected2, muonIdx1, muonIdx2))
-
+        # LeadingMuons_inJets represents the muons that need to be checked to calculate the trigger SF
         if selected1==999:
             continue
         if selected2==999:
@@ -246,14 +249,14 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         dijet_features = fill_dijet_features(dijet, jet1, jet2, evt)
         features_.update(dijet_features)
 
-        boost_vector = -dijet.BoostVector()  # Boost to the bb system's rest frame
-        jet1_rest = ROOT.TLorentzVector(jet1)  # Make a copy to boost
-        jet1_rest.Boost(boost_vector)     # Boost jet1 into the rest frame
-        jet2_rest = ROOT.TLorentzVector(jet2)  # Make a copy to boost
-        jet2_rest.Boost(boost_vector)     # Boost jet1 into the rest frame
+        #boost_vector = -dijet.BoostVector()  # Boost to the bb system's rest frame
+        #jet1_rest = ROOT.TLorentzVector(jet1)  # Make a copy to boost
+        #jet1_rest.Boost(boost_vector)     # Boost jet1 into the rest frame
+        #jet2_rest = ROOT.TLorentzVector(jet2)  # Make a copy to boost
+        #jet2_rest.Boost(boost_vector)     # Boost jet1 into the rest frame
         # Rest Features
-        rest_features = fill_rest_features(dijet_vec=dijet, jet1_rest_vec=jet1_rest, jet2_rest_vec=jet2_rest)
-        features_.update(rest_features)
+        #rest_features = fill_rest_features(dijet_vec=dijet, jet1_rest_vec=jet1_rest, jet2_rest_vec=jet2_rest)
+        #features_.update(rest_features)
         # Event  Variables (Shape and global features)
         event_variables = fill_event_variables(evt, maskJets)
         features_.update(event_variables)
@@ -300,32 +303,32 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         else:
             # R2 or R3
             # find leptonic charge in the second jet
-            for mu in range(evt["nMuon"]):
-                if mu==muonIdx1:
-                    # dont want the muon in the first jet
-                    continue
-                if (mu != evt["Jet_muonIdx1"][selected2]) & (mu != evt["Jet_muonIdx2"][selected2]):
-                    # avoid all muons not inside jet2
-                    continue
-                #if (evt["Muon_pt"][mu]<9) | (abs(evt["Muon_dxy"][mu]/evt["Muon_dxyErr"][mu])<6):
-                #    continue
-                else:
-                    # There is a second muon non triggering
-                    jet2_muon_isTriggering = False
-                    isMuon2 = True
-                    muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
-                    muon2.SetPtEtaPhiM(evt["Muon_pt"][mu], evt["Muon_eta"][mu], evt["Muon_phi"][mu], evt["Muon_mass"][mu])
-                    features_muon2, muon2_weight =fill_trig_muon_features(muon2,mu, jet2, "2", muon_RECO_map, evt, has_muon=isMuon2)
-                    features_.update(features_muon2)
-                    event_weight *= muon2_weight
-                    
-                    
-                    break
+            #for mu in range(evt["nMuon"]):
+            #    if mu==muonIdx1:
+            #        # dont want the muon in the first jet
+            #        continue
+            #    if (mu != evt["Jet_muonIdx1"][selected2]) & (mu != evt["Jet_muonIdx2"][selected2]):
+            #        # avoid all muons not inside jet2
+            #        continue
+            #    #if (evt["Muon_pt"][mu]<9) | (abs(evt["Muon_dxy"][mu]/evt["Muon_dxyErr"][mu])<6):
+            #    #    continue
+            #    else:
+            #        # There is a second muon non triggering
+            #        jet2_muon_isTriggering = False
+            #        isMuon2 = True
+            #        muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
+            #        muon2.SetPtEtaPhiM(evt["Muon_pt"][mu], evt["Muon_eta"][mu], evt["Muon_phi"][mu], evt["Muon_mass"][mu])
+            #        features_muon2, muon2_weight =fill_trig_muon_features(muon2,mu, jet2, "2", muon_RECO_map, evt, has_muon=isMuon2)
+            #        features_.update(features_muon2)
+            #        event_weight *= muon2_weight
+            #        
+            #        
+            #        break
             # R3: no second muon found
-            if isMuon2 == False:
-                features_muon2, muon2_weight = fill_trig_muon_features(None,None, jet2, "2",  muon_RECO_map, evt, has_muon=isMuon2)
-                features_.update(features_muon2)
-                event_weight *= muon2_weight
+            #if isMuon2 == False:
+            features_muon2, muon2_weight = fill_trig_muon_features(None,None, jet2, "2",  muon_RECO_map, evt, has_muon=isMuon2)
+            features_.update(features_muon2)
+            event_weight *= muon2_weight
         features_["jet2_muon_isTriggering"] = jet2_muon_isTriggering
         features_['dimuon_mass'] = np.float32((muon+muon2).M()) if isMuon2 else 0.106
 # Trigger
@@ -395,7 +398,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 jet_pileupId_SF  =1.
                 for j in np.arange(evt["nJet"])[maskJets]:
                     if (evt["Jet_pt"][j]<50) & (evt["Jet_genJetIdx"][j]>-1):
-                        wp = "T"
+                        wp = "L"
                         current_pileupID_SF = puId_SF_evaluator["PUJetID_eff"].evaluate(float(evt["Jet_eta"][j]), float(evt["Jet_pt"][j]), syst, wp)
                         jet_pileupId_SF *= current_pileupID_SF
                     else:
@@ -417,10 +420,15 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
         
 
-            trig_sf = get_trig_SF(muon_pt1=features_["jet1_muon_pt"],
-                                  muon_sIP1=abs(features_["jet1_muon_dxySig"]),
-                                  muon_pt2=features_["jet2_muon_pt"],
-                                  muon_sIP2=abs(features_["jet2_muon_dxySig"]),
+            trig_sf = get_trig_SF(LeadingMuons_inJets, 
+                                  evt["Muon_isTriggering"],
+                                  evt["Muon_pt"],
+                                  evt["Muon_dxy"],
+                                  evt["Muon_dxyErr"],
+                                  #muon_pt1=features_["jet1_muon_pt"],
+                                  #muon_sIP1=abs(features_["jet1_muon_dxySig"]),
+                                  #muon_pt2=features_["jet2_muon_pt"],
+                                  #muon_sIP2=abs(features_["jet2_muon_dxySig"]),
                                   muon_2_isTriggering=features_["jet2_muon_isTriggering"],
                                   effData_rootfile=effMC_rootFile,
                                   effMC_rootfile=effData_rootFile)
@@ -510,6 +518,13 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
         df['xsection']=xsections
 
     df = addFeatureToFile(df)
+    # NN prediction?
+
+    data_predictions1, data_predictions_qm = predict(df, modelName="Jan21_3_50p0", boosted=3, quantile_matching=True, run=2)
+    df["NN"] = data_predictions1
+    df["NN_qm"] = data_predictions_qm
+
+
     print('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber)
     df.to_parquet('/scratch/' +fullProcessName+"_%s.parquet"%fileNumber )
     print("Saving in " + '/scratch/' +fullProcessName+"_%s.parquet"%fileNumber )

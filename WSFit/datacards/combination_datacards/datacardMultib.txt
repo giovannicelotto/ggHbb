@@ -1,0 +1,55 @@
+Combination of cat1=datacardMulti1.txt  cat2=datacardMulti2.txt  cat3=datacardMulti3.txt  cat4=datacardMulti4.txt
+imax 4 number of bins
+jmax 2 number of processes minus 1
+kmax 9 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:model_Z_c1 ws3:model_Z_c1_$SYSTEMATIC
+shapes background  cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:rooHist_data_cat1
+shapes signal      cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:model_H_c1 ws3:model_H_c1_$SYSTEMATIC
+shapes Z           cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:model_Z_c2 ws3:model_Z_c2_$SYSTEMATIC
+shapes background  cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:rooHist_data_cat2
+shapes signal      cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:model_H_c2 ws3:model_H_c2_$SYSTEMATIC
+shapes Z           cat3        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws3.root ws3:model_Z_c3 ws3:model_Z_c3_$SYSTEMATIC
+shapes background  cat3        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws3.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat3        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws3.root ws3:rooHist_data_cat3
+shapes signal      cat3        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws3.root ws3:model_H_c3 ws3:model_H_c3_$SYSTEMATIC
+shapes Z           cat4        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:model_Z_c4 ws3:model_Z_c4_$SYSTEMATIC
+shapes background  cat4        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat4        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:rooHist_data_cat4
+shapes signal      cat4        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws4.root ws3:model_H_c4 ws3:model_H_c4_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat1                cat2                cat3                cat4              
+observation  -1                  -1                  -1                  -1                
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat1                cat1                cat1                cat2                cat2                cat2                cat3                cat3                cat3                cat4                cat4                cat4              
+process                         signal              background          Z                   signal              background          Z                   signal              background          Z                   signal              background          Z                 
+process                         0                   1                   2                   0                   1                   2                   0                   1                   2                   0                   1                   2                 
+rate                            1                   1                   1                   1                   1                   1                   1                   1                   1                   1                   1                   1                 
+----------------------------------------------------------------------------------------------------------------------------------
+PS_FSR                  lnN     -                   -                   -                   -                   -                   -                   1.0926278300607826  -                   1.086521952740616   -                   -                   -                 
+PS_ISR                  lnN     -                   -                   -                   -                   -                   -                   1.0071005453801893  -                   1.0864785569830897  -                   -                   -                 
+Scale                   lnN     -                   -                   -                   -                   -                   -                   1.1926772018494474  -                   1.0833415590899214  -                   -                   -                 
+alphaS                  lnN     -                   -                   -                   -                   -                   -                   1.0370374749696967  -                   1.0445689756376844  -                   -                   -                 
+lumi                    lnN     1.025               -                   1.025               1.025               -                   1.025               1.025               -                   1.025               1.025               -                   1.025             
+SF_NN_1       param  0.8121420965559429 0.10769887752748186
+SF_NN_2       param  0.8383502296247743 0.09557532386773615
+SF_NN_3       param  0.9028172094949983 0.06177687689882483
+SF_NN_4       param  0.6896938555710558 0.09309878009074302
+rateZbb       rateParam cat1 Z 1.0 [-1.0,3.0]
+SF_NN_1       rateParam cat1 Z 0.8121420965559429 
+SF_NN_1       rateParam cat1 signal 0.8121420965559429 
+rateZbb       rateParam cat2 Z 1.0 [-1.0,3.0]
+SF_NN_2       rateParam cat2 Z 0.8383502296247743 
+SF_NN_2       rateParam cat2 signal 0.8383502296247743 
+rateZbb       rateParam cat3 Z 1.0 [-1.0,3.0]
+SF_NN_3       rateParam cat3 Z 0.9028172094949983 
+SF_NN_3       rateParam cat3 signal 0.9028172094949983 
+rateZbb       rateParam cat4 Z 1.0 [-1.0,3.0]
+SF_NN_4       rateParam cat4 Z 0.6896938555710558 
+SF_NN_4       rateParam cat4 signal 0.6896938555710558 
+pdfindex_1_2016_13TeV  discrete
+pdfindex_2_2016_13TeV  discrete
+pdfindex_3_2016_13TeV  discrete
+pdfindex_4_2016_13TeV  discrete

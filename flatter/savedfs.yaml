@@ -1,7 +1,7 @@
-modelName: Jan21_3_50p0
+modelName: Mar05_12_50p0 #Jan21_3_50p0
 include_nn: true
 ttbar_CR: both
-boosted: 3
+boosted: 12
 columns:
   - jet1_pt
   - jet1_eta
@@ -163,26 +163,26 @@ dataPeriods:
 MC:
   0 : 0
   1 : -1 # EWKZJets
-  2 : -1 # Diboson
-  3 : -1 # Diboson
-  4 : -1 # Diboson
+  2 : 0 # Diboson
+  3 : 0 # Diboson
+  4 : 0 # Diboson
 
-  5 : -1    # Top
-  6 : -1    # Top
-  7 : -1    # Top
-  8 : -1    # Top
-  9 : -1    # Top
-  10 : -1   # Top
+  5 : 0    # Top
+  6 : 0    # Top
+  7 : 0    # Top
+  8 : 0    # Top
+  9 : 0    # Top
+  10 : 0   # Top
 
-  11 : -1 # ttbar
-  12 : -1 # ttbar
-  13 : -1 # ttbar
+  11 : 0 # ttbar
+  12 : 0 # ttbar
+  13 : 0 # ttbar
 
-  14 : -1 # WJets
-  15 : -1 #WJets
-  16 : -1 #WJets
-  17 : -1 #WJets
-  18 : -1  #WJets
+  14 : 0 # WJets
+  15 : 0 #WJets
+  16 : 0 #WJets
+  17 : 0 #WJets
+  18 : 0  #WJets
   19 : -1 #ZJets
   20 : -1 #ZJets
   21 : -1 #ZJets
@@ -201,7 +201,7 @@ MC:
   33 : 0 #QCD
   34 : 0 #QCD
 
-  35 : -1 #Zjets
+  35 : 0 #Zjets
   36 : -1 # VBF
   37 : -1 # ggHbb MINLO
   48 : -1 #Hbb other prod. mechanisms

@@ -35,7 +35,7 @@ for process, nanoPath in zip(dfProcess.process.iloc[MCList], dfProcess.nanoPath.
     print(process, "... started")
 
 
-    file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)[:1]
+    file_paths = glob.glob(nanoPath+"/**/*.root", recursive=True)[:1500]
     print("List of fileNames found... %d"%len(file_paths), flush=True)
     print(file_paths)
 

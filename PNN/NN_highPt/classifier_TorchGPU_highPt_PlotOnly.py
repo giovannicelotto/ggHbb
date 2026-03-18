@@ -111,6 +111,8 @@ Xval = unscale(Xval, featuresForTraining=featuresForTraining,   scalerName =  ou
 ####
 print("Plotting")
 from sklearn.metrics import roc_curve, auc
+from matplotlib.colors import LogNorm
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 maskHiggsData_train = (genMassTrain==0) | (genMassTrain==125)
 maskHiggsData_val = (genMassVal==0) | (genMassVal==125)
 Xtrain['weights']=Xtrain.flat_weight
@@ -120,7 +122,15 @@ Xval['weights']=Xval.flat_weight
 
 
 
-
+fig, ax = plt.subplots(1, 1)
+bins_nn, bins_dijet_pt = np.linspace(0, 1, 101), np.linspace(80, 500, 101)
+print(YPredTrain[genMassTrain==125])
+print(Xtrain.dijet_pt[genMassTrain==125])
+ax.hist2d(YPredTrain[genMassTrain==125].reshape(-1), Xtrain.dijet_pt[genMassTrain==125].values, bins=(bins_nn, bins_dijet_pt), cmap="viridis", norm=LogNorm())
+ax.set_xlabel("NN")
+ax.set_ylabel("dijet pt")
+ax.set_title("Train Sample (Signal)")
+fig.savefig(outFolder + "/performance/NN_vs_dijetPt.png", bbox_inches='tight')
 
 
 
@@ -419,7 +429,7 @@ nn_score_bins = [0.7 ,0.75, 0.8, 0.85 ,0.9, 1]
 fig, ax = plt.subplots(1, 1)
 for low, high in zip(nn_score_bins[:-1], nn_score_bins[1:]):
     maskTrain = (YPredTrain.reshape(-1)>low) & (Ytrain==0)
-    ax.hist(Xtrain.dijet_mass[maskTrain], bins=np.linspace(50, 300, 81), label=f'{low} < NN . DisCo = %.3f'%dcor.distance_correlation(YPredTrain.reshape(-1)[maskTrain], Xtrain.dijet_mass[maskTrain]), density=True, histtype='step')
+    ax.hist(Xtrain.dijet_mass[maskTrain], bins=np.linspace(50, 200, 81), label=f'{low} < NN . DisCo = %.3f'%dcor.distance_correlation(YPredTrain.reshape(-1)[maskTrain], Xtrain.dijet_mass[maskTrain]), density=True, histtype='step')
     ax.legend()
 ax.set_xlabel("Dijet mass [GeV]")
 fig.savefig(outFolder+"/performance/scan_train_highNN.png", bbox_inches='tight')
@@ -457,13 +467,13 @@ for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
     if idx< len(bkg_effs)//2:
         ax[0].hist(
             Xtrain.dijet_mass[mask_bkg],
-            bins=np.linspace(50, 300, 81),
+            bins=np.linspace(50, 200, 81),
             density=True,
             histtype='step',
             label=(
                 f"Bkg eff = {100*bkg_eff:.2f}%  "
                 f"Sig eff = {100*sig_eff:.2f}%  "
-                #f"NN thr = {thr:.3f} | "
+                f"NN thr = {thr:.3f} | "
                 f"DisCo = {disco:.3f}"
             )
         )
@@ -473,7 +483,7 @@ for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
 
         ax[1].hist(
             Xtrain.dijet_mass[mask_bkg],
-            bins=np.linspace(50, 300, 81),
+            bins=np.linspace(50, 200, 81),
             density=True,
             histtype='step',
             label=(
@@ -484,11 +494,44 @@ for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
             )
         )
         ax[1].set_xlabel("Dijet mass [GeV]")
-        ax[1].legend(fontsize=14)
+        ax[1].legend(fontsize=10)
 
 
 fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection.png", bbox_inches='tight')
 
+
+
+fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
+
+    # background passing the cut
+    mask_bkg = (y_pred > thr) & (bkg_mask) 
+
+    # signal efficiency
+    sig_eff = np.sum(Xtrain['flat_weight'][(sig_mask) & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)& (y_pred>thr)])/np.sum(Xtrain['flat_weight'][(sig_mask)  & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)])
+
+    disco = dcor.distance_correlation(
+        y_pred[mask_bkg],
+        Xtrain.dijet_mass[mask_bkg]
+    )
+    if idx< len(bkg_effs)//2:
+        ax.hist(
+            Xtrain.dijet_mass[mask_bkg],
+            bins=np.linspace(50, 200, 81),
+            density=True,
+            histtype='step',
+            label=(
+                f"Bkg eff = {100*bkg_eff:.2f}%  "
+                f"Sig eff = {100*sig_eff:.2f}%  "
+                f"NN thr = {thr:.3f} | "
+                f"DisCo = {disco:.3f}"
+            )
+        )
+        ax.set_xlabel("Dijet mass [GeV]")
+        ax.legend(fontsize=14)
+
+
+    fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection_%.2f.png"%(np.round(thr, 2)), bbox_inches='tight')
 # %%
 
 

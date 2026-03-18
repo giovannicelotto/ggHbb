@@ -14,10 +14,10 @@ def generate_datacard(
     background_name="background",
     lumi=1.025,
 ):
-    with open(f"/t3home/gcelotto/ggHbb/WSFit/Configs/systematics/cat{cat_name}_Hsyst.yaml", "r") as f:
-        Hsyst = yaml.safe_load(f) or {}
-    with open(f"/t3home/gcelotto/ggHbb/WSFit/Configs/systematics/cat{cat_name}_Zsyst.yaml", "r") as f:
-        Zsyst = yaml.safe_load(f) or {}
+    #with open(f"/t3home/gcelotto/ggHbb/WSFit/Configs/systematics/cat{cat_name}_Hsyst.yaml", "r") as f:
+    #    Hsyst = yaml.safe_load(f) or {}
+    #with open(f"/t3home/gcelotto/ggHbb/WSFit/Configs/systematics/cat{cat_name}_Zsyst.yaml", "r") as f:
+    #    Zsyst = yaml.safe_load(f) or {}
     """
     Generates a datacard txt file.
     """
@@ -57,15 +57,11 @@ bin          {" ".join(["Cat"+cat_name]*(len(processes)+2))}
 {rate_line}
 ---------------------------------------------
 lumi lnN {lumi}  - {" ".join([str(lumi)]*len(processes))}
-alphaS   lnN {Hsyst['alphaS']} - {Zsyst['alphaS']}\n
-PS_ISR   lnN {Hsyst['PS_ISR']} - {Zsyst['PS_ISR']}\n
-PS_FSR   lnN {Hsyst['PS_FSR']} - {Zsyst['PS_FSR']}\n
-Scale   lnN {Hsyst['Scale']} - {Zsyst['Scale']}\n
 ---------------------------------------------
 rateZbb  rateParam  Cat{cat_name}  Z  1.0  [-1.0,3.0]
-scaleSZ   rateParam  Cat{cat_name}  signal  0.91
-scaleSZ   rateParam  Cat{cat_name}  Z       0.91
-scaleSZ   param      {SF_NN}  {SF_err}
+SF_NN_{cat_name}   rateParam  Cat{cat_name}  signal  {SF_NN}
+SF_NN_{cat_name}   rateParam  Cat{cat_name}  Z       {SF_NN}
+SF_NN_{cat_name}   param      {SF_NN}  {SF_err}
 ---------------------------------------------
 """
     
@@ -104,7 +100,7 @@ if __name__ == "__main__":
     SF_NN = f["tree_fit_sb"].arrays()["SF_NN"][0]
     SF_NNLoErr = f["tree_fit_sb"].arrays()["SF_NNLoErr"][0]
     SF_NNHiErr = f["tree_fit_sb"].arrays()["SF_NNHiErr"][0]
-    print(SF_NNLoErr, SF_NNHiErr)
+    #print(SF_NNLoErr, SF_NNHiErr)
     SF_err_symm = max(abs(SF_NNLoErr), abs(SF_NNHiErr))
     
     generate_datacard(
@@ -117,3 +113,10 @@ if __name__ == "__main__":
         SF_err=SF_err_symm,
         lumi=args.lumi,
     )
+
+
+
+#alphaS   lnN {Hsyst['alphaS']} - {Zsyst['alphaS']}\n
+#PS_ISR   lnN {Hsyst['PS_ISR']} - {Zsyst['PS_ISR']}\n
+#PS_FSR   lnN {Hsyst['PS_FSR']} - {Zsyst['PS_FSR']}\n
+#Scale   lnN {Hsyst['Scale']} - {Zsyst['Scale']}\n

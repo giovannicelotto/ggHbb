@@ -2,7 +2,7 @@
 import ROOT
 import argparse
 import os
-
+ROOT.gErrorIgnoreLevel = ROOT.kWarning
 def main():
     parser = argparse.ArgumentParser(description="Enrich multipdf workspace with extra PDF.")
     parser.add_argument("-c", "--category", type=int, help="Index of the workspace")

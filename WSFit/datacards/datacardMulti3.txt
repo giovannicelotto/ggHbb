@@ -27,9 +27,9 @@ Scale   lnN 1.1926772018494474 - 1.0833415590899214
 
 ---------------------------------------------
 rateZbb  rateParam  Cat3  Z  1.0  [-1.0,3.0]
-scaleSZ   rateParam  Cat3  signal  0.91
-scaleSZ   rateParam  Cat3  Z       0.91
-scaleSZ   param      0.91  0.045
+SF_NN_3   rateParam  Cat3  signal  0.9028172094949983
+SF_NN_3   rateParam  Cat3  Z       0.9028172094949983
+SF_NN_3   param      0.9028172094949983  0.06177687689882483
 ---------------------------------------------
 pdfindex_3_2016_13TeV discrete
 ---------------------------------------------

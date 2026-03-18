@@ -37,21 +37,12 @@ def uniform_sample(df, column='dijet_mass', num_bins=20):
 def get_input_paths(dataTaking, mass_spin0=[50, 70, 100, 200, 300], boosted=3):
     base = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     folder = "training"
-    #if boosted==4:
-    #    input("These are old Paths. Press Any key to continue")
-    #    paths = [
-    #    "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB_o/Data1D/training",
-    #    f"{base}/MC/MINLOGluGluHToBB/training"
-    #]
-    #
-    #else:
+
     paths = [
     f"{base}/Data{dataTaking}/{folder}",
     f"{base}/MC/MINLOGluGluHToBB/training"
     ]
-    #if boosted==4:
-    #    masses = [125]
-    #else:    
+  
     paths += [f"{base}/MC/GluGluH_M{m}_ToBB" for m in mass_spin0]
     print(mass_spin0)
     masses = [125] + mass_spin0
@@ -59,42 +50,7 @@ def get_input_paths(dataTaking, mass_spin0=[50, 70, 100, 200, 300], boosted=3):
 
 
 
-#def apply_kinematic_cuts(dfs, boosted):
-#    cut_ranges = {
-#        0: {'dijet_pt': (None, 100), 'dijet_mass': (50, 300)},
-#        1: {'dijet_pt': (100, 160), 'dijet_mass': (50, 300)},
-#        2: {'dijet_pt': (160, None), 'dijet_mass': (50, 300)},
-#        3: {'dijet_pt': (100, None), 'dijet_mass': (50, 300)},
-#        4: {'dijet_pt': (50, 80), 'dijet_mass': (80, 170)},
-#
-#    }
-#
-#    if boosted in cut_ranges:
-#        pt_min, pt_max = cut_ranges[boosted]['dijet_pt']
-#        mass_min, mass_max = cut_ranges[boosted]['dijet_mass']
-#        print("pt min", pt_min)
-#        dfs = cut(dfs, 'dijet_pt', pt_min, pt_max)
-#        dfs = cut(dfs, 'dijet_mass', mass_min, mass_max)
-
-    # For conservative training
-    #if boosted == 22:
-    #    for idx, df in enumerate(dfs):
-    #        dfs[idx] = df[~((df.jet1_btagDeepFlavB > 0.71) & (df.jet2_btagDeepFlavB > 0.71))]
         
-    #dfs_bkg = [dfs[0]]
-        
-
-#    genMatched = False
-#    if genMatched:
-#        dfs_sig = dfs[1:]
-#        dfs_sig = cut(dfs_sig,'dR_jet1_genQuark',None, 0.2 )
-#        dfs_sig = cut(dfs_sig,'dR_jet2_genQuark',None, 0.2 )
-#        dfs_sig = cut(dfs_sig,'dpT_jet1_genQuark',None, 0.5 )
-#        dfs_sig = cut(dfs_sig,'dpT_jet2_genQuark',None, 0.5 )
-
-        #return [dfs[0]] + dfs_sig
-#    else:
-    #return dfs
 
 
 def filter_mass_windows(dfs, mass_hypos, mass_limits):

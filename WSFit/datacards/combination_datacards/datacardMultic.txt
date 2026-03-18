@@ -1,0 +1,42 @@
+Combination of cat1=datacardMulti1.txt  cat2=datacardMulti2.txt  cat6=datacardMulti6.txt
+imax 3 number of bins
+jmax 2 number of processes minus 1
+kmax 4 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:model_Z_c1 ws3:model_Z_c1_$SYSTEMATIC
+shapes background  cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:rooHist_data_cat1
+shapes signal      cat1        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:model_H_c1 ws3:model_H_c1_$SYSTEMATIC
+shapes Z           cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:model_Z_c2 ws3:model_Z_c2_$SYSTEMATIC
+shapes background  cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:rooHist_data_cat2
+shapes signal      cat2        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws2.root ws3:model_H_c2 ws3:model_H_c2_$SYSTEMATIC
+shapes Z           cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:model_Z_c6 ws3:model_Z_c6_$SYSTEMATIC
+shapes background  cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:rooHist_data_cat6
+shapes signal      cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:model_H_c6 ws3:model_H_c6_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat1   cat2   cat6 
+observation  -1     -1     -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat1        cat1        cat1        cat2        cat2        cat2        cat6        cat6        cat6      
+process                         signal      background  Z           signal      background  Z           signal      background  Z         
+process                         0           1           2           0           1           2           0           1           2         
+rate                            1           1           1           1           1           1           1           1           1         
+----------------------------------------------------------------------------------------------------------------------------------
+lumi                    lnN     1.025       -           1.025       1.025       -           1.025       1.025       -           1.025     
+SF_NN_1       param  0.8121420965559429 0.10769887752748186
+SF_NN_2       param  0.8383502296247743 0.09557532386773615
+SF_NN_6       param  0.6896938555710558 0.09309878009074302
+rateZbb       rateParam cat1 Z 1.0 [-1.0,3.0]
+SF_NN_1       rateParam cat1 Z 0.8121420965559429 
+SF_NN_1       rateParam cat1 signal 0.8121420965559429 
+rateZbb       rateParam cat2 Z 1.0 [-1.0,3.0]
+SF_NN_2       rateParam cat2 Z 0.8383502296247743 
+SF_NN_2       rateParam cat2 signal 0.8383502296247743 
+rateZbb       rateParam cat6 Z 1.0 [-1.0,3.0]
+SF_NN_6       rateParam cat6 Z 0.6896938555710558 
+SF_NN_6       rateParam cat6 signal 0.6896938555710558 
+pdfindex_1_2016_13TeV  discrete
+pdfindex_2_2016_13TeV  discrete
+pdfindex_6_2016_13TeV  discrete

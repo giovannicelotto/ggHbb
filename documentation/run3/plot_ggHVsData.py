@@ -6,17 +6,18 @@ import glob
 import mplhep as hep
 hep.style.use("CMS")
 # %%
-df_ggH = pd.read_parquet(glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/MC/GluGluHTo2B_Run3/GluGlu*.parquet"))
-df_data = pd.read_parquet(glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/DataRun3/Data_2025/*.parquet"))
+df_ggH = pd.read_parquet(glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB_Feb/MC/GluGluHTo2B_Run3/GluGlu*.parquet"))
+df_data = pd.read_parquet(glob.glob("/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB_Feb/DataRun3/Data_2025/*.parquet"))
 df_ggH = df_ggH[df_ggH.dijet_pt>100]
 df_data = df_data[df_data.dijet_pt>100]
 # %%
 fig, ax = plt.subplots(1, 1)
 bins_NN = np.linspace(0, 1, 31)
-ax.hist(df_ggH.PNN, bins=bins_NN, histtype='step', label="ggH", density=True)
-ax.hist(df_data.PNN, bins=bins_NN, histtype='step', label="Data", density=True)
+ax.hist(df_ggH.PNN, bins=bins_NN, histtype='step', label="ggH", density=True, linewidth=2)
+ax.hist(df_data.PNN, bins=bins_NN, histtype='step', label="Data", density=True, linewidth=2)
 ax.text(0.95, 0.95, s=r"Dijet p$_T$ > 100 GeV", transform=ax.transAxes, ha='right', va='top')
 ax.set_xlabel("NN output")
+hep.cms.label(data=True, com=13.6)
 ax.legend()
 # %%
 
@@ -43,6 +44,7 @@ ax.plot([0, 1], [0, 1], linestyle='--')  # random classifier line
 ax.set_xlabel("False Positive Rate")
 ax.set_ylabel("True Positive Rate")
 ax.legend()
+hep.cms.label(data=True, com=13.6)
 ax.grid(True)
 
 
@@ -54,13 +56,18 @@ ax.set_ylabel("True Positive Rate")
 ax.set_xlim(0, 0.02)
 ax.set_ylim(0, 0.1)
 ax.legend()
+hep.cms.label(data=True, com=13.6)
 ax.grid(True)
 
 # %%
 fig, ax = plt.subplots(1, 1)
-for nn_t in [0, 0.5, 0.7]:
-    ax.hist(df_data.dijet_mass[df_data.PNN>nn_t], bins=np.linspace(50, 300, 51), histtype='step', label=f"Data NN > {nn_t:1}", density=False)
+for nn_t in [0.5, 0.7, 0.85]:
+    ax.hist(df_data.dijet_mass[df_data.PNN>nn_t], bins=np.linspace(50, 300, 51), histtype='step', label=f"Data NN > {nn_t:1}", density=False, linewidth=2)
+ax.text(0.95, 0.95, s=r"Dijet p$_T$ > 100 GeV", transform=ax.transAxes, ha='right', va='top')
 ax.legend()
+ax.set_xlabel("Dijet Mass [GeV]")
+hep.cms.label(data=True, com=13.6)
+ax.set_ylabel("Counts")
 # %%
 #import sys
 #sys.path.append("/t3home/gcelotto/ggHbb/scripts/plotScripts/")

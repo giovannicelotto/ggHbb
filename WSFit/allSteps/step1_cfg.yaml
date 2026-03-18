@@ -4,13 +4,13 @@ output_Z : "/t3home/gcelotto/ggHbb/WSFit/output/catCONFIG/Z_fit_catCONFIG_SYST.p
 output_H : "/t3home/gcelotto/ggHbb/WSFit/output/catCONFIG/H_fit_catCONFIG_SYST.png"
 output_ws : "/t3home/gcelotto/ggHbb/WSFit/ws/step1/wsCONFIG_SYST.root"
 systematics :
- #- puid_up
- #- puid_down
- #- btag_hf_up
- #- btag_hf_down
- #- btag_lightf_up
- #- btag_lightf_down
- #- scale
- - PS_ISR
+ - puid_up
+ - puid_down
+ - btag_hf_up
+ - btag_hf_down
+ - btag_lightf_up
+ - btag_lightf_down
+ - scale
+ #- PS_ISR
  #- PS_FSR
  #- alphaS

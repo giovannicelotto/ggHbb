@@ -1,0 +1,9 @@
+ <<< Combine >>> 
+ <<< v9.2.1 >>>
+>>> Random number generator seed is 123456
+>>> Method used is FitDiagnostics
+Maximum failed steps (max=5) reached and minimization failed at r = -19.521 
+
+ --- FitDiagnostics ---
+Best fit r: -3.04157  -46.9584/+21.7756  (68% CL)
+Done in 0.03 min (cpu), 0.03 min (real)

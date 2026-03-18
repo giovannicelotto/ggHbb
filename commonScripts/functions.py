@@ -118,12 +118,24 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
                 ]
 
     ]
+    if boosted>10:
+        if boosted==11:
+            filters[0] = filters[0] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120)]
+            filters[1] = filters[1] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120)]
+        if boosted==12:
+            filters[0] = filters[0] + [('dijet_pt', '>=', 120), ('dijet_pt', '<', 200)]
+            filters[1] = filters[1] + [('dijet_pt', '>=', 120), ('dijet_pt', '<', 200)]
+        if boosted==13:
+            filters[0] = filters[0] + [('dijet_pt', '>=', 200)]
+            filters[1] = filters[1] + [('dijet_pt', '>=', 200)]
+#        if boosted==14:
+#            filters[0] = filters[0] + [('dijet_pt', '>=', 300)]
+#            filters[1] = filters[1] + [('dijet_pt', '>=', 300)]
+    
     if cutDijet:
         filters[0] = filters[0] + [('dijet_pt', '>=', 100)]
         filters[1] = filters[1] + [('dijet_pt', '>=', 100)]
-    if boosted==2:
-        filters[0] = filters[0] + [('dijet_pt', '<', 300)]
-        filters[1] = filters[1] + [('dijet_pt', '<', 300)]
+
     
     if (ttbarCR=="both"):
         pass

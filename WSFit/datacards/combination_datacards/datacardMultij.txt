@@ -1,0 +1,69 @@
+Combination of cat15=datacardMulti15.txt  cat13=datacardMulti13.txt  cat14=datacardMulti14.txt  cat25=datacardMulti25.txt  cat23=datacardMulti23.txt  cat24=datacardMulti24.txt
+imax 6 number of bins
+jmax 2 number of processes minus 1
+kmax 7 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat13       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws13.root ws3:model_Z_c13 ws3:model_Z_c13_$SYSTEMATIC
+shapes background  cat13       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws13.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat13       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws13.root ws3:rooHist_data_cat13
+shapes signal      cat13       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws13.root ws3:model_H_c13 ws3:model_H_c13_$SYSTEMATIC
+shapes Z           cat14       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws14.root ws3:model_Z_c14 ws3:model_Z_c14_$SYSTEMATIC
+shapes background  cat14       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws14.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat14       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws14.root ws3:rooHist_data_cat14
+shapes signal      cat14       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws14.root ws3:model_H_c14 ws3:model_H_c14_$SYSTEMATIC
+shapes Z           cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:model_Z_c15 ws3:model_Z_c15_$SYSTEMATIC
+shapes background  cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:rooHist_data_cat15
+shapes signal      cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:model_H_c15 ws3:model_H_c15_$SYSTEMATIC
+shapes Z           cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:model_Z_c23 ws3:model_Z_c23_$SYSTEMATIC
+shapes background  cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:rooHist_data_cat23
+shapes signal      cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:model_H_c23 ws3:model_H_c23_$SYSTEMATIC
+shapes Z           cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:model_Z_c24 ws3:model_Z_c24_$SYSTEMATIC
+shapes background  cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:rooHist_data_cat24
+shapes signal      cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:model_H_c24 ws3:model_H_c24_$SYSTEMATIC
+shapes Z           cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:model_Z_c25 ws3:model_Z_c25_$SYSTEMATIC
+shapes background  cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:rooHist_data_cat25
+shapes signal      cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:model_H_c25 ws3:model_H_c25_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat15  cat13  cat14  cat25  cat23  cat24
+observation  -1     -1     -1     -1     -1     -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat15       cat15       cat15       cat13       cat13       cat13       cat14       cat14       cat14       cat25       cat25       cat25       cat23       cat23       cat23       cat24       cat24       cat24     
+process                         signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z         
+process                         0           1           2           0           1           2           0           1           2           0           1           2           0           1           2           0           1           2         
+rate                            1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1         
+----------------------------------------------------------------------------------------------------------------------------------
+lumi                    lnN     1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025     
+SF_NN_15      param  0.8121420965559429 0.10769887752748186
+SF_NN_13      param  0.8121420965559429 0.10769887752748186
+SF_NN_14      param  0.8121420965559429 0.10769887752748186
+SF_NN_25      param  0.8707825897247942 0.06305924857156542
+SF_NN_23      param  0.6542243691089159 0.10590604345902299
+SF_NN_24      param  0.7903449924250043 0.19315500081633075
+rateZbb       rateParam cat15 Z 1.0 [-1.0,3.0]
+SF_NN_15      rateParam cat15 Z 0.8121420965559429 
+SF_NN_15      rateParam cat15 signal 0.8121420965559429 
+rateZbb       rateParam cat13 Z 1.0 [-1.0,3.0]
+SF_NN_13      rateParam cat13 Z 0.8121420965559429 
+SF_NN_13      rateParam cat13 signal 0.8121420965559429 
+rateZbb       rateParam cat14 Z 1.0 [-1.0,3.0]
+SF_NN_14      rateParam cat14 Z 0.8121420965559429 
+SF_NN_14      rateParam cat14 signal 0.8121420965559429 
+rateZbb       rateParam cat25 Z 1.0 [-1.0,3.0]
+SF_NN_25      rateParam cat25 Z 0.8707825897247942 
+SF_NN_25      rateParam cat25 signal 0.8707825897247942 
+rateZbb       rateParam cat23 Z 1.0 [-1.0,3.0]
+SF_NN_23      rateParam cat23 Z 0.6542243691089159 
+SF_NN_23      rateParam cat23 signal 0.6542243691089159 
+rateZbb       rateParam cat24 Z 1.0 [-1.0,3.0]
+SF_NN_24      rateParam cat24 Z 0.7903449924250043 
+SF_NN_24      rateParam cat24 signal 0.7903449924250043 
+pdfindex_15_2016_13TeV  discrete
+pdfindex_13_2016_13TeV  discrete
+pdfindex_14_2016_13TeV  discrete
+pdfindex_25_2016_13TeV  discrete
+pdfindex_23_2016_13TeV  discrete
+pdfindex_24_2016_13TeV  discrete

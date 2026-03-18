@@ -21,7 +21,7 @@ from getDfsFromConfig import extract_pnn_edges
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--category', type=str, default="0", help='Category')
+parser.add_argument('-c', '--category', type=str, default="28", help='Category')
 args = parser.parse_args([]) if hasattr(sys, 'ps1') or not sys.argv[1:] else parser.parse_args()
 
 
@@ -78,7 +78,7 @@ lumis = []
 for idx, p in enumerate(dfProcessesMC.process):
     if idx not in np.array(isMCList)[np.array(nMCs)!=0]:
         continue
-    print("[DEBUG] Trying to open %s"%(df_folder+"/df_%s_%s.parquet"%(p, modelName)))
+    #print("[DEBUG] Trying to open %s"%(df_folder+"/df_%s_%s.parquet"%(p, modelName)))
     df = pd.read_parquet(df_folder+"/df_%s_%s.parquet"%(p, modelName), columns=columns+MConlyFeatures)
     dfsMC.append(df)
 # %%
@@ -86,7 +86,7 @@ for idx, p in enumerate(dfProcessesData.process):
     if idx not in np.array(processesData)[np.array(nReals)!=0]:
         continue
     df = pd.read_parquet(df_folder+"/dataframes_%s_%s.parquet"%(p, modelName), columns=columns)
-    print("/dataframes_%s_%s.parquet"%(p, modelName))
+    #print("/dataframes_%s_%s.parquet"%(p, modelName))
 
     dfsData.append(df)
     lumi = np.load(df_folder+"/lumi_%s_%s.npy"%(p, modelName))
@@ -99,10 +99,9 @@ print("Lumi total is %.2f fb-1"%lumi)
 # %%
 process_dict = {
     "ST": [5, 6, 7, 8, 9, 10],
-    "tt(ll)": [11],
-    "tt(others)": [12, 13],
-    "diboson": [2, 3, 4],
-    "V+Jets": [14,15,16,17,18, 19,20,21,22,35,49],
+    "tt_ll": [11],
+    "tt_others": [12, 13],
+    "V+Jets": [2, 3, 4,14,15,16,17,18, 19,20,21,22,35,49],
     "QCD": [23,24,25,26,27,28,29,30,31,32,33,34],
     "ggH(bb)": [37],
     #"WJets":[],
@@ -155,9 +154,12 @@ for proc in processes:
 
     df_proc = dfMC[(dfMC["process"] == proc) & (dfMC.is_ttbar_CR == 1) & (dfMC.PNN_qm>=x_min) & (dfMC.PNN_qm<x_max)]
 
+
     values = df_proc["PNN_qm"].values
     weights = df_proc["weight"].values
-
+    if len(values) == 0:
+        print(f"Warning: No events for process {proc} in the specified range!")
+        hist.Fill(-1,0)
     for x, w in zip(values, weights):
         hist.Fill(float(x), float(w))
 

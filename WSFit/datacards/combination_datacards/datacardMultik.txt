@@ -1,0 +1,51 @@
+Combination of cat15=datacardMulti15.txt  cat16=datacardMulti16.txt  cat25=datacardMulti25.txt  cat26=datacardMulti26.txt
+imax 4 number of bins
+jmax 2 number of processes minus 1
+kmax 5 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:model_Z_c15 ws3:model_Z_c15_$SYSTEMATIC
+shapes background  cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:rooHist_data_cat15
+shapes signal      cat15       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws15.root ws3:model_H_c15 ws3:model_H_c15_$SYSTEMATIC
+shapes Z           cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:model_Z_c16 ws3:model_Z_c16_$SYSTEMATIC
+shapes background  cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:rooHist_data_cat16
+shapes signal      cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:model_H_c16 ws3:model_H_c16_$SYSTEMATIC
+shapes Z           cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:model_Z_c25 ws3:model_Z_c25_$SYSTEMATIC
+shapes background  cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:rooHist_data_cat25
+shapes signal      cat25       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws25.root ws3:model_H_c25 ws3:model_H_c25_$SYSTEMATIC
+shapes Z           cat26       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws26.root ws3:model_Z_c26 ws3:model_Z_c26_$SYSTEMATIC
+shapes background  cat26       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws26.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat26       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws26.root ws3:rooHist_data_cat26
+shapes signal      cat26       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws26.root ws3:model_H_c26 ws3:model_H_c26_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat15  cat16  cat25  cat26
+observation  -1     -1     -1     -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat15       cat15       cat15       cat16       cat16       cat16       cat25       cat25       cat25       cat26       cat26       cat26     
+process                         signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z         
+process                         0           1           2           0           1           2           0           1           2           0           1           2         
+rate                            1           1           1           1           1           1           1           1           1           1           1           1         
+----------------------------------------------------------------------------------------------------------------------------------
+lumi                    lnN     1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025     
+SF_NN_15      param  0.8121420965559429 0.10769887752748186
+SF_NN_16      param  0.8121420965559429 0.10769887752748186
+SF_NN_25      param  0.8707825897247942 0.06305924857156542
+SF_NN_26      param  0.6911575453090829 0.0932877282539597
+rateZbb       rateParam cat15 Z 1.0 [-1.0,3.0]
+SF_NN_15      rateParam cat15 Z 0.8121420965559429 
+SF_NN_15      rateParam cat15 signal 0.8121420965559429 
+rateZbb       rateParam cat16 Z 1.0 [-1.0,3.0]
+SF_NN_16      rateParam cat16 Z 0.8121420965559429 
+SF_NN_16      rateParam cat16 signal 0.8121420965559429 
+rateZbb       rateParam cat25 Z 1.0 [-1.0,3.0]
+SF_NN_25      rateParam cat25 Z 0.8707825897247942 
+SF_NN_25      rateParam cat25 signal 0.8707825897247942 
+rateZbb       rateParam cat26 Z 1.0 [-1.0,3.0]
+SF_NN_26      rateParam cat26 Z 0.6911575453090829 
+SF_NN_26      rateParam cat26 signal 0.6911575453090829 
+pdfindex_15_2016_13TeV  discrete
+pdfindex_16_2016_13TeV  discrete
+pdfindex_25_2016_13TeV  discrete
+pdfindex_26_2016_13TeV  discrete

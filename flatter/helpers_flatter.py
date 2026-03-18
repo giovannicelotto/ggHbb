@@ -1,6 +1,6 @@
 import numpy as np
 import ROOT
-from treeFlatter_dict_getSFs import getMuonID_SF, get_muon_recoSF, btag_wp
+from treeFlatter_dict_getSFs import getMuon_SF, get_muon_recoSF, btag_wp
 from getZ_KFactor import getZ_KFactor
 PF_INSIDE_JETS = False
 def get_event_branches(branches, ev, isMC, run=2):
@@ -76,7 +76,7 @@ def get_event_branches(branches, ev, isMC, run=2):
         "Jet_muonIdx1"                : branches["Jet_muonIdx1"][ev],
         "Jet_muonIdx2"                : branches["Jet_muonIdx2"][ev],
         # Regression
-        "Jet_bReg2018"                 : branches["Jet_bReg2018"][ev],
+        "Jet_bReg2018"                 : branches["Jet_bRegCorr"][ev],
 
 
         "dijet_eta"                     : branches["dijet_eta"][ev],
@@ -153,6 +153,7 @@ def get_event_branches(branches, ev, isMC, run=2):
         "Muon_fired_HLT_Mu9_IP6" :        branches["Muon_fired_HLT_Mu9_IP6"][ev],
         "nSV"                    :        branches["nSV"][ev],
         "PV_npvs"                :        branches["PV_npvs"][ev],
+        "dijet_pt_nano"                :        branches["dijet_pt"][ev],
         
     # Data MC dependent
     #Gen Information
@@ -444,12 +445,12 @@ def fill_ttbar_CR_features(evt, isMC, muonIdx1, muonIdx2, processName, muon_RECO
     features["Muon_tt_RECO_SF"] = muon_tt_RECO_SF["value"] if features["is_ttbar_CR"]==1 else 1.
     features["Muon_tt_RECO_stat"] = muon_tt_RECO_SF["stat"] if features["is_ttbar_CR"]==1 else 0.
     features["Muon_tt_RECO_syst"] = muon_tt_RECO_SF["syst"] if features["is_ttbar_CR"]==1 else 0.
-    muon_tt_ID_SF = getMuonID_SF(muon_ID_map, "NUM_TightID_DEN_TrackerMuons", evt["Muon_eta"][selected_muon_idx], evt["Muon_pt"][selected_muon_idx]) if features["is_ttbar_CR"]==1 else 1.
+    muon_tt_ID_SF = getMuon_SF(muon_ID_map, "NUM_TightID_DEN_TrackerMuons", evt["Muon_eta"][selected_muon_idx], evt["Muon_pt"][selected_muon_idx]) if features["is_ttbar_CR"]==1 else 1.
     features["Muon_tt_ID_SF"] = muon_tt_ID_SF["value"] if features["is_ttbar_CR"]==1 else 1.
     features["Muon_tt_ID_stat"] = muon_tt_ID_SF["stat"]  if features["is_ttbar_CR"]==1 else 0.
     features["Muon_tt_ID_syst"] = muon_tt_ID_SF["syst"]  if features["is_ttbar_CR"]==1 else 0.
 
-    muon_ISO_SF = getMuonID_SF(muon_ISO_map, "NUM_TightRelIso_DEN_TightIDandIPCut", evt["Muon_eta"][selected_muon_idx],  evt["Muon_pt"][selected_muon_idx]) if features["is_ttbar_CR"]==1 else 1.
+    muon_ISO_SF = getMuon_SF(muon_ISO_map, "NUM_TightRelIso_DEN_TightIDandIPCut", evt["Muon_eta"][selected_muon_idx],  evt["Muon_pt"][selected_muon_idx]) if features["is_ttbar_CR"]==1 else 1.
     features["Muon_tt_ISO_SF"] = muon_ISO_SF["value"] if features["is_ttbar_CR"]==1 else 1.
     features["Muon_tt_ISO_stat"] = muon_ISO_SF["stat"] if features["is_ttbar_CR"]==1 else 0.
     features["Muon_tt_ISO_syst"] = muon_ISO_SF["syst"] if features["is_ttbar_CR"]==1 else 0.
@@ -505,7 +506,7 @@ def fill_dijet_features(dijet_vec, jet1_vec, jet2_vec, evt, run=2):
         assert False
     features['dijet_pt'] = np.float32(dijet_vec.Pt())
     #features['dijet_eta_nano'] = evt["dijet_eta"]
-    #features['dijet_pt_nano'] = evt["dijet_pt"]
+    features['dijet_pt_nano'] = evt["dijet_pt_nano"]
     #if np.abs(evt["dijet_pt"]-dijet_vec.Pt())>1:
     #    print("%.3f vs %.3f"%(evt["dijet_pt"], dijet_vec.Pt()))
     #    print("%.3f vs %.3f"%(evt["dijet_jet1_pt"], jet1_vec.Pt()))

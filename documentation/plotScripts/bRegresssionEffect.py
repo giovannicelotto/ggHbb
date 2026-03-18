@@ -7,7 +7,12 @@ import numpy as np
 from functions import loadMultiParquet_v2, getCommonFilters
 # %%
 # Load data
-df = loadMultiParquet_v2(paths=[37],nMCs=-1,columns=None, returnFileNumberList=False, returnNumEventsTotal=False, filters=getCommonFilters(btagWP="T"))[0]
+particle = "Z"
+if particle=="Z":
+    processes = [19,20,21,22,35]
+else:
+    processes = [37]
+df = loadMultiParquet_v2(paths=processes,nMCs=-1,columns=None, returnFileNumberList=False, returnNumEventsTotal=False, filters=getCommonFilters(btagWP="T"))[0]
 # %%
 
 def invariant_mass(pt1, eta1, phi1, m1,
@@ -92,10 +97,12 @@ def chi2_spectrum(x, y, yerr):
 
 
 x = 0.5 * (bins[1:] + bins[:-1])
-
-mask_unc = (c_uncor_err > 0) & (x > 75) & (x < 150)
-mask_cor = (c_cor_err > 0) & (x > 90) & (x < 155)
-
+if particle=="Z":
+    mask_unc = (c_uncor_err > 0) & (x > 60) & (x < 110)
+    mask_cor = (c_cor_err > 0) & (x > 65) & (x < 120)
+else:
+    mask_unc = (c_uncor_err > 0) & (x > 75) & (x < 150)
+    mask_cor = (c_cor_err > 0) & (x > 90) & (x < 155)
 x_unc = x[mask_unc]
 y_unc = c_uncor[mask_unc]
 e_unc = c_uncor_err[mask_unc]
@@ -179,11 +186,11 @@ ax.text(0.95, 0.25+0.7, '$\mu = %.1f \pm %.1f$ GeV'%(m_cor.values["mu"], m_cor.e
 ax.text(0.95, 0.25+0.65, '$\sigma = %.1f \pm %.1f$ GeV'%(m_cor.values["sigma_g"], m_cor.errors["sigma_g"]), transform=ax.transAxes, fontsize=18, ha='right', color='red')
 ax.text(0.95, 0.25+0.6, '$\sigma/\mu = %.1f$ %%'%(m_cor.values["sigma_g"]/m_cor.values["mu"]*100), transform=ax.transAxes, fontsize=18, ha='right', color='red')
 
-
+ax.set_ylim(ax.get_ylim()[0],ax.get_ylim()[1]*1.2)
 ax.text(0.95, 0.2, '$p_T^{jj} > 100$ GeV\n$p_T^{\mu}$> 9 GeV\n |IPsig$^{\mu}$| > 6\n|$\eta^{\mu}$| < 1.5\n$p_T^j>20$ GeV', transform=ax.transAxes, fontsize=14, ha='right', color='black')
 ax.set_xlabel("Dijet Mass [GeV]")
 ax.set_ylabel("Events / %.1f GeV"%(bins[1]-bins[0]))
 ax.legend()
 hep.cms.label(data=False)
-fig.savefig("/t3home/gcelotto/ggHbb/documentation/plots/bRegression/bRegEffect_on_dijetMass.png", bbox_inches='tight')
+fig.savefig(f"/t3home/gcelotto/ggHbb/documentation/plots/bRegression/bRegEffect_on_dijetMass{particle}.png", bbox_inches='tight')
 # %%

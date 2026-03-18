@@ -17,7 +17,8 @@ branches_to_keep = ["dijet_mass", "dijet_pt"]  # replace with your actual branch
 # List to accumulate dataframes
 df_list = []
 
-for fname in fileNames[:500]:
+for idx, fname in enumerate(fileNames[:200]):
+    print(idx)
     with uproot.open(fname) as f:
         tree = f["Events"]  # adjust if tree has a different name
         # Read only selected branches
@@ -35,11 +36,11 @@ df = pd.concat(df_list, ignore_index=True)
 # %%
 fig, ax = plt.subplots(1,1)
 ax.hist(df.dijet_mass, bins=100, range=(50, 200), histtype='step', label='Data (p$_T>30$ GeV)', density=True)
-ax.hist(df.dijet_mass[df.dijet_pt>50], bins=100, range=(50, 200), histtype='step', label='Data (p$_T>50$ GeV)', density=True)
+ax.hist(df.dijet_mass[(df.dijet_pt>60) & (df.dijet_pt>120)], bins=100, range=(50, 200), histtype='step', label='Data (p$_T:60-120$ GeV)', density=True)
 ax.hist(df.dijet_mass[df.dijet_pt>70], bins=100, range=(50, 200), histtype='step', label='Data (p$_T>70$ GeV)', density=True)
 ax.hist(df.dijet_mass[df.dijet_pt>100], bins=100, range=(50, 200), histtype='step', label='Data (p$_T>100$ GeV)', density=True)
 ax.legend()
 ax.set_xlabel("Dijet mass [GeV]")
 ax.set_ylabel("Normalized counts")
-fig.savefig("/t3home/gcelotto/ggHbb/documentation/plots/dijet_mass_smooth_data_pt_cuts.png", bbox_inches="tight")
+#fig.savefig("/t3home/gcelotto/ggHbb/documentation/plots/dijet_mass_smooth_data_pt_cuts.png", bbox_inches="tight")
 # %%

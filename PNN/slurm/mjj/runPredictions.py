@@ -60,9 +60,9 @@ def main(isMC, processNumber, nFiles, modelName, boosted, isJEC):
             print(fileName, str(processNumber))
             subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 200)), '/t3home/gcelotto/ggHbb/PNN/slurm/mjj/predict.sh', fileName, str(processNumber), process, modelName, str(boosted)])
             doneFiles = doneFiles + 1
-            if doneFiles % 100 ==0:
+            if doneFiles % 10 ==0:
                 print("I am sleeping! Good Night!")
-                time.sleep(15)
+                time.sleep(10)
                 print("I am back! Good Morning!")
         else:
             print("Waiting" + "." * dots + " " * (3 - dots), end="\r", flush=True)

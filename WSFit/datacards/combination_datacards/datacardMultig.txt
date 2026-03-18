@@ -1,0 +1,33 @@
+Combination of cat10=datacardMulti10.txt  cat20=datacardMulti20.txt
+imax 2 number of bins
+jmax 2 number of processes minus 1
+kmax 3 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat10       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws10.root ws3:model_Z_c10 ws3:model_Z_c10_$SYSTEMATIC
+shapes background  cat10       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws10.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat10       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws10.root ws3:rooHist_data_cat10
+shapes signal      cat10       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws10.root ws3:model_H_c10 ws3:model_H_c10_$SYSTEMATIC
+shapes Z           cat20       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws20.root ws3:model_Z_c20 ws3:model_Z_c20_$SYSTEMATIC
+shapes background  cat20       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws20.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat20       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws20.root ws3:rooHist_data_cat20
+shapes signal      cat20       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws20.root ws3:model_H_c20 ws3:model_H_c20_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat10  cat20
+observation  -1     -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat10       cat10       cat10       cat20       cat20       cat20     
+process                         signal      background  Z           signal      background  Z         
+process                         0           1           2           0           1           2         
+rate                            1           1           1           1           1           1         
+----------------------------------------------------------------------------------------------------------------------------------
+lumi                    lnN     1.025       -           1.025       1.025       -           1.025     
+SF_NN_10      param  0.8121420965559429 0.10769887752748186
+SF_NN_20      param  0.8285092719306374 0.055053157924294216
+rateZbb       rateParam cat10 Z 1.0 [-1.0,3.0]
+SF_NN_10      rateParam cat10 Z 0.8121420965559429 
+SF_NN_10      rateParam cat10 signal 0.8121420965559429 
+rateZbb       rateParam cat20 Z 1.0 [-1.0,3.0]
+SF_NN_20      rateParam cat20 Z 0.8285092719306374 
+SF_NN_20      rateParam cat20 signal 0.8285092719306374 
+pdfindex_10_2016_13TeV  discrete
+pdfindex_20_2016_13TeV  discrete

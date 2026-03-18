@@ -19,7 +19,7 @@ from helpers.getFeatures import getFeatures, getFeaturesHighPt
 from helpers.scaleUnscale import scale
 from helpers.dcorLoss import *
 from helpers.saveDataAndPredictions import saveXYWrW
-from helpers.flattenWeights import flattenWeights
+from helpers.flattenWeights import flattenWeights, flattenWeights_conditionalPt
 
 from helpers.scaleUnscale import test_gaussianity_validation
 
@@ -30,7 +30,7 @@ from helpers.scaleUnscale import test_gaussianity_validation
 
 parser = argparse.ArgumentParser(description="Process some arguments.")
 parser.add_argument("-s", "--sampling", type=int, help="Enable sampling (default: False)", default=0)
-parser.add_argument("-b", "--boosted", type=int, default=2, help="Set boosted value (1 100-160) or 2 160-inf)")
+parser.add_argument("-b", "--boosted", type=int, default=10, help="Set boosted value (1 100-160) or 2 160-inf)")
 parser.add_argument("-dt", "--dataTaking", type=str, default='1D', help="1A or 1D")
 parser.add_argument("-btagWP", "--btagWP", type=str, default='M', help="M or L")
 
@@ -147,8 +147,15 @@ if args.boosted==4:
     rWval = rWval/np.mean(rWval)
 else:
     # Higgs and Data have flat distribution in m_jj only for training and validation
-    rWtrain, rWval = flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, outFolder, outName=outFolder+ "/massReweighted.png",
+    if args.boosted==10:
+        rWtrain, rWval = flattenWeights_conditionalPt(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval,  outName=outFolder+ "/massReweighted.png",
+                                                            xmin=50, xmax=300, nbins=201,
+                                                            ptmin=100, ptmax=450, nptbins=5)
+    else:
+        rWtrain, rWval = flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, outFolder, outName=outFolder+ "/massReweighted.png",
                                 xmin=int(Xtrain.dijet_mass.min()), nbins=201)
+    
+
 
 # To have typical numbers for lr and batch size set the mean weight to 1
     rWtrain = rWtrain/np.mean(rWtrain)
@@ -156,6 +163,30 @@ else:
 
 Wtrain = Wtrain/np.mean(Wtrain)
 Wval = Wval/np.mean(Wval)
+
+# %%
+fig, ax = plt.subplots(1, 1)
+
+bins = np.linspace(100, 900, 101)
+ax.hist(Xtrain[Ytrain==1].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="S", weights=rWtrain[Ytrain==1])
+ax.hist(Xtrain[Ytrain==0].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="B", weights=rWtrain[Ytrain==0])
+#ax.hist(Xtrain.dijet_mass[genMassTrain>0], bins=bins_sum, histtype='step', density=False, linewidth=1, weights=rWtrain[genMassTrain>0], label='Sum', color='black')
+ax.legend()
+ax.set_xlabel("Dijet pT [GeV]")
+ax.set_ylabel("Reweighted Counts")
+fig.savefig(outFolder+"/dijetPt_reweighted.png", bbox_inches='tight')
+
+# %%
+fig, ax = plt.subplots(1, 1)
+bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
+bins_sum=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
+for m in (np.unique(genMassTrain)[np.unique(genMassTrain)!=0]):
+    ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='step', density=False, linewidth=1, label="M: %d"%m, weights=rWtrain[genMassTrain==m])
+ax.hist(Xtrain.dijet_mass[genMassTrain>0], bins=bins_sum, histtype='step', density=False, linewidth=1, weights=rWtrain[genMassTrain>0], label='Sum', color='black')
+ax.legend()
+ax.set_xlabel("Dijet Mass [GeV]")
+ax.set_ylabel("Reweighted Counts")
+fig.savefig(outFolder+"/dijetMass_reweighted.png", bbox_inches='tight')
 
 # %%
 fig, ax = plt.subplots(1, 1)
@@ -170,17 +201,11 @@ fig.savefig(outFolder+"/dijetMass.png", bbox_inches='tight')
 
 
 
+
 # %%
-fig, ax = plt.subplots(1, 1)
-bins=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
-bins_sum=np.linspace(int(Xtrain.dijet_mass.min()), 300, 71)
-for m in (np.unique(genMassTrain)[np.unique(genMassTrain)!=0]):
-    ax.hist(Xtrain.dijet_mass[genMassTrain==m], bins=bins, histtype='step', density=False, linewidth=1, label="M: %d"%m, weights=rWtrain[genMassTrain==m])
-ax.hist(Xtrain.dijet_mass[genMassTrain>0], bins=bins_sum, histtype='step', density=False, linewidth=1, weights=rWtrain[genMassTrain>0], label='Sum', color='black')
-ax.legend()
-ax.set_xlabel("Dijet Mass [GeV]")
-ax.set_ylabel("Reweighted Counts")
-fig.savefig(outFolder+"/dijetMass_reweighted.png", bbox_inches='tight')
+
+
+
 # %%
 
 
@@ -210,11 +235,11 @@ Xval['label']=Yval
 
 #Without mass reweighiting
 
-#plotNormalizedFeatures(data=[Xtrain[Ytrain==0][featuresForTraining], Xtrain[Ytrain==1][featuresForTraining], Xval[Yval==0][featuresForTraining], Xval[Yval==1][featuresForTraining]],
-#                        outFile=outFolder+"/featuresForTraining.png", legendLabels=['Data Train', 'Higgs Train', 'Data Val', 'Higgs Val'],
-#                        colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
-#                        alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=False,
-#                        weights=[Wtrain[Ytrain==0], Wtrain[Ytrain==1], Wval[Yval==0], Wval[Yval==1]], error=False)
+plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xval[Yval==0], Xval[Yval==1]],
+                        outFile=outFolder+"/featuresForTraining.png", legendLabels=['Data Train', 'Higgs Train', 'Data Val', 'Higgs Val'],
+                        colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
+                        alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=True,
+                        weights=[Wtrain[Ytrain==0], Wtrain[Ytrain==1], Wval[Yval==0], Wval[Yval==1]], error=False)
 #With mass reweighiting
 #plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xval[Yval==0], Xval[Yval==1]],
 #                    outFile=outFolder+"/featuresReweighted.png", legendLabels=['Data Train', 'Higgs Train', 'Data Val', 'Higgs Val'],

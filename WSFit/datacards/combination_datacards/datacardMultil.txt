@@ -1,0 +1,69 @@
+Combination of cat11=datacardMulti11.txt  cat17=datacardMulti17.txt  cat18=datacardMulti18.txt  cat21=datacardMulti21.txt  cat27=datacardMulti27.txt  cat28=datacardMulti28.txt
+imax 6 number of bins
+jmax 2 number of processes minus 1
+kmax 7 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:model_Z_c11 ws3:model_Z_c11_$SYSTEMATIC
+shapes background  cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:rooHist_data_cat11
+shapes signal      cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:model_H_c11 ws3:model_H_c11_$SYSTEMATIC
+shapes Z           cat17       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws17.root ws3:model_Z_c17 ws3:model_Z_c17_$SYSTEMATIC
+shapes background  cat17       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws17.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat17       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws17.root ws3:rooHist_data_cat17
+shapes signal      cat17       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws17.root ws3:model_H_c17 ws3:model_H_c17_$SYSTEMATIC
+shapes Z           cat18       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws18.root ws3:model_Z_c18 ws3:model_Z_c18_$SYSTEMATIC
+shapes background  cat18       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws18.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat18       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws18.root ws3:rooHist_data_cat18
+shapes signal      cat18       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws18.root ws3:model_H_c18 ws3:model_H_c18_$SYSTEMATIC
+shapes Z           cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:model_Z_c21 ws3:model_Z_c21_$SYSTEMATIC
+shapes background  cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:rooHist_data_cat21
+shapes signal      cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:model_H_c21 ws3:model_H_c21_$SYSTEMATIC
+shapes Z           cat27       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws27.root ws3:model_Z_c27 ws3:model_Z_c27_$SYSTEMATIC
+shapes background  cat27       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws27.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat27       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws27.root ws3:rooHist_data_cat27
+shapes signal      cat27       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws27.root ws3:model_H_c27 ws3:model_H_c27_$SYSTEMATIC
+shapes Z           cat28       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws28.root ws3:model_Z_c28 ws3:model_Z_c28_$SYSTEMATIC
+shapes background  cat28       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws28.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat28       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws28.root ws3:rooHist_data_cat28
+shapes signal      cat28       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws28.root ws3:model_H_c28 ws3:model_H_c28_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat11  cat17  cat18  cat21  cat27  cat28
+observation  -1     -1     -1     -1     -1     -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat11       cat11       cat11       cat17       cat17       cat17       cat18       cat18       cat18       cat21       cat21       cat21       cat27       cat27       cat27       cat28       cat28       cat28     
+process                         signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z         
+process                         0           1           2           0           1           2           0           1           2           0           1           2           0           1           2           0           1           2         
+rate                            1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1         
+----------------------------------------------------------------------------------------------------------------------------------
+lumi                    lnN     1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025     
+SF_NN_11      param  0.8121420965559429 0.10769887752748186
+SF_NN_17      param  0.8121420965559429 0.10769887752748186
+SF_NN_18      param  0.8121420965559429 0.10769887752748186
+SF_NN_21      param  0.887669619486276 0.076887749060504
+SF_NN_27      param  0.7727519223258681 0.08000395872537658
+SF_NN_28      param  0.7708220723284188 0.12699885528589105
+rateZbb       rateParam cat11 Z 1.0 [-1.0,3.0]
+SF_NN_11      rateParam cat11 Z 0.8121420965559429 
+SF_NN_11      rateParam cat11 signal 0.8121420965559429 
+rateZbb       rateParam cat17 Z 1.0 [-1.0,3.0]
+SF_NN_17      rateParam cat17 Z 0.8121420965559429 
+SF_NN_17      rateParam cat17 signal 0.8121420965559429 
+rateZbb       rateParam cat18 Z 1.0 [-1.0,3.0]
+SF_NN_18      rateParam cat18 Z 0.8121420965559429 
+SF_NN_18      rateParam cat18 signal 0.8121420965559429 
+rateZbb       rateParam cat21 Z 1.0 [-1.0,3.0]
+SF_NN_21      rateParam cat21 Z 0.887669619486276 
+SF_NN_21      rateParam cat21 signal 0.887669619486276 
+rateZbb       rateParam cat27 Z 1.0 [-1.0,3.0]
+SF_NN_27      rateParam cat27 Z 0.7727519223258681 
+SF_NN_27      rateParam cat27 signal 0.7727519223258681 
+rateZbb       rateParam cat28 Z 1.0 [-1.0,3.0]
+SF_NN_28      rateParam cat28 Z 0.7708220723284188 
+SF_NN_28      rateParam cat28 signal 0.7708220723284188 
+pdfindex_11_2016_13TeV  discrete
+pdfindex_17_2016_13TeV  discrete
+pdfindex_18_2016_13TeV  discrete
+pdfindex_21_2016_13TeV  discrete
+pdfindex_27_2016_13TeV  discrete
+pdfindex_28_2016_13TeV  discrete

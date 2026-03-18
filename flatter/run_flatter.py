@@ -49,41 +49,20 @@ if isMC:
         df=getDfProcesses_v2()[0]
 else:
     df=getDfProcesses_v2()[1]
-nanoPath = list(df.nanoPath)[pN]
-flatPath = list(df.flatPath)[pN]
-if not os.path.exists(flatPath):
-    print("Creting flathPath ...", flatPath)
-    os.makedirs(flatPath)
-process = list(df.process)[pN]
-nanoFileNames = glob.glob(nanoPath+"/**/*.root", recursive=True)
-print("Look for ", nanoPath+"/**/*.root")
-flatFileNames = glob.glob(flatPath+"/**/*.parquet", recursive=True)
-print(process, len(flatFileNames), "/", len(nanoFileNames))
-if len(flatFileNames)==len(nanoFileNames):
-    sys.exit("Ended here")
 
-time.sleep(1)
-
-
-
-# Delete all *.out files
 if args.delete:
     target_path = "/t3home/gcelotto/slurm/output/flat"
     for file_path in glob.glob(target_path+"/*.out"):
         if os.path.isfile(file_path):
             os.remove(file_path)
 
-nFiles = nFiles if nFiles != -1 else len(nanoFileNames)
-if nFiles > len(nanoFileNames) :
-    nFiles = len(nanoFileNames)
-#nFiles to be done
-doneFiles = 0
+
 
 if args.test:
-    nanoFileName="/work/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test/minlo_10k_filter.root"
+    nanoFileName="/work/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test/AllMC_Run2_mc_124X.root"
     fileNumber = 1999
-    flatPath ="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/minlo_10k_filter_1999.parquet"
-    process = "test"
+    flatPath ="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/test_flat.parquet"
+    process = "GluGluHToBB"
     subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 100), '/t3home/gcelotto/ggHbb/flatter/job.sh', 
                     nanoFileName, 
                     str(maxEntries),
@@ -98,6 +77,28 @@ if args.test:
                     str(isMC),
                     str(run)])
 else:
+    nanoPath = list(df.nanoPath)[pN]
+    flatPath = list(df.flatPath)[pN]
+    if not os.path.exists(flatPath):
+        print("Creting flathPath ...", flatPath)
+        os.makedirs(flatPath)
+    process = list(df.process)[pN]
+    nanoFileNames = glob.glob(nanoPath+"/**/*.root", recursive=True)
+    print("Look for ", nanoPath+"/**/*.root")
+    flatFileNames = glob.glob(flatPath+"/**/*.parquet", recursive=True)
+    print(process, len(flatFileNames), "/", len(nanoFileNames))
+    if len(flatFileNames)==len(nanoFileNames):
+        sys.exit("Ended here")
+
+    time.sleep(1)
+    # Delete all *.out files
+
+
+    nFiles = nFiles if nFiles != -1 else len(nanoFileNames)
+    if nFiles > len(nanoFileNames) :
+        nFiles = len(nanoFileNames)
+    #nFiles to be done
+    doneFiles = 0
     for nanoFileName in nanoFileNames:
         if doneFiles==nFiles:
             break
@@ -120,6 +121,6 @@ else:
         subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 5000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC), str(run)])
         if (doneFiles % args.sleep ==0) & (doneFiles!=0)& (args.sleep!=-1):
             print("I am sleeping! Good Night!")
-            time.sleep(10)
+            time.sleep(150)
             print("I am back! Good Morning!")
         doneFiles = doneFiles+1

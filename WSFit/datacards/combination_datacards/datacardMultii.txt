@@ -1,0 +1,78 @@
+Combination of cat11=datacardMulti11.txt  cat12=datacardMulti12.txt  cat16=datacardMulti16.txt  cat21=datacardMulti21.txt  cat22=datacardMulti22.txt  cat23=datacardMulti23.txt  cat24=datacardMulti24.txt
+imax 7 number of bins
+jmax 2 number of processes minus 1
+kmax 8 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:model_Z_c11 ws3:model_Z_c11_$SYSTEMATIC
+shapes background  cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:rooHist_data_cat11
+shapes signal      cat11       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws11.root ws3:model_H_c11 ws3:model_H_c11_$SYSTEMATIC
+shapes Z           cat12       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:model_Z_c12 ws3:model_Z_c12_$SYSTEMATIC
+shapes background  cat12       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat12       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:rooHist_data_cat12
+shapes signal      cat12       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws12.root ws3:model_H_c12 ws3:model_H_c12_$SYSTEMATIC
+shapes Z           cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:model_Z_c16 ws3:model_Z_c16_$SYSTEMATIC
+shapes background  cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:rooHist_data_cat16
+shapes signal      cat16       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws16.root ws3:model_H_c16 ws3:model_H_c16_$SYSTEMATIC
+shapes Z           cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:model_Z_c21 ws3:model_Z_c21_$SYSTEMATIC
+shapes background  cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:rooHist_data_cat21
+shapes signal      cat21       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws21.root ws3:model_H_c21 ws3:model_H_c21_$SYSTEMATIC
+shapes Z           cat22       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws22.root ws3:model_Z_c22 ws3:model_Z_c22_$SYSTEMATIC
+shapes background  cat22       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws22.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat22       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws22.root ws3:rooHist_data_cat22
+shapes signal      cat22       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws22.root ws3:model_H_c22 ws3:model_H_c22_$SYSTEMATIC
+shapes Z           cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:model_Z_c23 ws3:model_Z_c23_$SYSTEMATIC
+shapes background  cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:rooHist_data_cat23
+shapes signal      cat23       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws23.root ws3:model_H_c23 ws3:model_H_c23_$SYSTEMATIC
+shapes Z           cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:model_Z_c24 ws3:model_Z_c24_$SYSTEMATIC
+shapes background  cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:rooHist_data_cat24
+shapes signal      cat24       /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws24.root ws3:model_H_c24 ws3:model_H_c24_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat11  cat12  cat16  cat21  cat22  cat23  cat24
+observation  -1     -1     -1     -1     -1     -1     -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat11       cat11       cat11       cat12       cat12       cat12       cat16       cat16       cat16       cat21       cat21       cat21       cat22       cat22       cat22       cat23       cat23       cat23       cat24       cat24       cat24     
+process                         signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z           signal      background  Z         
+process                         0           1           2           0           1           2           0           1           2           0           1           2           0           1           2           0           1           2           0           1           2         
+rate                            1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1           1         
+----------------------------------------------------------------------------------------------------------------------------------
+lumi                    lnN     1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025       1.025       -           1.025     
+SF_NN_11      param  0.8121420965559429 0.10769887752748186
+SF_NN_12      param  0.8121420965559429 0.10769887752748186
+SF_NN_16      param  0.8121420965559429 0.10769887752748186
+SF_NN_21      param  0.887669619486276 0.076887749060504
+SF_NN_22      param  0.8410043994982656 0.09603701615994786
+SF_NN_23      param  0.6542243691089159 0.10590604345902299
+SF_NN_24      param  0.7903449924250043 0.19315500081633075
+rateZbb       rateParam cat11 Z 1.0 [-1.0,3.0]
+SF_NN_11      rateParam cat11 Z 0.8121420965559429 
+SF_NN_11      rateParam cat11 signal 0.8121420965559429 
+rateZbb       rateParam cat12 Z 1.0 [-1.0,3.0]
+SF_NN_12      rateParam cat12 Z 0.8121420965559429 
+SF_NN_12      rateParam cat12 signal 0.8121420965559429 
+rateZbb       rateParam cat16 Z 1.0 [-1.0,3.0]
+SF_NN_16      rateParam cat16 Z 0.8121420965559429 
+SF_NN_16      rateParam cat16 signal 0.8121420965559429 
+rateZbb       rateParam cat21 Z 1.0 [-1.0,3.0]
+SF_NN_21      rateParam cat21 Z 0.887669619486276 
+SF_NN_21      rateParam cat21 signal 0.887669619486276 
+rateZbb       rateParam cat22 Z 1.0 [-1.0,3.0]
+SF_NN_22      rateParam cat22 Z 0.8410043994982656 
+SF_NN_22      rateParam cat22 signal 0.8410043994982656 
+rateZbb       rateParam cat23 Z 1.0 [-1.0,3.0]
+SF_NN_23      rateParam cat23 Z 0.6542243691089159 
+SF_NN_23      rateParam cat23 signal 0.6542243691089159 
+rateZbb       rateParam cat24 Z 1.0 [-1.0,3.0]
+SF_NN_24      rateParam cat24 Z 0.7903449924250043 
+SF_NN_24      rateParam cat24 signal 0.7903449924250043 
+pdfindex_11_2016_13TeV  discrete
+pdfindex_12_2016_13TeV  discrete
+pdfindex_16_2016_13TeV  discrete
+pdfindex_21_2016_13TeV  discrete
+pdfindex_22_2016_13TeV  discrete
+pdfindex_23_2016_13TeV  discrete
+pdfindex_24_2016_13TeV  discrete

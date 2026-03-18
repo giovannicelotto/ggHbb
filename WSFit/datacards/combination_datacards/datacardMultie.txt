@@ -1,0 +1,33 @@
+Combination of cat5=datacardMulti5.txt  cat6=datacardMulti6.txt
+imax 2 number of bins
+jmax 2 number of processes minus 1
+kmax 3 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           cat5        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws5.root ws3:model_Z_c5 ws3:model_Z_c5_$SYSTEMATIC
+shapes background  cat5        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws5.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat5        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws5.root ws3:rooHist_data_cat5
+shapes signal      cat5        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws5.root ws3:model_H_c5 ws3:model_H_c5_$SYSTEMATIC
+shapes Z           cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:model_Z_c6 ws3:model_Z_c6_$SYSTEMATIC
+shapes background  cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:rooHist_data_cat6
+shapes signal      cat6        /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws6.root ws3:model_H_c6 ws3:model_H_c6_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          cat5   cat6 
+observation  -1     -1   
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             cat5        cat5        cat5        cat6        cat6        cat6      
+process                         signal      background  Z           signal      background  Z         
+process                         0           1           2           0           1           2         
+rate                            1           1           1           1           1           1         
+----------------------------------------------------------------------------------------------------------------------------------
+lumi                    lnN     1.025       -           1.025       1.025       -           1.025     
+SF_NN_5       param  0.8697798418888877 0.06292472484671696
+SF_NN_6       param  0.6896938555710558 0.09309878009074302
+rateZbb       rateParam cat5 Z 1.0 [-1.0,3.0]
+SF_NN_5       rateParam cat5 Z 0.8697798418888877 
+SF_NN_5       rateParam cat5 signal 0.8697798418888877 
+rateZbb       rateParam cat6 Z 1.0 [-1.0,3.0]
+SF_NN_6       rateParam cat6 Z 0.6896938555710558 
+SF_NN_6       rateParam cat6 signal 0.6896938555710558 
+pdfindex_5_2016_13TeV  discrete
+pdfindex_6_2016_13TeV  discrete

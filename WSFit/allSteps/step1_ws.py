@@ -51,6 +51,12 @@ print(f"[INFO] Limits on RooRealVar: {x1}, {x2}, nbins={nbins}")
 
 config_path_Z = cfg["config_path_Z"].replace("CONFIG", args.config)
 config_path_H = cfg["config_path_H"].replace("CONFIG", args.config)
+if not os.path.exists(config_path_Z):
+    print(f"[WARNING] Config file for Z not found at {config_path_Z}. Trying with config 0.")
+    config_path_Z = cfg["config_path_Z"].replace("CONFIG", "0")
+if not os.path.exists(config_path_H):
+    print(f"[WARNING] Config file for Z not found at {config_path_Z}. Trying with config 0.")
+    config_path_H = cfg["config_path_H"].replace("CONFIG", "0")
 
 
 if args.syst:

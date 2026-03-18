@@ -18,25 +18,6 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName, 
 #
     rWtrain_QCD, rWtrain_H = rWtrain_QCD/np.sum(rWtrain_QCD), rWtrain_H/np.sum(rWtrain_H)
 
-    #from hep_ml.reweight import GBReweighter
-#
-    #reweighter_QCD = GBReweighter(n_estimators=100, max_depth=2)
-    #reweighter_QCD.fit(original=dfTrain_QCD[['dijet_mass']],
-    #               original_weight=Wtrain_QCD,
-    #               target=np.random.uniform(low=dfTrain_QCD['dijet_mass'].min(),
-    #                                                                    high=dfTrain_QCD['dijet_mass'].max(),
-    #                                                                    size=len(dfTrain_QCD)))
-    #reweighter_H = GBReweighter(n_estimators=100, max_depth=3)
-    #reweighter_H.fit(original=dfTrain_H[['dijet_mass']],
-    #               original_weight=Wtrain_H,
-    #               target=np.random.uniform(low=dfTrain_H['dijet_mass'].min(),
-    #                                                                    high=dfTrain_H['dijet_mass'].max(),
-    #                                                                    size=len(dfTrain_H)))
-#
-    #rWtrain_QCD = reweighter_QCD.predict_weights(dfTrain_QCD[['dijet_mass']])
-    #rWtrain_QCD /= np.sum(rWtrain_QCD)
-    #rWtrain_H = reweighter_H.predict_weights(dfTrain_H[['dijet_mass']])
-    #rWtrain_H /= np.sum(rWtrain_H)
 
 # **********
 # TEST
@@ -84,4 +65,179 @@ def flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, inFolder, outName, 
     rWval[Yval==1] = rWval_H
     #np.save(inFolder + "/rWTrain.npy", rWtrain)
     #np.save(inFolder + "/rWTest.npy",  rWval)
+    return rWtrain, rWval
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def flattenWeights_conditionalPt(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, outName,
+                   xmin=40, xmax=300, nbins=51,
+                   ptmin=0, ptmax=500, nptbins=10):
+
+# **********
+# TRAIN
+# **********
+    Xtrain['dijet_pt_clip'] = np.clip(Xtrain.dijet_pt, ptmin, ptmax-1e-6)
+    Xval['dijet_pt_clip'] = np.clip(Xval.dijet_pt, ptmin, ptmax-1e-6)
+    
+    Wtrain_QCD = Wtrain[Ytrain==0]
+    Wtrain_H   = Wtrain[Ytrain==1]
+
+    dfTrain_QCD = Xtrain[Ytrain==0]
+    dfTrain_H   = Xtrain[Ytrain==1]
+
+    mass_bins = np.linspace(xmin, xmax, nbins)
+    pt_bins   = np.linspace(ptmin, ptmax, nptbins)
+
+    rWtrain_QCD = np.zeros_like(Wtrain_QCD)
+    rWtrain_H   = np.zeros_like(Wtrain_H)
+
+    for i in range(len(pt_bins)-1):
+
+        pt_low  = pt_bins[i]
+        pt_high = pt_bins[i+1]
+
+        mask_QCD = (dfTrain_QCD.dijet_pt_clip >= pt_low) & (dfTrain_QCD.dijet_pt_clip < pt_high)
+        mask_H   = (dfTrain_H.dijet_pt_clip  >= pt_low) & (dfTrain_H.dijet_pt_clip  < pt_high)
+
+        if np.sum(mask_QCD) > 0:
+
+            counts = np.histogram(
+                dfTrain_QCD.dijet_mass[mask_QCD],
+                bins=mass_bins,
+                weights=Wtrain_QCD[mask_QCD]
+            )[0]
+
+            counts = np.maximum(counts, 1e-12)
+
+            mass_idx = np.digitize(
+                np.clip(dfTrain_QCD.dijet_mass[mask_QCD],
+                        mass_bins[0], mass_bins[-1]-1e-6),
+                mass_bins
+            ) - 1
+
+            rWtrain_QCD[mask_QCD] = Wtrain_QCD[mask_QCD] * (1.0 / counts[mass_idx])
+
+        if np.sum(mask_H) > 0:
+
+            counts = np.histogram(
+                dfTrain_H.dijet_mass[mask_H],
+                bins=mass_bins,
+                weights=Wtrain_H[mask_H]
+            )[0]
+
+            counts = np.maximum(counts, 1e-12)
+
+            mass_idx = np.digitize(
+                np.clip(dfTrain_H.dijet_mass[mask_H],
+                        mass_bins[0], mass_bins[-1]-1e-6),
+                mass_bins
+            ) - 1
+
+            rWtrain_H[mask_H] = Wtrain_H[mask_H] * (1.0 / counts[mass_idx])
+
+    rWtrain_QCD /= np.sum(rWtrain_QCD)
+    rWtrain_H   /= np.sum(rWtrain_H)
+
+# **********
+# VALIDATION
+# **********
+
+    Wval_QCD = Wval[Yval==0]
+    Wval_H   = Wval[Yval==1]
+
+    dfTest_QCD = Xval[Yval==0]
+    dfTest_H   = Xval[Yval==1]
+
+    rWval_QCD = np.zeros_like(Wval_QCD)
+    rWval_H   = np.zeros_like(Wval_H)
+
+    for i in range(len(pt_bins)-1):
+
+        pt_low  = pt_bins[i]
+        pt_high = pt_bins[i+1]
+
+        mask_QCD = (dfTest_QCD.dijet_pt_clip >= pt_low) & (dfTest_QCD.dijet_pt_clip < pt_high)
+        mask_H   = (dfTest_H.dijet_pt_clip  >= pt_low) & (dfTest_H.dijet_pt_clip  < pt_high)
+
+        if np.sum(mask_QCD) > 0:
+
+            counts = np.histogram(
+                dfTest_QCD.dijet_mass[mask_QCD],
+                bins=mass_bins,
+                weights=Wval_QCD[mask_QCD]
+            )[0]
+
+            counts = np.maximum(counts, 1e-12)
+
+            mass_idx = np.digitize(
+                np.clip(dfTest_QCD.dijet_mass[mask_QCD],
+                        mass_bins[0], mass_bins[-1]-1e-6),
+                mass_bins
+            ) - 1
+
+            rWval_QCD[mask_QCD] = Wval_QCD[mask_QCD] * (1.0 / counts[mass_idx])
+
+        if np.sum(mask_H) > 0:
+
+            counts = np.histogram(
+                dfTest_H.dijet_mass[mask_H],
+                bins=mass_bins,
+                weights=Wval_H[mask_H]
+            )[0]
+
+            counts = np.maximum(counts, 1e-12)
+
+            mass_idx = np.digitize(
+                np.clip(dfTest_H.dijet_mass[mask_H],
+                        mass_bins[0], mass_bins[-1]-1e-6),
+                mass_bins
+            ) - 1
+
+            rWval_H[mask_H] = Wval_H[mask_H] * (1.0 / counts[mass_idx])
+
+    rWval_QCD /= np.sum(rWval_QCD)
+    rWval_H   /= np.sum(rWval_H)
+
+# **********
+# PLOT
+# **********
+
+    fig, ax = plt.subplots(1, 1, figsize=(12,8), constrained_layout=True)
+
+    ax.hist(dfTrain_QCD.dijet_mass, bins=mass_bins, weights=Wtrain_QCD,
+            label='Data', alpha=0.4, color='gray')
+
+    ax.hist(dfTrain_H.dijet_mass, bins=mass_bins, weights=Wtrain_H,
+            alpha=0.4, label='H', linewidth=5, color='red')
+
+    ax.hist(dfTrain_QCD.dijet_mass, bins=mass_bins, weights=rWtrain_QCD,
+            label='Data reweighted', histtype='step', linewidth=3,
+            linestyle='dashed', color='blue')
+
+    ax.hist(dfTrain_H.dijet_mass, bins=mass_bins, weights=rWtrain_H,
+            histtype='step', label='H reweighted', linewidth=5,
+            linestyle='dotted', color='red')
+
+    ax.set_yscale('log')
+    ax.set_xlabel("Dijet Mass [GeV]")
+    ax.set_ylabel("Normalized Counts")
+    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax.set_xlim(xmin, xmax)
+
+    fig.savefig(outName)
+
+# **********
+# MERGE
+# **********
+
+    rWtrain = Wtrain.copy()
+    rWval   = Wval.copy()
+
+    rWtrain[Ytrain==0] = rWtrain_QCD
+    rWtrain[Ytrain==1] = rWtrain_H
+
+    rWval[Yval==0] = rWval_QCD
+    rWval[Yval==1] = rWval_H
+
     return rWtrain, rWval

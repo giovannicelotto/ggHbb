@@ -1,0 +1,307 @@
+
+>>> Random number generator seed is 123456
+>>> Method used is FitDiagnostics
+Turning on runtime-define MINIMIZER_freezeDisassociatedParams
+Set Range of Parameter rateZbb To : (0.5,1.5)
+Set Default Value of Parameter rateZbb To : 1
+Redefining the POIs to be: RooArgSet:: = (rateZbb)
+Freezing the following parameters: 
+r
+Adding discrete pdfindex_1_2016_13TeV 
+Adding discrete pdfindex_7_2016_13TeV 
+Adding discrete pdfindex_8_2016_13TeV 
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=1, tolerance=0.1
+Minimization finished with status=0
+Minimization success! status=0
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=0, tolerance=0.1
+Minimization finished with status=-1
+Minimization ended with latest status != 0 or 1
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=0, tolerance=0.1
+Minimization finished with status=-1
+Minimization ended with latest status != 0 or 1
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=0, tolerance=0.1
+Minimization finished with status=-1
+Minimization ended with latest status != 0 or 1
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=0, tolerance=0.1
+Minimization finished with status=-1
+Minimization ended with latest status != 0 or 1
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=0, tolerance=0.1
+Minimization finished with status=-1
+Minimization ended with latest status != 0 or 1
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=0, tolerance=0.1
+Minimization finished with status=-1
+Minimization ended with latest status != 0 or 1
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=0, tolerance=0.1
+Minimization finished with status=-1
+Minimization ended with latest status != 0 or 1
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=1, tolerance=0.1
+Minimization finished with status=0
+Minimization success! status=0
+Minimization configured with Type=Minuit2, Algo=Migrad, strategy=1, tolerance=0.1
+Minuit2Minimizer: Minimize with max-calls 2000 convergence for edm < 0.1 strategy 1
+Minuit2Minimizer::Minuit  - Changing default options
+             StorageLevel :               0
+Minuit2Minimizer : Valid minimum - status = 0
+FVAL  = 0
+Edm   = 4.69079069234526565e-31
+Nfcn  = 47
+SF_NN_1	  = 0.812142	 +/-  0.106581	(limited)
+SF_NN_7	  = 0.772752	 +/-  0.0791732	(limited)
+SF_NN_8	  = 0.770822	 +/-  0.12568	(limited)
+lumi	  = 0	 +/-  1
+Minimization finished with status=0
+Minimization success! status=0
+
+  RooFitResult: minimized FCN value: -1.97399e-07, estimated distance to minimum: 1.70497e-06
+                covariance matrix quality: Full matrix, but forced positive-definite
+                Status : MINIMIZE=0 HESSE=0 
+
+    Constant Parameter    Value     
+  --------------------  ------------
+            SF_NN_1_In    8.1214e-01
+            SF_NN_7_In    7.7275e-01
+            SF_NN_8_In    7.7082e-01
+           alpha1_H_c1    1.0318e+00
+           alpha1_H_c7    1.0087e+00
+           alpha1_H_c8    7.1598e-01
+           alpha1_Z_c1    1.2816e-01
+           alpha1_Z_c7    8.7927e-01
+           alpha1_Z_c8    1.9249e-01
+           alpha2_H_c1    2.5369e+00
+           alpha2_H_c7    2.6205e+00
+           alpha2_H_c8    2.7189e+00
+           alpha2_Z_c1    2.9318e-01
+           alpha2_Z_c7    1.2565e+00
+           alpha2_Z_c8    1.0249e-01
+         f_CB_GausH_c1    9.0972e-01
+         f_CB_GausH_c7    9.9964e-01
+         f_CB_GausH_c8    7.9649e-01
+         f_CB_GausZ_c1    3.3264e-01
+         f_CB_GausZ_c7    5.0121e-01
+         f_CB_GausZ_c8    1.6667e-01
+               lumi_In    0.0000e+00
+               mu_H_c1    1.2361e+02
+               mu_H_c7    1.2409e+02
+               mu_H_c8    1.2607e+02
+               mu_Z_c1    9.2798e+01
+               mu_Z_c7    9.2454e+01
+               mu_Z_c8    9.3637e+01
+               nL_H_c1    2.8113e+01
+               nL_H_c7    6.1415e+01
+               nL_H_c8    9.9959e+01
+               nL_Z_c1    9.9947e+01
+               nL_Z_c7    1.0563e+01
+               nL_Z_c8    9.9991e+01
+               nR_H_c1    1.0000e+00
+               nR_H_c7    1.0001e+00
+               nR_H_c8    1.0001e+00
+               nR_Z_c1    1.0000e+00
+               nR_Z_c7    1.0000e+00
+               nR_Z_c8    1.0000e+00
+  n_exp_binch1_proc_background    1.0000e+00
+  n_exp_binch2_proc_background    1.0000e+00
+  n_exp_binch3_proc_background    1.0000e+00
+                     r    1.0000e+00
+               rateZbb    5.0000e-01
+  shapeBkg_Z_ch1__norm    3.3017e+03
+  shapeBkg_Z_ch2__norm    6.6317e+03
+  shapeBkg_Z_ch3__norm    2.0296e+03
+  shapeSig_signal_ch1__norm    1.3734e+02
+  shapeSig_signal_ch2__norm    2.7273e+02
+  shapeSig_signal_ch3__norm    8.5628e+01
+         sigma_CB_H_c1    1.3587e+01
+         sigma_CB_H_c7    1.2318e+01
+         sigma_CB_H_c8    9.0599e+00
+         sigma_CB_Z_c1    4.1134e+00
+         sigma_CB_Z_c7    1.1012e+01
+         sigma_CB_Z_c8    1.3410e+01
+      sigma_gauss_H_c1    9.1161e+00
+      sigma_gauss_H_c7    1.1479e+01
+      sigma_gauss_H_c8    1.5208e+01
+      sigma_gauss_Z_c1    1.0424e+01
+      sigma_gauss_Z_c7    1.0118e+01
+      sigma_gauss_Z_c8    1.0309e+01
+
+    Floating Parameter  InitialValue    FinalValue +/-  Error     GblCorr.
+  --------------------  ------------  --------------------------  --------
+               SF_NN_1    8.4311e-01    8.4311e-01 +/-  1.11e-01  <none>
+               SF_NN_7    8.2967e-01    8.2967e-01 +/-  7.28e-02  <none>
+               SF_NN_8    8.1028e-01    8.1027e-01 +/-  1.12e-01  <none>
+  env_pdf_Bernstein_3_cat8_bern3_p0   -1.5369e-04   -1.5369e-04 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_bern3_p1    4.7892e-01    4.7892e-01 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_bern3_p2    3.9249e-01    3.9249e-01 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_turnon_beta    7.1944e+00    7.1944e+00 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_turnon_cutoff    5.3773e+01    5.3773e+01 +/-  0.00e+00  <none>
+  env_pdf_Exponential_3_cat7_exp3_f1    5.3591e-01    5.3591e-01 +/-  4.29e-03  <none>
+  env_pdf_Exponential_3_cat7_exp3_p1   -5.4086e-03   -5.4086e-03 +/-  8.55e-05  <none>
+  env_pdf_Exponential_3_cat7_exp3_p2   -3.1980e-02   -3.1980e-02 +/-  5.00e-04  <none>
+  env_pdf_Exponential_3_cat7_turnon_beta    9.1577e+00    9.1577e+00 +/-  3.83e-01  <none>
+  env_pdf_Exponential_3_cat7_turnon_cutoff    4.7482e+01    4.7482e+01 +/-  2.83e-01  <none>
+  env_pdf_Exponential_3_cat8_exp3_f1    4.2623e-01    4.2623e-01 +/-  1.06e-02  <none>
+  env_pdf_Exponential_3_cat8_exp3_p1   -2.5152e-04   -2.5151e-04 +/-  2.61e-04  <none>
+  env_pdf_Exponential_3_cat8_exp3_p2   -2.3921e-02   -2.3921e-02 +/-  7.34e-04  <none>
+  env_pdf_Exponential_3_cat8_turnon_beta    1.0011e+01    1.0011e+01 +/-  3.92e-01  <none>
+  env_pdf_Exponential_3_cat8_turnon_cutoff    6.0108e+01    6.0108e+01 +/-  6.37e-01  <none>
+  env_pdf_PolExpo_2_cat8_polexp2_c0   -8.8122e-01   -8.8122e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_2_cat8_polexp2_c1    3.4125e-01    3.4125e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_2_cat8_turnon_beta    7.9545e+00    7.9545e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_2_cat8_turnon_cutoff    5.5999e+01    5.5999e+01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_polexp3_c0   -1.0158e+00   -1.0158e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_polexp3_c1    4.5651e-01    4.5651e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_polexp3_c2   -1.3690e-01   -1.3690e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_turnon_beta    8.6529e+00    8.6529e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_turnon_cutoff    4.7884e+01    4.7884e+01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_polexp3_c0   -8.4567e-01   -8.4567e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_polexp3_c1    4.5452e-01    4.5452e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_polexp3_c2   -8.9394e-02   -8.9394e-02 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_turnon_beta    8.8598e+00    8.8598e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_turnon_cutoff    5.8725e+01    5.8725e+01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c0   -8.5457e-01   -8.5457e-01 +/-  1.10e-02  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c1    1.9749e-01    1.9749e-01 +/-  3.28e-02  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c2   -2.9697e-01   -2.9697e-01 +/-  1.35e-02  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c3    1.2296e-01    1.2295e-01 +/-  1.96e-02  <none>
+  env_pdf_PolExpo_4_cat1_turnon_beta    6.0256e+00    6.0256e+00 +/-  9.83e-01  <none>
+  env_pdf_PolExpo_4_cat1_turnon_cutoff    4.4272e+01    4.4272e+01 +/-  1.38e+00  <none>
+  env_pdf_PowerLaw_3_cat7_pow3_f1    5.3144e-01    5.3144e-01 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_pow3_p1   -1.1530e+00   -1.1530e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_pow3_p2   -2.8526e+00   -2.8526e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_turnon_beta    9.5504e+00    9.5504e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_turnon_cutoff    5.3716e+01    5.3716e+01 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_pow3_f1    1.4679e-01    1.4679e-01 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_pow3_p1    1.0000e+00    1.0000e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_pow3_p2   -1.8553e+00   -1.8553e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_turnon_beta    8.8794e+00    8.8794e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_turnon_cutoff    6.1224e+01    6.1224e+01 +/-  0.00e+00  <none>
+                  lumi    2.8656e-01    2.8663e-01 +/-  9.85e-01  <none>
+  shapeBkg_background_ch1__norm    2.5310e+05    2.5310e+05 +/-  5.39e+02  <none>
+  shapeBkg_background_ch2__norm    3.8175e+05    3.8175e+05 +/-  6.64e+02  <none>
+  shapeBkg_background_ch3__norm    6.3036e+04    6.3036e+04 +/-  2.75e+02  <none>
+
+
+  RooFitResult: minimized FCN value: -1.97399e-07, estimated distance to minimum: 1.70497e-06
+                covariance matrix quality: Full matrix, but forced positive-definite
+                Status : MINIMIZE=0 HESSE=0 
+
+    Constant Parameter    Value     
+  --------------------  ------------
+            SF_NN_1_In    8.1214e-01
+            SF_NN_7_In    7.7275e-01
+            SF_NN_8_In    7.7082e-01
+           alpha1_H_c1    1.0318e+00
+           alpha1_H_c7    1.0087e+00
+           alpha1_H_c8    7.1598e-01
+           alpha1_Z_c1    1.2816e-01
+           alpha1_Z_c7    8.7927e-01
+           alpha1_Z_c8    1.9249e-01
+           alpha2_H_c1    2.5369e+00
+           alpha2_H_c7    2.6205e+00
+           alpha2_H_c8    2.7189e+00
+           alpha2_Z_c1    2.9318e-01
+           alpha2_Z_c7    1.2565e+00
+           alpha2_Z_c8    1.0249e-01
+         f_CB_GausH_c1    9.0972e-01
+         f_CB_GausH_c7    9.9964e-01
+         f_CB_GausH_c8    7.9649e-01
+         f_CB_GausZ_c1    3.3264e-01
+         f_CB_GausZ_c7    5.0121e-01
+         f_CB_GausZ_c8    1.6667e-01
+               lumi_In    0.0000e+00
+               mu_H_c1    1.2361e+02
+               mu_H_c7    1.2409e+02
+               mu_H_c8    1.2607e+02
+               mu_Z_c1    9.2798e+01
+               mu_Z_c7    9.2454e+01
+               mu_Z_c8    9.3637e+01
+               nL_H_c1    2.8113e+01
+               nL_H_c7    6.1415e+01
+               nL_H_c8    9.9959e+01
+               nL_Z_c1    9.9947e+01
+               nL_Z_c7    1.0563e+01
+               nL_Z_c8    9.9991e+01
+               nR_H_c1    1.0000e+00
+               nR_H_c7    1.0001e+00
+               nR_H_c8    1.0001e+00
+               nR_Z_c1    1.0000e+00
+               nR_Z_c7    1.0000e+00
+               nR_Z_c8    1.0000e+00
+  n_exp_binch1_proc_background    1.0000e+00
+  n_exp_binch2_proc_background    1.0000e+00
+  n_exp_binch3_proc_background    1.0000e+00
+                     r    1.0000e+00
+               rateZbb    5.0000e-01
+  shapeBkg_Z_ch1__norm    3.3017e+03
+  shapeBkg_Z_ch2__norm    6.6317e+03
+  shapeBkg_Z_ch3__norm    2.0296e+03
+  shapeSig_signal_ch1__norm    1.3734e+02
+  shapeSig_signal_ch2__norm    2.7273e+02
+  shapeSig_signal_ch3__norm    8.5628e+01
+         sigma_CB_H_c1    1.3587e+01
+         sigma_CB_H_c7    1.2318e+01
+         sigma_CB_H_c8    9.0599e+00
+         sigma_CB_Z_c1    4.1134e+00
+         sigma_CB_Z_c7    1.1012e+01
+         sigma_CB_Z_c8    1.3410e+01
+      sigma_gauss_H_c1    9.1161e+00
+      sigma_gauss_H_c7    1.1479e+01
+      sigma_gauss_H_c8    1.5208e+01
+      sigma_gauss_Z_c1    1.0424e+01
+      sigma_gauss_Z_c7    1.0118e+01
+      sigma_gauss_Z_c8    1.0309e+01
+
+    Floating Parameter  InitialValue    FinalValue +/-  Error     GblCorr.
+  --------------------  ------------  --------------------------  --------
+               SF_NN_1    8.4311e-01    8.4311e-01 +/-  1.11e-01  <none>
+               SF_NN_7    8.2967e-01    8.2967e-01 +/-  7.28e-02  <none>
+               SF_NN_8    8.1028e-01    8.1027e-01 +/-  1.12e-01  <none>
+  env_pdf_Bernstein_3_cat8_bern3_p0   -1.5369e-04   -1.5369e-04 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_bern3_p1    4.7892e-01    4.7892e-01 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_bern3_p2    3.9249e-01    3.9249e-01 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_turnon_beta    7.1944e+00    7.1944e+00 +/-  0.00e+00  <none>
+  env_pdf_Bernstein_3_cat8_turnon_cutoff    5.3773e+01    5.3773e+01 +/-  0.00e+00  <none>
+  env_pdf_Exponential_3_cat7_exp3_f1    5.3591e-01    5.3591e-01 +/-  4.29e-03  <none>
+  env_pdf_Exponential_3_cat7_exp3_p1   -5.4086e-03   -5.4086e-03 +/-  8.55e-05  <none>
+  env_pdf_Exponential_3_cat7_exp3_p2   -3.1980e-02   -3.1980e-02 +/-  5.00e-04  <none>
+  env_pdf_Exponential_3_cat7_turnon_beta    9.1577e+00    9.1577e+00 +/-  3.83e-01  <none>
+  env_pdf_Exponential_3_cat7_turnon_cutoff    4.7482e+01    4.7482e+01 +/-  2.83e-01  <none>
+  env_pdf_Exponential_3_cat8_exp3_f1    4.2623e-01    4.2623e-01 +/-  1.06e-02  <none>
+  env_pdf_Exponential_3_cat8_exp3_p1   -2.5152e-04   -2.5151e-04 +/-  2.61e-04  <none>
+  env_pdf_Exponential_3_cat8_exp3_p2   -2.3921e-02   -2.3921e-02 +/-  7.34e-04  <none>
+  env_pdf_Exponential_3_cat8_turnon_beta    1.0011e+01    1.0011e+01 +/-  3.92e-01  <none>
+  env_pdf_Exponential_3_cat8_turnon_cutoff    6.0108e+01    6.0108e+01 +/-  6.37e-01  <none>
+  env_pdf_PolExpo_2_cat8_polexp2_c0   -8.8122e-01   -8.8122e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_2_cat8_polexp2_c1    3.4125e-01    3.4125e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_2_cat8_turnon_beta    7.9545e+00    7.9545e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_2_cat8_turnon_cutoff    5.5999e+01    5.5999e+01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_polexp3_c0   -1.0158e+00   -1.0158e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_polexp3_c1    4.5651e-01    4.5651e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_polexp3_c2   -1.3690e-01   -1.3690e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_turnon_beta    8.6529e+00    8.6529e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat7_turnon_cutoff    4.7884e+01    4.7884e+01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_polexp3_c0   -8.4567e-01   -8.4567e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_polexp3_c1    4.5452e-01    4.5452e-01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_polexp3_c2   -8.9394e-02   -8.9394e-02 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_turnon_beta    8.8598e+00    8.8598e+00 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_3_cat8_turnon_cutoff    5.8725e+01    5.8725e+01 +/-  0.00e+00  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c0   -8.5457e-01   -8.5457e-01 +/-  1.10e-02  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c1    1.9749e-01    1.9749e-01 +/-  3.28e-02  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c2   -2.9697e-01   -2.9697e-01 +/-  1.35e-02  <none>
+  env_pdf_PolExpo_4_cat1_polexp4_c3    1.2296e-01    1.2295e-01 +/-  1.96e-02  <none>
+  env_pdf_PolExpo_4_cat1_turnon_beta    6.0256e+00    6.0256e+00 +/-  9.83e-01  <none>
+  env_pdf_PolExpo_4_cat1_turnon_cutoff    4.4272e+01    4.4272e+01 +/-  1.38e+00  <none>
+  env_pdf_PowerLaw_3_cat7_pow3_f1    5.3144e-01    5.3144e-01 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_pow3_p1   -1.1530e+00   -1.1530e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_pow3_p2   -2.8526e+00   -2.8526e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_turnon_beta    9.5504e+00    9.5504e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat7_turnon_cutoff    5.3716e+01    5.3716e+01 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_pow3_f1    1.4679e-01    1.4679e-01 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_pow3_p1    1.0000e+00    1.0000e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_pow3_p2   -1.8553e+00   -1.8553e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_turnon_beta    8.8794e+00    8.8794e+00 +/-  0.00e+00  <none>
+  env_pdf_PowerLaw_3_cat8_turnon_cutoff    6.1224e+01    6.1224e+01 +/-  0.00e+00  <none>
+                  lumi    2.8656e-01    2.8663e-01 +/-  9.85e-01  <none>
+  shapeBkg_background_ch1__norm    2.5310e+05    2.5310e+05 +/-  5.39e+02  <none>
+  shapeBkg_background_ch2__norm    3.8175e+05    3.8175e+05 +/-  6.64e+02  <none>
+  shapeBkg_background_ch3__norm    6.3036e+04    6.3036e+04 +/-  2.75e+02  <none>
+
+[WARNING]: Unable to determine uncertainties on all fit parameters in b-only fit. Have a look at https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/nonstandard/#fit-parameter-uncertainties for more information.
+ Fit B-only, status = 0, numBadNLL = 0, covariance quality = 2

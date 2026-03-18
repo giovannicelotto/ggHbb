@@ -1,0 +1,37 @@
+Combination of datacardMulti0.txt  datacardMulti1.txt
+imax 2 number of bins
+jmax 2 number of processes minus 1
+kmax 7 number of nuisance parameters
+----------------------------------------------------------------------------------------------------------------------------------
+shapes Z           ch1         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws0.root ws3:model_Z_c0 ws3:model_Z_c0_$SYSTEMATIC
+shapes background  ch1         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws0.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    ch1         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws0.root ws3:rooHist_data_cat0
+shapes signal      ch1         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws0.root ws3:model_H_c0 ws3:model_H_c0_$SYSTEMATIC
+shapes Z           ch2         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:model_Z_c1 ws3:model_Z_c1_$SYSTEMATIC
+shapes background  ch2         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:CMS_hgg_0_2016_13TeV_bkg_noZ
+shapes data_obs    ch2         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:rooHist_data_cat1
+shapes signal      ch2         /t3home/gcelotto/ggHbb/WSFit/ws/step5/ws1.root ws3:model_H_c1 ws3:model_H_c1_$SYSTEMATIC
+----------------------------------------------------------------------------------------------------------------------------------
+bin          ch1                 ch2               
+observation  -1                  -1                
+----------------------------------------------------------------------------------------------------------------------------------
+bin                             ch1                 ch1                 ch1                 ch2                 ch2                 ch2               
+process                         signal              background          Z                   signal              background          Z                 
+process                         0                   1                   2                   0                   1                   2                 
+rate                            1                   1                   1                   1                   1                   1                 
+----------------------------------------------------------------------------------------------------------------------------------
+PS_FSR                  lnN     1.1029446573862889  -                   1.1430752868142964  1.1080266886785424  -                   1.1215683679948405
+PS_ISR                  lnN     1.008795143547079   -                   1.0891652451237188  1.0122735119444355  -                   1.0884185823198111
+Scale                   lnN     1.123895207156036   -                   1.113980016481165   1.1519887338610846  -                   1.1054485267800345
+alphaS                  lnN     1.0293317660320704  -                   1.0394067350927059  1.0329961260005178  -                   1.0420640773489633
+lumi                    lnN     1.025               -                   1.025               1.025               -                   1.025             
+SF_NN_0       param  0.6896938555710558 0.09309878009074302
+SF_NN_1       param  0.6523014486823475 0.10579173863808755
+rateZbb       rateParam ch1 Z 1.0 [-1.0,3.0]
+SF_NN_0       rateParam ch1 Z 0.6896938555710558 
+SF_NN_0       rateParam ch1 signal 0.6896938555710558 
+rateZbb       rateParam ch2 Z 1.0 [-1.0,3.0]
+SF_NN_1       rateParam ch2 Z 0.6523014486823475 
+SF_NN_1       rateParam ch2 signal 0.6523014486823475 
+pdfindex_0_2016_13TeV  discrete
+pdfindex_1_2016_13TeV  discrete
