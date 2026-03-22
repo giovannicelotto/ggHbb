@@ -20,6 +20,7 @@ parser.add_argument("-r", "--run", type=int, help="Run 2 or Run 3", default=2)
 parser.add_argument("-s", "--sleep", type=int, help="Number of files after which sleep for 20 seconds. If -1 disabled", default=-1)
 parser.add_argument("-d", "--delete", type=int, help="delete all logs file in the folder", default=0)
 parser.add_argument("-v", "--verbose", type=int, help="0 (silent), 1 (print info event by event)", default=0)
+parser.add_argument("-l", "--long", type=int, help="whether to call job short or job long", default=0)
 
 args = parser.parse_args()
 
@@ -118,9 +119,10 @@ else:
         #input("removing "+ nanoFileName+ " and sleeping for 5 seconds. Press Enter to continue...")
         #os.remove(nanoFileName)
         #print("removed")
-        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 5000), '/t3home/gcelotto/ggHbb/flatter/job.sh', nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC), str(run)])
+        job_path = '/t3home/gcelotto/ggHbb/flatter/job.sh' if args.long==0 else '/t3home/gcelotto/ggHbb/flatter/job_long.sh'
+        subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 5000), job_path, nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC), str(run)])
         if (doneFiles % args.sleep ==0) & (doneFiles!=0)& (args.sleep!=-1):
             print("I am sleeping! Good Night!")
-            time.sleep(150)
+            time.sleep(30)
             print("I am back! Good Morning!")
         doneFiles = doneFiles+1

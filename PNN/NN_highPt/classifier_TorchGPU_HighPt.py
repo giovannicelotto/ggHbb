@@ -83,9 +83,12 @@ eta_shape = args.eta_shape
 c_shape = args.c_shape 
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
 #featuresForTraining, columnsToRead = getFeaturesHighPt(outFolder)
-
-with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead.yaml") as f:
-    feature_cfg = yaml.safe_load(f)
+if args.boosted>20:
+    with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead_20plus.yaml") as f:
+        feature_cfg = yaml.safe_load(f)
+else:
+    with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead.yaml") as f:
+        feature_cfg = yaml.safe_load(f)
 featuresForTraining = feature_cfg['featuresForTraining']
 columnsToRead = featuresForTraining+feature_cfg['genFeatures']
 np.save(outFolder + "/model/featuresForTraining.npy", featuresForTraining)

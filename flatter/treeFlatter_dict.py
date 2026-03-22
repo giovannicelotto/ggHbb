@@ -430,8 +430,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                                   #muon_pt2=features_["jet2_muon_pt"],
                                   #muon_sIP2=abs(features_["jet2_muon_dxySig"]),
                                   muon_2_isTriggering=features_["jet2_muon_isTriggering"],
-                                  effData_rootfile=effMC_rootFile,
-                                  effMC_rootfile=effData_rootFile)
+                                  effData_rootfile=effData_rootFile,
+                                  effMC_rootfile=effMC_rootFile)
             features_['trig_sf'] = trig_sf
             event_weight  *= np.float32(trig_sf)
 # LHEScaleWeight

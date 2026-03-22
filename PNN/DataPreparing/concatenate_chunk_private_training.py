@@ -2,8 +2,8 @@ import glob
 import os
 import pandas as pd
 
-path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/MC/MINLOGluGluHToBB_private_v2"
-out_dir = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/MC/MINLOGluGluHToBB/training/v2"
+path = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/MC/MINLOGluGluHToBB_private_v9992"
+out_dir = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB/MC/MINLOGluGluHToBB/training/v9992"
 os.makedirs(out_dir, exist_ok=True)
 
 file_names = sorted(glob.glob(path + "/*.parquet"))

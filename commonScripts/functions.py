@@ -73,7 +73,8 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
         "No WP provided, you are using the btagTight argument"
     else:
         assert False
-
+    muon_pt_cut = 9.0 if boosted < 30 else 7.0
+    muon_ip_cut = 6.0 if boosted < 30 else 3.0
     #if btagTight:
     #    print("Setting btag cut to 0.71 for both jets")
     filters = [
@@ -90,10 +91,10 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
                 ('jet2_eta', '<',  2.5),
                 ('jet1_btagDeepFlavB', '>',  btag),
                 ('jet2_btagDeepFlavB', '>',  btag),
-                ('jet1_muon_pt', '>=',  9.0),
+                ('jet1_muon_pt', '>=',  muon_pt_cut),
                 ('jet1_muon_eta', '>=',  -1.5),
                 ('jet1_muon_eta', '<=',  1.5),
-                ('jet1_muon_dxySig', '>=', 6.0)
+                ('jet1_muon_dxySig', '>=', muon_ip_cut)
                 ],
                   
                   # OR Condition
@@ -111,20 +112,20 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
                 ('jet2_eta', '<',  2.5),
                 ('jet1_btagDeepFlavB', '>',  btag),
                 ('jet2_btagDeepFlavB', '>',  btag),
-                ('jet1_muon_pt', '>=',  9.0),
+                ('jet1_muon_pt', '>=',  muon_pt_cut),
                 ('jet1_muon_eta', '>=',  -1.5),
                 ('jet1_muon_eta', '<=',  1.5),
-                ('jet1_muon_dxySig', '<=', -6.0)
+                ('jet1_muon_dxySig', '<=', -muon_ip_cut)
                 ]
 
     ]
     if boosted>10:
-        if boosted==11:
-            filters[0] = filters[0] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120)]
-            filters[1] = filters[1] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120)]
-        if boosted==12:
-            filters[0] = filters[0] + [('dijet_pt', '>=', 120), ('dijet_pt', '<', 200)]
-            filters[1] = filters[1] + [('dijet_pt', '>=', 120), ('dijet_pt', '<', 200)]
+        if (boosted==11) | (boosted==21) | (boosted==31):
+            filters[0] = filters[0] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45)]
+            filters[1] = filters[1] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45)]
+        if (boosted==12) | (boosted==22) | (boosted==32):
+            filters[0] = filters[0] + [('dijet_pt', '>=', 120)]
+            filters[1] = filters[1] + [('dijet_pt', '>=', 120)]
         if boosted==13:
             filters[0] = filters[0] + [('dijet_pt', '>=', 200)]
             filters[1] = filters[1] + [('dijet_pt', '>=', 200)]

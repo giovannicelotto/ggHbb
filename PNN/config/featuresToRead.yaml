@@ -1,4 +1,5 @@
 featuresForTraining:
+
   - jet1_pt_prime
   - jet1_eta_prime
   - jet1_btagWP
@@ -45,6 +46,16 @@ featuresForTraining:
 
 # GEN INFORMATION
 genFeatures:
+  - jet1_sv_pt
+  - jet1_sv_mass
+  - jet1_sv_3dSig
+  - jet2_sv_pt
+  - jet2_sv_mass
+  - jet2_sv_3dSig
+  - jet1_muon_ptRel
+  - jet2_muon_ptRel
+  - jet2_muon_dxySig
+  - jet2_muon_pt_prime
   - jet1_muon_charge
   - b_gen_pt
   - b_gen_eta
@@ -95,10 +106,10 @@ genFeatures:
   - jet3_btagDeepFlavB
   - jet2_btagDeepFlavB
   - jet1_btagDeepFlavB
-  - jet1_rest_eta
-  - jet1_rest_phi
-  - jet2_rest_eta
-  - jet2_rest_phi
+  #- jet1_rest_eta
+  #- jet1_rest_phi
+  #- jet2_rest_eta
+  #- jet2_rest_phi
 
   #- dijet_pTAsymmetry
   #- centrality
@@ -131,7 +142,7 @@ mass_spin0:
 
 cuts:
   default:
-    - "dijet_pt >= 100 & dijet_mass >= 50 & dijet_mass < 300"
+    - "dijet_mass >= 50 & dijet_mass < 300"
   M50:
     - "higgs_gen_mass < 140 & dR_jet1_genQuark < 0.4 & dR_jet2_genQuark < 0.4"
   M70:

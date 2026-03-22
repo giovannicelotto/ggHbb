@@ -126,7 +126,7 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
     # Load MC and Data
     dfs = []
     for path in paths:
-        fileNames = glob.glob(path+"/*.parquet", recursive=True)
+        fileNames = glob.glob(path+"/**/*.parquet", recursive=True)
         print(path+"/*.parquet")
         if len(fileNames)==0:
             print("No files found in ", path)
@@ -148,7 +148,7 @@ def loadData_sampling(nReal, nMC, columnsToRead, featuresForTraining, test_split
             columnsToRead_ = columnsToRead.copy()
 
         
-        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagWP=btagWP, cutDijet=True, ttbarCR=False, boosted=boosted))
+        df = pd.read_parquet(fileNames, columns=columnsToRead_, filters=getCommonFilters(btagWP=btagWP, cutDijet=False, ttbarCR=False, boosted=boosted))
         if process[:4]=='Data':
             df['sf']=1
             df['btag_central']=1

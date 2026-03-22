@@ -30,7 +30,7 @@ from helpers.scaleUnscale import test_gaussianity_validation
 
 parser = argparse.ArgumentParser(description="Process some arguments.")
 parser.add_argument("-s", "--sampling", type=int, help="Enable sampling (default: False)", default=0)
-parser.add_argument("-b", "--boosted", type=int, default=10, help="Set boosted value (1 100-160) or 2 160-inf)")
+parser.add_argument("-b", "--boosted", type=int, default=12, help="Set boosted value (1 100-160) or 2 160-inf)")
 parser.add_argument("-dt", "--dataTaking", type=str, default='1D', help="1A or 1D")
 parser.add_argument("-btagWP", "--btagWP", type=str, default='M', help="M or L")
 
@@ -56,9 +56,12 @@ if not os.path.exists(outFolder):
     os.makedirs(outFolder)
 # %%
 # Define features to read and to train the pNN (+parameter massHypo) and save the features for training in outfolder
-
-with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead.yaml") as f:
-    feature_cfg = yaml.safe_load(f)
+if args.boosted>20:
+    with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead_20plus.yaml") as f:
+        feature_cfg = yaml.safe_load(f)
+else:
+    with open("/t3home/gcelotto/ggHbb/PNN/config/featuresToRead.yaml") as f:
+        feature_cfg = yaml.safe_load(f)
 featuresForTraining = feature_cfg['featuresForTraining']
 columnsToRead = featuresForTraining+feature_cfg['genFeatures']
 print("[INFO] Features for training: ", len(featuresForTraining))
@@ -83,6 +86,8 @@ data = loadData_sampling(nReal=-1, nMC=-1,
 #                            columnsToRead=columnsToRead, featuresForTraining=featuresForTraining, test_split=0.1,
 #                            boosted=boosted, dataTaking=dataTaking)
 Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, genMassTrain, genMassVal = data
+
+
 
 #%%
 
@@ -148,9 +153,10 @@ if args.boosted==4:
 else:
     # Higgs and Data have flat distribution in m_jj only for training and validation
     if args.boosted==10:
+        assert False
         rWtrain, rWval = flattenWeights_conditionalPt(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval,  outName=outFolder+ "/massReweighted.png",
                                                             xmin=50, xmax=300, nbins=201,
-                                                            ptmin=100, ptmax=450, nptbins=5)
+                                                            ptmin=60, ptmax=120, nptbins=5)
     else:
         rWtrain, rWval = flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, outFolder, outName=outFolder+ "/massReweighted.png",
                                 xmin=int(Xtrain.dijet_mass.min()), nbins=201)
@@ -167,7 +173,7 @@ Wval = Wval/np.mean(Wval)
 # %%
 fig, ax = plt.subplots(1, 1)
 
-bins = np.linspace(100, 900, 101)
+bins = np.linspace(Xtrain.dijet_pt.min(), 900, 101)
 ax.hist(Xtrain[Ytrain==1].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="S", weights=rWtrain[Ytrain==1])
 ax.hist(Xtrain[Ytrain==0].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="B", weights=rWtrain[Ytrain==0])
 #ax.hist(Xtrain.dijet_mass[genMassTrain>0], bins=bins_sum, histtype='step', density=False, linewidth=1, weights=rWtrain[genMassTrain>0], label='Sum', color='black')
@@ -235,11 +241,17 @@ Xval['label']=Yval
 
 #Without mass reweighiting
 
-plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xval[Yval==0], Xval[Yval==1]],
-                        outFile=outFolder+"/featuresForTraining.png", legendLabels=['Data Train', 'Higgs Train', 'Data Val', 'Higgs Val'],
-                        colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
-                        alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=True,
-                        weights=[Wtrain[Ytrain==0], Wtrain[Ytrain==1], Wval[Yval==0], Wval[Yval==1]], error=False)
+#plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xval[Yval==0], Xval[Yval==1]],
+#                        outFile=outFolder+"/featuresForTraining.png", legendLabels=['Data Train', 'Higgs Train', 'Data Val', 'Higgs Val'],
+#                        colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
+#                        alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=True,
+#                        weights=[Wtrain[Ytrain==0], Wtrain[Ytrain==1], Wval[Yval==0], Wval[Yval==1]], error=False)
+m=125
+plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[genMassTrain==m], Xval[Yval==0], Xval[genMassVal==m]],
+                    outFile=outFolder+f"/features_H{m}_{args.btagWP}.png", legendLabels=['Data Train', 'H%d Train'%m, 'Data Val', 'H%d Val'%m],
+                    colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
+                    alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=False,
+                    weights=[Wtrain[Ytrain==0], Wtrain[genMassTrain==m], Wval[Yval==0], Wval[genMassVal==m]], error=False)
 #With mass reweighiting
 #plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[Ytrain==1], Xval[Yval==0], Xval[Yval==1]],
 #                    outFile=outFolder+"/featuresReweighted.png", legendLabels=['Data Train', 'Higgs Train', 'Data Val', 'Higgs Val'],

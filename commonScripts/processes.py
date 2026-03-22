@@ -4,7 +4,7 @@ def getProcessesDataFrame():
     flatPathCommon = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/flatForGluGluHToBB"
     nanoFolder      = "AllMC2026Mar06"
     nanoFolderData  = "Data_50GeV2026Mar06"
-
+    nanoFolderData_lowPt = "Data_pt0To602026Mar19"
     processesMC = {
     'GluGluHToBB':                      [nanoPathCommon + "/"+nanoFolder+"/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/*/*/*",                            flatPathCommon+"/MC" + "/GluGluHToBB/others"    ,                48.61*0.58],                # 0     
     'EWKZJets':                         [nanoPathCommon + "/"+nanoFolder+"/EWKZ2Jets*",                                                                          flatPathCommon+"/MC" + "/EWKZJets",                       9.8],                       # 1     
@@ -43,7 +43,7 @@ def getProcessesDataFrame():
     'QCD_MuEnriched_Pt-30To50':         [nanoPathCommon + "/"+nanoFolder+"/QCD_Pt-30To50*",                                                                             flatPathCommon+"/nonResonant/QCDMuEnriched/QCD_Pt30To50"                ,    1367000.0],                 # 32        
     'QCD_MuEnriched_Pt-20To30':         [nanoPathCommon + "/"+nanoFolder+"/QCD_Pt-20To30*",                                                                             flatPathCommon+"/nonResonant/QCDMuEnriched/QCD_Pt20To30"                ,    2527000.0],                 # 33        
     'QCD_MuEnriched_Pt-15To20':         [nanoPathCommon + "/"+nanoFolder+"/QCD_Pt-15To20*",                                                                             flatPathCommon+"/nonResonant/QCDMuEnriched/QCD_Pt15To20"                ,    2800000.0	],              # 34            
-    'ZJetsToQQ_100to200'      :         [nanoPathCommon +"/ZJetsToQQ_HT-100to200",                                                                                      flatPathCommon+"/MC" + "/ZJets/ZJetsToQQ_HT-100to200" ,   5.261e+03],                 # 35    
+    'ZJetsToQQ_100to200'      :         [nanoPathCommon + "/"+nanoFolder+"/ZJetsToQQ_HT-100to200",                                                                                      flatPathCommon+"/MC" + "/ZJets/ZJetsToQQ_HT-100to200" ,   5.261e+03],                 # 35    
     'VBFHToBB'      :                   [nanoPathCommon + "/"+nanoFolder+"/VBFHToBB*/",                                                                          flatPathCommon+"/MC" + "/VBFHToBB" ,                      3.766*0.58],                # 36    
     'GluGluHToBBMINLO'          :       [nanoPathCommon + "/"+nanoFolder+"/GluGluHToBB_M-125_TuneCP5_MINLO_NNLOPS_13TeV-powheg-pythia*/*/*/*/",                        flatPathCommon+"/MC" + "/MINLOGluGluHToBB/others",               48.61*0.58],                # 37
     'GluGluH_M50_ToBB':                 [nanoPathCommon +"/"+nanoFolder+"/GluGluSpin0ToBBbar_W_1p0_M_50_MuEnriched_TuneCP5_13TeV_pythia8",                           flatPathCommon+"/MC" + "/GluGluH_M50_ToBB",               48.61*0.58],                # 38
@@ -64,8 +64,8 @@ def getProcessesDataFrame():
     'WplusH_HToBB_WToLNu'      :                   [nanoPathCommon + "/"+nanoFolder+"/WplusH_HToBB_WToLNu_M-125_TuneCP5_13TeV-powheg-pythia8*/",                                                                          flatPathCommon+"/MC" + "/WplusH_HToBB_WToLNu" ,                      0.831*0.58 * 0.1086*3],                # 36    
     'WminusH_HToBB_WToQQ'      :                   [nanoPathCommon + "/"+nanoFolder+"/WminusH_HToBB_WToLNu_M-125_TuneCP5_13TeV-powheg-pythia8*/",                                                                          flatPathCommon+"/MC" + "/WminusH_HToBB_WToQQ" ,                      0.527*0.58 * 0.6741],                # 36    
     'WminusH_HToBB_WToLNu'      :                   [nanoPathCommon + "/"+nanoFolder+"/WminusH_HToBB_WToQQ_M-125_TuneCP5_13TeV-powheg-pythia8*/",                                                                          flatPathCommon+"/MC" + "/WminusH_HToBB_WToLNu" ,                      0.527*0.58 * 0.1086*3],                # 54
-    "GluGluHToBBMINLO_private_v2"      :       [nanoPathCommon + "/GluGluHToBB_MINLO_PrivateProduction/M125_v2",                                                                           flatPathCommon+"/MC/MINLOGluGluHToBB_private_v2", 48.61*0.58],
-    "GluGluHToBBMINLO_private_v9992"      :       [nanoPathCommon + "/GluGluHToBB_MINLO_PrivateProduction/M125_v9992",                                                                           flatPathCommon+"/MC/MINLOGluGluHToBB_private_v9992", 48.61*0.58],
+    "GluGluHToBBMINLO_private_v2"      :       [nanoPathCommon + "/"+nanoFolder+"/GluGluHToBB_MINLO_PrivateProduction/M125_v2",                                                                           flatPathCommon+"/MC/MINLOGluGluHToBB_private_v2", 48.61*0.58],
+    "GluGluHToBBMINLO_private_v9992"      :       [nanoPathCommon + "/"+nanoFolder+"/GluGluHToBB_MINLO_PrivateProduction/M125_v9992",                                                                           flatPathCommon+"/MC/MINLOGluGluHToBB_private_v9992", 48.61*0.58],
     "GluGluHTo2B_Run3"      :       ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/Run3",                                                                           flatPathCommon+"/MC/GluGluHTo2B_Run3", 48.61*0.58],
 
     #'GluGluHToBB_tr':                   [nanoPathCommon + "/"+nanoFolder+"/GluGluHToBB_M-125_TuneCP5_13TeV-powheg-pythia8/*/*/*/training",                   flatPathCommon+"/MC" + "/GluGluHToBB/training"    ,                48.61*0.58],                # 0 
@@ -180,8 +180,35 @@ def getProcessesDataFrame():
     'Data3D':                          [nanoPathCommon + "/"+nanoFolderData+"/ParkingBPH3/crab_data_Run2018D_part3",                         flatPathCommon + "/Data3D"    ,                     5.302,     5437],                     # 7           5437   V
     'Data4D':                          [nanoPathCommon + "/"+nanoFolderData+"/ParkingBPH4/crab_data_Run2018D_part4",                         flatPathCommon + "/Data4D"    ,                     5.302,     5521],                     # 7         5521     
     'Data5D':                          [nanoPathCommon + "/"+nanoFolderData+"/ParkingBPH5/crab_data_Run2018D_part5",                         flatPathCommon + "/Data5D"    ,                     5.302,     5517],                     # 7       5517          
-    "Data_Run3"      :       ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/DataRun3",                                                                           flatPathCommon+"/DataRun3/Data_2025", 1, 2],
 
+
+# LOW PT STARTS HERE
+    'Data1A_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH1/crab_data_Run2018A_part1",                         flatPathCommon + "/Data1A_lowPt"    ,                     0.774,     1017],                  # 0              
+    'Data2A_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH2/crab_data_Run2018A_part2",                         flatPathCommon + "/Data2A_lowPt"    ,                     0.774,     1018],                     # 1              
+    'Data3A_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH3/crab_data_Run2018A_part3",                         flatPathCommon + "/Data3A_lowPt"    ,                     0.774,     1018],                     # 3              
+    'Data4A_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH4/crab_data_Run2018A_part4",                         flatPathCommon + "/Data4A_lowPt"    ,                     0.774,     1016],                     # 4              
+    'Data5A_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH5/crab_data_Run2018A_part5",                         flatPathCommon + "/Data5A_lowPt"    ,                     0.774,     1016],                     # 5              
+    'Data6A_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH6/crab_data_Run2018A_part6",                         flatPathCommon + "/Data6A_lowPt"    ,                     0.774,     1017],                     # ???             
+    
+    'Data1B_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH1/crab_data_Run2018B_part1",                         flatPathCommon + "/Data1B_lowPt"    ,                     0.911,     987],                  # 8              987
+    'Data2B_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH2/crab_data_Run2018B_part2",                         flatPathCommon + "/Data2B_lowPt"    ,                     0.911,     1020],                     # 9              1020
+    'Data3B_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH3/crab_data_Run2018B_part3",                         flatPathCommon + "/Data3B_lowPt" ,                        0.911,     1020],                     # 10              1020
+    'Data4B_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH4/crab_data_Run2018B_part4",                         flatPathCommon + "/Data4B_lowPt"    ,                     0.911,     1020],                     # 11              1020
+    'Data5B_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH5/crab_data_Run2018B_part5",                         flatPathCommon + "/Data5B_lowPt"    ,                     0.911,     1018],                     # 12              1018
+    'Data6B_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH6/crab_data_Run2018B_part6",                         flatPathCommon + "/Data6B_lowPt"    ,                     0.377,     494],                     # 13               494
+# Data C is checked!
+    'Data1C_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH1/crab_data_Run2018C_part1",                         flatPathCommon + "/Data1C_lowPt"    ,                     1.103,     1105],                  # 14              
+    'Data2C_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH2/crab_data_Run2018C_part2",                         flatPathCommon + "/Data2C_lowPt"    ,                     1.103,     1107],                     # 15
+    'Data3C_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH3/crab_data_Run2018C_part3",                         flatPathCommon + "/Data3C_lowPt" ,                        1.103,     1102],                     # 16
+    'Data4C_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH4/crab_data_Run2018C_part4",                         flatPathCommon + "/Data4C_lowPt"    ,                     1.103,     1108],                     # 17       V
+    'Data5C_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH5/crab_data_Run2018C_part5",                         flatPathCommon + "/Data5C_lowPt"    ,                     1.103,     1105],                     # 18       V
+# Daata D checked
+    'Data1D_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH1/crab_data_Run2018D_part1",                         flatPathCommon + "/Data1D_lowPt" ,                        5.302,     5524],                     # 2           5524
+    'Data2D_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH2/crab_data_Run2018D_part2",                         flatPathCommon + "/Data2D_lowPt"    ,                     5.302,     5532],                     # 7              5532
+    'Data3D_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH3/crab_data_Run2018D_part3",                         flatPathCommon + "/Data3D_lowPt"    ,                     5.302,     5437],                     # 7           5437   V
+    'Data4D_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH4/crab_data_Run2018D_part4",                         flatPathCommon + "/Data4D_lowPt"    ,                     5.302,     5521],                     # 7         5521     
+    'Data5D_lowPt':                          [nanoPathCommon + "/"+nanoFolderData_lowPt+"/ParkingBPH5/crab_data_Run2018D_part5",                         flatPathCommon + "/Data5D_lowPt"    ,                     5.302,     5517],                     # 7       5517          
+    "Data_Run3"      :       ["/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/nanoaod_ggH/DataRun3",                                                                           flatPathCommon+"/DataRun3/Data_2025", 1, 2],
 
     }
     dfData = pd.DataFrame(processesData).T
