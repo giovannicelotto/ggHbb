@@ -21,7 +21,7 @@ from getDfsFromConfig import extract_pnn_edges
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-c', '--category', type=str, default="28", help='Category')
+parser.add_argument('-c', '--category', type=str, default="7", help='Category')
 args = parser.parse_args([]) if hasattr(sys, 'ps1') or not sys.argv[1:] else parser.parse_args()
 
 
@@ -32,7 +32,7 @@ lower_NN, upper_NN = extract_pnn_edges(config_cuts["cuts_string"])
 
 
 # %%
-cfg_file = "/t3home/gcelotto/ggHbb/tt_CR/plot_tt_from_df.yaml"
+cfg_file = "/t3home/gcelotto/ggHbb/tt_CR/analysis/plot_tt_from_df_old.yaml"
 with open(cfg_file, "r") as f:
     cfg = yaml.safe_load(f)
 # %%
@@ -139,6 +139,7 @@ fout = ROOT.TFile(f"/t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/histograms_{args
 n_bins = 5
 x_min = lower_NN
 x_max = upper_NN
+print(x_min, x_max)
 
 processes = dfMC["process"].unique()
 

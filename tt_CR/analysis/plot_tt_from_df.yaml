@@ -1,0 +1,214 @@
+modelName: Jan21_3_50p0
+boosted: 3
+columns:
+  - jet2_eta
+  - dijet_pt
+  - dijet_mass
+  - jet2_pt
+  - jet1_pt
+  - jet1_eta
+  - jet1_phi
+  - jet1_btagWP
+  - jet1_btagDeepFlavB
+  - PNN
+  - PNN_qm
+  - is_ttbar_CR
+
+MConlyFeatures:
+  - weight
+  - xsection
+  - top_pt_reweighting
+  - btag_sf_hf_central
+  - btag_sf_hf_up
+  - btag_sf_hf_down
+  - btag_sf_light_up
+  - btag_sf_light_down
+  - btag_sf_lightf_central
+  - jet_pileupId_SF_down
+  - jet_pileupId_SF_up
+  - jet_pileupId_SF_nom
+  - NN_Jet_sys_JECAbsoluteMPFBias_up
+  - NN_Jet_sys_JECAbsoluteMPFBias_down
+  - NN_Jet_sys_JECAbsoluteScale_up
+  - NN_Jet_sys_JECAbsoluteScale_down
+  - NN_Jet_sys_JECAbsoluteStat_up
+  - NN_Jet_sys_JECAbsoluteStat_down
+  - NN_Jet_sys_JECFlavorQCD_up
+  - NN_Jet_sys_JECFlavorQCD_down
+  - NN_Jet_sys_JECFragmentation_up
+  - NN_Jet_sys_JECFragmentation_down
+  - NN_Jet_sys_JECPileUpDataMC_up
+  - NN_Jet_sys_JECPileUpDataMC_down
+  - NN_Jet_sys_JECPileUpPtBB_up
+  - NN_Jet_sys_JECPileUpPtBB_down
+  - NN_Jet_sys_JECPileUpPtEC1_up
+  - NN_Jet_sys_JECPileUpPtEC1_down
+  - NN_Jet_sys_JECPileUpPtEC2_up
+  - NN_Jet_sys_JECPileUpPtEC2_down
+  - NN_Jet_sys_JECPileUpPtHF_up
+  - NN_Jet_sys_JECPileUpPtHF_down
+  - NN_Jet_sys_JECPileUpPtRef_up
+  - NN_Jet_sys_JECPileUpPtRef_down
+  - NN_Jet_sys_JECRelativeBal_up
+  - NN_Jet_sys_JECRelativeBal_down
+  - NN_Jet_sys_JECRelativeFSR_up
+  - NN_Jet_sys_JECRelativeFSR_down
+  - NN_Jet_sys_JECRelativeJEREC1_up
+  - NN_Jet_sys_JECRelativeJEREC1_down
+  - NN_Jet_sys_JECRelativeJEREC2_up
+  - NN_Jet_sys_JECRelativeJEREC2_down
+  - NN_Jet_sys_JECRelativeJERHF_up
+  - NN_Jet_sys_JECRelativeJERHF_down
+  - NN_Jet_sys_JECRelativePtBB_up
+  - NN_Jet_sys_JECRelativePtBB_down
+  - NN_Jet_sys_JECRelativePtEC1_up
+  - NN_Jet_sys_JECRelativePtEC1_down
+  - NN_Jet_sys_JECRelativePtEC2_up
+  - NN_Jet_sys_JECRelativePtEC2_down
+  - NN_Jet_sys_JECRelativePtHF_up
+  - NN_Jet_sys_JECRelativePtHF_down
+  - NN_Jet_sys_JECRelativeSample_up
+  - NN_Jet_sys_JECRelativeSample_down
+  - NN_Jet_sys_JECRelativeStatEC_up
+  - NN_Jet_sys_JECRelativeStatEC_down
+  - NN_Jet_sys_JECRelativeStatFSR_up
+  - NN_Jet_sys_JECRelativeStatFSR_down
+  - NN_Jet_sys_JECRelativeStatHF_up
+  - NN_Jet_sys_JECRelativeStatHF_down
+  - NN_Jet_sys_JECSinglePionECAL_up
+  - NN_Jet_sys_JECSinglePionECAL_down
+  - NN_Jet_sys_JECSinglePionHCAL_up
+  - NN_Jet_sys_JECSinglePionHCAL_down
+  - NN_Jet_sys_JECTimePtEta_up
+  - NN_Jet_sys_JECTimePtEta_down
+  - Electron_tt_RECO_SF
+  - Electron_tt_RECO_SF_up
+  - Electron_tt_RECO_SF_down
+  - Electron_tt_ID_SF
+  - Electron_tt_ID_SF_up
+  - Electron_tt_ID_SF_down
+  - Muon_tt_RECO_SF
+  - Muon_tt_RECO_stat
+  - Muon_tt_RECO_syst
+  - Muon_tt_ID_SF
+  - Muon_tt_ID_stat
+  - Muon_tt_ID_syst
+  - Muon_tt_ISO_SF
+  - Muon_tt_ISO_stat
+  - Muon_tt_ISO_syst
+  - trig_sf
+  - err_trig_sf
+
+dataPeriods:
+  1A: -1
+  2A: -1
+  3A: -1
+  4A: -1
+  5A: -1
+  6A: -1
+  1B: -1
+  2B: -1
+  3B: -1
+  4B: -1
+  5B: -1
+  6B: -1
+  1C: -1
+  2C: -1
+  3C: -1
+  4C: -1
+  5C: -1
+  1D: -1
+  2D: -1
+  3D: -1
+  4D: -1
+  5D: -1
+
+MC:
+  VJets:
+    1 : 0
+    14 : 0    
+    15 : 0    
+    16 : 0    
+    17 : 0    
+    18 : 0      
+    19 : 0
+    20 : 0
+    21 : 0
+    22 : 0
+    2 : 0
+    3 : 0
+    4 : 0
+    35 : 0
+    47 : 0
+  ST:
+    5 : -1
+    6 : -1
+    7 : -1
+    8 : -1
+    9 : -1
+    10 : -1
+  TT:
+    11 : -1
+    12 : -1
+    13 : -1    
+  QCD:
+    23 : 0   # QCD
+    24 : 0   # QCD
+    25 : 0   # QCD
+    26 : 0   # QCD
+    27 : 0   # QCD
+    28 : 0   # QCD
+    29 : 0   # QCD
+    30 : 0   # QCD
+    31 : 0   # QCD
+    32 : 0   # QCD
+    33 : 0   # QCD
+    34 : 0   # QCD
+  ggH(bb):
+    36 : 0
+    37 : 0
+
+
+
+systematics:
+  - "btag" 
+  - "top_pT"
+  - "jet_puid"
+  - "JECAbsoluteMPFBias"
+  - "JECAbsoluteScale"
+  - "JECAbsoluteStat"
+  - "JECFlavorQCD"
+  - "JECFragmentation"
+  - "JECPileUpDataMC"
+  - "JECPileUpPtBB"
+  - "JECPileUpPtEC1"
+  - "JECPileUpPtEC2"
+  - "JECPileUpPtHF"
+  - "JECPileUpPtRef"
+  - "JECRelativeBal"
+  - "JECRelativeFSR"
+  - "JECRelativeJEREC1"
+  - "JECRelativeJEREC2"
+  - "JECRelativeJERHF"
+  - "JECRelativePtBB"
+  - "JECRelativePtEC1"
+  - "JECRelativePtEC2"
+  - "JECRelativePtHF"
+  - "JECRelativeSample"
+  - "JECRelativeStatEC"
+  - "JECRelativeStatFSR"
+  - "JECRelativeStatHF"
+  - "JECSinglePionECAL"
+  - "JECSinglePionHCAL"
+  - "JECTimePtEta"
+  - "ElectronReco"
+  - "ElectronId"
+  - "MuonRecoStat"
+  - "MuonRecoSyst"
+  - "MuonIdSyst"
+  - "MuonISOSyst"
+  - "trig_sf"
+
+
+
+  

@@ -5,20 +5,20 @@ combineCards.py datacardMulti1.txt \
                 datacardMulti7.txt \
                 datacardMulti8.txt  > combined_datacard.txt
 
-N_POINTS=40
+N_POINTS=10
 
 
-#combine -M MultiDimFit /t3home/gcelotto/ggHbb/WSFit/datacards/combined_datacard.txt \
-#  -t -1 --expectSignal 1.0 \
-#  --setParameters rateZbb=1.0 \
-#  --setParameterRanges rateZbb=0.5,1.5 \
-#  --X-rtd MINIMIZER_freezeDisassociatedParams \
-#  --X-rtd REMOVE_CONSTANT_ZERO_POINT=1 \
-#  --rMin=-5 --rMax=7 \
-#  --saveNLL \
-#  --cminDefaultMinimizerStrategy 0 \
-#  --algo grid --points $N_POINTS \
-#  -n  rateHbbScan_exp_combined
+combine -M MultiDimFit /t3home/gcelotto/ggHbb/WSFit/datacards/combined_datacard.txt \
+  -t -1 --expectSignal 1.0 \
+  --setParameters rateZbb=1.0 \
+  --setParameterRanges rateZbb=0.5,1.5 \
+  --X-rtd MINIMIZER_freezeDisassociatedParams \
+  --X-rtd REMOVE_CONSTANT_ZERO_POINT=1 \
+  --rMin=-5 --rMax=7 \
+  --saveNLL \
+  --cminDefaultMinimizerStrategy 0 \
+  --algo grid --points $N_POINTS \
+  -n  rateHbbScan_exp_combined
 
 
 echo "Run with Zbb frozen"

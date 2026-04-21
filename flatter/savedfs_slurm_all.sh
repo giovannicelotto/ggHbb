@@ -9,7 +9,7 @@
 #SBATCH --output=/t3home/gcelotto/ggHbb/flatter/saveDFS_all.out
 #SBATCH --error=/t3home/gcelotto/ggHbb/flatter/saveDFS_all.err
 
-modelName="Mar05_3_50p0"
+modelName="Mar31_11_50p0"
 #/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/PNN/NN_highPt/classifier_TorchGPU_HighPt.py -l $lambda_disco -d 0 -e 250 -eS 1000 -b 3 -lr 0.001 -bs 8192 -n 32,16 
 #/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/PNN/NN_highPt/classifier_TorchGPU_highPt_PlotOnly.py -v $lambda_disco -dt Jan14 -b 3 -s 0
 

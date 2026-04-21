@@ -12,15 +12,18 @@ from scipy.stats import norm
 import sys
 sys.path.append("/t3home/gcelotto/ggHbb/scripts/plotScripts")
 from plotFeatures import *
+from functions import getCommonFilters
 # %%
 folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/dataframes_NN/"
 modelName = "Jan21_3_50p0"
 featuresForTraining = np.load(f"/t3home/gcelotto/ggHbb/PNN/results_mjjDisco/{modelName}/model/featuresForTraining.npy")
 # %%
 # Open dataframes for ggH and ttbar
-df = pd.read_parquet(folder + modelName + "/df_GluGluHToBBMINLO_Jan21_3_50p0.parquet")
-df_tt = pd.read_parquet(folder + modelName + "/df_TTTo2L2Nu_Jan21_3_50p0.parquet", filters=[("is_ttbar_CR","==",1)])
+df = pd.read_parquet(folder + modelName + "/df_GluGluHToBBMINLO_Jan21_3_50p0.parquet", filters=getCommonFilters(btagWP="M", cutDijet=True, ttbarCR=False))
+df_tt = pd.read_parquet(folder + modelName + "/df_TTTo2L2Nu_Jan21_3_50p0.parquet", filters=getCommonFilters(btagWP="M", cutDijet=True, ttbarCR=True))
 # %%
+df_tt = df_tt[(df_tt.dijet_mass > 50) & (df_tt.dijet_mass < 300)]
+df = df[(df.dijet_mass > 50) & (df.dijet_mass < 300)]
 # Scale datasets before making predictions consistently with training
 from helpers.scaleUnscale import scale
 df_ggH_scaled  = scale(df, featuresForTraining=featuresForTraining, scalerName= "/t3home/gcelotto/ggHbb/PNN/results_mjjDisco/Jan21_3_50p0/model/myScaler.pkl" ,fit=False)
@@ -143,14 +146,15 @@ qt_tt.fit(df_tt_scaled[features])
 eps = 1e-6
 
 U_tt = qt_tt.transform(df_tt_scaled[features])
+# %%
 U_tt = np.clip(U_tt, eps, 1 - eps)
 
-Z_tt = norm.ppf(U_tt)   # now standard normal marginals
+Z_tt = norm.ppf(U_tt)   # now standard normal marginalsdf
 
 # %%
 
 # whiten ttbar
-cov_tt = np.cov(Z_tt[:len(Z_tt)//100,:], rowvar=False)
+cov_tt = np.cov(Z_tt[:len(Z_tt),:], rowvar=False)
 L_tt = np.linalg.cholesky(cov_tt)
 
 Z_tt_whitened = np.linalg.solve(L_tt, Z_tt.T).T
@@ -167,7 +171,7 @@ Z_ggH = norm.ppf(U_ggH)
 #plotNormalizedFeatures(data=[pd.DataFrame(Z_ggH, columns=featuresForTraining), 
 #                             pd.DataFrame(Z_tt, columns=featuresForTraining)], outFile=None, legendLabels=['ggH Uniform', 'ttbar Uniform'], colors=['red', 'blue'], histtypes=None, alphas=None, figsize=None, autobins=True,
 #                       weights=[df.flat_weight, df_tt.flat_weight], error=True)
-cov_ggH = np.cov(Z_ggH[:len(Z_ggH)//100], rowvar=False)
+cov_ggH = np.cov(Z_ggH[:len(Z_ggH)], rowvar=False)
 
 # Cholesky decomposition
 L_ggH = np.linalg.cholesky(cov_ggH)
@@ -184,6 +188,7 @@ df_tt_morphed_copula = pd.DataFrame(
     columns=features,
     index=df_tt_scaled.index
 )
+
 # %%
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -235,8 +240,8 @@ plt.title("Feature Correlation Matrix tt whitened")
 plt.show()
 
 # %%
-#plotNormalizedFeatures(data=[df_ggH_scaled[featuresForTraining], df_tt_morphed_copula[featuresForTraining]], outFile=None, legendLabels=['ggH original', 'ttbar morphed'], colors=['blue', 'red'], histtypes=None, alphas=None, figsize=None, autobins=False,
-#                       weights=[df.flat_weight, df_tt.flat_weight], error=True)
+plotNormalizedFeatures(data=[df_ggH_scaled[featuresForTraining], df_tt_morphed_copula[featuresForTraining]], outFile=None, legendLabels=['ggH original', 'ttbar morphed'], colors=['blue', 'red'], histtypes=None, alphas=None, figsize=None, autobins=False,
+                       weights=[df.flat_weight, df_tt.flat_weight], error=True)
 # %%
 tt_tensor_morphed_copula = torch.tensor(np.float32(df_tt_morphed_copula[featuresForTraining].values)).float()
 with torch.no_grad():  # No need to track gradients for inference
@@ -246,7 +251,7 @@ with torch.no_grad():  # No need to track gradients for inference
     tt_predictions_morphed_simple = nn(tt_tensor_morphed_simple).numpy()
 # %%
 fig, ax = plt.subplots(1, 1)
-bins = np.linspace(0, 1, 51)
+bins = np.linspace(0, 1, 201)
 ax.hist(ggH_predictions, bins=bins, density=True, histtype='step', label='ggH (SR)', color='red', linewidth=2)    
 ax.hist(tt_predictions, bins=bins, density=True, histtype='step', label=r'$t\bar{t}$ ($\ell\bar{\ell}$ CR)', color='blue', linewidth=2)    
 ax.hist(tt_predictions_morphed_simple, bins=bins, density=True, histtype='step', label=r'$t\bar{t}$  ($\ell\bar{\ell}$ CR after QM)', color='green', linewidth=2)    
@@ -259,9 +264,28 @@ import joblib
 import numpy as np
 
 # Save QuantileTransformers
-#joblib.dump(qt_tt,   "/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/qt_tt.pkl")
-#joblib.dump(qt_ggH,  "/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/qt_ggH.pkl")
+joblib.dump(qt_tt,   "/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/qt_tt.pkl")
+joblib.dump(qt_ggH,  "/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/qt_ggH.pkl")
 ## Save Cholesky matrices
-#np.save("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_tt.npy",  L_tt)
-#np.save("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_ggH.npy", L_ggH)
+np.save("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_tt.npy",  L_tt)
+np.save("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_ggH.npy", L_ggH)
+# %%
+
+X_ggH = pd.DataFrame(df_ggH_scaled[featuresForTraining].values, columns=featuresForTraining)
+X_tt  = pd.DataFrame(df_tt_morphed_copula[featuresForTraining].values, columns=featuresForTraining)
+
+corr_ggH = X_ggH.corr()
+corr_tt  = X_tt.corr()
+corr_diff = corr_tt - corr_ggH
+fig, ax = plt.subplots(1, 1, figsize=(12, 10))
+cax = ax.matshow(corr_diff, vmin=-0.5, vmax=0.5, cmap="coolwarm")
+fig.colorbar(cax)
+
+ax.set_xticks(range(len(featuresForTraining)))
+ax.set_yticks(range(len(featuresForTraining)))
+ax.set_xticklabels(featuresForTraining, rotation=90)
+ax.set_yticklabels(featuresForTraining)
+
+ax.set_title("Correlation difference: tt_morphed - ggH")
+fig.savefig("/t3home/gcelotto/ggHbb/documentation/plots/PNN/deltaRho.png", bbox_inches="tight")
 # %%

@@ -149,6 +149,66 @@ def get_trig_SF(LeadingMuons_inJets, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_
         if ybin == 0:
             ybin=1
         return xbin, ybin
+    def fix_bin(xbin, ybin, hist):
+        xbin = max(1, min(xbin, hist.GetNbinsX()))
+        ybin = max(1, min(ybin, hist.GetNbinsY()))
+        return xbin, ybin
+
+    def get_eff_err(hist, idx):
+        xbin = hist.GetXaxis().FindBin(Muon_pt[idx])
+        ybin = hist.GetYaxis().FindBin(abs(Muon_dxy[idx] / Muon_dxyErr[idx]))
+        xbin, ybin = fix_bin(xbin, ybin, hist)
+
+        eff = hist.GetBinContent(xbin, ybin)
+        err = hist.GetBinError(xbin, ybin)
+        return eff, err
+    hist_MC   = effMC_rootfile.Get("hMap")
+    hist_Data = effData_rootfile.Get("hMap")
+
+    # Only keep up to 2 muons 
+    muons = LeadingMuons_inJets[:2]
+
+    eff_data_tot = 1.0
+    eff_mc_tot   = 1.0
+
+    rel_err_sq = 0.0
+
+    for idx in muons:
+        fired = Muon_isTriggering[idx]
+
+        eff_d, err_d = get_eff_err(hist_Data, idx)
+        eff_m, err_m = get_eff_err(hist_MC, idx)
+
+        # choose contribution depending on trigger decision
+        if fired:
+            val_d = eff_d
+            val_m = eff_m
+
+            if eff_d > 0:
+                rel_err_sq += (err_d / eff_d) ** 2
+            if eff_m > 0:
+                rel_err_sq += (err_m / eff_m) ** 2
+
+        else:
+            # Note this is not running in case of one jet with one muon only
+            val_d = 1.0 - eff_d
+            val_m = 1.0 - eff_m
+
+            if (1.0 - eff_d) > 0:
+                rel_err_sq += (err_d / (1.0 - eff_d)) ** 2
+            if (1.0 - eff_m) > 0:
+                rel_err_sq += (err_m / (1.0 - eff_m)) ** 2
+
+        eff_data_tot *= val_d
+        eff_mc_tot   *= val_m
+
+    # final SF
+    sf = eff_data_tot / eff_mc_tot if eff_mc_tot > 0 else 1.0
+
+    # uncertainty
+    err_sf = sf * np.sqrt(rel_err_sq) if sf > 0 else 0.0
+
+    return np.float32(sf), np.float32(err_sf)
 
     if len(LeadingMuons_inJets)==1:
         hist_MC = effMC_rootfile.Get("hMap")
@@ -157,14 +217,20 @@ def get_trig_SF(LeadingMuons_inJets, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_
         ybin1_MC = hist_MC.GetYaxis().FindBin(abs(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]]))
         xbin1_Data = hist_Data.GetXaxis().FindBin(Muon_pt[LeadingMuons_inJets[0]])
         ybin1_Data = hist_Data.GetYaxis().FindBin(abs(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]]))
+
+        # Remove underflows
         xbin1_MC, ybin1_MC = remove_underflow_overflow(xbin1_MC, ybin1_MC, hist_MC)
         xbin1_Data, ybin1_Data = remove_underflow_overflow(xbin1_Data, ybin1_Data, hist_Data)
+        # Get eff in data and mc and uncrt.
         efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data)
+        err_data = hist_Data.GetBinError(xbin1_Data, ybin1_Data)
         efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC)
+        err_mc   = hist_MC.GetBinError(xbin1_MC, ybin1_MC)
         sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
-        print("One leading muon in jet, trig sf is ", sf)
-        print("Muon pt is ", Muon_pt[LeadingMuons_inJets[0]], " and dxy/dxyErr is ", abs(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]]))
-        print("efficiency_data is ", efficiency_data, " and efficiency_MC is ", efficiency_MC)
+        err_sf = sf * np.sqrt((err_data/efficiency_data)**2 + (err_mc/efficiency_MC)**2) if efficiency_data > 0 and efficiency_MC > 0 else 0.0
+        #print("One leading muon in jet, trig sf is ", sf)
+        #print("Muon pt is ", Muon_pt[LeadingMuons_inJets[0]], " and dxy/dxyErr is ", abs(Muon_dxy[LeadingMuons_inJets[0]]/Muon_dxyErr[LeadingMuons_inJets[0]]))
+        #print("efficiency_data is ", efficiency_data, " and efficiency_MC is ", efficiency_MC)
     if len(LeadingMuons_inJets)>1:
         #Two muons need to be checked
         hist_MC = effMC_rootfile.Get("hMap")
@@ -183,10 +249,35 @@ def get_trig_SF(LeadingMuons_inJets, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_
         xbin1_Data, ybin1_Data = remove_underflow_overflow(xbin1_Data, ybin1_Data, hist_Data)
         xbin2_Data, ybin2_Data = remove_underflow_overflow(xbin2_Data, ybin2_Data, hist_Data)
 
+        err_data1 = hist_Data.GetBinError(xbin1_Data, ybin1_Data)
+        err_data2 = hist_Data.GetBinError(xbin2_Data, ybin2_Data)
+        err_mc1   = hist_MC.GetBinError(xbin1_MC, ybin1_MC)
+        err_mc2   = hist_MC.GetBinError(xbin2_MC, ybin2_MC)
+
         if ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
-            efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data) * hist_Data.GetBinContent(xbin2_Data, ybin2_Data)
-            efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC) * hist_MC.GetBinContent(xbin2_MC, ybin2_MC)
+            eff_d1 = hist_Data.GetBinContent(xbin1_Data, ybin1_Data)
+            eff_d2 = hist_Data.GetBinContent(xbin2_Data, ybin2_Data)
+            eff_m1 = hist_MC.GetBinContent(xbin1_MC, ybin1_MC)
+            eff_m2 = hist_MC.GetBinContent(xbin2_MC, ybin2_MC)
+            efficiency_data = eff_d1 * eff_d2
+            efficiency_MC   = eff_m1 * eff_m2
+
             sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
+            rel_err_sq = 0.0
+
+            if eff_d1 > 0:
+                rel_err_sq += (err_data1 / eff_d1) ** 2
+            if eff_d2 > 0:
+                rel_err_sq += (err_data2 / eff_d2) ** 2
+            if eff_m1 > 0:
+                rel_err_sq += (err_mc1 / eff_m1) ** 2
+            if eff_m2 > 0:
+                rel_err_sq += (err_mc2 / eff_m2) ** 2
+
+            err_sf = sf * np.sqrt(rel_err_sq)
+            #efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data) * hist_Data.GetBinContent(xbin2_Data, ybin2_Data)
+            #efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC) * hist_MC.GetBinContent(xbin2_MC, ybin2_MC)
+            #sf = efficiency_data / efficiency_MC if efficiency_MC > 0 else 1.0
         elif ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (not Muon_isTriggering[LeadingMuons_inJets[1]])):
             efficiency_data = hist_Data.GetBinContent(xbin1_Data, ybin1_Data) * (1-hist_Data.GetBinContent(xbin2_Data, ybin2_Data))
             efficiency_MC = hist_MC.GetBinContent(xbin1_MC, ybin1_MC) * (1-hist_MC.GetBinContent(xbin2_MC, ybin2_MC))
@@ -198,7 +289,7 @@ def get_trig_SF(LeadingMuons_inJets, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_
         else:
             assert False, "This assert was called"
 
-    print("Trig sf is ", sf)
+    #print("Trig sf is ", sf)
     return np.float32(sf)
 
 

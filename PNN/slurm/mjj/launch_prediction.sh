@@ -1,1 +1,2 @@
-for i in {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,35,36,37,38,39,40,41,42,47,49,49,50,51,52,53,54}; do   python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/runPredictions.py -MC 1 -pN $i -m Jan21_3_50p0 -b 3 -n -1; done
+#for i in {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,35,36,37,38,39,40,41,42,47,49,49,50,51,52,53,54}; do   python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/runPredictions.py -MC 1 -pN $i -m Jan21_3_50p0 -b 3 -n -1; done
+for i in {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,35,36,37,38,39,40,41,42,47,48,49,50,51,52,53,54}; do   python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/runPredictions.py -MC 1 -pN $i -m Mar22_11_50p0 -b 11 -n -1; done

@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G
 #SBATCH --partition=short              # Specify your cluster partition
-#SBATCH --time=0-00:3:00
+#SBATCH --time=0-00:10:00
 #SBATCH --dependency=singleton
 #. /t3home/gcelotto/.bashrc
 #conda activate myenv
@@ -18,10 +18,11 @@ process=$3
 modelName=$4
 boosted=$5
 ttbarCR=$6
+isMC=$7
 
 echo "$file_path"
 echo "Calling"
-python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/predictTorch.py $file_path $process $modelName $boosted $ttbarCR
+python /t3home/gcelotto/ggHbb/PNN/slurm/mjj/predictTorch.py $file_path $process $modelName $boosted $ttbarCR $isMC
 
 # extract the fileName:
 filename=$(basename "$file_path")

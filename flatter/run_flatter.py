@@ -60,7 +60,7 @@ if args.delete:
 
 
 if args.test:
-    nanoFileName="/work/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test/AllMC_Run2_mc_124X.root"
+    nanoFileName="/work/gcelotto/CMSSW_12_4_8/src/PhysicsTools/BParkingNano/test/ggHbb_Run2_mc_124X.root"
     fileNumber = 1999
     flatPath ="/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/bb_ntuples/test_flat.parquet"
     process = "GluGluHToBB"
@@ -123,6 +123,6 @@ else:
         subprocess.run(['sbatch', '-J', process+"%d"%random.randint(1, 5000), job_path, nanoFileName, str(maxEntries), str(maxJet), str(pN), process, str(fileNumber), flatPath, str(method), str(isJEC), str(args.verbose), str(isMC), str(run)])
         if (doneFiles % args.sleep ==0) & (doneFiles!=0)& (args.sleep!=-1):
             print("I am sleeping! Good Night!")
-            time.sleep(30)
+            time.sleep(60)
             print("I am back! Good Morning!")
         doneFiles = doneFiles+1

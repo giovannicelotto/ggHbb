@@ -31,8 +31,9 @@ conda activate myenv
 
 # Fit signal and shape variations under systematic uncertainties
 mkdir -p "/t3home/gcelotto/ggHbb/WSFit/output/cat"$CATEGORY/plots
-###rm /t3home/gcelotto/ggHbb/WSFit/ws/step1/ws"$CATEGORY"*.root
-###/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY # produces step1/ws$CAT_syst.root
+rm /t3home/gcelotto/ggHbb/WSFit/ws/step1/ws"$CATEGORY"*.root
+/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY # produces step1/ws$CAT_syst.root
+exit
 #/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst puid_up
 #/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst puid_down
 #/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst btag_hf_up
@@ -45,25 +46,25 @@ mkdir -p "/t3home/gcelotto/ggHbb/WSFit/output/cat"$CATEGORY/plots
 #/work/gcelotto/miniconda3/envs/myenv/bin/python /t3home/gcelotto/ggHbb/WSFit/allSteps/step1_ws.py -c $CATEGORY --syst alphaS
 
 # Perform F-test on sidebands
-####cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
-####cmsenv
-####rm /t3home/gcelotto/ggHbb/WSFit/ws/step2/ws$CATEGORY".root"
-####/cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre4/external/el9_amd64_gcc12/bin/python3 /t3home/gcelotto/ggHbb/WSFit/allSteps/step2_ws.py -c $CATEGORY
-####cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src/flashggFinalFit/Background
-####rm /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src/flashggFinalFit/Background/plots/fTest_5families_functionalities_cat$CATEGORY/*.png
-####rm /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_$CATEGORY.root
-####./bin/fTest     --infilename "/t3home/gcelotto/ggHbb/WSFit/ws/step1/ws"$CATEGORY"_nominal.root"  \
-####                --ncats 1 --singleCat 1 --catNumber $CATEGORY --includeTurnOn $INCLUDE --includeZ $INCLUDEZ   \
-####                --outDir plots/fTest_5families_functionalities_cat$CATEGORY \
-####                --iterativeFit 0 --blindSignalRegion 1 \
-####                --saveMultiPdf /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_$CATEGORY.root 
+cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
+cmsenv
+rm /t3home/gcelotto/ggHbb/WSFit/ws/step2/ws$CATEGORY".root"
+/cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre4/external/el9_amd64_gcc12/bin/python3 /t3home/gcelotto/ggHbb/WSFit/allSteps/step2_ws.py -c $CATEGORY
+cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src/flashggFinalFit/Background
+rm /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src/flashggFinalFit/Background/plots/fTest_5families_functionalities_cat$CATEGORY/*.png
+rm /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_$CATEGORY.root
+./bin/fTest     --infilename "/t3home/gcelotto/ggHbb/WSFit/ws/step1/ws"$CATEGORY"_nominal.root"  \
+                --ncats 1 --singleCat 1 --catNumber $CATEGORY --includeTurnOn $INCLUDE --includeZ $INCLUDEZ   \
+                --outDir plots/fTest_5families_functionalities_cat$CATEGORY \
+                --iterativeFit 0 --blindSignalRegion 1 \
+                --saveMultiPdf /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdf/multipdf_$CATEGORY.root 
 # Adding to the workspace with F-test and envelope the H shape and the systematics
-###echo "Step 2 done, now adding H and systematics"
-###rm /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/multipdf_$CATEGORY".root"
-###echo -e "\n\n\n\n\n**************************\n       Running Step 3       \n**************************\n"
-###/cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre4/external/el9_amd64_gcc12/bin/python3 /t3home/gcelotto/ggHbb/WSFit/allSteps/step3_addH.py -c $CATEGORY
-###echo -e "\n\n\n\n\n**************************\n       Running Step 4       \n**************************\n"
-###/cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre4/external/el9_amd64_gcc12/bin/python3 /t3home/gcelotto/ggHbb/WSFit/allSteps/step4_addSyst.py -c $CATEGORY
+echo "Step 2 done, now adding H and systematics"
+rm /t3home/gcelotto/ggHbb/WSFit/ws/stepMultiPdfEnriched/multipdf_$CATEGORY".root"
+echo -e "\n\n\n\n\n**************************\n       Running Step 3       \n**************************\n"
+/cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre4/external/el9_amd64_gcc12/bin/python3 /t3home/gcelotto/ggHbb/WSFit/allSteps/step3_addH.py -c $CATEGORY
+echo -e "\n\n\n\n\n**************************\n       Running Step 4       \n**************************\n"
+/cvmfs/cms.cern.ch/el9_amd64_gcc12/cms/cmssw/CMSSW_14_1_0_pre4/external/el9_amd64_gcc12/bin/python3 /t3home/gcelotto/ggHbb/WSFit/allSteps/step4_addSyst.py -c $CATEGORY
 
 
 # Preapring the Dataset of ttbar control region
@@ -86,7 +87,7 @@ mv bin1_CMS_th1x_prefit.png bin1_CMS_th1x_prefit_cat$CATEGORY.png
 mv bin1_CMS_th1x_fit_s.png bin1_CMS_th1x_postfit_cat$CATEGORY.png
 
 #if the plots are not produced:
-combine -M FitDiagnostics datacard_ttbar_CR_$CATEGORY.txt --redefineSignalPOIs SF_NN  --freezeParameters r -n cat$CATEGORY --robustFit 1 >  /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/FitDiagnostics/FitDiagnostics_ttbar_CR_cat$CATEGORY.txt
+#combine -M FitDiagnostics datacard_ttbar_CR_$CATEGORY.txt --redefineSignalPOIs SF_NN  --freezeParameters r -n cat$CATEGORY --robustFit 1 >  /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/FitDiagnostics/FitDiagnostics_ttbar_CR_cat$CATEGORY.txt
 
 
 
@@ -96,11 +97,11 @@ combine -M FitDiagnostics datacard_ttbar_CR_$CATEGORY.txt --redefineSignalPOIs S
 echo "**************************\n       Impacts  for Control region     \n**************************\n"
 
 text2workspace.py datacard_ttbar_CR_$CATEGORY.txt  -o datacard_ttbar_CR_$CATEGORY.root 
-#combineTool.py -M Impacts -d datacard_ttbar_CR_$CATEGORY.root -m 0  --freezeParameters r -n .impacts  --redefineSignalPOIs SF_NN --doInitialFit --robustFit 1
-#combineTool.py -M Impacts -d datacard_ttbar_CR_$CATEGORY.root -m 0  --freezeParameters r -n .impacts --redefineSignalPOIs SF_NN --doFits --robustFit 1
-#combineTool.py -M Impacts -d datacard_ttbar_CR_$CATEGORY.root -m 0  --freezeParameters r -n .impacts --redefineSignalPOIs SF_NN -o /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/impacts/impacts_$CATEGORY.json
-#cd /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/impacts
-#plotImpacts.py -i impacts_$CATEGORY.json -o impacts_$CATEGORY
+combineTool.py -M Impacts -d datacard_ttbar_CR_$CATEGORY.root -m 0  --freezeParameters r -n .impacts  --redefineSignalPOIs SF_NN --doInitialFit --robustFit 1
+combineTool.py -M Impacts -d datacard_ttbar_CR_$CATEGORY.root -m 0  --freezeParameters r -n .impacts --redefineSignalPOIs SF_NN --doFits --robustFit 1
+combineTool.py -M Impacts -d datacard_ttbar_CR_$CATEGORY.root -m 0  --freezeParameters r -n .impacts --redefineSignalPOIs SF_NN -o /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/impacts/impacts_$CATEGORY.json
+cd /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/impacts
+plotImpacts.py -i impacts_$CATEGORY.json -o impacts_$CATEGORY
 cd /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm
 rm /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/higgsCombine_*Fit_.impacts.*.root
 rm /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/roostats*.root
@@ -113,10 +114,10 @@ rm /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/roostats*.root
 #PRint Signal Strength With Uncertainty from Best PDF on Asimov
 cd /t3home/gcelotto/ggHbb/WSFit/datacards
 combine -M FitDiagnostics -d "datacardMulti"$CATEGORY".txt" -t -1 --expectSignal 1  --X-rtd MINIMIZER_freezeDisassociatedParams --setParameterRange r=-50,50:rateZbb=-3,5 --freezeParameters "pdfindex_"$CATEGORY"_2016_13TeV" --cminDefaultMinimizerStrategy 0   --robustFit 1 > fitDiagnostics_expected/fitDiagnostics_expected_cat$CATEGORY.txt
-exit
+
 
 # Plot Likelihood Scan per Category
-bash /t3home/gcelotto/ggHbb/WSFit/scripts/plot1Dscan_rndShift_PerCat.sh  $CATEGORY
+#bash /t3home/gcelotto/ggHbb/WSFit/scripts/plot1Dscan_rndShift_PerCat.sh  $CATEGORY
 
 #
 #

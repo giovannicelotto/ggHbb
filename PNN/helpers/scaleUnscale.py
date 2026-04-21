@@ -53,7 +53,7 @@ def unscale_gnn(data, featuresForTraining, scalerName, log=True):
 
 
 
-def scale(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False, log=True, scaler='standard', verbose=False):
+def scale(data, featuresForTraining, scalerName, fit=False, weights=None, boosted=False, log=True, scaler='standard', verbose=False, features_to_exclude=[]):
     """
     Apply log transformation to features containing 'pt', 'mass', or named 'ht'.
     
@@ -67,7 +67,6 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None, booste
     Returns:
     - pd.DataFrame: The transformed and scaled dataset.
     """
-    
     data = data.astype(np.float32).copy()
     if log:
         # Apply log transformation to selected features
@@ -87,7 +86,7 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None, booste
             data.loc[:, col] = np.log1p(data[col])  # np.log1p(x) is equivalent to np.log(1+x)
 
     # Select features for scaling (excluding 'sf')
-    scale_features = [col for col in featuresForTraining if col != 'sf']
+    scale_features = [col for col in featuresForTraining if col not in features_to_exclude]
     
     if fit:
         # Initialize and fit the scaler
@@ -119,37 +118,50 @@ def scale(data, featuresForTraining, scalerName, fit=False, weights=None, booste
     data.update(scaled_data)
 
     return data
-def unscale(data, featuresForTraining, scalerName, log=True, verbose=False):
+def unscale(data, featuresForTraining, scalerName, log=True, verbose=False, features_to_exclude=[]):
+    
+    # Identify log-transformed features
     if log:
-        log_features = [col for col in featuresForTraining 
-                        if ("_pt" in col or "_mass" in col or col == "ht_prime") 
-                        and "normalized" not in col]
-        
-        #Dijet Mass not used as feature
-        #if boosted:
-        #    print("Removing Dijet Mass from features")
+        log_features = [
+            col for col in featuresForTraining
+            if ("_pt" in col or "_mass" in col or col == "ht_prime")
+            and "normalized" not in col
+        ]
         if 'dijet_mass' in log_features:
             log_features.remove('dijet_mass')
+
+    # Split features
+    scaled_features = [col for col in featuresForTraining if col not in features_to_exclude]
+    excluded_features = [col for col in featuresForTraining if col in features_to_exclude]
+
+    # Load scaler
     with open(scalerName, 'rb') as file:
         scalers = pickle.load(file)
         scaler = scalers['scaler']
-        scaled_array = scaler.inverse_transform(data[[col for col in featuresForTraining if col!='sf']])
-        dataUnscaled = pd.DataFrame(scaled_array, columns=[col for col in featuresForTraining if col!='sf'], index=data.index)
-        #dataUnscaled['sf'] = data['sf']
 
+    # Inverse transform only scaled features
+    scaled_array = scaler.inverse_transform(data[scaled_features])
+    dataUnscaled = pd.DataFrame(scaled_array, columns=scaled_features, index=data.index)
+
+    # Reattach excluded features WITHOUT modification
+    for col in excluded_features:
+        dataUnscaled[col] = data[col]
+
+    # Apply inverse log transform
     if log:
         for colName in log_features:
-            print(colName, " inverted trasnform")
-            dataUnscaled[colName] = np.exp(dataUnscaled[colName]) - 1
-            if verbose:
-                print(f"Feature: {colName} | Min: {dataUnscaled[colName].min():.1f}, Max: {dataUnscaled[colName].max():.1f}")
-    
+            if colName in dataUnscaled.columns:
+                print(colName, " inverted transform")
+                dataUnscaled[colName] = np.exp(dataUnscaled[colName]) - 1
+                if verbose:
+                    print(f"Feature: {colName} | Min: {dataUnscaled[colName].min():.1f}, Max: {dataUnscaled[colName].max():.1f}")
+
+    # Reattach any extra columns not used in training
     for feature in data.columns:
-        if feature not in featuresForTraining:
+        if feature not in dataUnscaled.columns:
             dataUnscaled[feature] = data[feature]
+
     return dataUnscaled
-
-
 def test_gaussianity_validation(Xtrain, Xval, featuresForTraining, inFolder):
 
     import matplotlib.pyplot as plt

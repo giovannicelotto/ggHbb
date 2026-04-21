@@ -7,17 +7,55 @@ kmax *  # number of systematics (auto)
 bin           bin1
 observation   -1  
 
-shapes * * /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/histograms_8.root h_$PROCESS
+shapes * * /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/histograms_8.root h_$PROCESS h_$PROCESS_$SYSTEMATIC
 shapes data_obs * /t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/histograms_8.root data_obs
 ------------
-bin           bin1      bin1            bin1      
-process       tt_ll    tt_others    ST     
-process       0         1             2              
-rate          -1 -1 -1 
+bin           bin1      bin1                 
+process       TT    ST         
+process       0         1 
+rate          -1 -1 
 ------------
 SF_NN rateParam bin1 * 1.0 [0.01,10.0]
-lumi lnN  1.025 1.025 1.025
-r_ttdilep lnN  1.025 - - 
-r_tt_others lnN  - 1.025 - 
-r_tt_st lnN  - - 1.025 
+lumi lnN  1.025 1.025 
+btag_hf     shape   1 1
+btag_lightf  shape   1 1
+top_pT shape 1 -
+jet_puid shape 1 1
+JECAbsoluteMPFBias shape 1 1
+JECAbsoluteMPFBias shape 1 1
+JECAbsoluteScale shape 1 1
+JECAbsoluteStat shape 1 1
+JECFlavorQCD shape 1 1
+JECFragmentation shape 1 1
+JECPileUpDataMC shape 1 1
+JECPileUpPtBB shape 1 1
+JECPileUpPtEC1 shape 1 1
+JECPileUpPtEC2 shape 1 1
+JECPileUpPtHF shape 1 1
+JECPileUpPtRef shape 1 1
+JECRelativeBal shape 1 1
+JECRelativeFSR shape 1 1
+JECRelativeJEREC1 shape 1 1
+JECRelativeJEREC2 shape 1 1
+JECRelativeJERHF shape 1 1
+JECRelativePtBB shape 1 1
+JECRelativePtEC1 shape 1 1
+JECRelativePtEC2 shape 1 1
+JECRelativePtHF shape 1 1
+JECRelativeSample shape 1 1
+JECRelativeStatEC shape 1 1
+JECRelativeStatFSR shape 1 1
+JECRelativeStatHF shape 1 1
+JECSinglePionECAL shape 1 1
+JECSinglePionHCAL shape 1 1
+JECTimePtEta shape 1 1
+ElectronReco shape 1 1
+ElectronId shape 1 1
+MuonRecoStat shape 1 1
+MuonRecoSyst shape 1 1
+MuonIdSyst shape 1 1
+MuonISOSyst shape 1 1
+trig_sf shape 1 1
+r_tt lnN  1.0514 -  
+r_st lnN  - 1.0365
 * autoMCStats 1

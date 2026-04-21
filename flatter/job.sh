@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=2G                       # 2G for Data needed   
 #SBATCH --partition=short              # Specify your cluster partition
-#SBATCH --time=0:10:00  #keep it standard for ttbar
+#SBATCH --time=0:59:00  #keep it standard for ttbar
 #SBATCH --output=/t3home/gcelotto/slurm/output/flat/%x.out    # Alternative method using job name and job ID
 #SBATCH --error=/t3home/gcelotto/slurm/output/flat/%x.out 
 #SBATCH --dependency=singleton

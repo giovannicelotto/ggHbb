@@ -48,7 +48,6 @@ parser = argparse.ArgumentParser(description="Script.")
 #### Define arguments
 parser.add_argument("-l", "--lambda_disco", type=float, help="lambda value for disco", default=0.)
 parser.add_argument("-ls", "--lambda_shape", type=float, help="lambda value for shape penalization", default=0.)
-parser.add_argument("-tau_shape", "--tau_shape", type=float, help="", default=0.0077)
 parser.add_argument("-threshold_shape", "--threshold_shape", type=float, help="", default=0)
 parser.add_argument("-alpha_shape", "--alpha_shape", type=float, help="", default=10)
 parser.add_argument("-gamma_shape", "--gamma_shape", type=float, help="", default=1.0)
@@ -75,7 +74,6 @@ else:
 
 inFolder, outFolder = getInfolderOutfolder(name = "%s_%d_%s"%(current_date, args.boosted, str(args.lambda_disco).replace('.', 'p') if args.lambda_disco>0 else str(args.lambda_shape).replace('.', 'p')), suffixResults='_mjjDisco')
 inFolder = f"/work/gcelotto/ggHbb_work/input_NN/data_pt{args.boosted}_1D"
-tau_shape = args.tau_shape 
 threshold_shape = args.threshold_shape 
 alpha_shape = args.alpha_shape 
 gamma_shape = args.gamma_shape 
@@ -226,11 +224,7 @@ for epoch in range(args.epochs):
             dCorr = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
             loss += args.lambda_disco*dCorr
 
-        #if args.lambda_shape>=1e-5:
-        #    shape_loss = soft_dynamic_bin_exponential_loss(dijetMass_batch[mask_batch], predictions[mask_batch], lam=tau_shape,
-        #                              target_fractions=[0.10, 0.01, 0.005],
-        #                              alpha=alpha_shape, gamma=gamma_shape)
-        #    loss += args.lambda_shape*shape_loss
+
 
         loss.backward()
         optimizer.step()
@@ -276,13 +270,7 @@ for epoch in range(args.epochs):
                     W_batch = torch.ones([len(W_batch), 1]) #device=device
                     dCorr = distance_corr(predictions[mask_batch], dijetMass_batch[mask_batch], W_batch[mask_batch])
                     loss += args.lambda_disco*dCorr
-                #else:
-                #    loss = classifier_loss
-                #if args.lambda_shape>=1e-5:
-                #    shape_loss = soft_dynamic_bin_exponential_loss(dijetMass_batch[mask_batch], predictions[mask_batch], lam=tau_shape,
-                #                      target_fractions=[0.10, 0.01, 0.005],
-                #                      alpha=alpha_shape, gamma=gamma_shape)
-                #    loss +=  args.lambda_shape*shape_loss
+
                         # Sum over batches
                 total_val_loss += loss.item()
                 #total_val_shape_loss += args.lambda_shape*shape_loss.item() if args.lambda_shape>=1e-5 else 0.0

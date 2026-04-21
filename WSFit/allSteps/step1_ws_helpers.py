@@ -162,10 +162,14 @@ def build_dscb_gaus_model(x_var, config, label):
     sigma_cb = ROOT.RooRealVar(f"sigma_CB_{label}", f"sigma_CB_{label}", config['parameters']['nominal']['sigma']['value'], 4, 20)
     sigma_gaus = ROOT.RooRealVar(f"sigma_gauss_{label}", f"sigma_gauss_{label}", config['parameters']['nominal']['sigmaG']['value'], 4, 20)
     
-    alpha1 = ROOT.RooRealVar(f"alpha1_{label}", f"alpha1_{label}", config['parameters']['nominal']['alphaL']['value'], 0.1, 5.0)
-    alpha2 = ROOT.RooRealVar(f"alpha2_{label}", f"alpha2_{label}", config['parameters']['nominal']['alphaR']['value'], 0.1, 5.0)
-    nL = ROOT.RooRealVar(f"nL_{label}", f"nL_{label}", config['parameters']['nominal']['nL']['value'], 1, 100.0)
-    nR = ROOT.RooRealVar(f"nR_{label}", f"nR_{label}", config['parameters']['nominal']['nR']['value'], 1, 100.0)
+    alpha1 = ROOT.RooRealVar(f"alpha1_{label}", f"alpha1_{label}", 1.5, 0.7, 5.0)
+    alpha2 = ROOT.RooRealVar(f"alpha2_{label}", f"alpha2_{label}", 1.5, 0.7, 5.0)
+    nL = ROOT.RooRealVar(f"nL_{label}", f"nL_{label}", 5., 1, 100.0)
+    nR = ROOT.RooRealVar(f"nR_{label}", f"nR_{label}", 5., 1, 100.0)
+    nL.setConstant(True)
+    nR.setConstant(True)
+    alpha1.setConstant(True)
+    alpha2.setConstant(True)
     
     gaus = ROOT.RooGaussian(f"gauss_{label}", f"gauss_{label}", x_var, mean, sigma_gaus)
     dscb = ROOT.RooDoubleCB(f"dscb_{label}", "Double-Sided Crystal Ball", x_var, mean, sigma_cb, alpha1, nL, alpha2, nR)
@@ -178,6 +182,108 @@ def build_dscb_gaus_model(x_var, config, label):
     model.fixCoefNormalization(ROOT.RooArgSet(x_var))
     
     return model, dscb, gaus, [mean, sigma_cb, sigma_gaus, alpha1, alpha2, nL, nR, frac]
+
+import ROOT
+
+import ROOT
+
+def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigma=(10.,1.,300.), verbose=True):
+    mean, mean_min, mean_max = mean
+    sigma_, sigma_min, sigma_max = sigma
+    results = []
+
+    for n in range(1, max_gaussians + 1):
+        gaussians = ROOT.RooArgList()
+        coeffs = ROOT.RooArgList()
+
+
+        components = []
+        parameters = []
+
+        for i in range(n):
+            mu = ROOT.RooRealVar(f"mu_{n}_{i}", f"mu_{n}_{i}", mean, mean_min, mean_max)
+            sigma = ROOT.RooRealVar(f"sigma_{n}_{i}", f"sigma_{n}_{i}", sigma_, sigma_min, sigma_max)
+
+            gaus = ROOT.RooGaussian(f"g_{n}_{i}", f"g_{n}_{i}", x, mu, sigma)
+
+            gaussians.add(gaus)
+
+            components.append(gaus)
+            parameters.extend([mu, sigma])
+
+            if i < n - 1:
+                frac = ROOT.RooRealVar(f"frac_{n}_{i}", f"frac_{n}_{i}", 0.5, 0.0, 1.0)
+                coeffs.add(frac)
+                parameters.append(frac)
+
+        model = ROOT.RooAddPdf(f"model_{n}", f"model_{n}", gaussians, coeffs, True)
+
+        # also keep model alive
+        components.append(model)
+
+        fit_result = model.fitTo(
+            datahist,
+            ROOT.RooFit.Save(),
+            ROOT.RooFit.PrintLevel(-1)
+        )
+
+        frame = x.frame()
+        datahist.plotOn(frame)
+        model.plotOn(frame)
+
+        chi2_ndof = frame.chiSquare()
+
+        results.append({
+            "n": n,
+            "model": model,
+            "fit_result": fit_result,
+            "chi2_ndof": chi2_ndof,
+            "components": components,
+            "parameters": parameters
+        })
+
+        if verbose:
+            print(f"[n = {n}] chi2/ndof = {chi2_ndof:.4f}")
+
+    best = min(results, key=lambda r: r["chi2_ndof"])
+
+    print("\nBest model:")
+    print(f"n = {best['n']} with chi2/ndof = {best['chi2_ndof']:.4f}")
+
+    return best, results
+
+
+def build_simple_gaus_model(x_var, config, label):
+    mean = ROOT.RooRealVar(f"mu_{label}", f"mu", config['parameters']['nominal']['mean']['value'], 85, 150)
+    sigma_cb = ROOT.RooRealVar(f"sigma_CB_{label}", f"sigma_CB_{label}", config['parameters']['nominal']['sigma']['value'], 4, 20)
+
+    
+    alpha1 = ROOT.RooRealVar(f"alpha1_{label}", f"alpha1_{label}", 1.5, 0.7, 5.0)
+    alpha2 = ROOT.RooRealVar(f"alpha2_{label}", f"alpha2_{label}", 1.5, 0.7, 5.0)
+    nL = ROOT.RooRealVar(f"nL_{label}", f"nL_{label}", 8.4, 1, 100.0)
+    nR = ROOT.RooRealVar(f"nR_{label}", f"nR_{label}", 8.56, 0.001, 100.0)
+    model = ROOT.RooDoubleCB(f"dscb_{label}", "Double-Sided Crystal Ball", x_var, mean, sigma_cb, alpha1, nL, alpha2, nR)
+    nL.setConstant(True)
+    #nR.setConstant(True)
+    #model.fixCoefNormalization(ROOT.RooArgSet(x_var))
+
+        # --- Bernstein(2) ---
+    # coefficients must be positive for stability
+    #c0 = ROOT.RooRealVar(f"bern_c0_{label}", f"bern_c0_{label}", 0.3, 0.0, 1.0)
+    #c1 = ROOT.RooRealVar(f"bern_c1_{label}", f"bern_c1_{label}", 0.3, 0.0, 1.0)
+    #c2 = ROOT.RooRealVar(f"bern_c2_{label}", f"bern_c2_{label}", 0.3, 0.0, 1.0)
+
+
+    #bern = ROOT.RooBernstein(
+    #    f"bern_{label}", f"bern_{label}",
+    #    x_var,
+    #    ROOT.RooArgList(c0, c1)
+    #)
+
+
+    return model,  [mean, sigma_cb, alpha1, alpha2, nL, nR]
+
+
 import re
 
 def prettify_param_name(name):
@@ -195,9 +301,12 @@ def prettify_param_name(name):
 def plot_model(x_var, data_hist, model, components=[], filename="plot.png", title="Fit"):
     x_var.SetTitle("m_{bb} [GeV]")
     frame = x_var.frame(ROOT.RooFit.Title(title))
-    data_hist.plotOn(frame, ROOT.RooFit.DataError(ROOT.RooAbsData.SumW2), ROOT.RooFit.Name("data"))
+    data_hist.plotOn(frame, ROOT.RooFit.DataError(ROOT.RooAbsData.SumW2), ROOT.RooFit.Name("data"), ROOT.RooFit.MarkerStyle(20), ROOT.RooFit.MarkerSize(0.6))
     
     model.plotOn(frame, ROOT.RooFit.LineColor(ROOT.kRed), ROOT.RooFit.Name("model"))
+    chi2 = frame.chiSquare()
+
+    print("chi2/ndof =", chi2)
     for comp in components:
         model.plotOn(frame, ROOT.RooFit.Components(comp['name']), ROOT.RooFit.LineColor(comp['color']), ROOT.RooFit.LineStyle(comp['style']), ROOT.RooFit.Name(comp['name']))
     leg = ROOT.TLegend(0.7, 0.3, 0.9, 0.6)
@@ -219,10 +328,8 @@ def plot_model(x_var, data_hist, model, components=[], filename="plot.png", titl
 
     #model.paramOn(frame,ROOT.RooFit.Layout(0.55, 0.95, 0.9))  # x1, x2, y
     params = model.getParameters(data_hist)
-
     left = ROOT.RooArgSet()
     right = ROOT.RooArgSet()
-
     i = 0
     it = params.createIterator()
     p = it.Next()
@@ -234,14 +341,59 @@ def plot_model(x_var, data_hist, model, components=[], filename="plot.png", titl
         i += 1
         p = it.Next()
 #    model.paramOn(frame,ROOT.RooFit.Parameters(left),ROOT.RooFit.Layout(0.1, 0.5, 0.9))
-
 #    model.paramOn(    frame,    ROOT.RooFit.Parameters(right),    ROOT.RooFit.Layout(0.55, 0.9, 0.9))
-
-    
     c = ROOT.TCanvas("c", "c", 600, 600)
-    ymax = frame.GetMaximum()
-    #frame.SetMaximum(1.35 * ymax)
+    c.Divide(1, 2)
+
+    # Pad superiore: plot principale
+    pad1 = c.cd(1)
+    pad1.SetPad(0, 0.3, 1, 1.0)
+    pad1.SetBottomMargin(0.02)
+    pad1.SetGridx()
+
     frame.Draw()
     leg.Draw()
+
+    # Pad inferiore: pull histogram
+    pad2 = c.cd(2)
+    pad2.SetPad(0, 0.0, 1, 0.3)
+    pad2.SetTopMargin(0.04)
+    pad2.SetBottomMargin(0.35)
+    pad2.SetGridx()
+
+    # Crea il frame dei pull dal RooFit frame
+    pull_hist = frame.pullHist("data", "model")
+
+    # Crea un nuovo frame per i pull (stessi limiti x del frame principale)
+    x_var = frame.getPlotVar()
+    pull_frame = x_var.frame(
+        ROOT.RooFit.Title(""),
+        ROOT.RooFit.Range(frame.GetXaxis().GetXmin(), frame.GetXaxis().GetXmax())
+    )
+
+    pull_hist.SetMarkerSize(0.6)
+    pull_frame.addPlotable(pull_hist, "P")
+    pull_frame.SetTitle("")
+    # Formattazione pull frame
+    pull_frame.GetYaxis().SetTitle("Pull")
+    pull_frame.GetYaxis().SetNdivisions(505)
+    pull_frame.GetYaxis().SetTitleSize(0.15)
+    pull_frame.GetYaxis().SetTitleOffset(0.3)
+    pull_frame.GetYaxis().SetLabelSize(0.12)
+    pull_frame.GetXaxis().SetTitleSize(0.15)
+    pull_frame.GetXaxis().SetLabelSize(0.12)
+    pull_frame.GetYaxis().SetRangeUser(-3, 3)
+
+    # Linea di riferimento a zero
+    line = ROOT.TLine(
+        frame.GetXaxis().GetXmin(), 0,
+        frame.GetXaxis().GetXmax(), 0
+    )
+    line.SetLineColor(ROOT.kRed)
+    line.SetLineStyle(2)
+
+    pull_frame.Draw()
+    line.Draw("same")
+
     print("SAVING ", filename)
     c.SaveAs(filename)

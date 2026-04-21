@@ -62,7 +62,10 @@ def getDfsFromConfig(idx, return_nn=False, return_lumi=False):
     for processName in dfProcessesData.process.values:
         #print("Opening ", processName)
         df = pd.read_parquet(path+"/dataframes_%s_%s.parquet"%(processName, modelName), columns=[  "dijet_mass", "weight", "PNN","jet1_pt_uncor", "jet2_pt_uncor","dR_jet3_dijet",
-                                                                                                 "jet2_pt", "jet1_eta", "jet2_eta", "jet1_muon_pt", "jet1_muon_eta", "dijet_pt", "jet1_btagDeepFlavB", "jet2_btagDeepFlavB"]) 
+                                                                                                 "jet2_pt", "jet1_eta", "jet2_eta", "jet1_muon_pt", "jet1_muon_eta", "dijet_pt", "jet1_btagDeepFlavB", "jet2_btagDeepFlavB", 
+                                                                                                 #"dijet_pT_asymmetry", 
+                                                                                                 #"dR_jet2_dijet","dR_jet1_dijet","dijet_dR"
+                                                                                                 ]) 
         dfsData.append(df)
         lumi_tot = lumi_tot + np.load(path+"/lumi_%s_%s.npy"%(processName, modelName))
 

@@ -7,7 +7,7 @@ plot_vars = {
     },
     "jet1_eta": {
         "bins": np.linspace(-2, 2, 41),
-        "xlabel": "jet1_eta [GeV]",
+        "xlabel": "jet1_eta",
     },
     "jet1_phi": {
         "bins": np.linspace(-3.14, 3.14, 21),
@@ -391,10 +391,10 @@ plot_vars = {
         "bins": np.linspace(0, 4, 21),
         "xlabel": "dijet_dR"
     },
-    "dijet_dEta": {
-        "bins": np.linspace(0, 4, 21),
-        "xlabel": "dijet_dEta"
-    },
+    #"dijet_dEta": {
+    #    "bins": np.linspace(0, 4, 21),
+    #    "xlabel": "dijet_dEta"
+    #},
     "dijet_dPhi": {
         "bins": np.linspace(0, 4, 21),
         "xlabel": "dijet_dPhi"
@@ -411,6 +411,14 @@ plot_vars = {
         "bins": np.linspace(0, 1, 21),
         "xlabel": "normalized_dijet_pt"
     },
+    "dijet_pt": {
+        "bins": np.linspace(100, 300, 21),
+        "xlabel": "Dijet pt [GeV]"
+    },
+    "dijet_mass": {
+        "bins": np.linspace(50, 300, 21),
+        "xlabel": "Dijet mass [GeV]"
+    },
     "dijet_pT_asymmetry": {
         "bins": np.linspace(0, 1, 21),
         "xlabel": "dijet_pT_asymmetry"
@@ -424,7 +432,7 @@ plot_vars = {
         "xlabel": "NN score rotated"
     },
     "PNN_qm": {
-        "bins": np.linspace(0, 1, 21),
+        "bins": np.linspace(0, 1, 51),
         "xlabel": "NN score Quantile-Matched"
     },
 }

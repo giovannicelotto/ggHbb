@@ -196,7 +196,7 @@ def getBins(dictFormat=False):
             'nJets_20GeV': [12, -0.5, 11.5], 'ht': [20.0, 0.0, 1200.0], 
             
             
-            'jet1_muon_pt': [30.0, 8.0, 30.0], 'jet1_muon_eta': [20.0, -2.5, 2.5],
+            'jet1_muon_pt': [30.0, 6.0, 15.0], 'jet1_muon_eta': [20.0, -2.5, 2.5],
             'lambda1':[21,0,1],
             'lambda2':[21,0,1],
             'lambda3':[21,0,1],

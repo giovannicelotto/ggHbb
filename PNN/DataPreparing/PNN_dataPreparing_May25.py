@@ -72,6 +72,9 @@ if args.boosted==4:
 else:
     mass_spin0 = feature_cfg['mass_spin0']
 print("[INFO] Mass Hypos: ", mass_spin0)
+if args.boosted==13:
+    print("[INFO] Removing 50 GeV mass hypo for boosted category")
+    mass_spin0.remove(50)
 # %%
 # load data for the samples and preprocess the data(pT cut)
 # fill the massHypo column
@@ -159,7 +162,7 @@ else:
                                                             ptmin=60, ptmax=120, nptbins=5)
     else:
         rWtrain, rWval = flattenWeights(Xtrain, Xval, Ytrain, Yval, Wtrain, Wval, outFolder, outName=outFolder+ "/massReweighted.png",
-                                xmin=int(Xtrain.dijet_mass.min()), nbins=201)
+                                xmin=int(Xtrain.dijet_mass.min()), xmax=Xtrain.dijet_mass.max(), nbins=201)
     
 
 
@@ -176,6 +179,8 @@ fig, ax = plt.subplots(1, 1)
 bins = np.linspace(Xtrain.dijet_pt.min(), 900, 101)
 ax.hist(Xtrain[Ytrain==1].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="S", weights=rWtrain[Ytrain==1])
 ax.hist(Xtrain[Ytrain==0].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="B", weights=rWtrain[Ytrain==0])
+ax.hist(Xtrain[genMassTrain==125].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="S(125)", weights=rWtrain[genMassTrain==125])
+ax.hist(Xtrain[genMassTrain==70].dijet_pt, bins=bins, histtype='step', density=False, linewidth=1, label="S(70)", weights=rWtrain[genMassTrain==70])
 #ax.hist(Xtrain.dijet_mass[genMassTrain>0], bins=bins_sum, histtype='step', density=False, linewidth=1, weights=rWtrain[genMassTrain>0], label='Sum', color='black')
 ax.legend()
 ax.set_xlabel("Dijet pT [GeV]")
@@ -206,9 +211,6 @@ ax.legend()
 fig.savefig(outFolder+"/dijetMass.png", bbox_inches='tight')
 
 
-
-
-# %%
 
 
 
@@ -247,7 +249,10 @@ Xval['label']=Yval
 #                        alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=True,
 #                        weights=[Wtrain[Ytrain==0], Wtrain[Ytrain==1], Wval[Yval==0], Wval[Yval==1]], error=False)
 m=125
-plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[genMassTrain==m], Xval[Yval==0], Xval[genMassVal==m]],
+for m in (np.unique(genMassTrain)):
+    if m==0:
+        continue
+    plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[genMassTrain==m], Xval[Yval==0], Xval[genMassVal==m]],
                     outFile=outFolder+f"/features_H{m}_{args.btagWP}.png", legendLabels=['Data Train', 'H%d Train'%m, 'Data Val', 'H%d Val'%m],
                     colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
                     alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=False,
@@ -267,22 +272,45 @@ plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[genMassTrain==m], Xval[Yv
 #                    colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
 #                    alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=False,
 #                    weights=[rWtrain[Ytrain==0], rWtrain[genMassTrain==m], rWval[Yval==0], rWval[genMassVal==m]], error=False)
-m=125
-plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[genMassTrain==m], Xval[Yval==0], Xval[genMassVal==m]],
+#m=125
+    plotNormalizedFeatures(data=[Xtrain[Ytrain==0], Xtrain[genMassTrain==m], Xval[Yval==0], Xval[genMassVal==m]],
                     outFile=outFolder+f"/featuresReweighted_H{m}_{args.btagWP}.png", legendLabels=['Data Train', 'H%d Train'%m, 'Data Val', 'H%d Val'%m],
                     colors=['blue', 'red', 'blue', 'red'], histtypes=[u'step', u'step', 'bar', 'bar'],
                     alphas=[1, 1, 0.4, 0.4], figsize=(20,40), autobins=False,
                     weights=[rWtrain[Ytrain==0], rWtrain[genMassTrain==m], rWval[Yval==0], rWval[genMassVal==m]], error=False)
 
+# %%
+fig, ax = plt.subplots(1, 1)
 
+# 2D histogram
+bins_mass = np.linspace(40, 150, 101)   # adjust mass range
+bins_dR = np.linspace(0.6, 3, 101)       # adjust dR range
 
+h = ax.hist2d(
+    Xtrain[Ytrain==1].dijet_mass,
+    Xtrain[Ytrain==1].dijet_dR,
+    bins=[bins_mass, bins_dR],
+    cmap='viridis',        # color map
+    density=True,
+    weights=rWtrain[Ytrain==1]
+)
+
+fig.colorbar(h[3], ax=ax, label='Density')
+ax.set_xlabel('dijet_mass [GeV]')
+ax.set_ylabel('dijet_dR')
+ax.set_title('2D distribution: dijet_mass vs dijet_dR')
+# %%
+fig, ax = plt.subplots(1, 1)
+ax.hist(Xtrain.dijet_mass[Ytrain==0], weights=rWtrain[Ytrain==0], bins=100, histtype='step')
+ax.hist(Xtrain.dijet_mass[Ytrain==1], weights=rWtrain[Ytrain==1], bins=100, histtype='step')
+# %%
 
 # %%
 # scale with standard scalers and apply log to any pt and mass distributions
 
 # %%
-Xtrain = scale(Xtrain, featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True, boosted=args.boosted, scaler='robust')
-Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False, boosted=args.boosted, scaler='robust')
+Xtrain = scale(Xtrain, featuresForTraining,  scalerName= outFolder + "/myScaler.pkl" ,fit=True, boosted=args.boosted, scaler='standard', features_to_exclude=['jet1_has_sv', 'jet2_has_sv'])
+Xval  = scale(Xval, featuresForTraining, scalerName= outFolder + "/myScaler.pkl" ,fit=False, boosted=args.boosted, scaler='standard', features_to_exclude=['jet1_has_sv', 'jet2_has_sv'])
 
 # %%
 test_gaussianity_validation(Xtrain, Xval, featuresForTraining, outFolder)

@@ -1,8 +1,15 @@
 import numpy as np
 import ROOT
+from categorizeQCDevents import *
 from treeFlatter_dict_getSFs import getMuon_SF, get_muon_recoSF, btag_wp
 from getZ_KFactor import getZ_KFactor
 PF_INSIDE_JETS = False
+JEC_Variations = [
+            "Jet_sys_JECAbsoluteMPFBias", "Jet_sys_JECAbsoluteScale","Jet_sys_JECAbsoluteStat", "Jet_sys_JECFlavorQCD","Jet_sys_JECFragmentation", "Jet_sys_JECPileUpDataMC","Jet_sys_JECPileUpPtBB", "Jet_sys_JECPileUpPtEC1",
+            "Jet_sys_JECPileUpPtEC2", "Jet_sys_JECPileUpPtHF","Jet_sys_JECPileUpPtRef", "Jet_sys_JECRelativeBal","Jet_sys_JECRelativeFSR", "Jet_sys_JECRelativeJEREC1","Jet_sys_JECRelativeJEREC2", "Jet_sys_JECRelativeJERHF",
+            "Jet_sys_JECRelativePtBB", "Jet_sys_JECRelativePtEC1","Jet_sys_JECRelativePtEC2", "Jet_sys_JECRelativePtHF","Jet_sys_JECRelativeSample", "Jet_sys_JECRelativeStatEC","Jet_sys_JECRelativeStatFSR", "Jet_sys_JECRelativeStatHF",
+            "Jet_sys_JECSinglePionECAL", "Jet_sys_JECSinglePionHCAL","Jet_sys_JECTimePtEta"
+        ]
 def get_event_branches(branches, ev, isMC, run=2):
     if run==2:
         return {
@@ -17,6 +24,34 @@ def get_event_branches(branches, ev, isMC, run=2):
         "Jet_phi"                     : branches["Jet_phi"][ev],
         "Jet_mass"                    : branches["Jet_mass"][ev],
         "Jet_btagDeepFlavB"           : branches["Jet_btagDeepFlavB"][ev],
+        
+        "Jet_sys_JECAbsoluteMPFBias"  : branches["Jet_sys_JECAbsoluteMPFBias_Up"][ev],
+        "Jet_sys_JECAbsoluteScale"    : branches["Jet_sys_JECAbsoluteScale_Up"][ev],
+        "Jet_sys_JECAbsoluteStat"     : branches["Jet_sys_JECAbsoluteStat_Up"][ev],
+        "Jet_sys_JECFlavorQCD"        : branches["Jet_sys_JECFlavorQCD_Up"][ev],
+        "Jet_sys_JECFragmentation"    : branches["Jet_sys_JECFragmentation_Up"][ev],
+        "Jet_sys_JECPileUpDataMC"     : branches["Jet_sys_JECPileUpDataMC_Up"][ev],
+        "Jet_sys_JECPileUpPtBB"       : branches["Jet_sys_JECPileUpPtBB_Up"][ev],
+        "Jet_sys_JECPileUpPtEC1"      : branches["Jet_sys_JECPileUpPtEC1_Up"][ev],
+        "Jet_sys_JECPileUpPtEC2"      : branches["Jet_sys_JECPileUpPtEC2_Up"][ev],
+        "Jet_sys_JECPileUpPtHF"       : branches["Jet_sys_JECPileUpPtHF_Up"][ev],
+        "Jet_sys_JECPileUpPtRef"      : branches["Jet_sys_JECPileUpPtRef_Up"][ev],
+        "Jet_sys_JECRelativeBal"      : branches["Jet_sys_JECRelativeBal_Up"][ev],
+        "Jet_sys_JECRelativeFSR"      : branches["Jet_sys_JECRelativeFSR_Up"][ev],
+        "Jet_sys_JECRelativeJEREC1"   : branches["Jet_sys_JECRelativeJEREC1_Up"][ev],
+        "Jet_sys_JECRelativeJEREC2"   : branches["Jet_sys_JECRelativeJEREC2_Up"][ev],
+        "Jet_sys_JECRelativeJERHF"    : branches["Jet_sys_JECRelativeJERHF_Up"][ev],
+        "Jet_sys_JECRelativePtBB"     : branches["Jet_sys_JECRelativePtBB_Up"][ev],
+        "Jet_sys_JECRelativePtEC1"    : branches["Jet_sys_JECRelativePtEC1_Up"][ev],
+        "Jet_sys_JECRelativePtEC2"    : branches["Jet_sys_JECRelativePtEC2_Up"][ev],
+        "Jet_sys_JECRelativePtHF"     : branches["Jet_sys_JECRelativePtHF_Up"][ev],
+        "Jet_sys_JECRelativeSample"   : branches["Jet_sys_JECRelativeSample_Up"][ev],
+        "Jet_sys_JECRelativeStatEC"   : branches["Jet_sys_JECRelativeStatEC_Up"][ev],
+        "Jet_sys_JECRelativeStatFSR"  : branches["Jet_sys_JECRelativeStatFSR_Up"][ev],
+        "Jet_sys_JECRelativeStatHF"   : branches["Jet_sys_JECRelativeStatHF_Up"][ev],
+        "Jet_sys_JECSinglePionECAL"   : branches["Jet_sys_JECSinglePionECAL_Up"][ev],
+        "Jet_sys_JECSinglePionHCAL"   : branches["Jet_sys_JECSinglePionHCAL_Up"][ev],
+        "Jet_sys_JECTimePtEta"        : branches["Jet_sys_JECTimePtEta_Up"][ev],
         
         #"Jet_pf1_charge"           : branches["Jet_pf1_charge"][ev],
         #"Jet_pf1_pt"           : branches["Jet_pf1_pt"][ev],
@@ -170,6 +205,7 @@ def get_event_branches(branches, ev, isMC, run=2):
         "GenJet_phi"               : branches["GenJet_phi"][ev] if isMC==1 else None,
         "GenJet_mass"              : branches["GenJet_mass"][ev] if isMC==1 else None,
         "GenJet_hadronFlavour"     : branches["GenJet_hadronFlavour"][ev] if isMC==1 else None,
+        "Jet_partonFlavour"        : branches["Jet_partonFlavour"][ev] if isMC==1 else None,
         "GenJet_partonMotherPdgId" : branches["GenJet_partonMotherPdgId"][ev] if isMC==1 else None,
         "GenJet_partonMotherIdx"   : branches["GenJet_partonMotherIdx"][ev] if isMC==1 else None,
         "genWeight"    : branches["genWeight"][ev] if isMC==1 else 1,
@@ -281,6 +317,7 @@ def get_event_genBranches(branches, ev, processName):
     "GenPart_phi" : branches["GenPart_phi"][ev],
     "GenPart_mass" : branches["GenPart_mass"][ev],
     "GenPart_statusFlags" : branches["GenPart_statusFlags"][ev],
+    "GenPart_status" : branches["GenPart_status"][ev],
 
 
     }
@@ -297,7 +334,12 @@ def get_event_genBranches(branches, ev, processName):
         dict["LHEPart_pt"] = branches["LHEPart_pt"][ev],
         dict["LHEPart_pdgId"] = branches["LHEPart_pdgId"][ev],
     return dict
-def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None, jetIsPresent=None):
+
+
+
+
+
+def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None, jetIsPresent=None, isMC=False, JECunc=None):
     features = {}
 
     features[f"{prefix}_pt"]   = jet_vec.Pt() if jet_vec is not None else 0.
@@ -314,6 +356,20 @@ def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None, jetIsPresent=None):
     features[f"{prefix}_jetId"]         = evt["Jet_jetId"][idx] if jet_vec is not None else 0
     features[f"{prefix}_nElectrons"]   = evt["Jet_nElectrons"][idx]      if jet_vec is not None else 0
     features[f"{prefix}_btagTight"]    = int(evt["Jet_btagDeepFlavB"][idx]>=0.71) if jet_vec is not None else 0
+
+    if isMC:
+        for variation in JEC_Variations:
+            newvar = variation.replace("Jet_sys_","")
+            features[f"{prefix}_{newvar}"] = evt[f"{variation}"][idx] if jet_vec is not None else 0.
+        if jet_vec is not None:
+            features[f"{prefix}_TotalJECUnc"] = JECunc.evaluate(float(evt["Jet_eta"][idx]), float(evt["Jet_pt"][idx]))
+        else:
+            features[f"{prefix}_TotalJECUnc"] = 0
+            #print(evt["Jet_eta"])
+            #print(idx)
+            #print((evt["Jet_eta"][idx]))
+            #print(type((evt["Jet_eta"][idx])), flush=True)
+
 
     if PF_INSIDE_JETS:
         features[f"{prefix}_pf1_pt"]    = float(evt["Jet_pf1_pt"][idx]) if jet_vec is not None else 0
@@ -517,6 +573,7 @@ def fill_dijet_features(dijet_vec, jet1_vec, jet2_vec, evt, run=2):
     features['dijet_eta'] = np.float32(dijet_vec.Eta())
     features['dijet_phi'] = np.float32(dijet_vec.Phi())
     features['dijet_mass'] = np.float32(dijet_vec.M())
+    assert np.float32(dijet_vec.M())>0
     features['dijet_dR'] = np.float32(jet1_vec.DeltaR(jet2_vec))
     features['dijet_dEta'] = np.float32(abs(jet1_vec.Eta() - jet2_vec.Eta()))
     # Here replace
@@ -577,9 +634,13 @@ def fill_gen_info(evt, evt_gen, jet1_vec, jet2_vec, selected1, selected2, select
     weight_genOnly *= evt["genWeight"]
     features['Pileup_nTrueInt'] = np.float32(evt["Pileup_nTrueInt"]) if isMC==1 else -1
     features['jet1_genHadronFlavour'] = evt["Jet_hadronFlavour"][selected1] if isMC==1 else -1
+    features['jet1_partonFlavour'] = evt["Jet_partonFlavour"][selected1] if isMC==1 else -1
     features['jet2_genHadronFlavour'] = evt["Jet_hadronFlavour"][selected2] if isMC==1 else -1
+    features['jet2_partonFlavour'] = evt["Jet_partonFlavour"][selected2] if isMC==1 else -1
     hadronFlavour3 = evt["Jet_hadronFlavour"][selected3] if (selected3 is not None) & (isMC==1) else -1
+    partonFlavour3 = evt["Jet_partonFlavour"][selected3] if (selected3 is not None) & (isMC==1) else -1
     features['jet3_genHadronFlavour'] = hadronFlavour3 
+    features['jet3_partonFlavour'] = partonFlavour3 
     if (('GluGluH' in processName) | ('VBF' in processName)):
         h = ROOT.TLorentzVector(0.,0.,0.,0.)
         b_gen = ROOT.TLorentzVector(0.,0.,0.,0.)
@@ -723,11 +784,29 @@ def fill_gen_info(evt, evt_gen, jet1_vec, jet2_vec, selected1, selected2, select
         mask = np.array(evt_gen["LHEPart_pdgId"])==23
         pt_Z = (pt[mask])
         k_factor = getZ_KFactor(pt=pt_Z)
-
     else:
         k_factor = 1.
     features["Zqq_NLO_kfactor"] = k_factor
     weight_genOnly *= k_factor
+    
+    if "QCD_MuEnriched" in processName:
+        features["QCD_topology"] = classify_event_v2(evt_gen["GenPart_pdgId"], evt_gen["GenPart_status"], evt_gen["GenPart_statusFlags"], evt_gen["GenPart_genPartIdxMother"])
+        features["inv_mass_MEfinalstate"] = inv_mass_MEfinalstate(pdg=evt_gen["GenPart_pdgId"],
+                                                                  status=evt_gen["GenPart_status"], 
+                                                                  GenPart_pt=evt_gen["GenPart_pt"], 
+                                                                  GenPart_eta=evt_gen["GenPart_eta"],
+                                                                  GenPart_phi=evt_gen["GenPart_phi"])
+    if "TTTo" in processName:
+        top_pt = evt_gen["GenPart_pt"][(evt_gen["GenPart_pdgId"]==6) & (evt_gen["GenPart_statusFlags"]>=8192) & (evt_gen["GenPart_statusFlags"]<16384)]
+        top_pt_rw = 0.103*np.exp(-0.0118*top_pt) - 0.000134*top_pt+0.973
+        antitop_pt = evt_gen["GenPart_pt"][(evt_gen["GenPart_pdgId"]==-6) & (evt_gen["GenPart_statusFlags"]>=8192) & (evt_gen["GenPart_statusFlags"]<16384)]
+        antitop_pt_rw = 0.103*np.exp(-0.0118*antitop_pt) - 0.000134*antitop_pt+0.973
+        assert len(top_pt_rw)==1
+        assert len(antitop_pt_rw)==1
+        features["top_pt_reweighting"] = np.sqrt(top_pt_rw[0]*antitop_pt_rw[0])
+        weight_genOnly *= np.sqrt(top_pt_rw[0]*antitop_pt_rw[0])
+    else:
+        features["top_pt_reweighting"] = 1.
     return features, weight_genOnly
 
 

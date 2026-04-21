@@ -50,11 +50,11 @@ featuresForTraining:
   - jet2_sv_mass
   - jet2_sv_3dSig
   - jet1_muon_ptRel
-  - jet2_muon_ptRel
-  - jet2_muon_dxySig
-  - jet2_muon_pt_prime
-  - jet2_muon_charge
-  - jet1_muon_charge
+  #- jet2_muon_ptRel
+  #- jet2_muon_dxySig
+  #- jet2_muon_pt_prime
+  #- jet2_muon_charge
+  #- jet1_muon_charge
   
 
 # GEN INFORMATION

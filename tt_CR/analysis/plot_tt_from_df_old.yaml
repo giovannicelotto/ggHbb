@@ -7,7 +7,7 @@ columns:
   - jet1_btagWP
   - jet1_btagDeepFlavB
   - PNN
-  - PNN_pca
+  - dijet_pt
   - PNN_qm
   - is_ttbar_CR
 MConlyFeatures:

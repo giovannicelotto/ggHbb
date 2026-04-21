@@ -38,6 +38,7 @@ MCDict = cfg["MC"]
 boosted = cfg["boosted"]
 columns = cfg["columns"]
 MConlyFeatures = cfg["MConlyFeatures"]
+SignalOnlyFeatures = cfg["SignalOnlyFeatures"]
 include_nn = cfg["include_nn"]
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
 if args.period is not None:
@@ -85,13 +86,13 @@ if args.runData:
     #    if dataTakingName=='Data1A':
     #        paths[dataTakingIdx]=paths[dataTakingIdx]+"/training"
 
-        print("ttbar_CR=", ttbar_CR)
+        print("ttbar_CR = ", ttbar_CR)
         dfs, lumi, fileNumberList = loadMultiParquet_Data_new(  dataTaking=[dataTakingIdx],
                                                                 nReals=nReals[dataTakingIdx],
                                                                 columns=columns,
                                                                 selectFileNumberList=predictionsFileNumbers,
                                                                 returnFileNumberList=True,
-                                                                filters=getCommonFilters(btagWP="L", cutDijet=True, ttbarCR=ttbar_CR))
+                                                                filters=getCommonFilters(btagWP="M", cutDijet=False, ttbarCR=ttbar_CR, boosted=boosted))
         #if boosted==1:
         #    dfs=cut(dfs, 'dijet_pt', 100, 160)
         #elif boosted==2:
@@ -100,7 +101,7 @@ if args.runData:
         #    dfs=cut(dfs, 'dijet_pt', 100, None)
         #elif boosted==60:
         #    dfs=cut(dfs, 'dijet_pt', 60, 100)
-        dfs=cut(dfs, 'dijet_mass', 50, 300)
+        #dfs=cut(dfs, 'dijet_mass', 50, 300)
         lumi_tot = lumi_tot + lumi
         predsData = loadPredictions(processesData, [dataTakingIdx], predictionsFileNames, fileNumberList)[0]
         print("Predictions loaded", flush=True)
@@ -112,9 +113,8 @@ if args.runData:
         #print(df.columns)
         df.loc[:, 'PNN'] = np.array(predsData.PNN)
         if "PNN_qm" in predsData.columns:
-            df.loc[:, 'PNN_pca'] = np.array(predsData.PNN_qm)
-        #df.loc[:,'PNN_qm'] = np.array(predsData.PNN_qm)
-        #print("Process ", dfProcessesData.process[isMC], " NN assigned")
+            df.loc[:, 'PNN_qm'] = np.array(predsData.PNN_qm)
+        
         df.loc[:, 'weight'] = 1
 
         print("Saving ", dataTakingName)
@@ -151,18 +151,19 @@ if args.runMC:
             print("Skipping ", processMC)
             continue
         predictionsFileNames, predictionsFileNumbers = getPredictionNamesNumbers([processMC],[isMC], predictionsPath)
-        #if "ZJets" in processMC:
-        #    columns_ = columns + ["NLO_kfactor"] 
-        #else:
-        #    columns_ = columns
 
-        dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=list(columns+MConlyFeatures),
+        if "HToBB" in processMC:
+            columns_=list(columns+MConlyFeatures+SignalOnlyFeatures)
+        else:
+            columns_ = list(columns+MConlyFeatures)
+
+        dfs, numEventsList, fileNumberList = loadMultiParquet_v2(paths=[isMC], nMCs=nMCs[idx], columns=columns_,
                                                                 returnNumEventsTotal=True, selectFileNumberList=None,
                                                                 returnFileNumberList=True,
-                                                                filters=getCommonFilters(btagWP="L", cutDijet=True, ttbarCR=ttbar_CR))
+                                                                filters=getCommonFilters(btagWP="M", cutDijet=False, ttbarCR=ttbar_CR, boosted=boosted))
 
 
-        dfs=cut(dfs, 'dijet_mass', 50, 300)
+        #dfs=cut(dfs, 'dijet_mass', 50, 300)
         
         
         
@@ -178,6 +179,11 @@ if args.runMC:
         if "PNN_qm" in predsMC.columns:
         #df.loc[:,'PNN_pca'] = np.array(predsMC.PNN_pca)
             df.loc[:,'PNN_qm'] = np.array(predsMC.PNN_qm)
+        
+        if "Jet_sys_JECAbsoluteMPFBias_up" in predsMC.columns:
+            for col in predsMC.columns:
+                if "Jet_sys" in col:
+                    df.loc[:,"NN_"+col] = predsMC[col]
 
         print("Process ", dfProcessesMC.process[isMC], " isMC :", isMC)
         #print("Xsection ", dfProcessesMC.xsection[isMC])

@@ -1,0 +1,60 @@
+Traceback (most recent call last):
+  File "/t3home/gcelotto/ggHbb/flatter/savedfs.py", line 113, in <module>
+    df.loc[:, 'PNN'] = np.array(predsData.PNN)
+  File "/work/gcelotto/miniconda3/envs/myenv/lib/python3.9/site-packages/pandas/core/indexing.py", line 911, in __setitem__
+    iloc._setitem_with_indexer(indexer, value, self.name)
+  File "/work/gcelotto/miniconda3/envs/myenv/lib/python3.9/site-packages/pandas/core/indexing.py", line 1857, in _setitem_with_indexer
+    self.obj[key] = value
+  File "/work/gcelotto/miniconda3/envs/myenv/lib/python3.9/site-packages/pandas/core/frame.py", line 4311, in __setitem__
+    self._set_item(key, value)
+  File "/work/gcelotto/miniconda3/envs/myenv/lib/python3.9/site-packages/pandas/core/frame.py", line 4524, in _set_item
+    value, refs = self._sanitize_column(value)
+  File "/work/gcelotto/miniconda3/envs/myenv/lib/python3.9/site-packages/pandas/core/frame.py", line 5266, in _sanitize_column
+    com.require_length_match(value, self.index)
+  File "/work/gcelotto/miniconda3/envs/myenv/lib/python3.9/site-packages/pandas/core/common.py", line 573, in require_length_match
+    raise ValueError(
+ValueError: Length of values (12429532) does not match length of index (8361296)
+xrdcp: no such file or directory processing /scratch/dataframes_Data1A_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data2A_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data3A_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data4A_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data5A_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data6A_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data1B_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data2B_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data3B_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data4B_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data5B_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data6B_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data1C_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data2C_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data3C_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data4C_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data5C_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data1D_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data2D_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data3D_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data4D_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/dataframes_Data5D_Mar31_11_50p0.parquet
+xrdcp: no such file or directory processing /scratch/lumi_Data1A_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data2A_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data3A_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data4A_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data5A_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data6A_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data1B_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data2B_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data3B_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data4B_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data5B_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data6B_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data1C_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data2C_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data3C_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data4C_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data5C_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data1D_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data2D_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data3D_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data4D_Mar31_11_50p0.npy
+xrdcp: no such file or directory processing /scratch/lumi_Data5D_Mar31_11_50p0.npy

@@ -33,8 +33,8 @@ parser = argparse.ArgumentParser(description="Script.")
 # Define arguments
 
 parser.add_argument("-v", "--version", type=float, help="version of the model", default=50.)
-parser.add_argument("-dt", "--date", type=str, help="MonthDay format e.g. Dec17", default=current_date)
-parser.add_argument("-b", "--boosted", type=int, help="boosted class", default=3)
+parser.add_argument("-dt", "--date", type=str, help="MonthDay format e.g. Dec17", default="Apr20")
+parser.add_argument("-b", "--boosted", type=int, help="boosted class", default=12)
 parser.add_argument("-s", "--sampling", type=int, help="sampling", default=0)
 parser.add_argument("-e", "--epoch", type=int, help="epoch", default=-1)
 
@@ -154,9 +154,56 @@ ax.set_xlabel('False Positive Rate')
 ax.set_ylabel('True Positive Rate')
 ax.legend()
 fig.savefig(outFolder + "/performance/roc125_weighted.png", bbox_inches='tight')
+plt.close('all')
+def partial_auc(fpr, tpr, max_fpr=0.005):
+    """
+    Compute partial AUC up to max_fpr.
+    """
+    # Ensure arrays are sorted
+    fpr = np.array(fpr)
+    tpr = np.array(tpr)
+
+    # Cut at max_fpr
+    mask = fpr <= max_fpr
+
+    fpr_cut = fpr[mask]
+    tpr_cut = tpr[mask]
+
+    # If last point is below max_fpr, interpolate one point at max_fpr
+    if fpr_cut[-1] < max_fpr:
+        tpr_interp = np.interp(max_fpr, fpr, tpr)
+        fpr_cut = np.append(fpr_cut, max_fpr)
+        tpr_cut = np.append(tpr_cut, tpr_interp)
+
+    return np.trapz(tpr_cut, fpr_cut)
+def plot_roc_curve_zoom(y_true, y_scores, weights, label, ax, color=None, linestyle='solid'):
+    fpr, tpr, _ = roc_curve(y_true, y_scores, sample_weight=weights)
+
+    roc_auc = auc(fpr, tpr)
+    p_auc = partial_auc(fpr, tpr, max_fpr=0.005)
+
+    ax.plot(
+        fpr, tpr,
+        label=f"{label} (AUC = {roc_auc:.3f}, pAUC@0.005 = {p_auc:.1e})",
+        color=color,
+        linestyle=linestyle
+    )
+
+    return roc_auc, p_auc
+fig, ax = plt.subplots()
+
+plot_roc_curve_zoom(Ytrain[maskHiggsData_train], YPredTrain[maskHiggsData_train].ravel(), weights=Wtrain[maskHiggsData_train], label="Train", ax=ax)
+plot_roc_curve_zoom(Yval[maskHiggsData_val], YPredVal[maskHiggsData_val].ravel(),weights=Wval[maskHiggsData_val], label="Validation", ax=ax)
+#plot_roc_curve((genMassTest==125).astype(int), YPredTest.ravel(), "Test", ax)
+ax.plot([0, 1], [0, 1], 'k--')
+ax.grid(True)
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+ax.legend()
 print("Saved", outFolder + "/performance/roc125_weighted.png")
-ax.set_xlim(0, 0.02)
+ax.set_xlim(0, 0.005)
 ax.set_ylim(0,0.1)
+ax.hlines(y=0.05, xmin=0, xmax=1, colors='red', linestyles='dashed', label='Bkg Eff = 5%')
 fig.savefig(outFolder + "/performance/roc125_weighted_zoomed.png", bbox_inches='tight')
 print("Saved", outFolder + "/performance/roc125_weighted_zoomed.png")
 
@@ -275,95 +322,164 @@ fig.savefig(outFolder + "/performance/effScan.png", bbox_inches='tight')
 print("Saved ", outFolder + "/performance/effScan.png")
 
 
-#ax.legend()
-#fig.savefig(outFolder+"/performance/effScan.png", bbox_inches='tight')
-#print("Saved ", outFolder+"/performance/effScan.png")
+
 # %%
+
+from helpers.doPlots import getShapTorch
+import shap
+def model_forward(x_input):
+    """
+    Wrapper to compute model output for a single sample.
+
+    Args:
+        x_input : 1D numpy array, shape (N_features,)
+
+    Returns:
+        float : model output (scalar)
+    """
+    # Convert to torch tensor and add batch dimension
+    x_tensor = torch.tensor(x_input, dtype=torch.float32).unsqueeze(0)  # shape (1, N_features)
+
+    # Make sure model is in eval mode
+    model.eval()
+
+    with torch.no_grad():
+        y = model(x_tensor)  # output tensor
+    # If output is 1D (binary classification), extract scalar
+    return y.item()
+
+def plot_shap_bar(phi_all, feature_names, top_n=10, out_file=None):
+    """
+    Produce a bar plot of feature importances from SHAP values.
+
+    Args:
+        phi_all : numpy array
+            SHAP values. Shape = (n_events, n_features) or (n_features,)
+        feature_names : list of str
+            Names of features, same order as columns in phi_all
+        top_n : int
+            Number of top features to display
+        out_file : str or None
+            If given, save plot to this file
+    """
+    # Ensure 2D array
+    phi_all = np.array(phi_all)
+    if phi_all.ndim == 1:
+        phi_all = phi_all.reshape(1, -1)
+    
+    # Global importance: mean absolute SHAP
+    importance = np.mean(np.abs(phi_all), axis=0)
+
+    # Rank features
+    indices = np.argsort(importance)[::-1][:top_n]
+    top_features = np.array(feature_names)[indices]
+    top_values = importance[indices]
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(12, 5))
+    ax.bar(np.arange(len(top_features)), top_values, color='C0')
+    ax.set_xticks(np.arange(len(top_features)))
+    ax.set_xticklabels(top_features, rotation=90, ha='center')
+    ax.set_ylabel('Mean(|SHAP|)')
+    ax.set_title('Top {} Feature Importances'.format(top_n))
+    plt.tight_layout()
+
+    if out_file is not None:
+        plt.savefig(out_file)
+    #plt.show()
+
+    # Return a dictionary of feature -> importance
+    return dict(zip(top_features, top_values))
+
+# %%
+
+nEvents = 500
+subdf_0 =Xtrain[(genMassTrain==0) & (Xtrain.jet2_muon_pt_prime>0)][featuresForTraining].iloc[:int(nEvents/2)]
+subdf_1 = Xtrain[(genMassTrain==125) & (Xtrain.jet2_muon_pt_prime>0)][featuresForTraining].iloc[:int(nEvents/2)]
+subdf_0_scaled = scale(subdf_0,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+subdf_1_scaled = scale(subdf_1,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
+subTensor_0 =  torch.tensor(np.float32(subdf_0_scaled.values)).float()
+subTensor_1 =  torch.tensor(np.float32(subdf_1_scaled.values)).float()
+subTensor = torch.cat([subTensor_0, subTensor_1])
+# %%
+
+X = subTensor.numpy()
+
+background = subTensor
+explainer = shap.DeepExplainer(
+    model,
+    background
+)
+# explain a subset (recommended for speed)
+
+shap_values = explainer.shap_values(
+    subTensor
+)
+phi_all = abs(shap_values).mean(axis=0).reshape(-1)
+
+# Sort features by descending importance
+indices = np.argsort(phi_all)[::-1]
+top_features = np.array(featuresForTraining)[indices]
+top_values = phi_all[indices]
+
+# Display top 10 features
+#for f, v in zip(top_features[:10], top_values[:10]):
+#    print(f"{f}: {v:.4f}")
+# %%
+plot_shap_bar(phi_all, featuresForTraining, top_n=50, out_file=outFolder+"/performance/shapMC.png")
+# %%
+
 import numpy as np
 from itertools import combinations
 
-# Only for events in mass window
-#sig_mask_val = (genMassVal == 125) & (Xval.dijet_mass > 100) & (Xval.dijet_mass < 150)
-#bkg_mask_val = (genMassVal == 0) & (Xval.dijet_mass > 100) & (Xval.dijet_mass < 150)
 
-#sig_scores = YPredVal[sig_mask_val]
-#bkg_scores = YPredVal[bkg_mask_val]
+import numpy as np
 
-#ts = np.linspace(0, 1, 50)  # Finer granularity than 21 for better scan
+def distance_correlation(x, y):
+    """
+    Compute distance correlation between two 1D arrays.
+    """
+    x = x.reshape(-1, 1)
+    y = y.reshape(-1, 1)
 
-#best_sig = 0
-#best_cuts = None
-#best_n_cats = None
+    # Pairwise distances
+    a = np.abs(x - x.T)
+    b = np.abs(y - y.T)
 
-# Try 2-category combinations
-#for t1 in ts[1:-1]:
-#    # Define 2 bins: [0, t1], [t1, 1]
-#    bins = [t1, 1]
-#
-#    total_sig = 0
-#    for i in range(len(bins)-1):
-#        low, high = bins[i], bins[i+1]
-#        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
-#        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
-#        if bkg_eff > 0:
-#            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
-#    total_sig = np.sqrt(total_sig)
-#    print(t1, total_sig)
-#    if total_sig > best_sig:
-#        best_sig = total_sig
-#        best_cuts = bins
-#        best_n_cats = 2
-#
-## Try 3-category combinations
-#for t1, t2 in combinations(ts[1:-1], 2):
-#    if t1 >= t2:
-#        continue
-#    # Define 3 bins: [0, t1], [t1, t2], [t2, 1]
-#    bins = [t1, t2, 1]
-#
-#    total_sig = 0
-#    for i in range(len(bins)-1):
-#        low, high = bins[i], bins[i+1]
-#        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
-#        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
-#        if bkg_eff > 0:
-#            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
-#    total_sig = np.sqrt(total_sig)
-#    if total_sig > best_sig:
-#        best_sig = total_sig
-#        best_cuts = bins
-#        best_n_cats = 3
-## %%
-## Try 4-category combinations
-#for t1, t2, t3 in combinations(ts[1:-1], 3):
-#    if (t1 >= t2) | (t2 >=t3) | (t1>=t3):
-#        continue
-#    # Define 4 bins: [0, t1], [t1, t2], [t2, 1]
-#    bins = [0,t1, t2, t3, 1]
-#
-#    total_sig = 0
-#    for i in range(len(bins)-1):
-#        low, high = bins[i], bins[i+1]
-#        sig_eff = np.sum((sig_scores >= low) & (sig_scores < high)) / len(sig_scores)
-#        bkg_eff = np.sum((bkg_scores >= low) & (bkg_scores < high)) / len(bkg_scores)
-#        if bkg_eff > 0:
-#            total_sig += np.sqrt(sig_eff/np.sqrt(bkg_eff))**2
-#    total_sig = np.sqrt(total_sig)
-#    if total_sig > best_sig:
-#        best_sig = total_sig
-#        best_cuts = bins
-#        best_n_cats = 4
-#
-## %%
-#print(f"Best total significance: {best_sig:.3f}")
-#print(f"Best number of categories: {best_n_cats}")
-#print(f"Best NN score cuts: {best_cuts}")
+    # Double centering
+    A = a - a.mean(axis=0)[None, :] - a.mean(axis=1)[:, None] + a.mean()
+    B = b - b.mean(axis=0)[None, :] - b.mean(axis=1)[:, None] + b.mean()
 
+    # Distance covariance / variances
+    dcov = np.sqrt(np.mean(A * B))
+    dvar_x = np.sqrt(np.mean(A * A))
+    dvar_y = np.sqrt(np.mean(B * B))
 
+    if dvar_x * dvar_y == 0:
+        return 0.0
 
+    return dcov / np.sqrt(dvar_x * dvar_y)
 
+# Build target vector aligned with subTensor
+y = np.concatenate([
+    np.zeros(len(subdf_0)),
+    np.ones(len(subdf_1))
+])
 
+X = subTensor.numpy()
 
+# Compute distance correlation for each feature
+dcor_values = np.array([
+    distance_correlation(X[:, i], y)
+    for i in range(X.shape[1])
+])
+
+plot_shap_bar(
+    dcor_values,
+    featuresForTraining,
+    top_n=50,
+    out_file=outFolder + "/performance/dcor_importance.png"
+)
 
 
 # %%
@@ -374,6 +490,27 @@ from helpers.doPlots import NNoutputs
 NNoutputs(signal_predictions=YPredVal[genMassVal==125], realData_predictions=YPredVal[genMassVal==0], signalTrain_predictions=YPredTrain[genMassTrain==125], realDataTrain_predictions=YPredTrain[Ytrain==0], outName=outFolder+"/performance/NNoutput.png", log=False, doubleDisco=False, label='NN output')
 
 NNoutputs(signal_predictions=YPredVal[(genMassVal==125) & (Xval.jet1_btagWP>=3)& (Xval.jet2_btagWP>=3)], realData_predictions=YPredVal[(genMassVal==0) & (Xval.jet1_btagWP>=3)& (Xval.jet2_btagWP>=3)], signalTrain_predictions=YPredTrain[(genMassTrain==125) & (Xtrain.jet1_btagWP>=3)& (Xtrain.jet2_btagWP>=3)], realDataTrain_predictions=YPredTrain[(Ytrain==0) & (Xtrain.jet1_btagWP>=3) & (Xtrain.jet2_btagWP>=3)], outName=outFolder+"/performance/NNoutput_tight.png", log=False, doubleDisco=False, label='NN output')
+
+
+NNoutputs(signal_predictions=YPredVal[(genMassVal==125) & (Xval.jet2_muon_pt_prime>0)], realData_predictions=YPredVal[(genMassVal==0) & (Xval.jet2_muon_pt_prime>0)], signalTrain_predictions=YPredTrain[(genMassTrain==125) & (Xtrain.jet2_muon_pt_prime>0)& (Xtrain.jet2_muon_pt_prime>0)], realDataTrain_predictions=YPredTrain[(Ytrain==0) & (Xtrain.jet2_muon_pt_prime>0) & (Xtrain.jet2_muon_pt_prime>0)], outName=outFolder+"/performance/NNoutput_muon2.png", log=False, doubleDisco=False, label='NN output')
+fig, ax = plt.subplots()
+
+plot_roc_curve_zoom(Ytrain[(maskHiggsData_train) & (Xtrain.jet2_muon_pt_prime>0)], YPredTrain[(maskHiggsData_train) & (Xtrain.jet2_muon_pt_prime>0)].ravel(), weights=Wtrain[(maskHiggsData_train) & (Xtrain.jet2_muon_pt_prime>0)], label="Train", ax=ax)
+plot_roc_curve_zoom(Yval[(maskHiggsData_val) & (Xval.jet2_muon_pt_prime>0)], YPredVal[(maskHiggsData_val) & (Xval.jet2_muon_pt_prime>0)].ravel(),weights=Wval[(maskHiggsData_val) & (Xval.jet2_muon_pt_prime>0)], label="Validation", ax=ax)
+#plot_roc_curve((genMassTest==125).astype(int), YPredTest.ravel(), "Test", ax)
+ax.plot([0, 1], [0, 1], 'k--')
+ax.grid(True)
+ax.set_xlabel('False Positive Rate')
+ax.set_ylabel('True Positive Rate')
+ax.legend()
+print("Saved", outFolder + "/performance/roc125_weighted.png")
+#ax.set_xlim(0, 0.005)
+#ax.set_ylim(0,0.1)
+ax.hlines(y=0.05, xmin=0, xmax=1, colors='red', linestyles='dashed', label='Bkg Eff = 5%')
+fig.savefig(outFolder + "/performance/roc125_weighted_zoomed_muon2.png", bbox_inches='tight')
+print("Saved", outFolder + "/performance/roc125_weighted_zoomed_muon2.png")
+
+
 # %%
 
 # LOSS
@@ -499,39 +636,13 @@ for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
 
 fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection.png", bbox_inches='tight')
 
-
-
 fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+
 for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
+    ...
+    ax.hist(...)
 
-    # background passing the cut
-    mask_bkg = (y_pred > thr) & (bkg_mask) 
-
-    # signal efficiency
-    sig_eff = np.sum(Xtrain['flat_weight'][(sig_mask) & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)& (y_pred>thr)])/np.sum(Xtrain['flat_weight'][(sig_mask)  & (Xtrain.dijet_mass>100) & (Xtrain.dijet_mass<150)])
-
-    disco = dcor.distance_correlation(
-        y_pred[mask_bkg],
-        Xtrain.dijet_mass[mask_bkg]
-    )
-    if idx< len(bkg_effs)//2:
-        ax.hist(
-            Xtrain.dijet_mass[mask_bkg],
-            bins=np.linspace(50, 200, 81),
-            density=True,
-            histtype='step',
-            label=(
-                f"Bkg eff = {100*bkg_eff:.2f}%  "
-                f"Sig eff = {100*sig_eff:.2f}%  "
-                f"NN thr = {thr:.3f} | "
-                f"DisCo = {disco:.3f}"
-            )
-        )
-        ax.set_xlabel("Dijet mass [GeV]")
-        ax.legend(fontsize=14)
-
-
-    fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection_%.2f.png"%(np.round(thr, 2)), bbox_inches='tight')
+fig.savefig(outFolder + "/performance/scan_train_all.png", bbox_inches='tight')
 # %%
 
 
@@ -578,237 +689,7 @@ for idx, (bkg_eff, thr) in enumerate(nn_thresholds.items()):
 #fig.savefig(outFolder + "/performance/scan_train_highNN_bkgRejection_5d_T.png", bbox_inches='tight')
 
 # %%
-from helpers.doPlots import getShapTorch
 
-#getShapTorch(Xtest, model, outName, nFeatures, class_names='NN output', tensor=None):
-#Xtrain_tensor = torch.tensor(np.float32(Xtrain[featuresForTraining].values[(YPredTrain<1e-4).reshape(-1)])).float()
-nEvents = 500
-subdf_0 =Xtrain[genMassTrain==0][featuresForTraining].iloc[:int(nEvents/2)]
-subdf_1 = Xtrain[genMassTrain==125][featuresForTraining].iloc[:int(nEvents/2)]
-subdf_0_scaled = scale(subdf_0,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
-subdf_1_scaled = scale(subdf_1,featuresForTraining,  scalerName= outFolder + "/model/myScaler.pkl" ,fit=False)
-subTensor_0 =  torch.tensor(np.float32(subdf_0_scaled.values)).float()
-subTensor_1 =  torch.tensor(np.float32(subdf_1_scaled.values)).float()
-subTensor = torch.cat([subTensor_0, subTensor_1])
-# %%
-import shap
-
-X = subTensor.numpy()
-
-background = subTensor
-explainer = shap.DeepExplainer(
-    model,
-    background
-)
-# explain a subset (recommended for speed)
-
-shap_values = explainer.shap_values(
-    subTensor
-)
-# %%
-phi_all = abs(shap_values).mean(axis=0).reshape(-1)
-
-# %%
-import random
-from math import comb
-
-def monte_carlo_shap(model, x_sample, x_baseline, n_samples=100):
-    """
-    Compute approximate SHAP values for a single sample using Monte Carlo.
-
-    Args:
-        model: function that takes an input vector and returns scalar output.
-        x_sample: 1D array of shape (N_features,) - the sample to explain
-        x_baseline: 1D array of shape (N_features,) - reference input
-        n_samples: number of random subsets per feature
-
-    Returns:
-        phi: 1D array of approximate SHAP values
-    """
-    N = len(x_sample)
-    phi = np.zeros(N)
-
-    for i in range(N):
-        contribs = []
-        for _ in range(n_samples):
-            # Random subset of other features
-            other_features = [j for j in range(N) if j != i]
-            S_size = random.randint(0, N-1)
-            S = random.sample(other_features, S_size)
-
-            # Input with features in S from sample, others from baseline
-            x_S = x_baseline.copy()
-            x_S[S] = x_sample[S]
-
-            # Input with S + i from sample
-            x_Si = x_S.copy()
-            x_Si[i] = x_sample[i]
-
-            # Model outputs
-            y_S = model(x_S)
-            y_Si = model(x_Si)
-
-            # Weight by combinatorial factor (optional, can use uniform for simplicity)
-            # weight = comb(len(S), N-1)
-            # contribs.append(weight * (y_Si - y_S))
-            contribs.append(y_Si - y_S)
-
-        # Average contribution for feature i
-        phi[i] = np.mean(contribs)
-
-    return phi
-
-import torch
-
-def model_forward(x_input):
-    """
-    Wrapper to compute model output for a single sample.
-
-    Args:
-        x_input : 1D numpy array, shape (N_features,)
-
-    Returns:
-        float : model output (scalar)
-    """
-    # Convert to torch tensor and add batch dimension
-    x_tensor = torch.tensor(x_input, dtype=torch.float32).unsqueeze(0)  # shape (1, N_features)
-
-    # Make sure model is in eval mode
-    model.eval()
-
-    with torch.no_grad():
-        y = model(x_tensor)  # output tensor
-    # If output is 1D (binary classification), extract scalar
-    return y.item()
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-def plot_shap_bar(phi_all, feature_names, top_n=10, out_file=None):
-    """
-    Produce a bar plot of feature importances from SHAP values.
-
-    Args:
-        phi_all : numpy array
-            SHAP values. Shape = (n_events, n_features) or (n_features,)
-        feature_names : list of str
-            Names of features, same order as columns in phi_all
-        top_n : int
-            Number of top features to display
-        out_file : str or None
-            If given, save plot to this file
-    """
-    # Ensure 2D array
-    phi_all = np.array(phi_all)
-    if phi_all.ndim == 1:
-        phi_all = phi_all.reshape(1, -1)
-    
-    # Global importance: mean absolute SHAP
-    importance = np.mean(np.abs(phi_all), axis=0)
-
-    # Rank features
-    indices = np.argsort(importance)[::-1][:top_n]
-    top_features = np.array(feature_names)[indices]
-    top_values = importance[indices]
-
-    # Plot
-    fig, ax = plt.subplots(figsize=(12, 5))
-    ax.bar(np.arange(len(top_features)), top_values, color='C0')
-    ax.set_xticks(np.arange(len(top_features)))
-    ax.set_xticklabels(top_features, rotation=90, ha='right')
-    ax.set_ylabel('Mean(|SHAP|)')
-    ax.set_title('Top {} Feature Importances'.format(top_n))
-    plt.tight_layout()
-
-    if out_file is not None:
-        plt.savefig(out_file)
-    #plt.show()
-
-    # Return a dictionary of feature -> importance
-    return dict(zip(top_features, top_values))
-
-# -----------------------
-# Example usage:
-
-# phi_all: shape (n_events, n_features) or (n_features,) for single event
-# feature_names: list of feature names
-
-
-# Example with 62 features
-#N_features = len(featuresForTraining)
-#x_sample = subTensor[0].numpy()           # take one event to explain
-#x_baseline = np.mean(subTensor.numpy(), axis=0)  # baseline = average of background
-#
-#phi = monte_carlo_shap(model_forward, x_sample, x_baseline, n_samples=100)
-def monte_carlo_shap_dataset(
-    model,
-    X,
-    x_baseline,
-    n_samples=100,
-    agg="mean_abs",
-):
-    """
-    Compute global SHAP importance by averaging per-event SHAP values.
-
-    Args:
-        model: callable model
-        X: array of shape (N_events, N_features)
-        x_baseline: 1D baseline vector
-        n_samples: MC samples per feature
-        agg: "mean_abs" or "mean"
-
-    Returns:
-        global_importance: 1D array (N_features,)
-        shap_values: 2D array (N_events, N_features)
-    """
-    n_events, n_features = X.shape
-    shap_values = np.zeros((n_events, n_features))
-
-    for k in range(n_events):
-        shap_values[k] = monte_carlo_shap(
-            model,
-            X[k],
-            x_baseline,
-            n_samples=n_samples,
-        )
-
-    if agg == "mean_abs":
-        global_importance = np.mean(np.abs(shap_values), axis=0)
-    elif agg == "mean":
-        global_importance = np.mean(shap_values, axis=0)
-    else:
-        raise ValueError("Unknown aggregation")
-
-    return global_importance, shap_values
-#X = subTensor.numpy()          # (N_events, N_features)
-#x_baseline = X.mean(axis=0)
-#
-#global_imp, shap_vals = monte_carlo_shap_dataset(
-#    model_forward,
-#    X,
-#    x_baseline,
-#    n_samples=5,
-#)
-#
-#import numpy as np
-
-# phi: 1D array, length = number of features
-# feature_names: list of feature names, same order as phi
-# %%
-
-
-# Sort features by descending importance
-indices = np.argsort(phi_all)[::-1]
-top_features = np.array(featuresForTraining)[indices]
-top_values = phi_all[indices]
-
-# Display top 10 features
-for f, v in zip(top_features[:10], top_values[:10]):
-    print(f"{f}: {v:.4f}")
-
-# phi[i] = approximate SHAP value for feature i
-plot_shap_bar(phi_all, featuresForTraining, top_n=15, out_file=outFolder+"/performance/shapMC.png")
-#getShapTorch(Xtrain[featuresForTraining], model, outName=outFolder+"/performance/shap.png", nFeatures=10, tensor=subTensor_1)
 # %%
 sys.path.append("/t3home/gcelotto/ggHbb/scripts/plotScripts/")
 from plotFeatures import plotNormalizedFeatures

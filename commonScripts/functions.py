@@ -81,8 +81,8 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
             [   ('jet1_pt_uncor', '>',  20),
                 ('jet2_pt_uncor', '>',  20),
                 
-                ('jet1_mass', '>', 0),
-                ('jet2_mass', '>', 0),
+                #('jet1_mass', '>', 0),
+                #('jet2_mass', '>', 0),
                 #('jet3_mass', '>',  0),
                 
                 ('jet1_eta', '>', -2.5),
@@ -102,8 +102,8 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
             [   ('jet1_pt_uncor', '>',  20),
                 ('jet2_pt_uncor', '>',  20),
                 
-                ('jet1_mass', '>', 0),
-                ('jet2_mass', '>', 0),
+                #('jet1_mass', '>', 0),
+                #('jet2_mass', '>', 0),
                 #('jet3_mass', '>',  0),
                 
                 ('jet1_eta', '>', -2.5),
@@ -119,16 +119,19 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
                 ]
 
     ]
+    if (boosted==9):
+        filters[0] = filters[0] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45), ('dijet_pT_asymmetry', '>', -0.45)]
+        filters[1] = filters[1] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45), ('dijet_pT_asymmetry', '>', -0.45)]
     if boosted>10:
         if (boosted==11) | (boosted==21) | (boosted==31):
-            filters[0] = filters[0] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45)]
-            filters[1] = filters[1] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45)]
+            filters[0] = filters[0] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45), ('dijet_pT_asymmetry', '>', -0.45), ('dijet_dR', '>', 1)]
+            filters[1] = filters[1] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45), ('dijet_pT_asymmetry', '>', -0.45), ('dijet_dR', '>', 1)]
         if (boosted==12) | (boosted==22) | (boosted==32):
             filters[0] = filters[0] + [('dijet_pt', '>=', 120)]
             filters[1] = filters[1] + [('dijet_pt', '>=', 120)]
         if boosted==13:
-            filters[0] = filters[0] + [('dijet_pt', '>=', 200)]
-            filters[1] = filters[1] + [('dijet_pt', '>=', 200)]
+            filters[0] = filters[0] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45), ('dijet_pT_asymmetry', '>', -0.45)]
+            filters[1] = filters[1] + [('dijet_pt', '>=', 60), ('dijet_pt', '<', 120), ('dijet_pT_asymmetry', '<', 0.45), ('dijet_pT_asymmetry', '>', -0.45)]
 #        if boosted==14:
 #            filters[0] = filters[0] + [('dijet_pt', '>=', 300)]
 #            filters[1] = filters[1] + [('dijet_pt', '>=', 300)]

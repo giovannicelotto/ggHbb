@@ -19,7 +19,7 @@ def jetsSelector_new(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggeri
             continue
         
         if (Jet_muonIdx1[i]>-1): #if there is a reco muon in the jet
-            if ((Muon_pt[Jet_muonIdx1[i]]>7)  & (abs(Muon_dxy[Jet_muonIdx1[i]] /Muon_dxyErr[Jet_muonIdx1[i]])>3 )):
+            if ((Muon_pt[Jet_muonIdx1[i]]>9)  & (abs(Muon_dxy[Jet_muonIdx1[i]] /Muon_dxyErr[Jet_muonIdx1[i]])>6 )):
                 LeadingMuons_inJets.append(Jet_muonIdx1[i])
                 jetsWithMuon.append(i)
             continue
@@ -50,24 +50,34 @@ def jetsSelector_new(nJet, Jet_eta, Jet_muonIdx1,  Jet_muonIdx2, Muon_isTriggeri
     # Two (or more) jets with muons inside. Consider the first two muons only
     elif len(LeadingMuons_inJets)>=2:
         # Case A) Both are triggering. Jet 1 is the leading
-        if ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
-
-            selected1=jetsWithMuon[0] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else jetsWithMuon[1]
-            selected2=jetsWithMuon[1] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else jetsWithMuon[0]
-            muonIdx=LeadingMuons_inJets[0] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else LeadingMuons_inJets[1]
-            muonIdx2=LeadingMuons_inJets[1] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else LeadingMuons_inJets[0]
+        if ((Muon_isTriggering[LeadingMuons_inJets[0]]) | (Muon_isTriggering[LeadingMuons_inJets[1]])):
+            if ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
+                selected1=jetsWithMuon[0] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else jetsWithMuon[1]
+                selected2=jetsWithMuon[1] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else jetsWithMuon[0]
+                muonIdx=LeadingMuons_inJets[0] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else LeadingMuons_inJets[1]
+                muonIdx2=LeadingMuons_inJets[1] if Muon_pt[LeadingMuons_inJets[0]]>Muon_pt[LeadingMuons_inJets[1]] else LeadingMuons_inJets[0]
+            elif ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (not Muon_isTriggering[LeadingMuons_inJets[1]])):
+                selected1=jetsWithMuon[0] 
+                selected2=jetsWithMuon[1] 
+                muonIdx=LeadingMuons_inJets[0] 
+                muonIdx2=LeadingMuons_inJets[1] 
+            elif ((not Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
+                selected1=jetsWithMuon[1] 
+                selected2=jetsWithMuon[0] 
+                muonIdx=LeadingMuons_inJets[1] 
+                muonIdx2=LeadingMuons_inJets[0] 
             # SF is effData1/effMC1 * effData2/effMC2 
         # Case B1) Leading Muon is triggering. Jet 1 is that one. Choose the second jet with b-tag method
-        elif ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (not Muon_isTriggering[LeadingMuons_inJets[1]])):
-            selected1=jetsWithMuon[0] 
-            muonIdx=LeadingMuons_inJets[0]
-            selected2=-444
-            #selected2 with btag
-            # SF is effData1/effMC1 * 1-effData2/1-effMC2 
-        elif ((not Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
-            selected1=jetsWithMuon[1] 
-            muonIdx=LeadingMuons_inJets[1]
-            selected2=-444
+        #elif ((Muon_isTriggering[LeadingMuons_inJets[0]]) & (not Muon_isTriggering[LeadingMuons_inJets[1]])):
+        #    selected1=jetsWithMuon[0] 
+        #    muonIdx=LeadingMuons_inJets[0]
+        #    selected2=-444
+        #    #selected2 with btag
+        #    # SF is effData1/effMC1 * 1-effData2/1-effMC2 
+        #elif ((not Muon_isTriggering[LeadingMuons_inJets[0]]) & (Muon_isTriggering[LeadingMuons_inJets[1]])):
+        #    selected1=jetsWithMuon[1] 
+        #    muonIdx=LeadingMuons_inJets[1]
+        #    selected2=-444
             #selected2 with btag
             # SF is effData1/effMC1 * 1-effData2/1-effMC2 
         

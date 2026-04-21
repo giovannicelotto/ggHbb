@@ -447,3 +447,409 @@ def varianceDcor(dCor):
 #
 #    return smoothness
 #
+
+
+import torch
+import torch.nn as nn
+import torch.nn.init as init
+
+
+class ClassifierWithSV(nn.Module):
+    def __init__(
+        self,
+        input_dim_main,
+        nNodes_main=(128, 64),
+        nNodes_sv=(32,),
+    ):
+        super().__init__()
+
+        # -----------------------
+        # Main MLP
+        layers_main = []
+        dim = input_dim_main
+
+        for n in nNodes_main:
+            layers_main.append(nn.Linear(dim, n))
+            layers_main.append(nn.ReLU())
+            layers_main.append(nn.BatchNorm1d(n))
+            dim = n
+
+        self.main_mlp = nn.Sequential(*layers_main)
+
+        # -----------------------
+        # SV MLP (shared for jet1 and jet2)
+        def make_sv_mlp():
+            layers = []
+            d = 4  # [pt, mass, ntrks]
+            for n in nNodes_sv:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+
+        self.sv_mlp = make_sv_mlp()
+
+        # -----------------------
+        # Final classifier
+        self.head = nn.Sequential(
+            nn.Linear(nNodes_main[-1] + 2 * nNodes_sv[-1], 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid()
+        )
+
+        self.apply(self._init_weights)
+
+    # -----------------------
+    def _init_weights(self, layer):
+        if isinstance(layer, nn.Linear):
+            init.kaiming_normal_(layer.weight, nonlinearity="relu")
+            init.constant_(layer.bias, 0)
+
+    # -----------------------
+    def forward(self, x_main, jet1_sv, jet2_sv):
+
+        # -----------------------
+        # Masks from ntrks (feature index = 2)
+        mask1 = (jet1_sv[:, 3] > 0.5).float().unsqueeze(1)
+        mask2 = (jet2_sv[:, 3] > 0.5).float().unsqueeze(1)
+
+        # -----------------------
+        # Main branch
+        h_main = self.main_mlp(x_main)
+
+        # -----------------------
+        # SV branches
+        h1 = self.sv_mlp(jet1_sv)
+        h2 = self.sv_mlp(jet2_sv)
+
+        # -----------------------
+        # Gating (critical step)
+        h1 = h1 * mask1
+        h2 = h2 * mask2
+
+        # -----------------------
+        # Combine
+        h = torch.cat([h_main, h1, h2], dim=1)
+
+        return self.head(h)
+    
+
+
+class ClassifierWithSV_jet3(nn.Module):
+    def __init__(
+        self,
+        input_dim_main,
+        nNodes_main=(128, 64),
+        nNodes_sv=(8,),
+        nNodes_jet3=(8)
+    ):
+        super().__init__()
+
+        # -----------------------
+        # Main MLP
+        layers_main = []
+        dim = input_dim_main
+
+        for n in nNodes_main:
+            layers_main.append(nn.Linear(dim, n))
+            layers_main.append(nn.ReLU())
+            layers_main.append(nn.BatchNorm1d(n))
+            dim = n
+
+        self.main_mlp = nn.Sequential(*layers_main)
+
+        # -----------------------
+        # SV MLP (shared for jet1 and jet2)
+        def make_sv_mlp():
+            layers = []
+            d = 4  # [pt, mass, ntrks, flag]
+            for n in nNodes_sv:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.sv_mlp = make_sv_mlp()
+        
+        def make_jet3_mlp():
+            layers = []
+            d = 6  # [pt, eta, phi, mass, btag]
+            for n in nNodes_sv:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.jet3_mlp = make_jet3_mlp()
+
+
+        # -----------------------
+        # Final classifier
+        self.head = nn.Sequential(
+            nn.Linear(nNodes_main[-1] + 2 * nNodes_sv[-1] + 1 * nNodes_jet3[-1], 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid()
+        )
+
+        self.apply(self._init_weights)
+
+    # -----------------------
+    def _init_weights(self, layer):
+        if isinstance(layer, nn.Linear):
+            init.kaiming_normal_(layer.weight, nonlinearity="relu")
+            init.constant_(layer.bias, 0)
+
+    # -----------------------
+    def forward(self, x_main, jet1_sv, jet2_sv, jet3):
+
+        # -----------------------
+        # Masks from ntrks (feature index = 2)
+        mask1 = (jet1_sv[:, -1] > 0.5).float().unsqueeze(1)
+        mask2 = (jet2_sv[:, -1] > 0.5).float().unsqueeze(1)
+        mask_jet3 = (jet3[:, -1] > 0.1).float().unsqueeze(1)
+
+        # -----------------------
+        # Main branch
+        h_main = self.main_mlp(x_main)
+
+        # -----------------------
+        # SV branches
+        h1 = self.sv_mlp(jet1_sv)
+        h2 = self.sv_mlp(jet2_sv)
+        h3 = self.jet3_mlp(jet3)
+
+        # -----------------------
+        # Gating (critical step)
+        h1 = h1 * mask1
+        h2 = h2 * mask2
+        h3 = h3 * mask_jet3
+
+        # -----------------------
+        # Combine
+        h = torch.cat([h_main, h1, h2, h3], dim=1)
+
+        return self.head(h)
+    
+
+
+
+
+
+class ClassifierWithSV_jet3_muon2(nn.Module):
+    def __init__(
+        self,
+        input_dim_main,
+        nNodes_main=(64, 32),
+        nNodes_sv=(8,),
+        nNodes_jet3=(8),
+        nNodes_jet2_muon=(8)
+    ):
+        super().__init__()
+
+        # -----------------------
+        # Main MLP
+        layers_main = []
+        dim = input_dim_main
+
+        for n in nNodes_main:
+            layers_main.append(nn.Linear(dim, n))
+            layers_main.append(nn.ReLU())
+            layers_main.append(nn.BatchNorm1d(n))
+            dim = n
+
+        self.main_mlp = nn.Sequential(*layers_main)
+
+        # -----------------------
+        # SV MLP (shared for jet1 and jet2)
+        def make_sv_mlp():
+            layers = []
+            d = 4  # [pt, mass, ntrks, flag]
+            for n in nNodes_sv:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.sv_mlp = make_sv_mlp()
+        
+        def make_jet3_mlp():
+            layers = []
+            d = 6  # [pt, eta, phi, mass, btag]
+            for n in nNodes_sv:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.jet3_mlp = make_jet3_mlp()
+
+        def make_jet2_muon_mlp():
+            layers = []
+            d = 5  # [pt, eta, phi, dxySig, flag]
+            for n in nNodes_jet2_muon:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.jet2_muon_mlp = make_jet2_muon_mlp()
+
+
+        # -----------------------
+        # Final classifier
+        self.head = nn.Sequential(
+            nn.Linear(nNodes_main[-1] + 2 * nNodes_sv[-1] + 1 * nNodes_jet3[-1] + 1 * nNodes_jet2_muon[-1], 64),
+            nn.ReLU(),
+            nn.Linear(64, 1),
+            nn.Sigmoid()
+        )
+
+        self.apply(self._init_weights)
+
+    # -----------------------
+    def _init_weights(self, layer):
+        if isinstance(layer, nn.Linear):
+            init.kaiming_normal_(layer.weight, nonlinearity="relu")
+            init.constant_(layer.bias, 0)
+
+    # -----------------------
+    def forward(self, x_main, jet1_sv, jet2_sv, jet3, jet2_muon):
+
+        # -----------------------
+        # Masks from ntrks (feature index = 2)
+        mask1 = (jet1_sv[:, -1] > 0.5).float().unsqueeze(1)
+        mask2 = (jet2_sv[:, -1] > 0.5).float().unsqueeze(1)
+        mask_jet3 = (jet3[:, -1] > 0.1).float().unsqueeze(1)
+        mask_jet2_muon = (jet2_muon[:, -1] > 0.1).float().unsqueeze(1)
+
+        # -----------------------
+        # Main branch
+        h_main = self.main_mlp(x_main)
+
+        # -----------------------
+        # SV branches
+        h1 = self.sv_mlp(jet1_sv)
+        h2 = self.sv_mlp(jet2_sv)
+        h3 = self.jet3_mlp(jet3)
+        h4 = self.jet2_muon_mlp(jet2_muon)
+
+        # -----------------------
+        # Gating (critical step)
+        h1 = h1 * mask1
+        h2 = h2 * mask2
+        h3 = h3 * mask_jet3
+        h4 = h4 * mask_jet2_muon
+
+        # -----------------------
+        # Combine
+        h = torch.cat([h_main, h1, h2, h3, h4], dim=1)
+
+        return self.head(h)
+    
+
+class ClassifierWithSV_jet3_muon2_update(nn.Module):
+    def __init__(
+        self,
+        input_dim_main,
+        nNodes_main=(64, 32),
+        nNodes_sv=(8,),
+        nNodes_jet3=(8),
+        nNodes_jet2_muon=(8)
+    ):
+        super().__init__()
+
+        # -----------------------
+        # Main MLP
+        layers_main = []
+        dim = input_dim_main
+
+        for n in nNodes_main:
+            layers_main.append(nn.Linear(dim, n))
+            layers_main.append(nn.ReLU())
+            layers_main.append(nn.BatchNorm1d(n))
+            dim = n
+
+        self.main_mlp = nn.Sequential(*layers_main)
+
+        # -----------------------
+        # SV MLP (shared for jet1 and jet2)
+        def make_sv_mlp():
+            layers = []
+            d = 3  # [pt, mass, ntrks]
+            for n in nNodes_sv:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.sv_mlp = make_sv_mlp()
+        
+        def make_jet3_mlp():
+            layers = []
+            d = 5  # [pt, eta, phi, mass, btag]
+            for n in nNodes_sv:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.jet3_mlp = make_jet3_mlp()
+
+        def make_jet2_muon_mlp():
+            layers = []
+            d = 4  # [pt, eta, phi, dxySig]
+            for n in nNodes_jet2_muon:
+                layers.append(nn.Linear(d, n))
+                layers.append(nn.ReLU())
+                d = n
+            return nn.Sequential(*layers)
+        self.jet2_muon_mlp = make_jet2_muon_mlp()
+
+
+        # -----------------------
+        # Final classifier
+        self.head = nn.Sequential(
+            nn.Linear(nNodes_main[-1] + 2 * nNodes_sv[-1] + 1 * nNodes_jet3[-1] + 1 * nNodes_jet2_muon[-1], 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1),
+            nn.Sigmoid()
+        )
+
+        self.apply(self._init_weights)
+
+    # -----------------------
+    def _init_weights(self, layer):
+        if isinstance(layer, nn.Linear):
+            init.kaiming_normal_(layer.weight, nonlinearity="relu")
+            init.constant_(layer.bias, 0)
+
+    # -----------------------
+    def forward(self, x_main, jet1_sv, jet2_sv, jet3, jet2_muon):
+
+        # -----------------------
+        # Masks from ntrks (feature index = 2)
+        mask1 = (jet1_sv[:, -1] > 0.5).float().unsqueeze(1)
+        mask2 = (jet2_sv[:, -1] > 0.5).float().unsqueeze(1)
+        mask_jet3 = (jet3[:, -1] > 0.1).float().unsqueeze(1)
+        mask_jet2_muon = (jet2_muon[:, -1] > 0.1).float().unsqueeze(1)
+
+        # -----------------------
+        # Main branch
+        h_main = self.main_mlp(x_main)
+
+        # -----------------------
+        # SV branches
+        h1 = self.sv_mlp(jet1_sv[:,:-1])
+        h2 = self.sv_mlp(jet2_sv[:,:-1])
+        h3 = self.jet3_mlp(jet3[:,:-1])
+        h4 = self.jet2_muon_mlp(jet2_muon[:,:-1])
+
+        # -----------------------
+        # Gating (critical step)
+        h1 = h1 * mask1
+        h2 = h2 * mask2
+        h3 = h3 * mask_jet3
+        h4 = h4 * mask_jet2_muon
+
+        # -----------------------
+        # Combine
+        h = torch.cat([h_main, h1, h2, h3, h4], dim=1)
+
+        return self.head(h)

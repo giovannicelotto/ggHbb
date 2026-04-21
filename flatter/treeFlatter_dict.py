@@ -82,6 +82,11 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
     
     # Open the WorkingPoint correction lib
     # /cvmfs/cms-griddata.cern.ch/cat/metadata/BTV/Run2-2018-UL-NanoAODv9/latest/btagging.json.gz
+    fname_jec = folder_cfg["JEC_unc_folder"]+"/jet_jerc_2.json.gz"
+    ceval = _core.CorrectionSet.from_file(fname_jec)
+    JECunc = ceval["Summer19UL18_V5_MC_Regrouped_Total_AK4PFchs"]
+
+
     fname = folder_cfg["btag_SF_folder"]+"/btagging.json.gz"
     if fname.endswith(".json.gz"):
         import gzip
@@ -209,9 +214,9 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         dijet = jet1 + jet2
 
         # Jet1
-        features_.update(fill_jet_features("jet1", selected1, evt, jet1, dijet=dijet))
+        features_.update(fill_jet_features("jet1", selected1, evt, jet1, dijet=dijet, isMC=isMC, JECunc=JECunc))
         # Jet2
-        features_.update(fill_jet_features("jet2", selected2, evt, jet2, dijet=dijet))
+        features_.update(fill_jet_features("jet2", selected2, evt, jet2, dijet=dijet, isMC=isMC, JECunc=JECunc))
         if muonIdx2!=999:
             features_["jet2_has_trigMuon"] = 1
         else:
@@ -225,11 +230,11 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                 else:
                     selected3 = i
                     jet3.SetPtEtaPhiM(evt["Jet_pt"][selected3],evt["Jet_eta"][selected3],evt["Jet_phi"][selected3],evt["Jet_mass"][selected3])
-                    features_.update(fill_jet_features("jet3", selected3, evt, jet3, dijet=dijet, jetIsPresent=True))
+                    features_.update(fill_jet_features("jet3", selected3, evt, jet3, dijet=dijet, jetIsPresent=True, isMC=isMC, JECunc=JECunc))
                     break
         else:
             selected3 = None
-            features_.update(fill_jet_features("jet3", idx=None, evt=evt, jet_vec=None, dijet=None, jetIsPresent=False))
+            features_.update(fill_jet_features("jet3", idx=None, evt=evt, jet_vec=None, dijet=None, jetIsPresent=False, isMC=isMC, JECunc=JECunc))
         
         # 4th Jets
         if np.sum(maskJets)>3:
@@ -289,8 +294,8 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
         # R1
         if (muonIdx2 != 999):# & (evt["Muon_pt"][muonIdx2]>9) & (np.abs(evt["Muon_eta"][muonIdx2])<1.5) & (abs(evt["Muon_dxy"][muonIdx2]/evt["Muon_dxyErr"][muonIdx2])>6):
             # Second muon is triggering as Mu9IP6
-            assert evt["Muon_isTriggering"][muonIdx2] == True
-            jet2_muon_isTriggering = True
+            #assert evt["Muon_isTriggering"][muonIdx2] == True
+            jet2_muon_isTriggering = int(evt["Muon_isTriggering"][muonIdx2])
             isMuon2 = True
             muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
             muon2.SetPtEtaPhiM(evt["Muon_pt"][muonIdx2], evt["Muon_eta"][muonIdx2], evt["Muon_phi"][muonIdx2], evt["Muon_mass"][muonIdx2])
@@ -301,35 +306,10 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
             
         else:
-            # R2 or R3
-            # find leptonic charge in the second jet
-            #for mu in range(evt["nMuon"]):
-            #    if mu==muonIdx1:
-            #        # dont want the muon in the first jet
-            #        continue
-            #    if (mu != evt["Jet_muonIdx1"][selected2]) & (mu != evt["Jet_muonIdx2"][selected2]):
-            #        # avoid all muons not inside jet2
-            #        continue
-            #    #if (evt["Muon_pt"][mu]<9) | (abs(evt["Muon_dxy"][mu]/evt["Muon_dxyErr"][mu])<6):
-            #    #    continue
-            #    else:
-            #        # There is a second muon non triggering
-            #        jet2_muon_isTriggering = False
-            #        isMuon2 = True
-            #        muon2 = ROOT.TLorentzVector(0., 0., 0., 0.)
-            #        muon2.SetPtEtaPhiM(evt["Muon_pt"][mu], evt["Muon_eta"][mu], evt["Muon_phi"][mu], evt["Muon_mass"][mu])
-            #        features_muon2, muon2_weight =fill_trig_muon_features(muon2,mu, jet2, "2", muon_RECO_map, evt, has_muon=isMuon2)
-            #        features_.update(features_muon2)
-            #        event_weight *= muon2_weight
-            #        
-            #        
-            #        break
-            # R3: no second muon found
-            #if isMuon2 == False:
             features_muon2, muon2_weight = fill_trig_muon_features(None,None, jet2, "2",  muon_RECO_map, evt, has_muon=isMuon2)
             features_.update(features_muon2)
             event_weight *= muon2_weight
-        features_["jet2_muon_isTriggering"] = jet2_muon_isTriggering
+        features_["jet2_muon_isTriggering"] = int(jet2_muon_isTriggering)
         features_['dimuon_mass'] = np.float32((muon+muon2).M()) if isMuon2 else 0.106
 # Trigger
         features_['jet1_muon_fired_HLT_Mu12_IP6'] = int(bool(evt["Muon_fired_HLT_Mu12_IP6"][muonIdx1]))
@@ -350,48 +330,47 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
             event_weight *= weight_gen
             # https://indico.ihep.ac.cn/event/16093/contributions/43970/attachments/21148/24086/SF.pdf
             # PDF
-            for k in range(1,101):
-                features_[f"LHEPdfWeight_{k}"] = evt_gen["LHEPdfWeight"][k]
-            # Alpha_S
-            features_[f"LHEAlphasWeight_down"] = evt_gen["LHEPdfWeight"][101]
-            features_[f"LHEAlphasWeight_up"] = evt_gen["LHEPdfWeight"][102]
-            # MuR and MuF
-            scale_order = [
-                    (0.5, 0.5),(1.0, 0.5),(2.0, 0.5),
-                    (0.5, 1.0),(1.0, 1.0),(2.0, 1.0),
-                    (0.5, 2.0),(1.0, 2.0),(2.0, 2.0)
+            #if len(evt_gen["LHEPdfWeight"])==101:
+            #    for k in range(1,101):
+            #        features_[f"LHEPdfWeight_{k}"] = evt_gen["LHEPdfWeight"][k]
+            if ("HToBB" in processName) | ("TTTo" in processName):
+                for k in range(1,101):
+                    features_[f"LHEPdfWeight_{k}"] = evt_gen["LHEPdfWeight"][k]
+                # Alpha_S
+                features_[f"LHEAlphasWeight_down"] = evt_gen["LHEPdfWeight"][101]
+                features_[f"LHEAlphasWeight_up"] = evt_gen["LHEPdfWeight"][102]
+                # MuR and MuF
+                scale_order = [
+                        (0.5, 0.5),(1.0, 0.5),(2.0, 0.5),
+                        (0.5, 1.0),(1.0, 1.0),(2.0, 1.0),
+                        (0.5, 2.0),(1.0, 2.0),(2.0, 2.0)
+                    ]
+                #if len(evt_gen["LHEScaleWeight"])==8:
+                #    scale_order.remove((1.0,1.0))
+                for idx, (muf, mur) in enumerate(scale_order):
+                    muf_str = "down" if muf==0.5 else ("up" if muf==2.0 else "nom")
+                    mur_str = "down" if mur==0.5 else ("up" if mur==2.0 else "nom")
+                    features_[f"LHEScaleWeight_MuF{muf_str}_MuR{mur_str}"] = evt_gen["LHEScaleWeight"][idx]
+                # ISR and FR
+                ISR_FSR_order = [
+                    (2.0,1.0), (1.0,2.0),
+                    (0.5,1.0), (1.0,0.5)
                 ]
-            if len(evt_gen["LHEScaleWeight"])==8:
-                scale_order.remove((1.0,1.0))
-            for idx, (muf, mur) in enumerate(scale_order):
-                muf_str = "down" if muf==0.5 else ("up" if muf==2.0 else "nom")
-                mur_str = "down" if mur==0.5 else ("up" if mur==2.0 else "nom")
-                features_[f"LHEScaleWeight_MuF{muf_str}_MuR{mur_str}"] = evt_gen["LHEScaleWeight"][idx]
-            # ISR and FR
-            ISR_FSR_order = [
-                (2.0,1.0), (1.0,2.0),
-                (0.5,1.0), (1.0,0.5)
-            ]
-            if len(evt_gen["PSWeight"])==1:
-                for idx, (isr, fsr) in enumerate(ISR_FSR_order):
-                    isr_str = "down" if isr==0.5 else ("up" if isr==2.0 else "nom")
-                    fsr_str = "down" if fsr==0.5 else ("up" if fsr==2.0 else "nom")
-                    features_[f"PSWeight_ISR{isr_str}_FSR{fsr_str}"] = 1
-            else:
-                for idx, (isr, fsr) in enumerate(ISR_FSR_order):
-                    isr_str = "down" if isr==0.5 else ("up" if isr==2.0 else "nom")
-                    fsr_str = "down" if fsr==0.5 else ("up" if fsr==2.0 else "nom")
-                    features_[f"PSWeight_ISR{isr_str}_FSR{fsr_str}"] = evt_gen["PSWeight"][idx]
+                if len(evt_gen["PSWeight"])==1:
+                    for idx, (isr, fsr) in enumerate(ISR_FSR_order):
+                        isr_str = "down" if isr==0.5 else ("up" if isr==2.0 else "nom")
+                        fsr_str = "down" if fsr==0.5 else ("up" if fsr==2.0 else "nom")
+                        features_[f"PSWeight_ISR{isr_str}_FSR{fsr_str}"] = 1
+                else:
+                    for idx, (isr, fsr) in enumerate(ISR_FSR_order):
+                        isr_str = "down" if isr==0.5 else ("up" if isr==2.0 else "nom")
+                        fsr_str = "down" if fsr==0.5 else ("up" if fsr==2.0 else "nom")
+                        features_[f"PSWeight_ISR{isr_str}_FSR{fsr_str}"] = evt_gen["PSWeight"][idx]
             
             #deltaPDF = [evt_gen["LHEPdfWeight"][k] - 1 for k in range(1, 101)]
             #deltaPDF = np.array(deltaPDF, dtype=np.float32)
             #deltaPDF = np.sqrt(np.sum(deltaPDF**2))
             #features_["deltaPDF"] = deltaPDF
-
-            deltaAlphaS = [evt_gen["LHEPdfWeight"][k] - 1 for k in range(101, 103)]
-            deltaAlphaS = np.array(deltaAlphaS, dtype=np.float32)
-            deltaAlphaS = np.sqrt(np.sum(deltaAlphaS**2))
-            features_["deltaAlphaS"] = deltaAlphaS
 # Gen Info
             # PileupID SF computation
             for syst in ["nom", "up", "down"]:
@@ -420,7 +399,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
 
         
 
-            trig_sf = get_trig_SF(LeadingMuons_inJets, 
+            trig_sf, err_trig_sf = get_trig_SF(LeadingMuons_inJets, 
                                   evt["Muon_isTriggering"],
                                   evt["Muon_pt"],
                                   evt["Muon_dxy"],
@@ -433,6 +412,7 @@ def treeFlatten(fileName, maxEntries, maxJet, pN, processName, method, isJEC, ve
                                   effData_rootfile=effData_rootFile,
                                   effMC_rootfile=effMC_rootFile)
             features_['trig_sf'] = trig_sf
+            features_['err_trig_sf'] = err_trig_sf
             event_weight  *= np.float32(trig_sf)
 # LHEScaleWeight
         # Code here
@@ -506,7 +486,6 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
     if fullProcessName[:4]=='Data':
         df['PU_SF']=1
         df['xsection']=1
-        
     else:
         PU_map = load_mapping_dict(folder_cfg["PU_Ratio_folder"]+'/PU_PVtoPUSF.json')
         df['PU_SF'] = df['Pileup_nTrueInt'].apply(int).map(PU_map)
@@ -517,10 +496,15 @@ def main(fileName, maxEntries, maxJet, pN, fullProcessName, method, isJEC, verbo
         xsections = dfProcessesMC.iloc[pN].xsection
         df['xsection']=xsections
 
+
     df = addFeatureToFile(df)
     # NN prediction?
-
-    data_predictions1, data_predictions_qm = predict(df, modelName="Jan21_3_50p0", boosted=3, quantile_matching=True, run=2)
+    if "QCD_topology" in df.columns:
+        df_pred = df.drop(['QCD_topology'], axis=1)
+        data_predictions1, data_predictions_qm = predict(df_pred, modelName="Jan21_3_50p0", boosted=3, quantile_matching=True, run=2)
+    else:
+        data_predictions1, data_predictions_qm = predict(df, modelName="Jan21_3_50p0", boosted=3, quantile_matching=True, run=2)
+    
     df["NN"] = data_predictions1
     df["NN_qm"] = data_predictions_qm
 

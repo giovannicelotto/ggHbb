@@ -8,4 +8,4 @@ Maximum failed steps (max=5) reached and minimization failed at r = 6.10101
 
  --- FitDiagnostics ---
 Best fit r: 1.05339  -3.74425/+48.9466  (68% CL)
-Done in 5.05 min (cpu), 5.07 min (real)
+Done in 5.09 min (cpu), 5.11 min (real)

@@ -1,8 +1,9 @@
-modelName: Mar05_12_50p0 #Jan21_3_50p0
+modelName: Jan21_3_50p0 #Mar31_9_200p0
 include_nn: true
 ttbar_CR: both
-boosted: 12
+boosted: 3
 columns:
+  - dijet_pT_asymmetry
   - jet1_pt
   - jet1_eta
   - jet1_phi
@@ -49,6 +50,10 @@ columns:
   - jet1_muon_pt
   - jet1_muon_eta
   - jet1_muon_dxySig
+  - dijet_dR
+  - dijet_dPhi
+  - dijet_dEta
+  - dijet_twist
   #- has_jet4
   #- jet4_pt
   #- jet4_eta
@@ -85,6 +90,21 @@ columns:
 
   - is_ttbar_CR
   - flat_weight
+SignalOnlyFeatures:
+  - LHEScaleWeight_MuFdown_MuRdown
+  - LHEScaleWeight_MuFdown_MuRnom
+  - LHEScaleWeight_MuFdown_MuRup
+  - LHEScaleWeight_MuFnom_MuRdown
+  - LHEScaleWeight_MuFnom_MuRup
+  - LHEScaleWeight_MuFup_MuRdown
+  - LHEScaleWeight_MuFup_MuRnom
+  - LHEScaleWeight_MuFup_MuRup
+  - PSWeight_ISRdown_FSRnom
+  - PSWeight_ISRup_FSRnom
+  - PSWeight_ISRnom_FSRup
+  - PSWeight_ISRnom_FSRdown
+  - LHEAlphasWeight_down
+  - LHEAlphasWeight_up
 MConlyFeatures:
   - btag_sf_hf_central
   - btag_sf_hf_up
@@ -92,21 +112,8 @@ MConlyFeatures:
   - btag_sf_lightf_central
   - btag_sf_light_up
   - btag_sf_light_down
+  - top_pt_reweighting
   - xsection
-  #- LHEScaleWeight_MuFdown_MuRdown
-  #- LHEScaleWeight_MuFdown_MuRnom
-  #- LHEScaleWeight_MuFdown_MuRup
-  #- LHEScaleWeight_MuFnom_MuRdown
-  #- LHEScaleWeight_MuFnom_MuRup
-  #- LHEScaleWeight_MuFup_MuRdown
-  #- LHEScaleWeight_MuFup_MuRnom
-  #- LHEScaleWeight_MuFup_MuRup
-  #- PSWeight_ISRdown_FSRnom
-  #- PSWeight_ISRup_FSRnom
-  #- PSWeight_ISRnom_FSRup
-  #- PSWeight_ISRnom_FSRdown
-  #- LHEAlphasWeight_down
-  #- LHEAlphasWeight_up
   - jet_pileupId_SF_up
   - jet_pileupId_SF_down
   - jet_pileupId_SF_nom
@@ -127,14 +134,28 @@ MConlyFeatures:
   - dijet_pt_prime
   - dijet_eta_prime
   - dijet_phi_prime
-  - dijet_dR
-  - dijet_dEta
-  - dijet_twist
   - dijet_cs
   - ht_prime
   - nJets_20
   - nJets_30
   - nJets_50
+  - Electron_tt_RECO_SF
+  - Electron_tt_RECO_SF_up
+  - Electron_tt_RECO_SF_down
+  - Electron_tt_ID_SF
+  - Electron_tt_ID_SF_up
+  - Electron_tt_ID_SF_down
+  - Muon_tt_RECO_SF
+  - Muon_tt_RECO_stat
+  - Muon_tt_RECO_syst
+  - Muon_tt_ID_SF
+  - Muon_tt_ID_stat
+  - Muon_tt_ID_syst
+  - Muon_tt_ISO_SF
+  - Muon_tt_ISO_stat
+  - Muon_tt_ISO_syst
+  - trig_sf
+  - err_trig_sf
 
 dataPeriods:
   1A: -1
@@ -161,32 +182,33 @@ dataPeriods:
   5D: -1
 
 MC:
+  
   0 : 0
-  1 : -1 # EWKZJets
+  1 : 0 # EWKZJets
   2 : 0 # Diboson
   3 : 0 # Diboson
   4 : 0 # Diboson
 
-  5 : 0    # Top
-  6 : 0    # Top
-  7 : 0    # Top
-  8 : 0    # Top
-  9 : 0    # Top
-  10 : 0   # Top
+  5 : 0 # Top
+  6 : 0 # Top
+  7 : 0 # Top
+  8 : 0 # Top
+  9 : 0 # Top
+  10 : 0 # Top
 
   11 : 0 # ttbar
   12 : 0 # ttbar
-  13 : 0 # ttbar
+  13 : -1 # ttbar
 
   14 : 0 # WJets
   15 : 0 #WJets
   16 : 0 #WJets
   17 : 0 #WJets
-  18 : 0  #WJets
-  19 : -1 #ZJets
-  20 : -1 #ZJets
-  21 : -1 #ZJets
-  22 : -1 #ZJets
+  18 : 0 #WJets
+  19 : 0 #ZJets
+  20 : 0 #ZJets
+  21 : 0 #ZJets
+  22 : 0 #ZJets
   
   23 : 0 #QCD
   24 : 0 #QCD
@@ -202,12 +224,12 @@ MC:
   34 : 0 #QCD
 
   35 : 0 #Zjets
-  36 : -1 # VBF
-  37 : -1 # ggHbb MINLO
-  48 : -1 #Hbb other prod. mechanisms
-  49 : -1 #Hbb other prod. mechanisms
-  50 : -1 #Hbb other prod. mechanisms
-  51 : -1 #Hbb other prod. mechanisms
-  52 : -1 #Hbb other prod. mechanisms
-  53 : -1 #Hbb other prod. mechanisms
-  54 : -1 #Hbb other prod. mechanisms
+  36 : 0 # VBF
+  37 : 0 # ggHbb MINLO
+  48 : 0 #Hbb other prod. mechanisms
+  49 : 0 #Hbb other prod. mechanisms
+  50 : 0 #Hbb other prod. mechanisms
+  51 : 0 #Hbb other prod. mechanisms
+  52 : 0 #Hbb other prod. mechanisms
+  53 : 0 #Hbb other prod. mechanisms
+  54 : 0 #Hbb other prod. mechanisms

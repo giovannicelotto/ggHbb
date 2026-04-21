@@ -22,7 +22,7 @@ import json
 # Custom modules
 from helpers.getDfsFromConfig import getDfsFromConfig
 from functions import cut, getDfProcesses_v2
-from step1_ws_helpers import apply_syst, make_hist, make_roodatahist, build_dscb_gaus_model, plot_model
+from step1_ws_helpers import apply_syst, make_hist, make_roodatahist, build_dscb_gaus_model, plot_model, build_simple_gaus_model, fit_sum_of_gaussians
 # Style
 hep.style.use("CMS")
 ROOT.gROOT.SetBatch(True)
@@ -73,7 +73,7 @@ if args.syst:
 # --- Histograms & RooDataHists ---
 print(f"dijet_mass_c{args.config}")
 x_cat = ROOT.RooRealVar(f"dijet_mass_c{args.config}", f"dijet_mass_c{args.config}", x1, x2)
-
+print(len(dfMC_Z.dijet_mass), " Z events, with total weight ", np.sum(dfMC_Z.weight))
 hist_data_cat = make_hist(f"hist_data_cat{args.config}", df.dijet_mass, np.ones(len(df)), nbins, x1, x2)
 hist_Z_cat = make_hist(f"hist_Z_cat{args.config}", dfMC_Z.dijet_mass, dfMC_Z.weight, nbins, x1, x2)
 hist_H_cat = make_hist(f"hist_H_cat{args.config}", dfMC_H.dijet_mass, dfMC_H.weight, nbins, x1, x2)
@@ -87,21 +87,50 @@ rooHist_H_cat = make_roodatahist(f"rooHist_H_cat{args.config}", hist_H_cat, x_ca
 with open(config_path_Z, 'r') as f:
     config_Z = yaml.safe_load(f)
 ext = f"_{(args.syst).replace('_up', 'Up').replace('_down','Down')}" if args.syst else ""
-model_Z_c, dscb_Z, gaus_Z, params_Z = build_dscb_gaus_model(x_cat, config_Z, f"Z_c{args.config}{ext}")
+#model_Z_c,   params_Z = build_simple_gaus_model(x_cat, config_Z, f"Z_c{args.config}{ext}")
+best, all_results = fit_sum_of_gaussians(
+    x_cat,
+    rooHist_Z_cat,
+    max_gaussians=5,
+    mean=(90.,50.,300.), sigma=(10.,1.,300.)
+)
+model_Z_c = best['model']
+#model_Z_c,  gaus_Z,gaus2, params_Z = build_dscb_gaus_model(x_cat, config_Z, f"Z_c{args.config}{ext}")
 model_Z_c.Print()
 rooHist_Z_cat.Print()
 # Fit
-model_Z_c.fitTo(rooHist_Z_cat, ROOT.RooFit.Extended(False), ROOT.RooFit.Binned(True), ROOT.RooFit.SumW2Error(True))
+fit_result = model_Z_c.fitTo(rooHist_Z_cat, ROOT.RooFit.Extended(False), ROOT.RooFit.Binned(True), ROOT.RooFit.SumW2Error(True), ROOT.RooFit.Save())
+print("******************************\n******************************\n******************************")
+print("Fit results for Z model:")
+fit_result.Print("v")
+#params = model_Z_c.floatParsFinal()
 
-
+#for i in range(params.getSize()):
+#    p = params.at(i)
+#    print(f"{p.GetName()} = {p.getVal():.4f} ± {p.getError():.4f}")
 # Plot
+n=best['n']
+components = []
+for i in range(n):
+    components.append({
+        'name': f'g_{n}_{i}',
+        'color': ROOT.kBlue + i,   # or whatever scheme you want
+        'style': ROOT.kDashed,
+        'label': f"Gauss {i}"
+    })
 plot_model(
     x_cat, rooHist_Z_cat, model_Z_c,
-    components=[{'name': f'dscb_Z_c{args.config}{ext}', 'color': ROOT.kBlue, 'style': ROOT.kDashed, 'label': "DSCB"},
-                {'name': f'gauss_Z_c{args.config}{ext}', 'color': ROOT.kGreen+2, 'style': ROOT.kDotted, 'label': "Gauss"}],
+    components=components,
     filename=cfg["output_Z"].replace("CONFIG", args.config).replace("SYST", args.syst if args.syst else "nominal"),
     title=" "
 )
+#plot_model(
+#    x_cat, rooHist_Z_cat, model_Z_c,
+#    components=[{'name': f'gauss_Z_c{args.config}{ext}', 'color': ROOT.kBlue, 'style': ROOT.kDashed, 'label': "Gauss"},
+#                {'name': f'dscb_Z_c{args.config}{ext}', 'color': ROOT.kGreen+2, 'style': ROOT.kDotted, 'label': "DSCB"},],
+#    filename=cfg["output_Z"].replace("CONFIG", args.config).replace("SYST", args.syst if args.syst else "nominal"),
+#    title=" "
+#)
 
 # Freeze Z parameters
 # Default category
@@ -117,28 +146,38 @@ else:
     all_params = {}
 
 # Overwrite / add only the chosen category
-all_params[category] = {
-    p.GetName(): {
-        "value": float(p.getVal()),
-        "error": float(p.getError())
-    }
-    for p in params_Z
-}
+#all_params[category] = {
+#    p.GetName(): {
+#        "value": float(p.getVal()),
+#        "error": float(p.getError())
+#    }
+#    for p in params_Z
+#}
 
 # Freeze parameters
-for p in params_Z:
+for p in best["parameters"]:
     p.setConstant(True)
 
 # Write back the full JSON
-with open(outpath, "w") as f:
-    json.dump(all_params, f, indent=2)
+#with open(outpath, "w") as f:
+#    json.dump(all_params, f, indent=2)
 
 # %%
 # --- Higgs model ---
 with open(config_path_H, 'r') as f:
     config_H = yaml.safe_load(f)
+best_H, all_results = fit_sum_of_gaussians(
+    x_cat,
+    rooHist_H_cat,
+    max_gaussians=5,
+    mean=(125.,50.,300.), sigma=(10.,1.,300.)
+)
+model_H_c = best_H['model']
+model_H_c.Print()
+rooHist_H_cat.Print()
 
-model_H_c, dscb_H, gaus_H, params_H = build_dscb_gaus_model(x_cat, config_H, f"H_c{args.config}{ext}")
+
+#model_H_c, dscb_H, gaus_H, params_H = build_dscb_gaus_model(x_cat, config_H, f"H_c{args.config}{ext}")
 model_H_c.fitTo(rooHist_H_cat, ROOT.RooFit.Extended(False), ROOT.RooFit.Binned(True), ROOT.RooFit.SumW2Error(True))
 
 plot_model(
@@ -149,7 +188,7 @@ plot_model(
     title=" ")
 
 # Freeze H parameters
-for p in params_H:
+for p in best_H['parameters']:
     p.setConstant(True)
 
 # %%

@@ -15,7 +15,7 @@ from plotDfs import plotDfs
 from hist import Hist
 import yaml
 # %%
-cfg_file = "/t3home/gcelotto/ggHbb/tt_CR/plot_tt_from_df.yaml"
+cfg_file = "/t3home/gcelotto/ggHbb/tt_CR/analysis/plot_tt_from_df.yaml"
 with open(cfg_file, "r") as f:
     cfg = yaml.safe_load(f)
 # %%
@@ -27,7 +27,7 @@ boosted = cfg["boosted"]
 columns = cfg["columns"]
 MConlyFeatures = cfg["MConlyFeatures"]
 predictionsPath = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/mjjDiscoPred_%s"%modelName
-
+print(columns)
 # %%
 dfProcessesMC, dfProcessesData, dfProcessMC_JEC = getDfProcesses_v2()
 
@@ -70,6 +70,7 @@ for idx, p in enumerate(dfProcessesData.process):
         continue
     df = pd.read_parquet(df_folder+"/dataframes_%s_%s.parquet"%(p, modelName), columns=columns)
     print("/dataframes_%s_%s.parquet"%(p, modelName))
+    df['dijet_dEta'] =df.jet1_eta - df.jet2_eta
 
     dfsData.append(df)
     lumi = np.load(df_folder+"/lumi_%s_%s.npy"%(p, modelName))
@@ -78,6 +79,7 @@ lumi = np.sum(lumis)
 # %%
 for idx, df in enumerate(dfsMC):
     dfsMC[idx]['weight'] =dfsMC[idx].weight*lumi
+    dfsMC[idx]['dijet_dEta'] =dfsMC[idx].jet1_eta - dfsMC[idx].jet2_eta
 print("Lumi total is %.2f fb-1"%lumi)
 # %%
 process_dict = {
@@ -109,6 +111,7 @@ dfData = pd.concat(dfsData, ignore_index=True)
 dfMC   = pd.concat(dfsMC, ignore_index=True)
 
 #%%
+
 from binning_per_variable import plot_vars
 # %%
 def plot_data_mc_stack_ratio(dfData, dfMC, var, bins, xlabel):
@@ -243,9 +246,10 @@ def plot_data_mc_stack_ratio(dfData, dfMC, var, bins, xlabel):
 
 # %%
 for var, cfg in plot_vars.items():
-    if var in columns:
+    if var in columns or var == "dijet_dEta":
         pass
     else:
+        #print("[WARNING] Variable %s not found in dataframe columns, skipping..."%var)
         continue
     print(var," plotting...")
     fig, (ax, rax), mc_arrays, mc_weights = plot_data_mc_stack_ratio(
@@ -259,3 +263,5 @@ for var, cfg in plot_vars.items():
     plt.close('all')
     del fig, ax, rax
 
+
+# %%
