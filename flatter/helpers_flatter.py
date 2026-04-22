@@ -330,7 +330,7 @@ def get_event_genBranches(branches, ev, processName):
         dict["LHEPdfWeight"] = branches["LHEPdfWeight"][ev]
     else:
         dict["LHEPdfWeight"] = np.ones(103)
-    if (('ZJetsToQQ' in processName) | ('EWKZJets' in processName)):
+    if (('ZJets' in processName) | ('ZJets' in processName)):
         dict["LHEPart_pt"] = branches["LHEPart_pt"][ev],
         dict["LHEPart_pdgId"] = branches["LHEPart_pdgId"][ev],
     return dict
@@ -412,20 +412,23 @@ def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None, jetIsPresent=None, 
     counterMuTight=0
     if jet_vec is not None:
         for muIdx in range(len(evt["Muon_pt"])):
-            if (np.sqrt((evt["Muon_eta"][muIdx]-evt["Jet_eta"][idx])**2 + (evt["Muon_phi"][muIdx]-evt["Jet_phi"][idx])**2)<0.4) & (evt["Muon_tightId"][muIdx]):
+            mu = ROOT.TLorentzVector()
+            mu.SetPtEtaPhiM(evt["Muon_pt"][muIdx], evt["Muon_eta"][muIdx], evt["Muon_phi"][muIdx], evt["Muon_mass"][muIdx])
+            deta = abs(evt["Muon_eta"][muIdx]-evt["Jet_eta"][idx])
+            dphi = jet_vec.DeltaPhi(mu)
+            if (np.sqrt((deta)**2 + (dphi)**2)<0.4) & (evt["Muon_tightId"][muIdx]):
                 counterMuTight=counterMuTight+1
     features[f"{prefix}_nTightMuons"] = counterMuTight        if jet_vec is not None else 0
 
     jet_btagWP = btag_wp(evt["Jet_btagDeepFlavB"][idx], evt["Jet_pt"][idx]) if jet_vec is not None else -1
     features[f"{prefix}_btagWP"] = int(jet_btagWP) if jet_vec is not None else 0
     features[f"{prefix}_idx"] = idx if jet_vec is not None else -1
-    features[f"{prefix}_rawFactor"] = evt["Jet_rawFactor"][idx] if jet_vec is not None else 0.
     features[f"{prefix}_bReg2018"] = evt["Jet_bReg2018"][idx] if jet_vec is not None else 0.
     features[f"{prefix}_sv_pt"] = evt["Jet_vtxPt"][idx] if jet_vec is not None else 0.
     features[f"{prefix}_sv_mass"] = evt["Jet_vtxMass"][idx] if jet_vec is not None else 0.
     features[f"{prefix}_sv_Ntrk"] = evt["Jet_vtxNtrk"][idx] if jet_vec is not None else 0
     if jet_vec is not None:
-        jet_sv_3dSig = (evt["Jet_vtx3dL"][idx])/(evt["Jet_vtx3deL"][idx]) if (evt["Jet_vtx3dL"][idx]!=0) else 0
+        jet_sv_3dSig = (evt["Jet_vtx3dL"][idx])/(evt["Jet_vtx3deL"][idx]) if (evt["Jet_vtx3deL"][idx]!=0) else 0
     else:
         jet_sv_3dSig = 0.
     features[f"{prefix}_sv_3dSig"] = jet_sv_3dSig if jet_vec is not None else 0.
@@ -433,7 +436,7 @@ def fill_jet_features(prefix, idx, evt, jet_vec, dijet=None, jetIsPresent=None, 
     if dijet is not None:
         features[f"dR_{prefix}_dijet"]   = jet_vec.DeltaR(dijet) if jet_vec is not None else 0.
         features[f"dPhi_{prefix}_dijet"] = jet_vec.DeltaPhi(dijet) if jet_vec is not None else 0.
-        features[f"dEta_{prefix}_dijet"] = jet_vec.DeltaPhi(dijet) if jet_vec is not None else 0.
+        features[f"dEta_{prefix}_dijet"] = abs(jet_vec.Eta() - dijet.Eta()) if jet_vec is not None else 0.
     else:
         features[f"dR_{prefix}_dijet"]   = 0.
         features[f"dPhi_{prefix}_dijet"] = 0.
@@ -580,6 +583,7 @@ def fill_dijet_features(dijet_vec, jet1_vec, jet2_vec, evt, run=2):
     deltaPhi = jet1_vec.Phi()-jet2_vec.Phi()
     deltaPhi = deltaPhi - 2*np.pi*(deltaPhi >= np.pi) + 2*np.pi*(deltaPhi< -np.pi)
     features['dijet_dPhi'] = np.float32(abs(deltaPhi))
+
     
     tau = np.arctan(abs(deltaPhi)/abs(jet1_vec.Eta() - jet2_vec.Eta() + 0.0000001))
     features['dijet_twist'] = np.float32(tau)

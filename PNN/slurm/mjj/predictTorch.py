@@ -13,7 +13,11 @@ import yaml
 from functions import getDfProcesses_v2
 import ROOT
 import numpy as np
-
+import os
+import matplotlib.pyplot as plt
+import mplhep as hep
+hep.style.use("CMS")
+DEBUG=False
 def apply_jec_and_recompute_root(df_, featuresForTraining, syst_name, direction="up"):
     """
     Apply JEC systematic and recompute all kinematics using TLorentzVector.
@@ -112,10 +116,10 @@ def apply_jec_and_recompute_root(df_, featuresForTraining, syst_name, direction=
         ht.iloc[i] = np.float32(    ht.iloc[i] - initial_HT123_sum.iloc[i]    + v1_uncor.Pt() + v2_uncor.Pt() + v3.Pt())
 
         # angular quantities
-        dEta = v3.Eta() - dijet.Eta()
-        dPhi = ROOT.TVector2.Phi_mpi_pi(v3.Phi() - dijet.Phi())
+        #dEta = v3.Eta() - dijet.Eta()
+        dPhi = v3.DeltaPhi(dijet) if v3.Pt()>10 else 0.
 
-        dR_jet3_dijet[i] = np.sqrt(dEta**2 + dPhi**2)
+        dR_jet3_dijet[i] = v3.DeltaR(dijet) if v3.Pt()>10 else 0.
         dPhi_jet3_dijet[i] = dPhi
 
     # -----------------------------
@@ -194,7 +198,6 @@ def predict(file_path, modelName, boosted, quantile_matching=True, JEC_eval=Fals
 
     # Load data from file_path and preprocess it as needed
     if type(file_path) == str:
-        print("Before opening", flush=True)
         Xtest = pd.read_parquet(file_path,
                                     engine='pyarrow',
                                      filters= getCommonFilters(btagWP="M", cutDijet=False, ttbarCR='both', boosted=boosted))
@@ -207,6 +210,7 @@ def predict(file_path, modelName, boosted, quantile_matching=True, JEC_eval=Fals
 
 
     data = [Xtest]
+    print("Variables recomputed for jec")
 
     data[0]  = scale(data[0], featuresForTraining=featuresForTraining, scalerName= modelDir + "/myScaler.pkl" ,fit=False)
     for f in data[0].columns:
@@ -235,11 +239,60 @@ def predict(file_path, modelName, boosted, quantile_matching=True, JEC_eval=Fals
 
             # UP and DOWN predictions could be stored if needed
             for direction in ["up", "down"]:
+                print("JECvar and direction: ", JECvar, direction)
                 df_var = apply_jec_and_recompute_root(
                     X_nominal,
                     featuresForTraining,
                     JECvar,
                     direction=direction)
+                
+                debug_dir = f"/t3home/gcelotto/ggHbb/debug_jec_features/{JECvar}_{direction}"
+                os.makedirs(debug_dir, exist_ok=True)
+                if (DEBUG):
+                    for feat in featuresForTraining:
+
+                        nominal_vals = Xtest[feat].replace([np.inf, -np.inf], np.nan).dropna()
+                        varied_vals  = df_var[feat].replace([np.inf, -np.inf], np.nan).dropna()
+
+                        if (len(nominal_vals) == 0) or (len(varied_vals) == 0):
+                            continue
+                        
+                        qlow = np.nanpercentile(nominal_vals, 0.5)
+                        qhigh = np.nanpercentile(nominal_vals, 99.5)
+
+                        if qlow == qhigh:
+                            continue
+                        
+                        bins = np.linspace(qlow, qhigh, 80)
+
+                        fig, ax = plt.subplots(1, 1, figsize=(8, 6))
+
+                        ax.hist(
+                            nominal_vals,
+                            bins=bins,
+                            histtype='step',
+                            density=True,
+                            linewidth=2,
+                            label='nominal'
+                        )
+
+                        ax.hist(
+                            varied_vals,
+                            bins=bins,
+                            histtype='step',
+                            density=True,
+                            linewidth=1,
+                            label=f'{JECvar}_{direction}'
+                        )
+
+                        ax.set_xlabel(feat)
+                        ax.set_ylabel("Normalized entries")
+                        ax.legend()
+
+                        fig.savefig(f"{debug_dir}/{feat}.png", bbox_inches='tight')
+
+                        plt.close(fig)
+
                 
                 # scale with SAME scaler
                 df_var = scale(
@@ -264,13 +317,14 @@ def predict(file_path, modelName, boosted, quantile_matching=True, JEC_eval=Fals
                         L_tt   = np.load("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_tt.npy")
                         L_ggH  = np.load("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_ggH.npy")
                         from copula_morph import copula_morph
-                        X_tt_morphed = pd.DataFrame(copula_morph( data[0][featuresForTraining], qt_tt, qt_ggH, L_tt, L_ggH), columns=featuresForTraining, index=data[0].index)
+                        X_tt_morphed = pd.DataFrame(copula_morph( df_var[featuresForTraining], qt_tt, qt_ggH, L_tt, L_ggH), columns=featuresForTraining, index=data[0].index)
                         quantile_varied_tensor = torch.tensor(np.float32(X_tt_morphed[featuresForTraining].values)).float()
                         data_predictions_qm = nn(quantile_varied_tensor).numpy()
                         jec_outputs[f"qm_{JECvar}_{direction}"] = data_predictions_qm
 
 
                 jec_outputs[f"{JECvar}_{direction}"] = pred
+                jec_outputs[f"dijet_pt_{JECvar}_{direction}"] = df_var["dijet_pt"].values
         return jec_outputs
     
     

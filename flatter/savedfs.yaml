@@ -189,15 +189,15 @@ MC:
   3 : 0 # Diboson
   4 : 0 # Diboson
 
-  5 : 0 # Top
-  6 : 0 # Top
-  7 : 0 # Top
-  8 : 0 # Top
-  9 : 0 # Top
-  10 : 0 # Top
+  5 : -1 # Top
+  6 : -1 # Top
+  7 : -1 # Top
+  8 : -1 # Top
+  9 : -1 # Top
+  10 : -1 # Top
 
-  11 : 0 # ttbar
-  12 : 0 # ttbar
+  11 : -1 # ttbar
+  12 : -1 # ttbar
   13 : -1 # ttbar
 
   14 : 0 # WJets
@@ -224,12 +224,12 @@ MC:
   34 : 0 #QCD
 
   35 : 0 #Zjets
-  36 : 0 # VBF
-  37 : 0 # ggHbb MINLO
-  48 : 0 #Hbb other prod. mechanisms
-  49 : 0 #Hbb other prod. mechanisms
-  50 : 0 #Hbb other prod. mechanisms
-  51 : 0 #Hbb other prod. mechanisms
-  52 : 0 #Hbb other prod. mechanisms
-  53 : 0 #Hbb other prod. mechanisms
-  54 : 0 #Hbb other prod. mechanisms
+  36 : -1 # VBF
+  37 : -1 # ggHbb MINLO
+  48 : -1 #Hbb other prod. mechanisms
+  49 : -1 #Hbb other prod. mechanisms
+  50 : -1 #Hbb other prod. mechanisms
+  51 : -1 #Hbb other prod. mechanisms
+  52 : -1 #Hbb other prod. mechanisms
+  53 : -1 #Hbb other prod. mechanisms
+  54 : -1 #Hbb other prod. mechanisms

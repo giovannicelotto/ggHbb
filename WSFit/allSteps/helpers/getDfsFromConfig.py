@@ -5,6 +5,8 @@ import ROOT
 import numpy as np
 from array import array
 import sys, re
+BASE_CONFIG_PATH = "/t3home/gcelotto/ggHbb/WSFit/Configs"
+BASE_DATA_PATH = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/dataframes_NN"
 
 def extract_pnn_edges(condition: str):
     pattern = r"PNN\s*([<>]=?)\s*([0-9]*\.?[0-9]+)"

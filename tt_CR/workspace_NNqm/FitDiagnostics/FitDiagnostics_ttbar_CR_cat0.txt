@@ -2,3 +2,42 @@
  <<< v9.2.1 >>>
 >>> Random number generator seed is 123456
 >>> Method used is FitDiagnostics
+============================================================
+Analyzing bin errors for: prop_binbin1
+Poisson cut-off: 1
+Processes excluded for sums: TT
+============================================================
+Bin        Contents        Error           Notes                         
+0          314.995348      3.802194        total sum                     
+0          17.201433       1.972742        excluding marked processes    
+0          76.000000       8.717798        Unweighted events, alpha=4.144676
+  => Total parameter prop_binbin1_bin0[0.00,-7.00,7.00] to be Gaussian constrained
+------------------------------------------------------------
+1          665.406107      5.219849        total sum                     
+1          27.724344       2.335096        excluding marked processes    
+1          141.000000      11.874342       Unweighted events, alpha=4.719192
+  => Total parameter prop_binbin1_bin1[0.00,-7.00,7.00] to be Gaussian constrained
+------------------------------------------------------------
+2          893.954605      5.943748        total sum                     
+2          36.798233       2.589618        excluding marked processes    
+2          202.000000      14.212670       Unweighted events, alpha=4.425518
+  => Total parameter prop_binbin1_bin2[0.00,-7.00,7.00] to be Gaussian constrained
+------------------------------------------------------------
+3          1606.079880     7.918742        total sum                     
+3          61.357468       3.409708        excluding marked processes    
+3          324.000000      18.000000       Unweighted events, alpha=4.957037
+  => Total parameter prop_binbin1_bin3[0.00,-7.00,7.00] to be Gaussian constrained
+------------------------------------------------------------
+4          495.090504      4.643625        total sum                     
+4          31.870960       2.424610        excluding marked processes    
+4          173.000000      13.152946       Unweighted events, alpha=2.861795
+  => Total parameter prop_binbin1_bin4[0.00,-7.00,7.00] to be Gaussian constrained
+------------------------------------------------------------
+Channel bin1 will use autoMCStats with settings: event-threshold=1, include-signal=0, hist-mode=1
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1 = 3975.53
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1__model_bonly_ = 9.62196
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1 = 3564.98
+
+ --- FitDiagnostics ---
+Best fit SF_NN: 0.926284  -0.0651415/+0.0705107  (68% CL)
+Done in 0.03 min (cpu), 0.03 min (real)

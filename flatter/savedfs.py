@@ -180,10 +180,19 @@ if args.runMC:
         #df.loc[:,'PNN_pca'] = np.array(predsMC.PNN_pca)
             df.loc[:,'PNN_qm'] = np.array(predsMC.PNN_qm)
         
-        if "Jet_sys_JECAbsoluteMPFBias_up" in predsMC.columns:
-            for col in predsMC.columns:
-                if "Jet_sys" in col:
-                    df.loc[:,"NN_"+col] = predsMC[col]
+        cols = [col for col in predsMC.columns if col.startswith("Jet_sys") or col.startswith("qm_Jet_sys")]
+
+        df = pd.concat(
+            [df, predsMC[cols].add_prefix("NN_")],
+            axis=1
+        )
+
+        cols = [col for col in predsMC.columns if col.startswith("dijet_pt_Jet_sys")]
+
+        df = pd.concat(
+            [df, predsMC[cols]],
+            axis=1
+        )
 
         print("Process ", dfProcessesMC.process[isMC], " isMC :", isMC)
         #print("Xsection ", dfProcessesMC.xsection[isMC])

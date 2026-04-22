@@ -3,6 +3,7 @@ from array import array
 import numpy as np
 import yaml
 from pathlib import Path
+assert False, "This module is deprecated. Please use the corresponding functions in signal_modeling_helpers.py instead."
 def apply_syst(df, syst, cat, particle):
     if syst=="puid_up":
         print("Before", df['weight'].sum())
@@ -183,11 +184,9 @@ def build_dscb_gaus_model(x_var, config, label):
     
     return model, dscb, gaus, [mean, sigma_cb, sigma_gaus, alpha1, alpha2, nL, nR, frac]
 
-import ROOT
 
-import ROOT
 
-def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigma=(10.,1.,300.), verbose=True):
+def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigma=(10.,1.,300.), particle="Z", verbose=True):
     mean, mean_min, mean_max = mean
     sigma_, sigma_min, sigma_max = sigma
     results = []
@@ -201,10 +200,10 @@ def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigm
         parameters = []
 
         for i in range(n):
-            mu = ROOT.RooRealVar(f"mu_{n}_{i}", f"mu_{n}_{i}", mean, mean_min, mean_max)
-            sigma = ROOT.RooRealVar(f"sigma_{n}_{i}", f"sigma_{n}_{i}", sigma_, sigma_min, sigma_max)
+            mu = ROOT.RooRealVar(f"mu{particle}_{n}_{i}", f"mu{particle}_{n}_{i}", mean, mean_min, mean_max)
+            sigma = ROOT.RooRealVar(f"sigma{particle}_{n}_{i}", f"sigma{particle}_{n}_{i}", sigma_, sigma_min, sigma_max)
 
-            gaus = ROOT.RooGaussian(f"g_{n}_{i}", f"g_{n}_{i}", x, mu, sigma)
+            gaus = ROOT.RooGaussian(f"g{particle}_{n}_{i}", f"g{particle}_{n}_{i}", x, mu, sigma)
 
             gaussians.add(gaus)
 
@@ -212,11 +211,11 @@ def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigm
             parameters.extend([mu, sigma])
 
             if i < n - 1:
-                frac = ROOT.RooRealVar(f"frac_{n}_{i}", f"frac_{n}_{i}", 0.5, 0.0, 1.0)
+                frac = ROOT.RooRealVar(f"frac{particle}_{n}_{i}", f"frac{particle}_{n}_{i}", 0.5, 0.0, 1.0)
                 coeffs.add(frac)
                 parameters.append(frac)
 
-        model = ROOT.RooAddPdf(f"model_{n}", f"model_{n}", gaussians, coeffs, True)
+        model = ROOT.RooAddPdf(f"model_{particle}{n}", f"model_{particle}{n}", gaussians, coeffs, True)
 
         # also keep model alive
         components.append(model)

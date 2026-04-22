@@ -6,6 +6,7 @@
 # apply systematic variation
 # Build roodatahist
 # Build models
+assert False, "This script is deprecated and should not be used. Please use the new signal_modeling.py instead, which has a more modular structure and better handling of systematics."
 import ROOT
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.FATAL)
 ROOT.gErrorIgnoreLevel = ROOT.kError
