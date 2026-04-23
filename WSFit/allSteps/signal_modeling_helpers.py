@@ -15,7 +15,7 @@ def make_roodatahist(name, hist, x_var):
     return ROOT.RooDataHist(name, name, ROOT.RooArgList(x_var), hist)
 
 
-def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigma=(10.,1.,300.), particle="Z", verbose=True):
+def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigma=(10.,1.,300.), particle="Z", category_number=7, tag='nominal', verbose=True):
     mean, mean_min, mean_max = mean
     sigma_, sigma_min, sigma_max = sigma
     results = []
@@ -29,10 +29,10 @@ def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigm
         parameters = []
 
         for i in range(n):
-            mu = ROOT.RooRealVar(f"mu{particle}_{n}_{i}", f"mu{particle}_{n}_{i}", mean, mean_min, mean_max)
-            sigma = ROOT.RooRealVar(f"sigma{particle}_{n}_{i}", f"sigma{particle}_{n}_{i}", sigma_, sigma_min, sigma_max)
+            mu = ROOT.RooRealVar(f"mu{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", f"mu{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", mean, mean_min, mean_max)
+            sigma = ROOT.RooRealVar(f"sigma{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", f"sigma{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", sigma_, sigma_min, sigma_max)
 
-            gaus = ROOT.RooGaussian(f"g{particle}_{n}_{i}", f"g{particle}_{n}_{i}", x, mu, sigma)
+            gaus = ROOT.RooGaussian(f"g{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", f"g{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", x, mu, sigma)
 
             gaussians.add(gaus)
 
@@ -40,11 +40,11 @@ def fit_sum_of_gaussians(x, datahist, max_gaussians=5, mean=(90.,50.,300.), sigm
             parameters.extend([mu, sigma])
 
             if i < n - 1:
-                frac = ROOT.RooRealVar(f"frac{particle}_{n}_{i}", f"frac{particle}_{n}_{i}", 0.5, 0.0, 1.0)
+                frac = ROOT.RooRealVar(f"frac{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", f"frac{particle}_{n}_{i}_{tag.replace('_up', 'Up').replace('_down', 'Down')}", 0.5, 0.0, 1.0)
                 coeffs.add(frac)
                 parameters.append(frac)
-
-        model = ROOT.RooAddPdf(f"model_{particle}{n}", f"model_{particle}{n}", gaussians, coeffs, True)
+        modelName = f"model_{particle}_c{category_number}" if tag == "nominal" else f"model_{particle}_c{category_number}_{tag.replace('_up', 'Up').replace('_down', 'Down')}"
+        model = ROOT.RooAddPdf(modelName, modelName, gaussians, coeffs, True)
 
         # also keep model alive
         components.append(model)

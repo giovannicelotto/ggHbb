@@ -9,6 +9,15 @@ folder = "/pnfs/psi.ch/cms/trivcat/store/user/gcelotto/dataframes_NN/"
 modelName = "Jan21_3_50p0"
 df = pd.read_parquet(folder + modelName + "/df_GluGluHToBBMINLO_Jan21_3_50p0.parquet")
 df_VBF = pd.read_parquet(folder + modelName + "/df_VBFHToBB_Jan21_3_50p0.parquet")
+Z_processes = ["ZJetsToQQ_100to200", 
+               "ZJetsToQQ_200to400",
+                "ZJetsToQQ_400to600",
+                "ZJetsToQQ_600to800",
+                "ZJetsToQQ_800toInf"]
+df_Z=pd.DataFrame()
+for Z_proc in Z_processes:
+    df_Z__ = pd.read_parquet(folder + modelName + f"/df_{Z_proc}_Jan21_3_50p0.parquet")
+    df_Z = pd.concat([df_Z, df_Z__], ignore_index=True)
 # %%
 from matplotlib.colors import LogNorm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -65,6 +74,7 @@ ax_top.set_yticks([])
 # %%
 dfs = []
 categories = {
+    0:"No Cut",
     1:"NN Loose",
     7:"NN Medium",
     8:"NN Tight"}
@@ -92,54 +102,78 @@ for cat in categories.keys():
         dfs_VBF.append(df_)
 bins_dijet_pt = np.linspace(80, 900, 31)
 
+
+dfs_Z = []
+import yaml
+for cat in categories.keys():
+    yaml_file=f"/t3home/gcelotto/ggHbb/WSFit/Configs/cat{cat}.yml"
+    with open(yaml_file, "r") as f:
+        cfg = yaml.safe_load(f)
+
+        df_=df_Z.copy().query(cfg["cuts_string"])
+        print("Appended")
+        dfs_Z.append(df_)
+
+
 # %%
-fig, ax  = plt.subplots(1, 3, figsize=(15, 5))
+        
+VARIABLE = "jet3_pt"
+BINS = np.linspace(-0.01, 500, 51)
+fig, ax  = plt.subplots(1, 4, figsize=(25, 5))
 fig.subplots_adjust( hspace=0.35,  wspace=0.25,  top=0.95,bottom=0.08,left=0.07,right=0.98)
-#for i, cat in enumerate(categories):
-#    ax[i//2][i%2].hist(np.clip(dfs[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1]), bins=bins_dijet_pt, weights=dfs[i].weight*41.6, label="ggF")
-#    ax[i//2][i%2].set_xlabel("dijet pt")
-#    ax[i//2][i%2].set_ylabel("Events")
-#    ax[i//2][i%2].text(x=0.95, y=0.9, s=f"cat {cat}", transform=ax[i//2][i%2].transAxes, ha="right", va="center")
-#    ax[i//2][i%2].set_xlim(bins_dijet_pt[0],bins_dijet_pt[-1])
-#
-#    ax[i//2][i%2].hist(np.clip(dfs_VBF[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1]), bins=bins_dijet_pt, weights=dfs_VBF[i].weight*41.6, label='VBF', histtype='step', linewidth=2)
-#    ax[i//2][i%2].legend()
-
 for i, cat in enumerate(categories.keys()):
+    print("Plotting category %d: %s"%(cat, categories[cat]))
 
-    a = ax[i%3]
+    a = ax[i%(len(categories))]
 
     # --- ggF ---
-    x = np.clip(dfs[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1])
+    x = np.clip(dfs[i][VARIABLE], BINS[0], BINS[-1])
     w = dfs[i].weight * 41.6
 
-    counts, _ = np.histogram(x, bins=bins_dijet_pt, weights=w)
-    sumw2, _ = np.histogram(x, bins=bins_dijet_pt, weights=w**2)
+    counts, _ = np.histogram(x, bins=BINS, weights=w)
+    sumw2, _ = np.histogram(x, bins=BINS, weights=w**2)
     err = np.sqrt(sumw2)
 
-    centers = 0.5 * (bins_dijet_pt[1:] + bins_dijet_pt[:-1])
-    widths = np.diff(bins_dijet_pt)
+    centers = 0.5 * (BINS[1:] + BINS[:-1])
+    widths = np.diff(BINS)
 
     a.bar(centers, counts, width=widths, align="center", alpha=0.5, label="ggF")
     a.errorbar(centers, counts, yerr=err, fmt="none", capsize=2)
+    print("Events with no third jet in ggF %.2f%%"%(counts[0]/sum(counts)*100))
 
     # --- VBF ---
-    x = np.clip(dfs_VBF[i].dijet_pt, bins_dijet_pt[0], bins_dijet_pt[-1])
+    x = np.clip(dfs_VBF[i][VARIABLE], BINS[0], BINS[-1])
     w = dfs_VBF[i].weight * 41.6
 
-    counts, _ = np.histogram(x, bins=bins_dijet_pt, weights=w)
-    sumw2, _ = np.histogram(x, bins=bins_dijet_pt, weights=w**2)
+    counts, _ = np.histogram(x, bins=BINS, weights=w)
+    sumw2, _ = np.histogram(x, bins=BINS, weights=w**2)
     err = np.sqrt(sumw2)
 
-    a.step(bins_dijet_pt[:-1], counts, where="post", linewidth=2, label="VBF", color='red')
+    a.step(BINS[:-1], counts, where="post", linewidth=2, label="VBF", color='red')
     a.errorbar(centers, counts, yerr=err, fmt="none", capsize=2, color='red')
 
+    print("Events with no third jet in VBF %.2f%%"%(counts[0]/sum(counts)*100))
+
+    # --- ZJets ---
+    # Scaled by factor
+    r_factor = 30
+    x = np.clip(dfs_Z[i][VARIABLE], BINS[0], BINS[-1])
+    w = dfs_Z[i].weight * 41.6
+
+    counts, _ = np.histogram(x, bins=BINS, weights=w/r_factor)
+    sumw2, _ = np.histogram(x, bins=BINS, weights=w**2)
+    err = np.sqrt(sumw2)/r_factor
+
+    a.step(BINS[:-1], counts, where="post", linewidth=2, label=f"ZJets / {r_factor}", color='green')
+    a.errorbar(centers, counts, yerr=err, fmt="none", capsize=2, color='green')
+    print("Events with no third jet in ZJets %.2f%%"%(counts[0]/sum(counts)*100))
+
     # --- styling ---
-    a.set_xlabel("dijet pt")
+    a.set_xlabel(VARIABLE)
     a.set_ylabel("Events")
     
     a.set_title(categories[cat], fontsize=14)
-    a.set_xlim(bins_dijet_pt[0], bins_dijet_pt[-1])
+    a.set_xlim(BINS[0], BINS[-1])
     a.legend()
 # %%
 category_plot = 0

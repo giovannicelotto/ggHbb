@@ -81,8 +81,8 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
             [   ('jet1_pt_uncor', '>',  20),
                 ('jet2_pt_uncor', '>',  20),
                 
-                #('jet1_mass', '>', 0),
-                #('jet2_mass', '>', 0),
+                ('jet1_mass', '>', 0),
+                ('jet2_mass', '>', 0),
                 #('jet3_mass', '>',  0),
                 
                 ('jet1_eta', '>', -2.5),
@@ -102,8 +102,8 @@ def getCommonFilters(btagWP=None, cutDijet=True, ttbarCR=False, boosted=3):
             [   ('jet1_pt_uncor', '>',  20),
                 ('jet2_pt_uncor', '>',  20),
                 
-                #('jet1_mass', '>', 0),
-                #('jet2_mass', '>', 0),
+                ('jet1_mass', '>', 0),
+                ('jet2_mass', '>', 0),
                 #('jet3_mass', '>',  0),
                 
                 ('jet1_eta', '>', -2.5),

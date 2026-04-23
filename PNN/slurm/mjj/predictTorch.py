@@ -208,8 +208,8 @@ def predict(file_path, modelName, boosted, quantile_matching=True, JEC_eval=Fals
                 
     print("File opened", flush=True)
 
-
-    data = [Xtest]
+    cols_float = [col for col in Xtest.columns if "topology" not in col]
+    data = [Xtest[cols_float]].copy()
     print("Variables recomputed for jec")
 
     data[0]  = scale(data[0], featuresForTraining=featuresForTraining, scalerName= modelDir + "/myScaler.pkl" ,fit=False)
@@ -248,6 +248,7 @@ def predict(file_path, modelName, boosted, quantile_matching=True, JEC_eval=Fals
                 
                 debug_dir = f"/t3home/gcelotto/ggHbb/debug_jec_features/{JECvar}_{direction}"
                 os.makedirs(debug_dir, exist_ok=True)
+                
                 if (DEBUG):
                     for feat in featuresForTraining:
 
@@ -312,10 +313,10 @@ def predict(file_path, modelName, boosted, quantile_matching=True, JEC_eval=Fals
                     pred = nn(data_tensor).numpy().reshape(-1)
                     if quantile_matching:
                         # Prediction with Quantile Matching + Copula Space
-                        qt_tt  = joblib.load("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/qt_tt.pkl")
-                        qt_ggH = joblib.load("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/qt_ggH.pkl")
-                        L_tt   = np.load("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_tt.npy")
-                        L_ggH  = np.load("/t3home/gcelotto/ggHbb/documentation/plotScripts/PNN/quantile_matching/L_ggH.npy")
+                        qt_tt  = joblib.load("/t3home/gcelotto/ggHbb/tt_CR/analysis/morphing/matrices_and_fitter/qm_old/qt_tt.pkl")
+                        qt_ggH = joblib.load("/t3home/gcelotto/ggHbb/tt_CR/analysis/morphing/matrices_and_fitter/qm_old/qt_ggH.pkl")
+                        L_tt   = np.load("/t3home/gcelotto/ggHbb/tt_CR/analysis/morphing/matrices_and_fitter/qm_old/L_tt.npy")
+                        L_ggH  = np.load("/t3home/gcelotto/ggHbb/tt_CR/analysis/morphing/matrices_and_fitter/qm_old/L_ggH.npy")
                         from copula_morph import copula_morph
                         X_tt_morphed = pd.DataFrame(copula_morph( df_var[featuresForTraining], qt_tt, qt_ggH, L_tt, L_ggH), columns=featuresForTraining, index=data[0].index)
                         quantile_varied_tensor = torch.tensor(np.float32(X_tt_morphed[featuresForTraining].values)).float()

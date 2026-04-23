@@ -58,7 +58,7 @@ def main(isMC, processNumber, nFiles, modelName, boosted, isJEC):
         if not matching_files:  # No files match the pattern
             print("Launching the job soon")
             print(fileName, str(processNumber))
-            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 200)), '/t3home/gcelotto/ggHbb/PNN/slurm/mjj/predict.sh', fileName, str(processNumber), process, modelName, str(boosted), str(isMC)])
+            subprocess.run(['sbatch', '-J', "y%s_%d"%(process, random.randint(1, 1000)), '/t3home/gcelotto/ggHbb/PNN/slurm/mjj/predict.sh', fileName, str(processNumber), process, modelName, str(boosted), str(isMC)])
             doneFiles = doneFiles + 1
             if doneFiles % 200 ==0:
                 print("I am sleeping! Good Night!")

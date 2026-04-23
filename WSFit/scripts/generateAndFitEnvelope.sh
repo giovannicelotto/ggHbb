@@ -7,14 +7,17 @@ ext=Signal$signalExpected
 rMin=-30
 rMax=32
 # Summary arguments
+cd /t3home/gcelotto/ggHbb/CMSSW_14_1_0_pre4/src
+cmsenv
+
 echo "Signal expected is $signalExpected"
 echo "Category is $CATEGORY"
 echo "Number of toys is $nToys"
 cd /t3home/gcelotto/ggHbb/WSFit/datacards
 # Generate toys with 3 different PDFS
-#for toyGenIdx in $(seq 0 $((npdf - 1))); do
-#        combine -M GenerateOnly -d datacardMulti$CATEGORY.txt  --setParameterRanges r=$rMin,$rMax   --freezeParameters pdfindex_$CATEGORY"_2016_13TeV" --setParameters pdfindex_$CATEGORY"_2016_13TeV"=$toyGenIdx -n ToysPdf$toyGenIdx"_"$ext"_cat"$CATEGORY -m 125   -t $nToys --expectSignal $signalExpected --saveToys
-#done
+for toyGenIdx in $(seq 0 $((npdf - 1))); do
+        combine -M GenerateOnly -d datacardMulti$CATEGORY.txt  --setParameterRanges r=$rMin,$rMax   --freezeParameters pdfindex_$CATEGORY"_2016_13TeV" --setParameters pdfindex_$CATEGORY"_2016_13TeV"=$toyGenIdx -n ToysPdf$toyGenIdx"_"$ext"_cat"$CATEGORY -m 125   -t $nToys --expectSignal $signalExpected --saveToys
+done
 #
 #
 #

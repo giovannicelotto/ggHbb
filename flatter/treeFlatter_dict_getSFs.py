@@ -172,7 +172,7 @@ def get_trig_SF(LeadingMuons_inJets, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_
     eff_mc_tot   = 1.0
 
     rel_err_sq = 0.0
-
+    naive_SF = 1.0
     for idx in muons:
         fired = Muon_isTriggering[idx]
 
@@ -201,6 +201,8 @@ def get_trig_SF(LeadingMuons_inJets, Muon_isTriggering, Muon_pt, Muon_dxy, Muon_
 
         eff_data_tot *= val_d
         eff_mc_tot   *= val_m
+        if idx == 0:
+            naive_SF = val_d / val_m if val_m > 0 else 1.0
 
     # final SF
     sf = eff_data_tot / eff_mc_tot if eff_mc_tot > 0 else 1.0

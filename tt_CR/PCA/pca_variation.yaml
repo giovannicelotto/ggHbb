@@ -1,9 +1,0 @@
-pc1_sigma: 2.5253660678863525
-pc2_sigma: 2.0512216091156006
-pc3_sigma: 1.8986732959747314
-pca_file: /t3home/gcelotto/ggHbb/tt_CR/PCA/pca_ttbar.pkl
-scaler_file: myScaler.pkl
-shift:
-  pc1: 0
-  pc2: -3
-  pc3: -3

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import mplhep as hep
 import numpy as np
 hep.style.use("CMS")
+import os
 from binning_per_variable import plot_vars
 def plot_data_mc_stack_ratio(dfData, dfMC, var, bins, xlabel, lumi):
     fig, (ax, rax) = plt.subplots(
@@ -138,7 +139,10 @@ def plot_data_mc_stack_ratio(dfData, dfMC, var, bins, xlabel, lumi):
 
 
 
-def plot_all_variables(dfData, dfMC, lumi, config):
+def plot_all_variables(dfData, dfMC, lumi, config, folder):
+    plot_vars["nJets_20"] ={
+        "bins": np.arange(10)-0.5,
+        "xlabel": "nJets_20"}
     for var, cfg in plot_vars.items():
         if var in config["columns"] or var == "dijet_dEta":
             pass
@@ -155,7 +159,9 @@ def plot_all_variables(dfData, dfMC, lumi, config):
             xlabel=cfg["xlabel"],
             lumi=lumi,
         )
-        fig.savefig("/t3home/gcelotto/ggHbb/documentation/plots/ttbar_CR/%s.png"%(var), bbox_inches="tight")
+        print("Creating folder...")
+        os.makedirs(folder, exist_ok=True)
+        fig.savefig(folder+"/%s.png"%(var), bbox_inches="tight")
         plt.close('all')
         del fig, ax, rax
 

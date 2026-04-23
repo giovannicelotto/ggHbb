@@ -31,8 +31,12 @@ ROOT.SetOwnership(workspace, False)
 
 
 model_Z_c    = workspace.obj("model_Z_c%d"%(int(args.config)))
+if not model_Z_c:
+    raise RuntimeError("model_Z_c%d not found in the workspace"%(int(args.config)))
 ROOT.SetOwnership(model_Z_c, False)
 data_obs = workspace.obj("rooHist_data_cat%d"%(args.config))  # Replace "data_obs" with the actual name of your RooDataHist
+if not data_obs:
+    raise RuntimeError("data_obs not found in the workspace")
 ROOT.SetOwnership(data_obs, False)
 #nZ_times_mu = workspace.obj("nZ_times_mu")  
 #ROOT.SetOwnership(nZ_times_mu, False)

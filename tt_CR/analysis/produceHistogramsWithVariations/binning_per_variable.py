@@ -384,7 +384,7 @@ plot_vars = {
         "xlabel": "dijet_phi"
     },
     "dijet_mass": {
-        "bins": np.linspace(50, 300, 21),
+        "bins": np.linspace(30, 500, 41),
         "xlabel": "dijet_mass"
     },
     "dijet_dR": {
@@ -424,7 +424,7 @@ plot_vars = {
         "xlabel": "dijet_pT_asymmetry"
     },
     "PNN": {
-        "bins": np.linspace(0, 1, 21),
+        "bins": np.linspace(0, 1, 51),
         "xlabel": "NN score"
     },
     "PNN_pca": {
@@ -433,6 +433,6 @@ plot_vars = {
     },
     "PNN_qm": {
         "bins": np.linspace(0, 1, 51),
-        "xlabel": "NN score Quantile-Matched"
+        "xlabel": "NN score Morphed"
     },
 }

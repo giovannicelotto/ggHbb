@@ -1,0 +1,11 @@
+ <<< Combine >>> 
+ <<< v9.2.1 >>>
+>>> Random number generator seed is 123456
+>>> Method used is FitDiagnostics
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1 = 47.8657
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1_bonly = 0.0680906
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1 = 31.9986
+
+ --- FitDiagnostics ---
+Best fit SF_NN: 0.671956  -0.124961/+0.146791  (68% CL)
+Done in 0.03 min (cpu), 0.03 min (real)

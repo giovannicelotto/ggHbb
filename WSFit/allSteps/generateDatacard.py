@@ -59,11 +59,11 @@ bin          {" ".join(["Cat"+cat_name]*(len(processes)+2))}
 lumi lnN {lumi}  - {" ".join([str(lumi)]*len(processes))}
 ---------------------------------------------
 rateZbb  rateParam  Cat{cat_name}  Z  1.0  [-1.0,3.0]
-SF_NN_{cat_name}   rateParam  Cat{cat_name}  signal  {SF_NN}
-SF_NN_{cat_name}   rateParam  Cat{cat_name}  Z       {SF_NN}
-SF_NN_{cat_name}   param      {SF_NN}  {SF_err}
 ---------------------------------------------
 """
+#SF_NN_{cat_name}   rateParam  Cat{cat_name}  signal  {SF_NN}
+#SF_NN_{cat_name}   rateParam  Cat{cat_name}  Z       {SF_NN}
+#SF_NN_{cat_name}   param      {SF_NN}  {SF_err}
     
     # Optional: you can add rateParam or other discrete lines as needed
     datacard += f"pdfindex_{cat_name}_2016_13TeV discrete\n"

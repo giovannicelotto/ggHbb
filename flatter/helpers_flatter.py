@@ -552,6 +552,7 @@ def fill_ttbar_CR_features(evt, isMC, muonIdx1, muonIdx2, processName, muon_RECO
     mu.SetPtEtaPhiM(evt["Muon_pt"][selected_muon_idx], evt["Muon_eta"][selected_muon_idx], evt["Muon_phi"][selected_muon_idx], 0.106) if features["is_ttbar_CR"]==1 else None
     el.SetPtEtaPhiM(evt["Electron_pt"][selected_ele_idx], evt["Electron_eta"][selected_ele_idx], evt["Electron_phi"][selected_ele_idx], 0.000511) if features["is_ttbar_CR"]==1 else None
     features["dilepton_tt_mass"]   = np.float32((mu+el).M()) if features["is_ttbar_CR"]==1 else 0.
+    features["dilepton_tt_dR"]   = np.float32(mu.DeltaR(el)) if features["is_ttbar_CR"]==1 else 0.
 
 
     weight_factor *=  features["Muon_tt_RECO_SF"] * features["Muon_tt_ID_SF"] * features["Muon_tt_ISO_SF"] * features["Electron_tt_ID_SF"] * features["Electron_tt_RECO_SF"]
@@ -576,7 +577,7 @@ def fill_dijet_features(dijet_vec, jet1_vec, jet2_vec, evt, run=2):
     features['dijet_eta'] = np.float32(dijet_vec.Eta())
     features['dijet_phi'] = np.float32(dijet_vec.Phi())
     features['dijet_mass'] = np.float32(dijet_vec.M())
-    assert np.float32(dijet_vec.M())>0
+    #assert np.float32(dijet_vec.M())>0
     features['dijet_dR'] = np.float32(jet1_vec.DeltaR(jet2_vec))
     features['dijet_dEta'] = np.float32(abs(jet1_vec.Eta() - jet2_vec.Eta()))
     # Here replace

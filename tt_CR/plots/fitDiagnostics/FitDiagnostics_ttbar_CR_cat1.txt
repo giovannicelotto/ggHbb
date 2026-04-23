@@ -1,0 +1,54 @@
+ <<< Combine >>> 
+ <<< v9.2.1 >>>
+>>> Random number generator seed is 123456
+Setting robust fit options to Tolerance=0.1 / Strategy=0 / Type,Algo=Minuit2,Migrad (note that defaults of CascadeMinimizer if these options were not specified)
+>>> Method used is FitDiagnostics
+Redefining the POIs to be: RooArgSet:: = (SF_NN)
+Freezing the following parameters: 
+r
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1 = 66.3532
+ Fit B-only, status = 0, numBadNLL = 0, covariance quality = 3
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1_bonly = 0.0925872
+Running RobustFit for POI SF_NN. Configured with strategy 0  
+Searching for crossing at nll = -170.762, in the interval 0.757668 < SF_NN < 10
+ SF_NN lvl-here lvl-there 	stepping 
+ 1.681902    -13.10827  +0.49447    0.924233
+ 1.034938    -1.36691  -13.10827    0.277270
+ 0.840849    +0.29796  -1.36691    0.083181
+ 0.924030    -0.23774  +0.29796    0.083181
+ 0.865804    +0.16950  -0.23774    0.024954
+ 0.890758    +0.01260  +0.16950    0.024954
+ 0.915712    -0.17095  +0.01260    0.024954
+ 0.898244    -0.03974  -0.17095    0.007486
+ 0.893004    -0.00285  -0.03974    0.002246
+ 0.891432    +0.00799  -0.00285    0.000674
+ 0.892106    +0.00336  +0.00799    0.000674
+ 0.892779    -0.00129  +0.00336    0.000674
+ 0.892308    +0.00197  -0.00129    0.000202
+ 0.892510    +0.00057  +0.00197    0.000202
+ 0.892712    -0.00082  +0.00057    0.000202
+Searching for crossing at nll = -170.762, in the interval 0.757668 < SF_NN < 0.01
+ SF_NN lvl-here lvl-there 	stepping 
+ 0.682902    +0.30981  +0.49447    -0.074767
+ 0.608135    -0.31126  +0.30981    -0.074767
+ 0.660472    +0.17458  -0.31126    -0.022430
+ 0.638041    -0.00278  +0.17458    -0.022430
+ 0.653742    +0.12597  -0.00278    -0.006729
+ 0.647013    +0.07346  +0.12597    -0.006729
+ 0.640284    +0.01697  +0.07346    -0.006729
+ 0.633555    -0.04361  +0.01697    -0.006729
+ 0.638266    -0.00077  -0.04361    -0.002019
+ 0.639679    +0.01169  -0.00077    -0.000606
+ 0.639073    +0.00637  +0.01169    -0.000606
+ 0.638468    +0.00102  +0.00637    -0.000606
+ 0.637862    -0.00436  +0.00102    -0.000606
+ 0.638286    -0.00059  -0.00436    -0.000182
+ 0.638413    +0.00054  -0.00059    -0.000055
+ 0.638359    +0.00006  +0.00054    -0.000055
+Fit S+B, status = 0, numBadNLL = 0, covariance quality = 3
+[utils::makePlots] Number of events for pdf in bin1_CMS_th1x, pdf pdf_binbin1 = 51.0057
+
+ --- FitDiagnostics ---
+Best fit SF_NN: 0.757668  -0.119246/+0.135043  (68% CL)
+Done in 0.03 min (cpu), 0.09 min (real)
+158 log messages saved to combine_logger.out

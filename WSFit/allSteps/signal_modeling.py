@@ -98,9 +98,9 @@ def build_roohists(df, dfMC_Z, dfMC_H, nbins, nbins_MC, x1, x2, config_id):
 
     return (
         x,
-        make_roodatahist(f"roo_data_{config_id}", hist_data, x),
-        make_roodatahist(f"roo_Z_{config_id}", hist_Z, x),
-        make_roodatahist(f"roo_H_{config_id}", hist_H, x),
+        make_roodatahist(f"rooHist_data_cat{config_id}", hist_data, x),
+        make_roodatahist(f"rooHist_Z_cat{config_id}", hist_Z, x),
+        make_roodatahist(f"rooHist_H_cat{config_id}", hist_H, x),
     )
 
 
@@ -108,14 +108,16 @@ def build_roohists(df, dfMC_Z, dfMC_H, nbins, nbins_MC, x1, x2, config_id):
 # Model building
 # -----------------------------
 
-def build_model(x, rooHist, mean_guess, xmin_fit, xmax_fit, particle="Z"):
+def build_model(x, rooHist, mean_guess, xmin_fit, xmax_fit, particle="Z", category_number=7,tag="nominal"):
     x.setRange("fit_range", xmin_fit, xmax_fit)
     best, _ = fit_sum_of_gaussians(
         x, rooHist,
         max_gaussians=5,
         mean=mean_guess,
         sigma=(10., 4., 300.),
-        particle=particle   
+        particle=particle,
+        category_number=category_number,
+        tag=tag
     )
 
     model = best["model"]
@@ -208,6 +210,7 @@ base_dfMC_Z, base_dfMC_H, df, nbins, nbins_MC, x1, x2 = load_dataframes(args.con
 systematics = [None] + cfg.get("systematics", [])
 
 for syst in systematics:
+    tag = syst if syst else "nominal"
 
     print(f"\n[INFO] Running systematic: {syst or 'nominal'}")
 
@@ -223,12 +226,11 @@ for syst in systematics:
         df, dfMC_Z, dfMC_H, nbins, nbins_MC, x1, x2, args.config
     )
 
-    model_H, best_H = build_model(x, roo_H, (125., 50., 300.), 50, 300)
-    model_Z, best_Z = build_model(x, roo_Z, (90., 50., 300.), 50, 300)
+    model_H, best_H = build_model(x, roo_H, (125., 50., 300.), 50, 300, category_number=(args.config), particle="H", tag=tag)
+    model_Z, best_Z = build_model(x, roo_Z, (90., 50., 300.), 50, 300, category_number=(args.config), particle="Z", tag=tag)
 
     nZ, nH = build_extended(dfMC_Z, dfMC_H, args.config)
 
-    tag = syst if syst else "nominal"
 
     plot_model(
         x, roo_Z, model_Z,

@@ -14,6 +14,7 @@ from iminuit.cost import LeastSquares
 # %%
 parser = argparse.ArgumentParser(description="Enrich multipdf workspace with extra PDF.")
 parser.add_argument("--cat", type=int, help="Index of the workspace", default=0)
+parser.add_argument("--POI", type=str, help="POI r or rateZbb", default='r')
 parser.add_argument("--signalExpected", type=int, help="Signal expected", default=0)
 parser.add_argument("--npdf", type=int, help="Signal expected", default=3)
 args = parser.parse_args()
@@ -23,9 +24,10 @@ expectedSignal = args.signalExpected
 npdf = args.npdf
 
 # %%
-pdfLabels = {0:["Bern2", "Expo1", "PolExpo3"],
-             10:["Bern2", "Bern3", "Expo1", "PolExpo2"],
-             100:["Bern2","Expo1","PolExpo2"]}
+pdfLabels = {0:["Expo3", "PolExpo3"],
+             #10:["Bern2", "Bern3", "Expo1", "PolExpo2"],
+             #100:["Bern2","Expo1","PolExpo2"]
+             }
 toysGenValues = list(np.arange(npdf))
 fig, ax = plt.subplots(1, len(toysGenValues), figsize=(20,6))
 
@@ -43,9 +45,9 @@ for toysGenFrom in toysGenValues:
     
     tree = file["tree_fit_sb"]
     branches = tree.arrays(library="np")
-    r = branches["r"]
-    rHiErr = branches["rHiErr"]
-    rLoErr = branches["rLoErr"]
+    r = branches[args.POI]
+    rHiErr = branches[f"{args.POI}HiErr"]
+    rLoErr = branches[f"{args.POI}LoErr"]
     fit_status = branches["fit_status"]
 
 
@@ -82,7 +84,7 @@ for toysGenFrom in toysGenValues:
     p=norm.pdf(x, mu, std)
     ax[toysGenFrom].plot(x, p*len(r)*np.diff(bins)[0], 'r--', linewidth=2)
     ax[toysGenFrom].text(x=0.95, y=0.95, s=f"N={len(r)}", ha="right", va="top", transform=ax[toysGenFrom].transAxes)
-    ax[toysGenFrom].text(x=0.95, y=0.8, s=f"Fit=MultiPdf\nToy={pdfLabels[cat][toysGenFrom]}", ha="right", va="top", transform=ax[toysGenFrom].transAxes)
+#    ax[toysGenFrom].text(x=0.95, y=0.8, s=f"Fit=MultiPdf\nToy={pdfLabels[cat][toysGenFrom]}", ha="right", va="top", transform=ax[toysGenFrom].transAxes)
     ax[toysGenFrom].text(x=0.05, y=0.95, s=f"$\mu$={mu:.3f}\n$\sigma$={std:.2f}", ha="left", va="top", transform=ax[toysGenFrom].transAxes, color='red')
 
     if abs(mu) > 0.5:

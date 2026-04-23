@@ -1,8 +1,11 @@
 from functions import getDfProcesses_v2, getCommonFilters
 import numpy as np
 import pandas as pd
-
-FILTERS = [('is_ttbar_CR', '==', 1)] 
+from functions import getCommonFilters
+FILTERS = [('is_ttbar_CR', '==', 1),
+           ('dijet_mass','>',50),
+            ('dijet_mass','<',300)
+            ] 
 def load_all_data(config):
     dfProcessesMC, dfProcessesData, _ = getDfProcesses_v2()
 
@@ -59,7 +62,7 @@ def load_all_data(config):
         df = pd.read_parquet(
             f"{df_folder}/dataframes_{p}_{modelName}.parquet",
             columns=columns,
-            filters=[('is_ttbar_CR', '==', 1)]
+            filters=FILTERS if "HtoBB" not in p else None
         )
         dfsData.append(df)
 

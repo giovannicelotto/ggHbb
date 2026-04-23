@@ -1,11 +1,56 @@
  <<< Combine >>> 
  <<< v9.2.1 >>>
 >>> Random number generator seed is 123456
+Setting robust fit options to Tolerance=0.1 / Strategy=0 / Type,Algo=Minuit2,Migrad (note that defaults of CascadeMinimizer if these options were not specified)
 >>> Method used is FitDiagnostics
-[WARNING]: Unable to determine uncertainties on all fit parameters in b-only fit. Have a look at https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/nonstandard/#fit-parameter-uncertainties for more information.
-Maximum failed steps (max=5) reached and minimization failed at r = 6.10101 
+Turning on runtime-define MINIMIZER_freezeDisassociatedParams
+Set Range of Parameter r To : (-50,50)
+Set Range of Parameter rateZbb To : (-3,5)
+Freezing the following parameters: 
+pdfindex_7_2016_13TeV
+Using internal logic for binned/unbinned Asimov dataset generation
+Generating asimov with histogram for pdf pdf_binCat7_obsOnly: in 500 x-bins
+ Fit B-only, status = 0, numBadNLL = 0, covariance quality = 3
+Running RobustFit for POI r. Configured with strategy 0  
+Searching for crossing at nll = 0.0693132, in the interval 1.02483 < r < 50
+ r lvl-here lvl-there 	stepping 
+ 5.922346    -0.31790  +0.49452    4.897517
+ 2.494084    +0.18839  -0.31790    1.469255
+ 3.963339    -0.10363  +0.18839    1.469255
+ 2.934861    +0.22904  -0.10363    0.440777
+ 3.375637    +0.08906  +0.22904    0.440777
+ 3.816414    -0.09483  +0.08906    0.440777
+ 3.507870    +0.04114  -0.09483    0.132233
+ 3.640103    -0.01424  +0.04114    0.132233
+ 3.547540    +0.02524  -0.01424    0.039670
+ 3.587210    +0.00864  +0.02524    0.039670
+ 3.626880    -0.00809  +0.00864    0.039670
+ 3.599111    +0.00388  -0.00809    0.011901
+ 3.611012    -0.00116  +0.00388    0.011901
+ 3.602681    +0.00241  -0.00116    0.003570
+ 3.606251    +0.00091  +0.00241    0.003570
+ 3.609822    -0.00060  +0.00091    0.003570
+ 3.607322    +0.00047  -0.00060    0.001071
+ 3.608394    +0.00003  +0.00047    0.001071
+Searching for crossing at nll = 0.0693132, in the interval 1.02483 < r < -50
+ r lvl-here lvl-there 	stepping 
+ -4.077654    -1.13416  +0.49452    -5.102483
+ -0.505916    +0.37901  -1.13416    -1.530745
+ -2.036661    -0.24299  +0.37901    -1.530745
+ -0.965140    +0.26589  -0.24299    -0.459223
+ -1.424363    +0.08777  +0.26589    -0.459223
+ -1.883586    -0.15467  +0.08777    -0.459223
+ -1.562130    +0.02227  -0.15467    -0.137767
+ -1.699897    -0.04883  +0.02227    -0.137767
+ -1.603460    +0.00594  -0.04883    -0.041330
+ -1.644790    -0.01056  +0.00594    -0.041330
+ -1.615859    +0.00408  -0.01056    -0.012399
+ -1.628258    +0.00187  +0.00408    -0.012399
+ -1.640657    -0.00010  +0.00187    -0.012399
 [WARNING]: Unable to determine uncertainties on all fit parameters in s+b fit. Have a look at https://cms-analysis.github.io/HiggsAnalysis-CombinedLimit/part3/nonstandard/#fit-parameter-uncertainties for more information.
+Fit S+B, status = 0, numBadNLL = 0, covariance quality = 2
 
  --- FitDiagnostics ---
-Best fit r: 1.05339  -3.74425/+48.9466  (68% CL)
-Done in 5.09 min (cpu), 5.11 min (real)
+Best fit r: 1.02483  -2.66558/+2.58359  (68% CL)
+Done in 3.55 min (cpu), 3.57 min (real)
+161 log messages saved to combine_logger.out

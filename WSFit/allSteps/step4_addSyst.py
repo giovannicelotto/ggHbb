@@ -22,6 +22,7 @@ with open("/t3home/gcelotto/ggHbb/WSFit/allSteps/step1_cfg.yaml", 'r') as stream
 variations = cfg["systematics"]
 if variations is not None:
     for var in variations:
+        print(f"Variation {var}")
         in_path = f"/t3home/gcelotto/ggHbb/WSFit/ws/step1/ws{args.category}_{var}.root"
         if not os.path.exists(in_path):
             print("Scale uncertainty")

@@ -1,18 +1,31 @@
 modelName: Jan21_3_50p0
 boosted: 3
 columns:
-  - jet2_eta
-  - dijet_pt
-  - dijet_mass
-  - jet2_pt
   - jet1_pt
   - jet1_eta
   - jet1_phi
-  - jet1_btagWP
-  - jet1_btagDeepFlavB
+
+  - jet2_pt
+  - jet2_eta
+  - jet2_phi
+
+  - jet3_pt
+  - jet3_eta
+  - jet3_phi
+
+  - dijet_pt
+  - dijet_mass
+  - dijet_dPhi
+  - dijet_dEta
+
+  - nJets_20
+  #- dilepton_tt_mass
+
+
   - PNN
   - PNN_qm
   - is_ttbar_CR
+
 
 MConlyFeatures:
   - weight
@@ -206,7 +219,7 @@ MC:
   TT:
     11 : -1
     12 : -1
-    13 : -1    
+    13 : -1
   QCD:
     23 : 0   # QCD
     24 : 0   # QCD
@@ -222,7 +235,7 @@ MC:
     34 : 0   # QCD
   ggH(bb):
     36 : 0
-    37 : -1
+    37 : 0
 
 
 

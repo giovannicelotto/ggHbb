@@ -1,5 +1,0 @@
- <<< Combine >>> 
- <<< v9.2.1 >>>
->>> Random number generator seed is 123456
->>> Method used is FitDiagnostics
-Channel bin1 will use autoMCStats with settings: event-threshold=1, include-signal=0, hist-mode=1

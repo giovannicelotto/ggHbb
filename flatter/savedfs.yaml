@@ -34,6 +34,7 @@ columns:
   - jet3_phi
   - jet3_btagWP
   - jet3_btagDeepFlavB
+  - nJets_20
   #- jet3_nMuons
   #- jet3_nConstituents
   #- jet3_leadTrackPt
@@ -54,6 +55,7 @@ columns:
   - dijet_dPhi
   - dijet_dEta
   - dijet_twist
+  - dilepton_tt_mass
   #- has_jet4
   #- jet4_pt
   #- jet4_eta
@@ -136,7 +138,6 @@ MConlyFeatures:
   - dijet_phi_prime
   - dijet_cs
   - ht_prime
-  - nJets_20
   - nJets_30
   - nJets_50
   - Electron_tt_RECO_SF
@@ -184,31 +185,31 @@ dataPeriods:
 MC:
   
   0 : 0
-  1 : 0 # EWKZJets
+  1 : -1 # EWKZJets
   2 : 0 # Diboson
   3 : 0 # Diboson
   4 : 0 # Diboson
 
-  5 : -1 # Top
-  6 : -1 # Top
-  7 : -1 # Top
-  8 : -1 # Top
-  9 : -1 # Top
-  10 : -1 # Top
+  5 :  0 # Top
+  6 :  0 # Top
+  7 :  0 # Top
+  8 :  0 # Top
+  9 :  0 # Top
+  10 : 0 # Top
 
-  11 : -1 # ttbar
-  12 : -1 # ttbar
-  13 : -1 # ttbar
+  11 : 0 # ttbar
+  13 : 0 # ttbar
+  12 : 0 # ttbar
 
   14 : 0 # WJets
   15 : 0 #WJets
   16 : 0 #WJets
   17 : 0 #WJets
   18 : 0 #WJets
-  19 : 0 #ZJets
-  20 : 0 #ZJets
-  21 : 0 #ZJets
-  22 : 0 #ZJets
+  19 : -1 #ZJets
+  20 : -1 #ZJets
+  21 : -1 #ZJets
+  22 : -1 #ZJets
   
   23 : 0 #QCD
   24 : 0 #QCD
@@ -224,12 +225,12 @@ MC:
   34 : 0 #QCD
 
   35 : 0 #Zjets
-  36 : -1 # VBF
-  37 : -1 # ggHbb MINLO
-  48 : -1 #Hbb other prod. mechanisms
-  49 : -1 #Hbb other prod. mechanisms
-  50 : -1 #Hbb other prod. mechanisms
-  51 : -1 #Hbb other prod. mechanisms
-  52 : -1 #Hbb other prod. mechanisms
-  53 : -1 #Hbb other prod. mechanisms
-  54 : -1 #Hbb other prod. mechanisms
+  36 : 0 # VBF
+  37 : 0 # ggHbb MINLO
+  48 : 0 #Hbb other prod. mechanisms
+  49 : 0 #Hbb other prod. mechanisms
+  50 : 0 #Hbb other prod. mechanisms
+  51 : 0 #Hbb other prod. mechanisms
+  52 : 0 #Hbb other prod. mechanisms
+  53 : 0 #Hbb other prod. mechanisms
+  54 : 0 #Hbb other prod. mechanisms

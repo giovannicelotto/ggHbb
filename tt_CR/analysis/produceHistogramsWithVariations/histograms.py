@@ -1,8 +1,8 @@
 import ROOT
 
-def make_histograms(mc_variations, dfData, config, category):
+def make_histograms(mc_variations, dfData, config, category, n_bins):
     fout = ROOT.TFile(
-        f"/t3home/gcelotto/ggHbb/tt_CR/workspace_NNqm/histograms_{category}.root",
+        f"/t3home/gcelotto/ggHbb/tt_CR/histograms/histograms_{category}.root",
         "RECREATE"
     )
     for variation, dfMC in mc_variations.items():
@@ -11,7 +11,7 @@ def make_histograms(mc_variations, dfData, config, category):
 
 
 
-        n_bins = 5
+
         x_min = config["lower_NN"]
         x_max = config["upper_NN"]
 
